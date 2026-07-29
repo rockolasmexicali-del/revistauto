@@ -28,6 +28,15 @@
     display: none; /* Chrome, Safari y Opera */
 }
 
+/* Prevenir salto de diseño (FOUT) cuando cargan los íconos */
+.material-symbols-rounded {
+    overflow: hidden;
+    max-width: 1.2em;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
