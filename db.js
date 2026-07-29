@@ -363,6 +363,10 @@ class Database {
                         ...item,
                         phone: item.seller_phone,
                         whatsapp: item.seller_whatsapp,
+                        publishedAt: item.published_at || item.publishedAt,
+                        expiresAt: item.expires_at || item.expiresAt,
+                        lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth,
+                        paymentStatus: item.payment_status || item.paymentStatus,
                         images: item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'],
                         isMyListing: item.publisher_id === this.uuid || item.publisherId === this.uuid
                     }));
@@ -461,7 +465,11 @@ class Database {
                 views: listing.views || 0,
                 notes: listing.notes || [],
                 payments: listing.payments || [],
-                publisher_id: listing.publisherId || listing.publisher_id || ''
+                publisher_id: listing.publisherId || listing.publisher_id || '',
+                published_at: listing.publishedAt || listing.published_at || null,
+                expires_at: listing.expiresAt || listing.expires_at || null,
+                last_renewed_month: listing.lastRenewedMonth || listing.last_renewed_month || null,
+                payment_status: listing.paymentStatus || listing.payment_status || null
             };
 
             supabaseClient.from('listings').upsert([payload]).then(({ data, error }) => {
