@@ -996,7 +996,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Mover el botón clickeado hacia el centro de la vista
             btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         });
-    }
 
     function createListingCardHTML(listing, hideHeart = false) {
         const isSaved = savedListingsIds.includes(listing.id);
@@ -1129,7 +1128,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Removemos el límite de 10 para que en la cuadrícula puedan ver todos los de esa categoría
             
             if (listings.length === 0) {
-                feedContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No se encontraron vehículos en esta zona.</p>';
+                feedContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; width: 100%;">
+                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.8rem; font-weight: 600; line-height: 1.4; opacity: 0.6;">
+                            No se encontraron<br>vehículos en esta<br>zona.
+                        </h2>
+                    </div>`;
                 return;
             }
             feedContainer.innerHTML = listings.map(l => createListingCardHTML(l, true)).join('');
@@ -1186,7 +1190,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (html === '') {
-                feedContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No se encontraron vehículos en esta zona.</p>';
+                feedContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; width: 100%;">
+                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.8rem; font-weight: 600; line-height: 1.4; opacity: 0.6;">
+                            No se encontraron<br>vehículos en esta<br>zona.
+                        </h2>
+                    </div>`;
             } else {
                 feedContainer.innerHTML = html;
                 
