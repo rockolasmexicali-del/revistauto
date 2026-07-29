@@ -421,11 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await db.getActiveLocations();
             const serverLocations = (data && data.success && data.locations) ? data.locations : {};
             const allCitiesByState = { ...catalogData.citiesByState, ...serverLocations };
-            const allStates = Array.from(new Set([...catalogData.states, ...Object.keys(serverLocations)]));
-            window.activeLocations = { states: allStates, citiesByState: allCitiesByState };
+            const inventoryStates = Object.keys(serverLocations);
+            window.activeLocations = { states: inventoryStates, citiesByState: allCitiesByState };
         } catch (e) {
             console.error('Error fetching active locations', e);
-            window.activeLocations = { states: [...catalogData.states], citiesByState: { ...catalogData.citiesByState } };
+            window.activeLocations = { states: [], citiesByState: { ...catalogData.citiesByState } };
         }
 
         userStateSelect.innerHTML = '<option value="Todos">Todos los estados</option>';
@@ -468,9 +468,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function applyDetectedLocation(stateName, cityName, isManualClick = false) {
             if (!stateName) return;
-            const matchedState = window.activeLocations.states.find(s => s.toLowerCase() === stateName.toLowerCase() || stateName.toLowerCase().includes(s.toLowerCase()));
+            const matchedState = catalogData.states.find(s => s.toLowerCase() === stateName.toLowerCase() || stateName.toLowerCase().includes(s.toLowerCase()));
             if (matchedState) {
-                const stateCities = window.activeLocations.citiesByState[matchedState] || [];
+                // Agregar al dropdown dinámicamente si no existe
+                if (!window.activeLocations.states.includes(matchedState)) {
+                    window.activeLocations.states.push(matchedState);
+                    userStateSelect.innerHTML += `<option value="${matchedState}">${matchedState}</option>`;
+                    filterState.innerHTML += `<option value="${matchedState}">${matchedState}</option>`;
+                }
+
+                const stateCities = window.activeLocations.citiesByState[matchedState] || catalogData.citiesByState[matchedState] || [];
                 const matchedCity = stateCities.find(c => 
                     c.toLowerCase() === cityName.toLowerCase() || 
                     cityName.toLowerCase().includes(c.toLowerCase()) ||
