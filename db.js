@@ -361,6 +361,8 @@ class Database {
                     this.isServerConnected = true;
                     const normalized = data.map(item => ({
                         ...item,
+                        phone: item.seller_phone,
+                        whatsapp: item.seller_whatsapp,
                         images: item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'],
                         isMyListing: item.publisher_id === this.uuid || item.publisherId === this.uuid
                     }));
@@ -368,13 +370,14 @@ class Database {
                     if (typeof window.onServerDataSynced === 'function') {
                         window.onServerDataSynced();
                     }
-                    return;
+                } else {
+                    console.error('Error fetching listings from Supabase:', error);
                 }
             } catch (err) {
-                console.warn('⚠️ Consulta Supabase no disponible:', err);
+                console.error('Network or Supabase error during sync:', err);
+                this.isServerConnected = false;
             }
         }
-        this.isServerConnected = false;
     }
 
     getAllListings() {
@@ -413,15 +416,9 @@ class Database {
 
     saveListing(listing) {
         const listings = this.getAllListings();
-        if (listing.id) {
-            // Update
-            const index = listings.findIndex(l => String(l.id) === String(listing.id));
-            if (index !== -1) {
-                listings[index] = { ...listings[index], ...listing };
-            }
-        } else {
-            // Insert
+        if (!listing.id) {
             listing.id = Date.now();
+            listing.publishedAt = new Date().toISOString();
             listing.status = listing.status || 'pendiente autorizacion';
             listing.publisherId = this.uuid;
             listing.isMyListing = true;
@@ -430,12 +427,20 @@ class Database {
                 listing.images = ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'];
             }
             listings.push(listing);
+        } else {
+            const index = listings.findIndex(l => String(l.id) === String(listing.id));
+            if (index > -1) {
+                listings[index] = { ...listings[index], ...listing };
+            } else {
+                listings.push(listing);
+            }
         }
         localStorage.setItem(this.listingsKey, JSON.stringify(listings));
 
         // Sincronizar asíncronamente con Supabase Cloud
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const payload = {
+                id: listing.id, // Fundamental para que Supabase actualice y no duplique
                 title: listing.title,
                 type: listing.type,
                 make: listing.make,
