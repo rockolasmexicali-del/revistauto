@@ -10,12 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Feed
     (async () => {
-        // ONE-TIME CLEANUP (Added temporarily to wipe dummy data)
+        // ONE-TIME VERIFICATION SCRIPT
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            console.log("Limpiando autos de prueba de Supabase...");
-            await supabaseClient.from('listings').delete().lt('id', 17);
-            localStorage.removeItem('revista_autos_listings');
-            console.log("Limpieza de base de datos completada.");
+            console.log("Verificando todos los autos en la base de datos de Supabase...");
+            const { data, error } = await supabaseClient.from('listings').select('id, title, status, make, model');
+            
+            if (error) {
+                alert("Error al conectar con la base de datos: " + error.message);
+                return;
+            }
+            
+            if (data && data.length > 0) {
+                let msg = `LA BASE DE DATOS EN LA NUBE TIENE ${data.length} VEHÍCULO(S):\n\n`;
+                data.forEach(c => {
+                    msg += `- ID: ${c.id} | ${c.title || (c.make + ' ' + c.model)} | Estatus: ${c.status || 'ninguno'}\n`;
+                });
+                alert(msg);
+            } else {
+                alert("✅ LA BASE DE DATOS EN LA NUBE ESTÁ TOTALMENTE VACÍA (0 vehículos).");
+            }
         }
     })();
 
