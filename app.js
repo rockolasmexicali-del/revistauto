@@ -419,17 +419,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fetch active locations (para los filtros de Inicio)
         try {
             const data = await db.getActiveLocations();
-            if (data.success) {
-                // Adaptar el nuevo formato map al antiguo
-                const states = Object.keys(data.locations);
-                window.activeLocations = { states: states, citiesByState: data.locations };
-            } else {
-                window.activeLocations = { states: [], citiesByState: {} };
-            }
+            const serverLocations = (data && data.success && data.locations) ? data.locations : {};
+            const allCitiesByState = { ...catalogData.citiesByState, ...serverLocations };
+            const allStates = Array.from(new Set([...catalogData.states, ...Object.keys(serverLocations)]));
+            window.activeLocations = { states: allStates, citiesByState: allCitiesByState };
         } catch (e) {
             console.error('Error fetching active locations', e);
-            window.activeLocations = { states: [], citiesByState: {} };
+            window.activeLocations = { states: [...catalogData.states], citiesByState: { ...catalogData.citiesByState } };
         }
+
+        userStateSelect.innerHTML = '<option value="Todos">Todos los estados</option>';
+        filterState.innerHTML = '<option value="Todos">Todos los estados</option>';
 
         window.activeLocations.states.forEach(state => {
             userStateSelect.innerHTML += `<option value="${state}">${state}</option>`;
@@ -2167,6 +2167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             year: parseInt(year),
             price: parseInt(document.getElementById('form-price').value.replace(/[^0-9]/g, ''), 10) || 0,
             color: colorVal,
+            state: formState.value,
             city: formCity.value,
             phone: formPhone.value,
             whatsapp: formWhatsApp.value,
