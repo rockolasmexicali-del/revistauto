@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RevistAuto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="style.css?v=6">
+    <!-- Mercado Pago SDK -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- SheetJS para exportar Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Dashboard Button Oculto -->
+
+        <header class="app-header">
+            <h1 class="app-title">Revist<span style="color: white; -webkit-text-fill-color: white;">Auto</span></h1>
+        </header>
+
+        <main id="main-content">
+            <!-- View: Inicio -->
+            <section id="view-inicio" class="view active">
+                <div class="section-header">
+                    <h2>Descubre</h2>
+                    <p>Encuentra tu próximo vehículo</p>
+                    <div class="city-selector" style="display:flex; gap:8px; align-items:center; width:100%;">
+                        <span id="btn-locate-me" class="material-symbols-rounded" style="cursor: pointer; transition: color 0.3s; flex-shrink:0;" title="Detectar mi ubicación">location_on</span>
+                        <select id="user-state" style="max-width: 130px; background: transparent; border: none; color: white; font-family: inherit; font-size: 0.9rem; outline: none; appearance: none; -webkit-appearance: none; flex: 1; min-width: 0;">
+                            <option value="Todos">Todos los estados</option>
+                        </select>
+                        <span style="color: var(--border-color); flex-shrink:0;">|</span>
+                        <button id="btn-user-cities" style="background: transparent; border: none; color: var(--text-main); padding: 0; font-size: 0.9rem; font-weight: 600; font-family: inherit; display: flex; align-items: center; gap: 2px; cursor: pointer; outline: none; white-space: nowrap; flex-shrink: 0;">
+                            Ciudades <span class="material-symbols-rounded" style="font-size: 18px; color: var(--text-muted);">expand_more</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="horizontal-scroll categories" id="home-categories">
+                    <button class="category-chip active" data-type="Todos">Todos</button>
+                    <!-- Llenado por JS -->
+                </div>
+
+                <div class="section-title-bar">
+                    <h3>Recomendados en tu zona</h3>
+                </div>
+                
+                <div id="feed-container" class="listings-grid">
+                    <!-- Cards de vehículos inyectadas por JS -->
+                </div>
+            </section>
+
+            <!-- View: Busqueda -->
+            <section id="view-busqueda" class="view">
+                <div class="section-header">
+                    <h2>Búsqueda Avanzada</h2>
+                </div>
+                <div class="search-bar-container">
+                    <span class="material-symbols-rounded search-icon">search</span>
+                    <input type="text" id="search-input" placeholder="Busca por Marca o Modelo (Ej. Honda, Nissan, Jetta...)">
+                </div>
+                <div id="search-filters-container" style="transition: all 0.3s ease;">
+                    <h4 style="margin-bottom: 12px; color: var(--text-main);">Ubicación</h4>
+                    <div class="filter-row">
+                        <div class="filter-group half">
+                            <label>Estado</label>
+                            <select id="filter-state">
+                                <option value="Todos">Todos los estados</option>
+                            </select>
+                        </div>
+                        <div class="filter-group half">
+                            <label>Ciudad</label>
+                            <select id="filter-city">
+                                <option value="Todas">Todas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-bottom: 12px; color: var(--text-main); margin-top: 16px;">Detalles</h4>
+                    <div class="filter-row">
+                        <div class="filter-group half">
+                            <label>Año Mínimo</label>
+                            <input type="number" id="filter-min-year" placeholder="Ej. 2015">
+                        </div>
+                        <div class="filter-group half">
+                            <label>Año Máximo</label>
+                            <input type="number" id="filter-max-year" placeholder="Ej. 2024">
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="filter-group half">
+                            <label>Transmisión</label>
+                            <select id="filter-transmission">
+                                <option value="Todas" selected>Cualquiera</option>
+                                <option value="Automática">Automática</option>
+                                <option value="Manual">Manual</option>
+                            </select>
+                        </div>
+                        <div class="filter-group half">
+                            <label>Situación Legal</label>
+                            <select id="filter-legal">
+                                <option value="Todas" selected>Cualquiera</option>
+                                <option value="Nacional">Nacional</option>
+                                <option value="Importado">Importado</option>
+                                <option value="Regularizado">Regularizado</option>
+                                <option value="Fronterizo">Fronterizo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="filter-group full">
+                            <label>Color</label>
+                            <select id="filter-color">
+                                <option value="Todos" selected>Cualquiera</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="display: none; margin-bottom: 12px; color: var(--text-main); margin-top: 16px;">Presupuesto</h4>
+                    <div class="filter-row" style="display: none;">
+                        <div class="filter-group half">
+                            <label>Precio Mín. ($)</label>
+                            <input type="number" id="filter-min-price" placeholder="0">
+                        </div>
+                        <div class="filter-group half">
+                            <label>Precio Máx. ($)</label>
+                            <input type="number" id="filter-max-price" placeholder="Sin límite">
+                        </div>
+                    </div>
+                    
+                    <button id="btn-search" class="primary-btn" style="margin-top: 24px;">Buscar Resultados</button>
+                </div>
+                
+                <div id="search-results" class="listings-grid" style="margin-top: 16px;">
+                    <!-- Search results here -->
+                </div>
+            </section>
+
+            <!-- View: Favoritos -->
+            <section id="view-biblioteca" class="view">
+                <div class="section-header">
+                    <h2>Favoritos</h2>
+                    <p>Vehículos guardados para después</p>
+                </div>
+                <div id="saved-listings-container" class="listings-grid">
+                    <div class="empty-state">
+                        <span class="material-symbols-rounded">favorite_border</span>
+                        <p>Aún no has guardado vehículos</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Alta -->
+            <section id="view-alta" class="view">
+                <div class="section-header">
+                    <h2>Mis Publicaciones</h2>
+                    <p>Gestiona tus anuncios o publica uno nuevo</p>
+                    <p id="monthly-cost-disclaimer" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; font-style: italic;"></p>
+                </div>
+                
+                <button id="btn-new-listing" class="primary-btn"><span class="material-symbols-rounded">add</span> Nuevo Anuncio</button>
+                
+                <div id="my-listings-container" class="my-listings-list">
+                    <!-- My listings will appear here -->
+                </div>
+
+                <!-- Modal for new listing form -->
+                <div id="new-listing-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Dar de Alta Vehículo</h3>
+                            <button id="btn-close-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+                        </div>
+                        <div class="wizard-progress">
+                            <span id="wizard-step-indicator" style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">Paso 1 de 5</span>
+                            <div class="wizard-bar" style="width: 100%; height: 6px; background: var(--border-color); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                                <div id="wizard-bar-fill" style="width: 20%; height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <form id="new-listing-form" style="margin-top: 20px;">
+                            
+                            <!-- PASO 1 -->
+                            <div class="form-step" data-step="1">
+                                <h4 style="margin-bottom: 16px; color: var(--text-muted);">1. El Vehículo</h4>
+                            <div class="form-group">
+                                <label>Marca</label>
+                                <select id="form-make" required>
+                                    <option value="" disabled selected>Selecciona una marca</option>
+                                </select>
+                                <input type="text" id="form-custom-make" placeholder="Escribe la marca..." style="display: none; margin-top: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label>Modelo</label>
+                                <select id="form-model" required>
+                                    <option value="" disabled selected>Selecciona un modelo</option>
+                                </select>
+                                <input type="text" id="form-custom-model" placeholder="Escribe el modelo..." style="display: none; margin-top: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Vehículo</label>
+                                <select id="form-type" required>
+                                    <option value="" disabled selected>Selecciona un tipo</option>
+                                </select>
+                                <input type="text" id="form-custom-type" placeholder="Escribe el tipo (ej. Motocicleta)..." style="display: none; margin-top: 8px;">
+                            </div>
+                            <div class="form-group">
+                                <label>Color</label>
+                                <select id="form-color" required>
+                                    <option value="" disabled selected>Selecciona un color</option>
+                                </select>
+                            </div>
+                            </div>
+
+                            <!-- PASO 2 -->
+                            <div class="form-step" data-step="2" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. Mecánica</h4>
+                            
+                            <div class="form-group">
+                                <label>Motor</label>
+                                <input type="text" id="form-engine" required placeholder="Ej. 4 cilindros, 5.0L, V6..." maxlength="14">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Transmisión</label>
+                                    <select id="form-transmission" required>
+                                        <option value="" disabled selected>Selecciona una opción</option>
+                                        <option value="Automática">Automática</option>
+                                        <option value="Manual">Manual</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label>A/C</label>
+                                    <select id="form-ac" required>
+                                        <option value="" disabled selected>Selecciona una opción</option>
+                                        <option value="Sí">Sí</option>
+                                        <option value="No">No</option>
+                                    </select>
+                                </div>
+                            </div>
+                            </div>
+
+                            <!-- PASO 3 -->
+                            <div class="form-step" data-step="3" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. Ficha Técnica</h4>
+
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Kilometraje / Millaje</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" id="form-mileage" required placeholder="Ej. 120,000" inputmode="numeric" maxlength="10" style="flex: 2;">
+                                        <select id="form-mileage-unit" required style="flex: 1; padding: 0 8px; text-align: center;">
+                                            <option value="km">km</option>
+                                            <option value="mi">mi</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group half">
+                                    <label>Situación Legal</label>
+                                    <select id="form-legal" required>
+                                        <option value="" disabled selected>Selecciona una opción</option>
+                                        <option value="Nacional">Nacional</option>
+                                        <option value="Fronterizo">Fronterizo</option>
+                                        <option value="Americano">Americano</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Año</label>
+                                    <input type="number" id="form-year" required min="1950" max="2025" placeholder="Ej. 2021">
+                                </div>
+                                <div class="form-group half">
+                                    <label>Precio de Venta (MXN)</label>
+                                    <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. $250,000" maxlength="11">
+                                </div>
+                            </div>
+                            </div>
+
+                            <!-- PASO 4 -->
+                            <div class="form-step" data-step="4" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Ubicación y Contacto</h4>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Estado</label>
+                                    <select id="form-state" required>
+                                        <option value="" disabled selected>Selecciona un estado</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label>Ciudad</label>
+                                    <select id="form-city" required>
+                                        <option value="" disabled selected>Selecciona una ciudad</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Teléfono</label>
+                                    <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" maxlength="10">
+                                </div>
+                                <div class="form-group half">
+                                    <label>WhatsApp</label>
+                                    <input type="tel" id="form-whatsapp" required placeholder="Ej. +52 5512345678" maxlength="14">
+                                </div>
+                            </div>
+                            </div>
+
+                            <!-- PASO 5 -->
+                            <div class="form-step" data-step="5" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Galería de Fotos</h4>
+                            <div class="form-group">
+                                <label>Fotos del Vehículo</label>
+                                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--surface-color); padding: 12px; border-radius: 12px; border: 1px dashed var(--primary-color);">
+                                    <label for="form-image" class="primary-btn" style="width: auto; padding: 10px 20px; cursor: pointer; margin: 0; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px; color: white;">
+                                        <span class="material-symbols-rounded" style="font-size: 20px;">image</span> Elegir galería
+                                    </label>
+                                    <label for="form-image-camera" class="primary-btn" style="width: auto; padding: 10px 20px; cursor: pointer; margin: 0; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px; color: white; background: var(--surface-light);">
+                                        <span class="material-symbols-rounded" style="font-size: 20px;">photo_camera</span> Tomar foto
+                                    </label>
+                                    <span id="file-chosen-text" style="color: var(--text-muted); font-size: 0.85rem; width: 100%;">Sin archivos seleccionados</span>
+                                    <input type="file" id="form-image" accept="image/*" multiple style="display: none;">
+                                    <input type="file" id="form-image-camera" accept="image/*" capture="environment" style="display: none;">
+                                </div>
+                                <div id="image-preview-container" class="image-preview-container"></div>
+                            </div>
+                            </div>
+
+                            <div class="wizard-buttons" style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; align-items: center;">
+                                <button type="button" id="btn-wizard-back" class="danger-btn" style="display: none; flex: 1; background: var(--surface-light);">Atrás</button>
+                                <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
+                                <button type="button" id="btn-wizard-submit" class="success-btn" style="display: none; flex: 1.5; padding: 22px 16px; font-size: 1.15rem; font-weight: 700; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); text-transform: uppercase; letter-spacing: 0.5px;">Publicar Vehículo</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="view-inicio">
+                <span class="material-symbols-rounded">home</span>
+                <span>Inicio</span>
+            </button>
+            <button class="nav-item" data-target="view-busqueda">
+                <span class="material-symbols-rounded">search</span>
+                <span>Búsqueda</span>
+            </button>
+            <button class="nav-item" data-target="view-biblioteca">
+                <span class="material-symbols-rounded">favorite</span>
+                <span>Favoritos</span>
+            </button>
+            <button class="nav-item" data-target="view-alta">
+                <span class="material-symbols-rounded">add_circle</span>
+                <span>Vender</span>
+            </button>
+        </nav>
+
+        <!-- View: Detalle del Vehículo (Pantalla Completa) -->
+        <section id="view-detalle" class="view" style="padding: 0; padding-bottom: calc(var(--nav-height) + 20px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 999; background: var(--bg-color); overflow-y: auto;">
+            <div id="detalle-content">
+                <!-- Contenido inyectado por JS -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="modal" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 320px; padding: 30px 24px; text-align: center; border-radius: 16px;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 24px; border: none;">
+                <span class="material-symbols-rounded" style="font-size: 48px; color: var(--primary-color);">admin_panel_settings</span>
+                <h3 style="width: 100%; margin-top: 8px; font-size: 1.4rem;">Acceso Administrativo</h3>
+                <button id="btn-close-login" class="icon-btn" style="position: absolute; top: 16px; right: 16px;"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="modal-body" style="text-align: left;">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Usuario</label>
+                    <input type="text" id="login-username" placeholder="Tu usuario" autocomplete="username" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Tu contraseña" autocomplete="current-password" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); outline: none;">
+                </div>
+                <div id="login-error-message" style="color: var(--danger-color); font-size: 0.85rem; text-align: center; margin-bottom: 16px; min-height: 20px;"></div>
+                <button id="btn-admin-login" class="primary-btn" style="width: 100%; padding: 14px; font-size: 1rem; font-weight: bold; justify-content: center;">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard Modal (Desktop focused) -->
+    <div id="admin-dashboard-modal" class="modal dashboard-modal">
+        <div class="dashboard-content">
+            <div class="dashboard-header">
+                <h2>Panel de Administración</h2>
+                <button id="btn-close-dashboard" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="dashboard-layout">
+                <aside class="dashboard-sidebar" style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="dashboard-tab active" data-tab="tab-general">
+                        <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">dashboard</span> General
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-inventario">
+                        <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">inventory_2</span> Inventario
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-aprobaciones" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <span><span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">fact_check</span> Aprobaciones</span>
+                        <span id="sidebar-pending-badge" class="badge-count" style="background: var(--primary-color); color: white; border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; display: none;">0</span>
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-renovaciones" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <span><span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">autorenew</span> Renovaciones</span>
+                        <span id="sidebar-renewals-badge" class="badge-count" style="background: var(--danger-color); color: white; border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; display: none;">0</span>
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-finanzas" id="sidebar-tab-finanzas">
+                        <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">payments</span> Finanzas
+                    </button>
+                    <button class="dashboard-tab" data-tab="tab-usuarios" id="sidebar-tab-usuarios">
+                        <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">group</span> Usuarios
+                    </button>
+                    
+                    <button id="btn-admin-add-listing" class="primary-btn" style="margin-top: auto; padding: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="material-symbols-rounded" style="font-size: 18px;">add_circle</span> Dar de Alta
+                    </button>
+                    
+                    <button id="btn-admin-logout" class="secondary-btn" style="margin-top: 8px; padding: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.2); color: white; background: transparent;">
+                        <span class="material-symbols-rounded" style="font-size: 18px;">logout</span> Cerrar Sesión
+                    </button>
+                </aside>
+                <main class="dashboard-main">
+                    <!-- Tab: Vista General -->
+                    <div id="tab-general" class="dashboard-view active">
+                        <h3>Vista General</h3>
+                        <div class="stats-premium-grid" style="margin-bottom: 24px;">
+                            <div class="stat-premium-card">
+                                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><span class="material-symbols-rounded">visibility</span></div>
+                                <div class="stat-details">
+                                    <h4>Visitas Totales</h4>
+                                    <p id="stat-views" class="stat-value">0</p>
+                                    <span class="stat-trend positive" style="color: var(--success-color); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">trending_up</span> +12%</span>
+                                </div>
+                            </div>
+                            <div class="stat-premium-card">
+                                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><span class="material-symbols-rounded">directions_car</span></div>
+                                <div class="stat-details">
+                                    <h4>Autos Activos</h4>
+                                    <p id="stat-active" class="stat-value">0</p>
+                                    <span class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0%</span>
+                                </div>
+                            </div>
+                            <div class="stat-premium-card">
+                                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;"><span class="material-symbols-rounded">sell</span></div>
+                                <div class="stat-details">
+                                    <h4>Autos Vendidos</h4>
+                                    <p id="stat-sold" class="stat-value">0</p>
+                                    <span class="stat-trend positive" style="color: var(--success-color); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">trending_up</span> +5%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="config-section" style="margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h4 style="margin: 0; color: #3b82f6; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-rounded" style="font-size: 20px;">payments</span> Costo Mensual Base
+                                </h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Define el costo base de publicación por mes.</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2rem; color: var(--text-muted);">$</span>
+                                <input type="number" id="admin-monthly-price" style="width: 100px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1.1rem; font-weight: bold; outline: none; text-align: right;" value="500">
+                                <button id="btn-save-price" class="primary-btn" style="padding: 8px 16px;">Guardar</button>
+                            </div>
+                        </div>
+
+                        <!-- Flex Container for Mercado Pago & Chart -->
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch;">
+                            <!-- Configuración de Mercado Pago -->
+                            <div class="config-section" style="flex: 1; min-width: 300px; padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; flex-direction: column;">
+                            <div style="display: flex; align-items: center; justify-content: flex-start; gap: 16px; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="margin: 0; color: var(--success-color); display: flex; align-items: center; gap: 6px;">
+                                        <span class="material-symbols-rounded" style="font-size: 20px;">credit_card</span> Habilitar Pagos (Mercado Pago)
+                                    </h4>
+                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Activa la pasarela de pagos con tarjeta para los clientes.</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="admin-mp-enabled">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="admin-mp-credentials" style="display: none; flex-direction: column; gap: 12px; padding-top: 12px; border-top: 1px dashed rgba(16, 185, 129, 0.3);">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem;">Public Key (Frontend)</label>
+                                    <input type="text" id="admin-mp-public-key" placeholder="TEST-xxxx-xxxx-xxxx" style="width: 100%; max-width: 600px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem;">Access Token (Backend)</label>
+                                    <input type="password" id="admin-mp-access-token" placeholder="TEST-xxxx-xxxx-xxxx" style="width: 100%; max-width: 600px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-section" style="flex: 1; min-width: 300px; background: var(--surface-color); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                <h4 id="traffic-chart-title" style="margin: 0;">Tráfico de Visitas</h4>
+                                <select id="traffic-period-select" class="form-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none; width: auto;">
+                                    <option value="7d">Últimos 7 días</option>
+                                    <option value="month">Por Mes (Ene-Dic)</option>
+                                    <option value="year">Por Año (Histórico)</option>
+                                </select>
+                            </div>
+                            <div class="bar-chart-container" id="traffic-chart" style="display: flex; align-items: flex-end; justify-content: space-between; height: 150px; gap: 8px;">
+                                <!-- Barras inyectadas por JS -->
+                            </div>
+                        </div>
+                        </div> <!-- End Flex Container -->
+                    </div>
+
+                    <!-- Tab: Inventario -->
+                    <div id="tab-inventario" class="dashboard-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <h3 style="margin:0;">Inventario Activo</h3>
+                                <span id="inventory-count-badge" class="badge-count" style="background:var(--primary-color); color:white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight:700;">0</span>
+                            </div>
+                            <div style="display:flex; gap:10px; flex: 1; max-width: 600px;">
+                                <select id="inventory-state-filter" class="form-select" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none; max-width:150px;">
+                                    <option value="Todos">Todos los Estados</option>
+                                </select>
+                                <select id="inventory-city-filter" class="form-select" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none; max-width:150px;">
+                                    <option value="Todas">Todas las Ciudades</option>
+                                </select>
+                                <div style="position:relative; flex: 1;">
+                                    <input type="text" id="inventory-search-input" placeholder="Buscar por marca, modelo, etc..." style="width:100%; padding: 8px 12px 8px 36px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none;">
+                                    <span class="material-symbols-rounded" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--text-muted);">search</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-table-container">
+                            <table class="admin-table" id="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Auto</th>
+                                        <th>Marca/Modelo</th>
+                                        <th>Precio</th>
+                                        <th>Vistas</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table-body">
+                                    <!-- JS Injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Aprobaciones -->
+                    <div id="tab-aprobaciones" class="dashboard-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <h3 style="margin:0;">Publicaciones Pendientes</h3>
+                                <span id="pending-count-badge" class="badge-count" style="background:var(--primary-color); color:white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight:700;">0</span>
+                            </div>
+                            <div style="display:flex; gap:10px; flex: 1; max-width: 320px;">
+                                <div style="position:relative; width:100%;">
+                                    <input type="text" id="pending-search-input" placeholder="Buscar por marca, modelo, tel..." style="width:100%; padding: 8px 12px 8px 36px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none;">
+                                    <span class="material-symbols-rounded" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--text-muted);">search</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="pending-approvals-list" class="admin-list">
+                            <!-- JS injected -->
+                        </div>
+                    </div>
+
+                    <!-- Tab: Renovaciones -->
+                    <div id="tab-renovaciones" class="dashboard-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <h3 style="margin:0;">Renovaciones Pendientes</h3>
+                                <span id="renewals-count-badge" class="badge-count" style="background:var(--danger-color); color:white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight:700;">0</span>
+                            </div>
+                            <div style="display:flex; gap:10px; flex: 1; max-width: 320px;">
+                                <div style="position:relative; width:100%;">
+                                    <input type="text" id="renewals-search-input" placeholder="Buscar publicación a renovar..." style="width:100%; padding: 8px 12px 8px 36px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none;">
+                                    <span class="material-symbols-rounded" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--text-muted);">search</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="renewals-list" class="admin-list">
+                            <!-- JS injected -->
+                        </div>
+                    </div>
+
+                    <!-- Tab: Finanzas -->
+                    <div id="tab-finanzas" class="dashboard-view">
+                        <!-- Corte de Caja -->
+                        <div style="margin-bottom: 24px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                                <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                                    <span class="material-symbols-rounded" style="color:var(--success-color);">summarize</span>
+                                    Corte de Caja
+                                </h3>
+                                <button id="btn-export-excel" class="primary-btn" style="padding: 8px 16px; font-size: 0.9rem; background: #217346; display:flex; align-items:center; gap:6px;">
+                                    <span class="material-symbols-rounded" style="font-size:16px;">download</span> Exportar Excel
+                                </button>
+                            </div>
+
+                            <!-- Selector de Período -->
+                            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center;">
+                                <button class="corte-period-btn active" data-period="today" id="corte-btn-today" style="padding: 7px 16px; border-radius:20px; border:1px solid var(--primary-color); background:var(--primary-color); color:white; font-size:0.85rem; cursor:pointer; font-family:inherit;">Hoy</button>
+                                <button class="corte-period-btn" data-period="week" id="corte-btn-week" style="padding: 7px 16px; border-radius:20px; border:1px solid var(--border-color); background:transparent; color:var(--text-main); font-size:0.85rem; cursor:pointer; font-family:inherit;">Esta Semana</button>
+                                <button class="corte-period-btn" data-period="month" id="corte-btn-month" style="padding: 7px 16px; border-radius:20px; border:1px solid var(--border-color); background:transparent; color:var(--text-main); font-size:0.85rem; cursor:pointer; font-family:inherit;">Este Mes</button>
+                                <button class="corte-period-btn" data-period="custom" id="corte-btn-custom" style="padding: 7px 16px; border-radius:20px; border:1px solid var(--border-color); background:transparent; color:var(--text-main); font-size:0.85rem; cursor:pointer; font-family:inherit;">Rango</button>
+                                <div id="corte-custom-range" style="display:none; gap:8px; align-items:center; flex-wrap:wrap;">
+                                    <input type="date" id="corte-from" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-color); background:var(--surface-light); color:var(--text-main); font-size:0.85rem; outline:none;">
+                                    <span style="color:var(--text-muted);">a</span>
+                                    <input type="date" id="corte-to" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border-color); background:var(--surface-light); color:var(--text-main); font-size:0.85rem; outline:none;">
+                                    <button id="btn-corte-apply-range" class="primary-btn" style="padding:6px 14px; font-size:0.85rem;">Aplicar</button>
+                                </div>
+                            </div>
+
+                            <!-- Tarjetas Resumen -->
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:20px;">
+                                <div style="background:linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05)); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:16px;">
+                                    <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">💰 Total</div>
+                                    <div id="corte-total-amount" style="font-size:1.5rem; font-weight:700; color:var(--text-main);">$0</div>
+                                    <div id="corte-total-count" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">0 entradas</div>
+                                </div>
+                                <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05)); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:16px;">
+                                    <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">💳 Tarjeta (MP)</div>
+                                    <div id="corte-mp-amount" style="font-size:1.5rem; font-weight:700; color:#10b981;">$0</div>
+                                    <div id="corte-mp-count" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">0 pagos</div>
+                                </div>
+                                <div style="background:linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05)); border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:16px;">
+                                    <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">🤝 Manual</div>
+                                    <div id="corte-manual-amount" style="font-size:1.5rem; font-weight:700; color:#f59e0b;">$0</div>
+                                    <div id="corte-manual-count" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">0 pagos</div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla Detalle Corte -->
+                            <div class="admin-table-container">
+                                <table class="admin-table" id="corte-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Vehículo</th>
+                                            <th>Ciudad</th>
+                                            <th>Método</th>
+                                            <th>Tipo</th>
+                                            <th style="text-align:right;">Monto (MXN)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="corte-table-body">
+                                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Historial Completo (tabla existente) -->
+                        <div style="margin-top:32px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                                    <span class="material-symbols-rounded" style="color:var(--text-muted);">history</span>
+                                    Historial Completo de Cobros
+                                </h3>
+                            </div>
+                            <div class="admin-table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Concepto / Vehículo</th>
+                                            <th>Monto Cobrado</th>
+                                            <th style="text-align: center;">Comprobante</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="billing-table-body">
+                                        <!-- JS injected -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tab: Usuarios -->
+                    <div id="tab-usuarios" class="dashboard-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                            <h3>Gestión de Usuarios</h3>
+                            <button class="primary-btn" id="btn-admin-add-user" style="padding: 8px 16px; font-size: 0.9rem;">
+                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">person_add</span> Nuevo Usuario
+                            </button>
+                        </div>
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Regiones Permitidas</th>
+                                        <th>Contraseña</th>
+                                        <th style="text-align: right;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- JS injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Cities Selection -->
+    <div id="cities-modal" class="modal">
+        <div class="modal-content" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3>Selecciona Ciudades</h3>
+                <button id="btn-close-cities-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 10px 0;">
+                <div id="cities-checkboxes-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- JS Injected checkboxes -->
+                </div>
+            </div>
+            <div style="padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
+                <button id="btn-apply-cities" class="primary-btn">Aplicar Filtros</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exit Confirmation Modal -->
+    <div id="exit-modal" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center; padding: 24px;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem;">¿Salir de MotorRev?</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); margin-bottom: 24px;">¿Estás seguro de que deseas salir de la aplicación?</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button id="btn-exit-no" class="primary-btn" style="background: var(--surface-light); flex: 1;">No</button>
+                    <button id="btn-exit-yes" class="primary-btn" style="background: var(--danger-color); flex: 1;">Sí, salir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center; padding: 24px;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem;">Eliminar Publicación</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); margin-bottom: 24px;">¿Estás seguro de que deseas eliminar este vehículo de forma permanente?</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button id="btn-delete-no" class="primary-btn" style="background: var(--surface-light); flex: 1; padding: 10px;">Cancelar</button>
+                    <button id="btn-delete-yes" class="primary-btn" style="background: var(--danger-color); flex: 1; padding: 10px;">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sold Confirmation Modal -->
+    <div id="sold-modal" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center; padding: 24px;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem;">Marcar como Vendido</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); margin-bottom: 24px;">¡Felicidades por la venta! ¿Confirmas que este vehículo ya fue vendido?</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button id="btn-sold-no" class="primary-btn" style="background: var(--surface-light); flex: 1; padding: 10px;">Cancelar</button>
+                    <button id="btn-sold-yes" class="primary-btn" style="background: #10B981; flex: 1; padding: 10px;">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- More Photos Confirmation Modal -->
+    <div id="more-photos-modal" class="modal" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 320px; text-align: center; padding: 24px;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem;">¡Foto guardada!</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); margin-bottom: 24px;">¿Deseas tomar otra foto del vehículo?</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button id="btn-more-photos-no" class="primary-btn" style="background: var(--surface-light); flex: 1; padding: 10px;">No, gracias</button>
+                    <button id="btn-more-photos-yes" class="primary-btn" style="flex: 1; padding: 10px;">Sí, tomar otra</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom-alert-modal" class="modal" style="z-index: 10010;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%); border: 1px solid var(--primary-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div id="custom-alert-icon" style="font-size: 48px; color: var(--primary-color); margin-bottom: 16px;">
+                <span class="material-symbols-rounded">info</span>
+            </div>
+            <h3 id="custom-alert-title" style="margin-bottom: 12px; font-size: 1.2rem;">Notificación</h3>
+            <p id="custom-alert-message" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.4; margin-bottom: 20px;"></p>
+            <button id="btn-custom-alert-ok" class="primary-btn" style="width: 100%;">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- Admin User Edit/Create Modal -->
+    <div id="admin-user-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 400px; padding: 24px;">
+            <div class="modal-header">
+                <h3 id="admin-user-modal-title">Nuevo Usuario</h3>
+                <button id="btn-close-user-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <form id="admin-user-form" style="margin-top: 16px;">
+                <input type="hidden" id="admin-user-id">
+                <div class="form-group">
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="admin-user-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="text" id="admin-user-password" required>
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="admin-user-role">
+                        <option value="empleado">Empleado (Limitado)</option>
+                        <option value="admin">Administrador (Control Total)</option>
+                    </select>
+                </div>
+                
+                <div id="admin-user-permissions-section">
+                    <h4 style="margin: 16px 0 8px 0; color: var(--text-main);">Regiones Permitidas</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Selecciona los estados o ciudades que este empleado puede administrar. Si seleccionas un estado completo, tendrá acceso a todas sus ciudades.</p>
+                    
+                    <div id="admin-user-states-container" style="max-height: 200px; overflow-y: auto; background: var(--surface-light); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="primary-btn" id="btn-cancel-user" style="background: var(--surface-light); flex: 1;">Cancelar</button>
+                    <button type="submit" class="primary-btn" style="flex: 1;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contact Options Modal -->
+    <div id="contact-modal" class="modal" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 320px; text-align: center; padding: 24px;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem;">¿Cómo te quieres comunicar?</h3>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 12px; justify-content: center;">
+                    <button id="btn-contact-call" class="primary-btn" style="background: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="material-symbols-rounded">call</span> Llamar
+                    </button>
+                    <button id="btn-contact-whatsapp" class="primary-btn" style="background: #25D366; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="material-symbols-rounded">chat</span> WhatsApp
+                    </button>
+                    <button onclick="document.getElementById('contact-modal').classList.remove('active')" class="primary-btn" style="background: var(--surface-light); margin-top: 8px;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Approve Modal -->
+    <div id="approve-confirm-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 340px; text-align: center; padding: 28px 20px; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%); border: 1px solid var(--success-color); box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div style="font-size: 52px; color: var(--success-color); margin-bottom: 12px;">
+                <span class="material-symbols-rounded">check_circle</span>
+            </div>
+            <h3 style="margin-bottom: 10px; font-size: 1.25rem;">¿Aprobar Publicación?</h3>
+            <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.4; margin-bottom: 16px;">
+                La publicación pasará inmediatamente al catálogo público de vehículos.
+            </p>
+            <div style="text-align: left; margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Monto Cobrado (MXN) *</label>
+                <input type="number" id="approve-payment-amount" placeholder="Ej. 500" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+            </div>
+            <div style="text-align: left; margin-bottom: 22px;">
+                <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 8px;">Comprobante de Pago (Opcional)</label>
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed var(--primary-color); background: rgba(59, 130, 246, 0.1); color: var(--primary-color); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">upload_file</span>
+                    <span id="approve-file-name">Seleccionar imagen...</span>
+                    <input type="file" id="approve-payment-receipt" accept="image/*" style="display: none;" onchange="document.getElementById('approve-file-name').innerText = this.files[0] ? this.files[0].name : 'Seleccionar imagen...';">
+                </label>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button id="btn-approve-confirm-cancel" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1; padding: 12px;">Cancelar</button>
+                <button id="btn-approve-confirm-yes" class="primary-btn" style="background: var(--success-color); color: white; flex: 1; padding: 12px;">Sí, Aprobar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Reject Modal -->
+    <div id="reject-confirm-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 340px; text-align: center; padding: 28px 20px; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%); border: 1px solid var(--danger-color); box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div style="font-size: 52px; color: var(--danger-color); margin-bottom: 12px;">
+                <span class="material-symbols-rounded">cancel</span>
+            </div>
+            <h3 style="margin-bottom: 10px; font-size: 1.25rem;">¿Rechazar Publicación?</h3>
+            <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.4; margin-bottom: 22px;">
+                La publicación será rechazada y eliminada de forma permanente.
+            </p>
+            <div style="display: flex; gap: 12px;">
+                <button id="btn-reject-confirm-cancel" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1; padding: 12px;">Cancelar</button>
+                <button id="btn-reject-confirm-yes" class="primary-btn" style="background: var(--danger-color); color: white; flex: 1; padding: 12px;">Sí, Rechazar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Renew Modal -->
+    <div id="renew-confirm-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 340px; text-align: center; padding: 28px 20px; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%); border: 1px solid var(--success-color); box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+            <div style="font-size: 52px; color: var(--success-color); margin-bottom: 12px;">
+                <span class="material-symbols-rounded">autorenew</span>
+            </div>
+            <h3 style="margin-bottom: 10px; font-size: 1.25rem;">¿Renovar Publicación?</h3>
+            <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.4; margin-bottom: 16px;">
+                ¿Confirmas que se recibió el pago y se renueva el vehículo para el mes siguiente?
+            </p>
+            <div style="text-align: left; margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Monto Cobrado (MXN) *</label>
+                <input type="number" id="renew-payment-amount" placeholder="Ej. 500" required style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+            </div>
+            <div style="text-align: left; margin-bottom: 22px;">
+                <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 8px;">Comprobante de Pago (Opcional)</label>
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed var(--primary-color); background: rgba(59, 130, 246, 0.1); color: var(--primary-color); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">upload_file</span>
+                    <span id="renew-file-name">Seleccionar imagen...</span>
+                    <input type="file" id="renew-payment-receipt" accept="image/*" style="display: none;" onchange="document.getElementById('renew-file-name').innerText = this.files[0] ? this.files[0].name : 'Seleccionar imagen...';">
+                </label>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button id="btn-renew-confirm-cancel" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1; padding: 12px;">Cancelar</button>
+                <button id="btn-renew-confirm-yes" class="primary-btn" style="background: var(--success-color); color: white; flex: 1; padding: 12px;">Sí, Renovar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Edit Modal -->
+    <div id="admin-edit-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 500px; text-align: left; padding: 24px; max-height: 90vh; display: flex; flex-direction: column; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%);">
+            <div class="modal-header" style="justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem; margin: 0;">Editar Datos del Vehículo</h3>
+                <button id="btn-close-admin-edit" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; flex: 1; margin-bottom: 16px; padding-right: 8px;">
+                <form id="admin-edit-form" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-group">
+                        <label>Precio del Auto (Pesos MXN)</label>
+                        <input type="number" id="edit-price" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 12px;">
+                        <div class="form-group half" style="flex:1;">
+                            <label>Año</label>
+                            <input type="number" id="edit-year" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+                        <div class="form-group half" style="flex:1;">
+                            <label>Kilometraje</label>
+                            <input type="text" id="edit-mileage" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 12px;">
+                        <div class="form-group half" style="flex:1;">
+                            <label>Marca</label>
+                            <input type="text" id="edit-make" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+                        <div class="form-group half" style="flex:1;">
+                            <label>Modelo</label>
+                            <input type="text" id="edit-model" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 12px;">
+                        <div class="form-group half" style="flex:1;">
+                            <label>Tipo</label>
+                            <input type="text" id="edit-type" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+                        <div class="form-group half" style="flex:1;">
+                            <label>Transmisión</label>
+                            <input type="text" id="edit-transmission" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="edit-phone" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="edit-whatsapp" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                    </div>
+                </form>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="btn-cancel-admin-edit" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
+                <button id="btn-save-admin-edit" class="primary-btn" style="background: var(--success-color); color: white; flex: 1;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Opciones de Publicación -->
+    <div id="publish-options-modal" class="modal" style="z-index: 10001;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>¡Casi listo!</h3>
+                <button id="btn-close-publish-options" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">¿Cómo deseas activar tu anuncio?</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Card 1: Pago en Línea -->
+                <div id="btn-option-pay-now" style="background: var(--surface-light); border: 2px solid var(--primary-color); border-radius: 12px; padding: 20px; cursor: pointer; display: flex; gap: 16px; align-items: center; transition: all 0.3s ease;">
+                    <div style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <span class="material-symbols-rounded" style="font-size: 28px;">credit_card</span>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 4px 0; font-size: 1.1rem;">Pago Seguro en Línea</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Activa tu anuncio por un mes de inmediato, pagando <b id="publish-price-text" style="color: #f59e0b;">$500 MXN</b> con tarjeta. (Procesado por Mercado Pago).</p>
+                    </div>
+                </div>
+
+                <!-- Card 2: Pago Asistido -->
+                <div id="btn-option-pay-later" style="background: var(--surface-light); border: 2px solid transparent; border-radius: 12px; padding: 20px; cursor: pointer; display: flex; gap: 16px; align-items: center; transition: all 0.3s ease;">
+                    <div style="background: rgba(107, 114, 128, 0.1); color: var(--text-muted); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <span class="material-symbols-rounded" style="font-size: 28px;">support_agent</span>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 4px 0; font-size: 1.1rem; color: var(--text-main);">Pago Asistido / Revisión</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Mercado Pago -->
+    <div id="mercado-pago-modal" class="modal" style="z-index: 10002;">
+        <div class="modal-content" style="max-width: 500px; padding: 0;">
+            <div class="modal-header" style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h3>Pago Seguro</h3>
+                <button id="btn-close-mp-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+                <div id="paymentBrick_container" style="min-height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <!-- Supabase Cloud SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <script src="db.js?v=3"></script>
+    <script src="app.js?v=16"></script>
+</body>
+</html>
