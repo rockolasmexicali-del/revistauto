@@ -1128,6 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Removemos el límite de 10 para que en la cuadrícula puedan ver todos los de esa categoría
             
             if (listings.length === 0) {
+                feedContainer.classList.remove('listings-grid');
                 feedContainer.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; width: 100%;">
                         <h2 style="color: var(--text-muted); text-align: center; font-size: 1.8rem; font-weight: 600; line-height: 1.4; opacity: 0.6;">
