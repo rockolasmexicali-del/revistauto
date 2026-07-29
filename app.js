@@ -1681,9 +1681,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Mostrar fecha de publicación solo si está activo (no caducado)
+            // Mostrar fecha de publicación solo si está activo (no caducado y no pendiente)
             let publishedDateHTML = '';
-            if (listing.publishedAt && displayStatus !== 'CADUCADO') {
+            if (listing.publishedAt && displayStatus !== 'CADUCADO' && listing.status !== 'pendiente autorizacion') {
                 const pubDate = new Date(listing.publishedAt);
                 const pubDateStr = pubDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
                 publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Publicado el ${pubDateStr}</p>`;
