@@ -2145,6 +2145,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedData.paymentStatus = 'pending';
                 const newListing = db.saveListing(updatedData);
                 
+                finishWizardSubmit(); // Call instantly so it renders in the background
+                
                 if (globalMpEnabled) {
                     // Mostrar modal de opciones
                     const optionsModal = document.getElementById('publish-options-modal');
@@ -2160,7 +2162,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     newListingModal.classList.remove('active');
                 } else {
                     showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación. En breve te contactaremos por llamada o WhatsApp para confirmar tu anuncio.', 'Publicado', 'check_circle');
-                    finishWizardSubmit();
                 }
             }
         } catch(e) {
@@ -2949,7 +2950,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof renderAdminInventory === 'function') renderAdminInventory();
             if (typeof updateAdminStats === 'function') updateAdminStats();
             if (typeof renderFeed === 'function') renderFeed();
-            if(document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) renderMyListings();
+            if (typeof renderMyListings === 'function') renderMyListings(); // Siempre renderizar para que esté listo al cambiar de pestaña
             showAlert('La publicación ha sido aprobada exitosamente.', 'Publicación Aprobada', 'check_circle');
         }
     };
@@ -3866,11 +3867,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                     promise = Promise.reject(new Error("Supabase Client no está disponible. No se puede procesar el pago."));
                                 }
 
-                                promise.then((response) => {
+                                promise.then(async (response) => {
                                     if (response.success) {
                                         resolve();
                                         modalMp.classList.remove('active');
                                         showAlert('¡Pago realizado con éxito! Tu anuncio ya está activo.', 'Pago Exitoso', 'check_circle');
+                                        await db.syncWithServer(); // Sincronizar para descargar el nuevo estado 'autorizado'
                                         renderMyListings();
                                         if (typeof loadAdminData === 'function') loadAdminData();
                                     } else {
