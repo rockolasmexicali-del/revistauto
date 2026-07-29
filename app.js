@@ -1524,6 +1524,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="detalle-label">Modelo</span>
                         <span class="detalle-value">${listing.model}</span>
                     </div>
+                    ${listing.trim ? `
+                    <div class="detalle-item">
+                        <span class="detalle-label">Versión</span>
+                        <span class="detalle-value">${listing.trim}</span>
+                    </div>` : ''}
                     <div class="detalle-item">
                         <span class="detalle-label">Año</span>
                         <span class="detalle-value">${listing.year}</span>
@@ -2037,6 +2042,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('form-color').value = listing.color || '';
         if(window.customColorSelect) window.customColorSelect.update();
 
+        const formTrim = document.getElementById('form-trim');
+        if (formTrim) formTrim.value = listing.trim || '';
+
         formPhone.value = listing.phone || '';
         let wa = listing.whatsapp || '';
         let waV = wa.replace(/[^0-9]/g, '');
@@ -2120,7 +2128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let model = formModel.value === 'Otros' ? document.getElementById('form-custom-model').value.trim() : formModel.value;
         if(!model || model === '') model = 'Modelo Desconocido';
         const year = document.getElementById('form-year').value;
-        const title = `${make} ${model} ${year}`;
+        const trimVal = document.getElementById('form-trim') ? document.getElementById('form-trim').value.trim() : '';
+        const title = `${make} ${model} ${trimVal ? trimVal + ' ' : ''}${year}`;
         const engine = formEngine.value;
         const transmission = formTransmission.value;
         const ac = formAc.value;
@@ -2192,7 +2201,8 @@ document.addEventListener('DOMContentLoaded', () => {
             transmission: transmission,
             ac: ac,
             mileage: mileage,
-            legal: legal
+            legal: legal,
+            trim: document.getElementById('form-trim') ? document.getElementById('form-trim').value.trim() : ''
         };
         
         if (uploadedImageUrls.length > 0) {

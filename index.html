@@ -204,6 +204,10 @@
                                 <input type="text" id="form-custom-model" placeholder="Escribe el modelo..." style="display: none; margin-top: 8px;">
                             </div>
                             <div class="form-group">
+                                <label>Versión / Edición <span style="font-weight:normal; color:var(--text-muted); font-size:0.8rem;">(Opcional)</span></label>
+                                <input type="text" id="form-trim" placeholder="Ej. Lariat, GLI, XLE, Platinum..." maxlength="40">
+                            </div>
+                            <div class="form-group">
                                 <label>Tipo de Vehículo</label>
                                 <select id="form-type" required>
                                     <option value="" disabled selected>Selecciona un tipo</option>
@@ -1063,6 +1067,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js?v=3"></script>
     <script src="db.js?v=13"></script>
-    <script src="app.js?v=32"></script>
+    <script src="app.js?v=33"></script>
 </body>
 </html>
