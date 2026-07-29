@@ -966,19 +966,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedIcon = isSaved ? 'favorite' : 'favorite_border';
         
         const images = listing.images || (listing.image ? [listing.image] : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']);
-        const imageElements = images.map(img => `<img src="${img}" alt="Auto" loading="lazy">`).join('');
-        const counterHTML = images.length > 1 ? `<div class="image-counter">1 / ${images.length}</div>` : '';
+        // Solo tomar la primera foto para la tarjeta de previsualización (evitar scroll doble)
+        const firstImage = images[0] || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+        const imageElements = `<img src="${firstImage}" alt="Auto" loading="lazy">`;
+        
         let navArrows = '';
-
 
         return `
             <div class="card" style="cursor: pointer;" onclick="if(!event.target.closest('.card-save-btn')) openListingDetails(${listing.id})">
                 <div class="card-img-wrapper">
-                    <div class="card-img-carousel" onscroll="updateCounter(this)">
+                    <div class="card-img-carousel" style="overflow-x: hidden;">
                         ${imageElements}
                     </div>
                     ${navArrows}
-                    ${counterHTML}
                     <button class="card-save-btn ${savedClass}" style="${(hideHeart && !isSaved) ? 'display: none;' : ''}" onclick="event.stopPropagation(); window.toggleSave(${listing.id}, this)">
                         <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">${savedIcon}</span>
                     </button>
