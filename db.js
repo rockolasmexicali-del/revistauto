@@ -744,7 +744,17 @@ class Database {
         const defaultSettings = { monthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '' };
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const { data, error } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
-            if (data) return { success: true, settings: data };
+            if (data) {
+                return { 
+                    success: true, 
+                    settings: {
+                        monthlyPrice: data.monthlyprice !== undefined ? data.monthlyprice : (data.monthlyPrice || 500),
+                        mercadoPagoEnabled: data.mercadopagoenabled !== undefined ? data.mercadopagoenabled : (data.mercadoPagoEnabled || false),
+                        mpPublicKey: data.mppublickey !== undefined ? data.mppublickey : (data.mpPublicKey || ''),
+                        mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || '')
+                    } 
+                };
+            }
             if (error) console.error('Error fetching settings:', error);
         }
         const local = localStorage.getItem('revista_settings');
@@ -755,7 +765,14 @@ class Database {
         localStorage.setItem('revista_settings', JSON.stringify(settings));
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                const payload = { id: 1, ...settings };
+                // Postgres guarda columnas sin comillas en minúsculas. Mapeamos de camelCase a minúsculas
+                const payload = { 
+                    id: 1, 
+                    monthlyprice: settings.monthlyPrice,
+                    mercadopagoenabled: settings.mercadoPagoEnabled,
+                    mppublickey: settings.mpPublicKey,
+                    mpaccesstoken: settings.mpAccessToken
+                };
                 const { error } = await supabaseClient.from('settings').upsert([payload]);
                 if (error) {
                     return { success: false, error: error.message };
