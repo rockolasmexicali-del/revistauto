@@ -2840,14 +2840,30 @@ document.addEventListener('DOMContentLoaded', () => {
             listings[idx].status = 'autorizado';
             
             db.saveListing(listings[idx]);
+            db.saveListing(listings[idx]);
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.remove('active');
-            updateAdminRenewals();
-            if (typeof renderAdminInventory === 'function') renderAdminInventory();
-            if (typeof renderFeed === 'function') renderFeed();
+            
+            forceInstantAdminRefresh();
             showAlert('Publicación renovada por 30 días más.', 'Renovación Exitosa', 'autorenew');
         }
     };
+
+    function forceInstantAdminRefresh() {
+        const pendingList = document.getElementById('pending-approvals-list');
+        if (pendingList) delete pendingList.dataset.lastState;
+        const renewalsList = document.getElementById('renewals-list');
+        if (renewalsList) delete renewalsList.dataset.lastState;
+        const inventoryTable = document.getElementById('inventory-table-body');
+        if (inventoryTable) delete inventoryTable.dataset.lastState;
+
+        if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+        if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+        if (typeof renderAdminInventory === 'function') renderAdminInventory();
+        if (typeof updateAdminStats === 'function') updateAdminStats();
+        if (typeof renderFeed === 'function') renderFeed();
+        if (typeof renderMyListings === 'function') renderMyListings();
+    }
 
     window.expandedAdminCards = window.expandedAdminCards || new Set();
 
@@ -2992,18 +3008,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.remove('active');
 
-            // Forzar actualización instantánea limpiando las cachés visuales
-            const pendingList = document.getElementById('pending-approvals-list');
-            if (pendingList) delete pendingList.dataset.lastState;
-            const inventoryTable = document.getElementById('inventory-table-body');
-            if (inventoryTable) delete inventoryTable.dataset.lastState;
-
-            if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
-            if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
-            if (typeof renderAdminInventory === 'function') renderAdminInventory();
-            if (typeof updateAdminStats === 'function') updateAdminStats();
-            if (typeof renderFeed === 'function') renderFeed();
-            if (typeof renderMyListings === 'function') renderMyListings(); // Siempre renderizar para que esté listo al cambiar de pestaña
+            forceInstantAdminRefresh();
             showAlert('La publicación ha sido aprobada exitosamente.', 'Publicación Aprobada', 'check_circle');
         }
     };
@@ -3022,18 +3027,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('reject-confirm-modal');
         if (modal) modal.classList.remove('active');
 
-        // Forzar actualización instantánea limpiando las cachés visuales
-        const pendingList = document.getElementById('pending-approvals-list');
-        if (pendingList) delete pendingList.dataset.lastState;
-        const inventoryTable = document.getElementById('inventory-table-body');
-        if (inventoryTable) delete inventoryTable.dataset.lastState;
-
-        if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
-        if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
-        if (typeof renderAdminInventory === 'function') renderAdminInventory();
-        if (typeof updateAdminStats === 'function') updateAdminStats();
-        if (typeof renderFeed === 'function') renderFeed();
-        if(document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) renderMyListings();
+        forceInstantAdminRefresh();
         showAlert('La publicación ha sido eliminada del sistema.', 'Publicación Eliminada', 'info');
     };
 
