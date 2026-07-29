@@ -359,21 +359,47 @@ class Database {
 
                 if (!error && Array.isArray(data)) {
                     this.isServerConnected = true;
-                    const normalized = data.map(item => ({
-                        ...item,
-                        engine: item.engine || item.motor || '',
-                        legal: item.legal || item.situacion || '',
-                        ac: item.ac || '',
-                        mileage: item.mileage !== undefined && item.mileage !== null ? String(item.mileage) : '',
-                        phone: item.seller_phone || item.phone || '',
-                        whatsapp: item.seller_whatsapp || item.whatsapp || '',
-                        publishedAt: item.published_at || item.publishedAt,
-                        expiresAt: item.expires_at || item.expiresAt,
-                        lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth,
-                        paymentStatus: item.payment_status || item.paymentStatus,
-                        images: item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'],
-                        isMyListing: item.publisher_id === this.uuid || item.publisherId === this.uuid
-                    }));
+                    
+                    const localListings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
+                    const localMyListingsMap = new Map();
+                    localListings.forEach(l => {
+                        if (l.isMyListing || l.publisherId === this.uuid || l.publisher_id === this.uuid) {
+                            localMyListingsMap.set(String(l.id), l);
+                        }
+                    });
+
+                    const serverIds = new Set(data.map(item => String(item.id)));
+
+                    const normalized = data.map(item => {
+                        const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || localMyListingsMap.has(String(item.id));
+                        const localListing = localMyListingsMap.get(String(item.id));
+
+                        return {
+                            ...item,
+                            engine: item.engine || item.motor || (localListing ? localListing.engine : ''),
+                            legal: item.legal || item.situacion || (localListing ? localListing.legal : ''),
+                            ac: item.ac || (localListing ? localListing.ac : ''),
+                            mileage: item.mileage !== undefined && item.mileage !== null ? String(item.mileage) : (localListing ? localListing.mileage : ''),
+                            phone: item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
+                            whatsapp: item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
+                            publishedAt: item.published_at || item.publishedAt || (localListing ? localListing.publishedAt : null),
+                            expiresAt: item.expires_at || item.expiresAt || (localListing ? localListing.expiresAt : null),
+                            lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
+                            paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
+                            images: item.images && item.images.length > 0 ? item.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
+                            publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
+                            publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
+                            isMyListing: isMine
+                        };
+                    });
+
+                    // Preservar publicaciones creadas localmente que aún no han sido descargadas del servidor
+                    localListings.forEach(local => {
+                        if ((local.isMyListing || local.publisherId === this.uuid || local.publisher_id === this.uuid) && !serverIds.has(String(local.id))) {
+                            normalized.push(local);
+                        }
+                    });
+
                     localStorage.setItem(this.listingsKey, JSON.stringify(normalized));
                     if (typeof window.onServerDataSynced === 'function') {
                         window.onServerDataSynced();
@@ -429,6 +455,7 @@ class Database {
             listing.publishedAt = new Date().toISOString();
             listing.status = listing.status || 'pendiente autorizacion';
             listing.publisherId = this.uuid;
+            listing.publisher_id = this.uuid;
             listing.isMyListing = true;
             listing.views = 0;
             if (!listing.images || listing.images.length === 0) {
@@ -436,6 +463,9 @@ class Database {
             }
             listings.push(listing);
         } else {
+            listing.publisherId = listing.publisherId || listing.publisher_id || this.uuid;
+            listing.publisher_id = listing.publisherId;
+            listing.isMyListing = listing.isMyListing !== undefined ? listing.isMyListing : true;
             const index = listings.findIndex(l => String(l.id) === String(listing.id));
             if (index > -1) {
                 listings[index] = { ...listings[index], ...listing };

@@ -2222,8 +2222,16 @@ document.addEventListener('DOMContentLoaded', () => {
             editingListingId = null;
             newListingForm.reset();
             newListingModal.classList.remove('active');
+
+            const pendingList = document.getElementById('pending-approvals-list');
+            if (pendingList) delete pendingList.dataset.lastState;
+            const inventoryTable = document.getElementById('inventory-table-body');
+            if (inventoryTable) delete inventoryTable.dataset.lastState;
+
             renderMyListings();
-            if(typeof loadAdminData === 'function') {
+            if (typeof forceInstantAdminRefresh === 'function') {
+                forceInstantAdminRefresh();
+            } else if(typeof loadAdminData === 'function') {
                 loadAdminData();
             }
             submitBtn.disabled = false;
