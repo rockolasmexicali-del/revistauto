@@ -222,7 +222,7 @@ class Database {
         return null;
     }
 
-    saveListing(listing) {
+    async saveListing(listing) {
         const listings = this.getAllListings();
         if (!listing.id) {
             listing.id = Date.now();
@@ -247,7 +247,6 @@ class Database {
                 listings.push(listing);
             }
         }
-        localStorage.setItem(this.listingsKey, JSON.stringify(listings));
 
         // Sincronizar asíncronamente con Supabase Cloud
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
@@ -283,18 +282,21 @@ class Database {
                 payment_status: listing.paymentStatus || listing.payment_status || null
             };
 
-            supabaseClient.from('listings').upsert([payload]).then(({ data, error }) => {
-                if (error) console.error('⚠️ Error al guardar en Supabase:', error);
-                else console.log('✅ Anuncio sincronizado con Supabase');
-            });
+            const { data, error } = await supabaseClient.from('listings').upsert([payload]);
+            if (error) {
+                console.error('⚠️ Error al guardar en Supabase:', error);
+                throw new Error("Error al enviar publicación a la nube: " + error.message);
+            }
+            console.log('✅ Anuncio sincronizado exitosamente con Supabase Cloud');
         } else {
-            fetch(`${this.apiBaseUrl}/listings`, {
+            await fetch(`${this.apiBaseUrl}/listings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(listing)
             }).catch(err => console.log('Guardado local (servidor offline)'));
         }
 
+        localStorage.setItem(this.listingsKey, JSON.stringify(listings));
         return listing;
     }
 
