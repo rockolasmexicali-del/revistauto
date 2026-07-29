@@ -9,6 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const views = document.querySelectorAll('.view');
     
     // Feed
+    (async () => {
+        // ONE-TIME CLEANUP (Added temporarily to wipe dummy data)
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            console.log("Limpiando autos de prueba de Supabase...");
+            await supabaseClient.from('listings').delete().lt('id', 17);
+            localStorage.removeItem('revista_autos_listings');
+            console.log("Limpieza de base de datos completada.");
+        }
+    })();
+
     const feedContainer = document.getElementById('feed-container');
     const homeCategories = document.getElementById('home-categories');
     const userStateSelect = document.getElementById('user-state');
