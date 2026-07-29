@@ -9,31 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const views = document.querySelectorAll('.view');
     
     // Feed
-    (async () => {
-        // ONE-TIME VERIFICATION SCRIPT
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            console.log("Verificando todos los autos en la base de datos de Supabase...");
-            const { data, error } = await supabaseClient.from('listings').select('id, title, status, make, model');
-            
-            if (error) {
-                alert("Error al conectar con la base de datos: " + error.message);
-                return;
-            }
-            
-            if (data && data.length > 0) {
-                let msg = `LA BASE DE DATOS EN LA NUBE TIENE ${data.length} VEHÍCULO(S):\n\n`;
-                data.forEach(c => {
-                    msg += `- ID: ${c.id} | ${c.title || (c.make + ' ' + c.model)} | Estatus: ${c.status || 'ninguno'}\n`;
-                });
-                alert(msg);
-            } else {
-                alert("✅ LA BASE DE DATOS EN LA NUBE ESTÁ TOTALMENTE VACÍA (0 vehículos).");
-            }
-        }
-    })();
-
+    // Inicialización completada.
     const feedContainer = document.getElementById('feed-container');
-    const homeCategories = document.getElementById('home-categories');
     const userStateSelect = document.getElementById('user-state');
     const btnUserCities = document.getElementById('btn-user-cities');
     const btnLocateMe = document.getElementById('btn-locate-me');
