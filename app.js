@@ -1483,9 +1483,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${navArrows}
                 ${images.length > 1 ? `<div class="image-counter" style="position: absolute; bottom: 8px; right: 8px;">1 / ${images.length}</div>` : ''}
                 
-                <button class="detalle-floating-btn" onclick="event.stopPropagation(); window.closeListingDetails()" style="left: 16px; z-index: 10;">
-                    <span class="material-symbols-rounded">arrow_back</span>
-                </button>
                 <button id="detalle-heart-btn-${id}" class="detalle-floating-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); window.toggleSaveDetalle('${id}', this)" style="right: 16px; color: ${isSaved ? '#EF4444' : 'white'}; z-index: 10; transition: color 0.3s ease;">
                     <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">${isSaved ? 'favorite' : 'favorite_border'}</span>
                 </button>
