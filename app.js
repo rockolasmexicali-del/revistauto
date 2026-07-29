@@ -2992,6 +2992,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.remove('active');
 
+            // Forzar actualización instantánea limpiando las cachés visuales
+            const pendingList = document.getElementById('pending-approvals-list');
+            if (pendingList) delete pendingList.dataset.lastState;
+            const inventoryTable = document.getElementById('inventory-table-body');
+            if (inventoryTable) delete inventoryTable.dataset.lastState;
+
             if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
             if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
             if (typeof renderAdminInventory === 'function') renderAdminInventory();
@@ -3010,15 +3016,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // db.deleteListing manejará la eliminación de la base de datos y de Supabase Storage
-        
         // Eliminación local y en la nube manejada internamente por db.js
-        // No es necesario usar fetch local
-
         db.deleteListing(id);
 
         const modal = document.getElementById('reject-confirm-modal');
         if (modal) modal.classList.remove('active');
+
+        // Forzar actualización instantánea limpiando las cachés visuales
+        const pendingList = document.getElementById('pending-approvals-list');
+        if (pendingList) delete pendingList.dataset.lastState;
+        const inventoryTable = document.getElementById('inventory-table-body');
+        if (inventoryTable) delete inventoryTable.dataset.lastState;
 
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
