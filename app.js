@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Feed
     // Inicialización completada.
     const feedContainer = document.getElementById('feed-container');
+    const homeCategories = document.getElementById('home-categories');
     const userStateSelect = document.getElementById('user-state');
     const btnUserCities = document.getElementById('btn-user-cities');
     const btnLocateMe = document.getElementById('btn-locate-me');
