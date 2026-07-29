@@ -933,14 +933,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getSortedCategoriesByPopularity() {
+        let listings = db.getAllListings().filter(l => db.isListingActive(l));
+        
+        // Filtrar por ciudad para que la popularidad sea hiper-local
+        if (selectedCities.length > 0) {
+            listings = listings.filter(l => selectedCities.includes(l.city));
+        }
+
+        const viewCounts = {};
+        listings.forEach(l => {
+            if (!viewCounts[l.type]) viewCounts[l.type] = 0;
+            viewCounts[l.type] += (l.views || 0);
+        });
+
+        const sortedTypes = catalogData && catalogData.types ? [...catalogData.types] : [];
+        sortedTypes.sort((a, b) => {
+            const viewsA = viewCounts[a] || 0;
+            const viewsB = viewCounts[b] || 0;
+            return viewsB - viewsA; // Mayor a menor
+        });
+        return sortedTypes;
+    }
+
     function populateHomeCategories() {
-        catalogData.types.forEach(type => {
+        // Limpiar categorías previas por si se vuelve a llamar
+        const existingChips = homeCategories.querySelectorAll('.category-chip:not([data-type="Todos"])');
+        existingChips.forEach(chip => chip.remove());
+
+        const smartCategories = getSortedCategoriesByPopularity();
+        smartCategories.forEach(type => {
             const btn = document.createElement('button');
             btn.className = 'category-chip';
             btn.setAttribute('data-type', type);
             btn.textContent = type;
+            if (type === currentFeedCategory) {
+                btn.classList.add('active');
+            }
             homeCategories.appendChild(btn);
         });
+        
+        const todosBtn = homeCategories.querySelector('.category-chip[data-type="Todos"]');
+        if (todosBtn) {
+            if (currentFeedCategory === 'Todos') todosBtn.classList.add('active');
+            else todosBtn.classList.remove('active');
+        }
+    }
 
         // Event delegation para hacer que funcione tanto en los nuevos botones como en el 'Todos' original
         homeCategories.addEventListener('click', (e) => {
@@ -1074,6 +1112,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function renderFeed() {
+        // Actualizar el menú de botones superiores (chips) basado en la ciudad actual
+        populateHomeCategories();
+
         // get a bunch of listings, filter by type if needed
         let listings = db.getAllListings().filter(l => db.isListingActive(l));
         
@@ -1107,8 +1148,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Inicializar el almacenamiento para lazy loading
             window.netflixRowData = {};
             
-            // Use catalogData order if available, else Object.keys
-            const order = catalogData && catalogData.types ? catalogData.types : Object.keys(grouped);
+            // Use smart order based on popularity
+            const order = getSortedCategoriesByPopularity();
             
             order.forEach(type => {
                 if (grouped[type] && grouped[type].length > 0) {
