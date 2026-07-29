@@ -843,19 +843,24 @@ class Database {
                 // Consultar estados y ciudades directamente de los autos autorizados
                 const { data, error } = await supabaseClient
                     .from('listings')
-                    .select('state, city')
+                    .select('state, city, expires_at, status')
                     .eq('status', 'autorizado');
                 
                 if (!error && data) {
-                    activeListings = data;
+                    activeListings = data.filter(l => {
+                        if (l.expires_at) {
+                            return new Date(l.expires_at) > new Date();
+                        }
+                        return true;
+                    });
                 } else {
-                    activeListings = this.getAllListings().filter(l => l.status === 'autorizado');
+                    activeListings = this.getAllListings().filter(l => this.isListingActive(l));
                 }
             } catch(e) {
-                activeListings = this.getAllListings().filter(l => l.status === 'autorizado');
+                activeListings = this.getAllListings().filter(l => this.isListingActive(l));
             }
         } else {
-            activeListings = this.getAllListings().filter(l => l.status === 'autorizado');
+            activeListings = this.getAllListings().filter(l => this.isListingActive(l));
         }
 
         const locationsMap = {};
