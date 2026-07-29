@@ -460,7 +460,8 @@ class Database {
                 status: listing.status || 'pendiente autorizacion',
                 views: listing.views || 0,
                 notes: listing.notes || [],
-                payments: listing.payments || []
+                payments: listing.payments || [],
+                publisher_id: listing.publisherId || listing.publisher_id || ''
             };
 
             supabaseClient.from('listings').upsert([payload]).then(({ data, error }) => {
