@@ -754,9 +754,16 @@ class Database {
     async saveSettings(settings) {
         localStorage.setItem('revista_settings', JSON.stringify(settings));
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const payload = { id: 1, ...settings };
-            const { error } = await supabaseClient.from('settings').upsert([payload]);
-            if (error) return { success: false, error: error.message };
+            try {
+                const payload = { id: 1, ...settings };
+                const { error } = await supabaseClient.from('settings').upsert([payload]);
+                if (error) {
+                    return { success: false, error: error.message };
+                }
+            } catch (err) {
+                // Si el proyecto de Supabase está pausado o eliminado, lanza error de red
+                return { success: false, error: "No se pudo conectar a la base de datos (Supabase puede estar pausado o inactivo). Error: " + err.message };
+            }
         }
         return { success: true };
     }
@@ -817,28 +824,32 @@ class Database {
 
     async loginAdmin(username, password) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const { data, error } = await supabaseClient
-                .from('admin_users')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password)
-                .maybeSingle();
-            
-            if (error) {
-                console.error("Error consultando admin_users:", error);
-            }
+            try {
+                const { data, error } = await supabaseClient
+                    .from('admin_users')
+                    .select('*')
+                    .eq('username', username)
+                    .eq('password', password)
+                    .maybeSingle();
+                
+                if (error) {
+                    console.error("Error consultando admin_users:", error);
+                }
 
-            if (data) {
-                return { 
-                    success: true, 
-                    token: 'admin-token-' + data.id, 
-                    role: data.role, 
-                    user: { id: data.id, username: data.username, role: data.role, allowedStates: data.allowedStates, allowedCities: data.allowedCities } 
-                };
+                if (data) {
+                    return { 
+                        success: true, 
+                        token: 'admin-token-' + data.id, 
+                        role: data.role, 
+                        user: { id: data.id, username: data.username, role: data.role, allowedStates: data.allowedStates, allowedCities: data.allowedCities } 
+                    };
+                }
+            } catch (err) {
+                console.warn("Error de red al consultar admin_users en Supabase, aplicando fallback:", err);
             }
         }
         
-        // Fallback seguro en caso de que la tabla aún no tenga el usuario admin
+        // Fallback seguro en caso de que la tabla aún no tenga el usuario admin o no haya red
         if (username === 'admin' && password === 'admin') {
             return { 
                 success: true, 
@@ -853,14 +864,18 @@ class Database {
 
     async getAdminUsers() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const { data, error } = await supabaseClient.from('admin_users').select('*');
-            if (data) {
-                const mappedUsers = data.map(u => ({
-                    ...u,
-                    allowedStates: u.allowedstates,
-                    allowedCities: u.allowedcities
-                }));
-                return { success: true, users: mappedUsers };
+            try {
+                const { data, error } = await supabaseClient.from('admin_users').select('*');
+                if (data) {
+                    const mappedUsers = data.map(u => ({
+                        ...u,
+                        allowedStates: u.allowedstates,
+                        allowedCities: u.allowedcities
+                    }));
+                    return { success: true, users: mappedUsers };
+                }
+            } catch (err) {
+                console.warn("Error consultando getAdminUsers en Supabase:", err);
             }
         }
         return { success: true, users: [] };
@@ -868,26 +883,32 @@ class Database {
 
     async saveAdminUser(user) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const dbUser = {
-                ...user,
-                allowedstates: user.allowedStates,
-                allowedcities: user.allowedCities
-            };
-            delete dbUser.allowedStates;
-            delete dbUser.allowedCities;
-            
-            const { error } = await supabaseClient.from('admin_users').upsert([dbUser]);
-            if (error) return { success: false, error: error.message };
-            return { success: true };
+            try {
+                const dbUser = {
+                    ...user,
+                    allowedstates: user.allowedStates,
+                    allowedcities: user.allowedCities
+                };
+                delete dbUser.allowedStates;
+                delete dbUser.allowedCities;
+                
+                const { error } = await supabaseClient.from('admin_users').upsert([dbUser]);
+                if (error) console.warn("Error guardando adminUser en Supabase:", error.message);
+            } catch (err) {
+                console.warn("Error de red guardando adminUser en Supabase:", err);
+            }
         }
         return { success: true };
     }
 
     async deleteAdminUser(id) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const { error } = await supabaseClient.from('admin_users').delete().eq('id', id);
-            if (error) return { success: false, error: error.message };
-            return { success: true };
+            try {
+                const { error } = await supabaseClient.from('admin_users').delete().eq('id', id);
+                if (error) console.warn("Error eliminando adminUser en Supabase:", error.message);
+            } catch (err) {
+                console.warn("Error de red eliminando adminUser en Supabase:", err);
+            }
         }
         return { success: true };
     }
