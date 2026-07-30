@@ -2141,7 +2141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 for (let i = 0; i < imageFiles.length; i++) {
                     const file = imageFiles[i].file;
-                    const dataUrl = await new Promise((resolve) => {
+                    const compressedFile = await new Promise((resolve) => {
                         const img = new Image();
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
@@ -2154,20 +2154,29 @@ document.addEventListener('DOMContentLoaded', () => {
                             canvas.height = img.height * scaleSize;
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            try {
-                                resolve(canvas.toDataURL('image/jpeg', 0.7)); // Comprimir a 70% JPEG
-                            } catch (e) {
-                                resolve(imageFiles[i].url); // Fallback si hay error CORS (Tainted Canvas)
-                            }
+                            canvas.toBlob((blob) => {
+                                if (blob) {
+                                    resolve(new File([blob], file && file.name ? file.name : 'foto.jpg', { type: 'image/jpeg' }));
+                                } else {
+                                    resolve(file); // Fallback
+                                }
+                            }, 'image/jpeg', 0.7);
                         };
-                        img.onerror = () => resolve(imageFiles[i].url); // En caso de error, intentar resolver con la original
+                        img.onerror = () => resolve(file); // Fallback
                         img.src = imageFiles[i].url;
                     });
-                    uploadedImageUrls.push(dataUrl);
+                    
+                    // Subir archivo comprimido a Supabase Storage en lugar de usar Base64 gigante
+                    const publicUrl = await db.uploadImageToSupabase(compressedFile);
+                    if (publicUrl) {
+                        uploadedImageUrls.push(publicUrl);
+                    } else {
+                        throw new Error("No se pudo subir la imagen a la nube. Por favor intenta de nuevo.");
+                    }
                 }
             } catch (error) {
                 console.error('Error procesando imágenes:', error);
-                showAlert('Hubo un error procesando las imágenes.', 'Error de Imagen', 'error');
+                showAlert(error.message || 'Hubo un error subiendo las imágenes.', 'Error de Imagen', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Publicar Vehículo';
                 return;
@@ -2233,7 +2242,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {
             console.error(e);
-            showAlert('Error al guardar. Puede que las imágenes sean demasiado grandes para la memoria local.', 'Error de Almacenamiento', 'error');
+            showAlert(e.message || 'Error al guardar. Por favor intenta de nuevo.', 'Error al Publicar', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Publicar Vehículo';
         }
