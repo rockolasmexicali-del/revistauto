@@ -4654,7 +4654,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // CLIENT AD FLOW & ADMIN ADS LOGIC
     // ==========================================
-    const btnAdvertise = document.getElementById('btn-advertise');
+    {
+        const btnAdvertise = document.getElementById('btn-advertise');
     const clientAdModal = document.getElementById('client-ad-modal');
     const btnCloseClientAd = document.getElementById('btn-close-client-ad');
     const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
@@ -5085,4 +5086,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (originalRefresh) originalRefresh();
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
     };
+    } // End of CLIENT AD FLOW scope
 });
