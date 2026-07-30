@@ -2180,7 +2180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = document.getElementById('btn-wizard-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Subiendo...';
+            submitBtn.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px;">sync</span> Subiendo...';
         }
 
         let uploadedImageUrls = [];
