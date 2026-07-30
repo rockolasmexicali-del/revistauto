@@ -1055,19 +1055,25 @@ class Database {
     }
 
     async incrementAdViews(adId) {
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const ad = this.getAllAds().find(a => String(a.id) === String(adId));
-            if (ad) {
-                ad.views = (ad.views || 0) + 1;
-                await supabaseClient.from('ads').update({ views: ad.views }).eq('id', adId);
-                const ads = this.getAllAds();
-                const idx = ads.findIndex(a => String(a.id) === String(adId));
-                if (idx > -1) {
-                    ads[idx].views = ad.views;
-                    localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
-                }
-            }
+        let ad = this.getAllAds().find(a => String(a.id) === String(adId));
+        if (!ad) return null;
+        
+        ad.views = (ad.views || 0) + 1;
+        const ads = this.getAllAds();
+        const idx = ads.findIndex(a => String(a.id) === String(adId));
+        if (idx > -1) {
+            ads[idx].views = ad.views;
+            localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
+            ad = ads[idx]; // update reference
         }
+
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            // Fire and forget
+            supabaseClient.from('ads').update({ views: ad.views }).eq('id', adId).then(({error}) => {
+                if (error) console.warn("Error updating ad views in supabase:", error);
+            });
+        }
+        return ad;
     }
 
     async incrementAdClicks(adId) {
