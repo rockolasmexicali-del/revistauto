@@ -40,14 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingListingId = null;
 
     // Ads
-    const btnAdvertise = document.getElementById('btn-advertise');
-    if (btnAdvertise) {
-        btnAdvertise.addEventListener('click', () => {
-            const waNumber = '526861234567'; // Change this to actual support number if available
-            const text = encodeURIComponent('Hola, me interesa anunciar mi negocio en RevistAuto.');
-            window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
-        });
-    }
+    // (Old WhatsApp logic removed)
 
     const adFullscreenModal = document.getElementById('ad-fullscreen-modal');
     const btnCloseAdModal = document.getElementById('btn-close-ad-modal');
