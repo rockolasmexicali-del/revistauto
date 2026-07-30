@@ -318,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Initial local render
+    window.isWaitingForInitialGps = true;
     populateHomeCategories();
     renderFeed();
     if (typeof updateAdminStats === 'function') updateAdminStats();
@@ -542,45 +543,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 // indefinidamente a que el usuario responda el modal de permisos.
             };
 
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                try {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                    const data = await res.json();
-                    
-                    if (data && data.address) {
-                        const stateName = data.address.state || '';
-                        const cityName = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || '';
-                        
-                        applyDetectedLocation(stateName, cityName, isManualClick);
-                    }
-                } catch (e) {
-                    console.error('Error detectando ubicación:', e);
-                } finally {
-                    if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
-                }
-            }, () => {
-                if (isManualClick) showAlert('Permiso de ubicación denegado o no disponible.', 'Ubicación', 'warning');
-                if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
-            }, options);
+        function forceAllStatesAndRender() {
+            const userStateSelect = document.getElementById('user-state-select');
+            const filterState = document.getElementById('filter-state');
+            if (userStateSelect) userStateSelect.value = 'Todos';
+            if (filterState) {
+                filterState.value = 'Todos';
+                filterState.dispatchEvent(new Event('change'));
+            }
+            if (window.customUserFilterStateSelect) window.customUserFilterStateSelect.update();
+            if (window.customFilterStateSelect) window.customFilterStateSelect.update();
+            renderFeed();
         }
 
-        if (btnLocateMe) {
-            btnLocateMe.addEventListener('click', () => detectUserLocation(true));
-        }
-        
-        // 1. Carga inmediata desde caché
-        const cachedLocationStr = localStorage.getItem('revista_last_location');
-        if (cachedLocationStr) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
             try {
-                const cachedLocation = JSON.parse(cachedLocationStr);
-                applyDetectedLocation(cachedLocation.state, cachedLocation.city, false);
-            } catch (e) { }
-        }
-        
-        // 2. Validación en segundo plano (GPS ultra rápido)
-        setTimeout(() => detectUserLocation(false), 500);
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const data = await res.json();
+                
+                if (data && data.address) {
+                    const stateName = data.address.state || '';
+                    const cityName = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || '';
+                    
+                    window.isWaitingForInitialGps = false;
+                    applyDetectedLocation(stateName, cityName, isManualClick);
+                } else {
+                    if (window.isWaitingForInitialGps) {
+                        window.isWaitingForInitialGps = false;
+                        forceAllStatesAndRender();
+                    }
+                }
+            } catch (e) {
+                console.error('Error detectando ubicación:', e);
+                if (window.isWaitingForInitialGps) {
+                    window.isWaitingForInitialGps = false;
+                    forceAllStatesAndRender();
+                }
+            } finally {
+                if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
+            }
+        }, () => {
+            if (isManualClick) showAlert('Permiso de ubicación denegado o no disponible.', 'Ubicación', 'warning');
+            if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
+            
+            if (window.isWaitingForInitialGps) {
+                window.isWaitingForInitialGps = false;
+                forceAllStatesAndRender();
+            }
+        }, options);
+    }
+
+    if (btnLocateMe) {
+        btnLocateMe.addEventListener('click', () => detectUserLocation(true));
+    }
+    
+    // 1. Carga inmediata desde caché
+    const cachedLocationStr = localStorage.getItem('revista_last_location');
+    if (cachedLocationStr) {
+        try {
+            const cachedLocation = JSON.parse(cachedLocationStr);
+            window.isWaitingForInitialGps = false;
+            applyDetectedLocation(cachedLocation.state, cachedLocation.city, false);
+        } catch (e) { }
+    }
+    
+    // 2. Validación en segundo plano (GPS ultra rápido)
+    setTimeout(() => detectUserLocation(false), 500);
 
         const formCustomMake = document.getElementById('form-custom-make');
         const formCustomModel = document.getElementById('form-custom-model');
@@ -1121,6 +1151,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function renderFeed() {
+        if (window.isWaitingForInitialGps) {
+            const feedContainer = document.getElementById('feed-container');
+            if (feedContainer) {
+                feedContainer.classList.remove('listings-grid');
+                feedContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; width: 100%; gap: 16px;">
+                        <span class="material-symbols-rounded" style="animation: spin 1s linear infinite; font-size: 48px; color: var(--primary-color);">my_location</span>
+                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.5rem; font-weight: 500;">
+                            Esperando ubicación...
+                        </h2>
+                    </div>`;
+            }
+            return;
+        }
+
         // Actualizar el menú de botones superiores (chips) basado en la ciudad actual
         populateHomeCategories();
 
@@ -3067,7 +3112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Confirmation Modals Logic for Approvals ---
     let pendingActionTargetId = null;
 
-    window.approveListing = function(id, isConfirmed = false) {
+    window.approveListing = async function(id, isConfirmed = false) {
         if (!isConfirmed) {
             pendingActionTargetId = id;
             const listing = db.getAllListings().find(l => String(l.id) === String(id));
@@ -3093,8 +3138,15 @@ document.addEventListener('DOMContentLoaded', () => {
             listing.lastRenewedMonth = currentMonthStr;
             listing.expiresAt = expiresAt.toISOString();
             listing.publishedAt = now.toISOString(); // fecha de publicación visible al usuario
-            // Sincronizar local y con Supabase
-            db.saveListing(listing);
+            
+            try {
+                // Sincronizar local y con Supabase (esperamos a que termine)
+                await db.saveListing(listing);
+            } catch (e) {
+                console.error("Error al aprobar:", e);
+                showAlert('Hubo un error al aprobar en la nube. Intenta de nuevo.', 'Error', 'error');
+                return; // Si falla, detenemos aquí
+            }
 
             if (!catalogData.makes.includes(listing.make)) {
                 db.addSuggestion('make', listing.make);
@@ -3285,7 +3337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(fileInput) fileInput.value = '';
                 
                 pendingActionTargetId = null;
-                approveListing(targetId, true);
+                await approveListing(targetId, true);
             }
         };
     }
