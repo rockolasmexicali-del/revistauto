@@ -906,9 +906,24 @@ class Database {
 
     // --- Analytics Reales ---
     async incrementViews(id) {
-        // Incrementamos locamente primero
+        // Evitar múltiples conteos por sesión para el mismo anuncio
+        let viewedThisSession = [];
+        try {
+            viewedThisSession = JSON.parse(sessionStorage.getItem('revista_autos_viewed_session') || '[]');
+        } catch (e) {}
+
+        if (viewedThisSession.includes(String(id))) {
+            const listings = this.getAllListings();
+            const listing = listings.find(l => String(l.id) === String(id));
+            return listing ? listing.views : 0;
+        }
+
+        viewedThisSession.push(String(id));
+        sessionStorage.setItem('revista_autos_viewed_session', JSON.stringify(viewedThisSession));
+
+        // Incrementamos localmente primero
         const listings = this.getAllListings();
-        const listing = listings.find(l => l.id === id);
+        const listing = listings.find(l => String(l.id) === String(id));
         if (listing) {
             listing.views = (listing.views || 0) + 1;
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
