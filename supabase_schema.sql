@@ -42,6 +42,9 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS published_at TIMESTAMP WITH
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_renewed_month TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS payment_status TEXT;
+
+-- 2.6 COMANDO PARA CAMBIAR MILEAGE A TEXTO (EJECÚTALO PARA ARREGLAR EL ERROR DE "invalid input syntax for type integer")
+ALTER TABLE public.listings ALTER COLUMN mileage TYPE TEXT USING mileage::TEXT;
 -- 3. Habilitar la búsqueda rápida e índices
 CREATE INDEX IF NOT EXISTS idx_listings_status ON public.listings(status);
 CREATE INDEX IF NOT EXISTS idx_listings_make ON public.listings(make);
