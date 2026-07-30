@@ -397,6 +397,10 @@ class Database {
         return true;
     }
 
+    getPendingRenewals() {
+        return this.getAllListings().filter(l => l.status === 'autorizado' && !this.isListingActive(l));
+    }
+
     getRandomListings(count, city = null) {
         let activeListings = this.getAllListings().filter(l => this.isListingActive(l));
         if (city) {
