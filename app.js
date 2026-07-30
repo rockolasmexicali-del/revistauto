@@ -2028,21 +2028,66 @@ document.addEventListener('DOMContentLoaded', () => {
             htmlContent += '<h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Anuncios Publicitarios</h3>';
             htmlContent += myAds.map(ad => {
                 const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-                const isActive = db.isAdActive(ad);
-                const statusColorClass = isActive ? 'status-autorizado' : 'status-caducado';
-                const displayStatus = isActive ? 'ACTIVO' : 'INACTIVO';
+                
+                let displayStatus = 'PENDIENTE PAGO';
+                let statusColorClass = 'status-pendiente';
+                let paymentBtnHTML = '';
+                
+                if (ad.payment_status === 'pendiente') {
+                    displayStatus = 'PENDIENTE PAGO';
+                    statusColorClass = 'status-pendiente';
+                    if (globalMpEnabled) {
+                        paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrickAd(${ad.id})" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
+                    }
+                } else if (ad.is_active === false) {
+                    displayStatus = 'INACTIVO';
+                    statusColorClass = 'status-caducado';
+                } else {
+                    const now = new Date();
+                    if (ad.end_date) {
+                        const expDate = new Date(ad.end_date);
+                        if (now > expDate) {
+                            displayStatus = 'CADUCADO';
+                            statusColorClass = 'status-caducado';
+                            if (globalMpEnabled) {
+                                paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrickAd(${ad.id})" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
+                            }
+                        } else {
+                            displayStatus = 'ACTIVO';
+                            statusColorClass = 'status-autorizado';
+                        }
+                    } else {
+                        displayStatus = 'ACTIVO';
+                        statusColorClass = 'status-autorizado';
+                    }
+                }
+                
+                let publishedDateHTML = '';
+                if (ad.start_date && displayStatus !== 'CADUCADO' && displayStatus !== 'PENDIENTE PAGO') {
+                    const pubDate = new Date(ad.start_date);
+                    const pubDateStr = pubDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+                    publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Publicado el ${pubDateStr}</p>`;
+                }
 
                 return `
-                    <div class="my-listing-card" style="cursor: default; border: 1px solid var(--primary-color);">
+                    <div class="my-listing-card" style="cursor: default;">
                         <div class="card-img-carousel" style="width:100px; height:100px; flex-shrink:0; background:#000;">
                             <img src="${firstImg}" alt="Ad" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                         <div class="my-listing-info">
                             <h4 class="my-listing-title">${ad.title}</h4>
-                            <span class="status-badge ${statusColorClass}" style="${!isActive ? 'background: var(--danger-color);' : ''}">${displayStatus}</span>
-                            <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">
+                            <div style="display: flex; gap: 12px; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted);">
                                 <span style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-rounded" style="font-size: 16px;">visibility</span> ${ad.views || 0} vistas</span>
                                 <span style="display: flex; align-items: center; gap: 4px; color: var(--primary-color);"><span class="material-symbols-rounded" style="font-size: 16px;">ads_click</span> ${ad.clicks || 0} clics</span>
+                            </div>
+                            <span class="status-badge ${statusColorClass}" style="${statusColorClass === 'status-caducado' ? 'background: var(--danger-color);' : (statusColorClass === 'status-pendiente' ? 'background: #f59e0b; color: white;' : '')}">${displayStatus}</span>
+                            ${publishedDateHTML}
+                        </div>
+                        <div class="my-listing-actions" style="flex-direction: column;">
+                            ${paymentBtnHTML}
+                            <div style="display: flex; gap: 8px; width: 100%;">
+                                <button class="primary-btn" onclick="showAlert('La edición de anuncios estará disponible próximamente.', 'Próximamente', 'info')" style="background:var(--surface-light); padding: 8px; flex: 1;">Editar</button>
+                                <button class="danger-btn" onclick="if(confirm('¿Eliminar este anuncio permanentemente?')) { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); }" style="padding: 8px; flex: 1;">Eliminar</button>
                             </div>
                         </div>
                     </div>
