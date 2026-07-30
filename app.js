@@ -1944,7 +1944,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const payInfo = getListingPaymentInfo(listing);
                 priceTextHTML = `<p style="font-size: 0.85rem; color: var(--danger-color); margin-top: 4px; font-weight: bold;">${payInfo.textDesc}</p>`;
                 if (globalMpEnabled && listing.paymentStatus === 'pending') {
-                    paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, false)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
+                    paymentBtnHTML = `<button class="primary-btn" onclick="window.openedFromDashboard=true; openMercadoPagoBrick(${listing.id}, false)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
                 }
             } else if (listing.status === 'autorizado' || listing.status === 'activo') {
                 const now = new Date();
@@ -2037,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     displayStatus = 'PENDIENTE PAGO';
                     statusColorClass = 'status-pendiente';
                     if (globalMpEnabled) {
-                        paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrickAd(${ad.id})" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
+                        paymentBtnHTML = `<button class="primary-btn" onclick="window.openedFromDashboard=true; openMercadoPagoBrickAd(${ad.id})" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
                     }
                 } else if (ad.is_active === false) {
                     displayStatus = 'INACTIVO';
@@ -4574,13 +4574,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCloseMp) btnCloseMp.addEventListener('click', () => {
         modalMp.classList.remove('active');
-        if (!isRenewalPayment && modalPublishOptions) {
+        if (!isRenewalPayment && !window.openedFromDashboard && modalPublishOptions) {
             modalPublishOptions.classList.add('active');
         }
     });
 
     if (btnOptionPayNow) btnOptionPayNow.addEventListener('click', () => {
         modalPublishOptions.classList.remove('active');
+        window.openedFromDashboard = false;
         openMercadoPagoBrick(window.currentPendingListingId, false);
     });
 
@@ -5013,6 +5014,7 @@ document.addEventListener('DOMContentLoaded', () => {
         originalBtnPayNow.parentNode.replaceChild(clonedBtn, originalBtnPayNow);
         clonedBtn.addEventListener('click', () => {
             document.getElementById('publish-options-modal').classList.remove('active');
+            window.openedFromDashboard = false;
             if (window.currentPendingAdId) {
                 openMercadoPagoBrickAd(window.currentPendingAdId);
             } else {
