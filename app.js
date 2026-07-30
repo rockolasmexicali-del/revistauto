@@ -2180,7 +2180,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = document.getElementById('btn-wizard-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px;">sync</span> Subiendo...';
+            submitBtn.textContent = 'Subiendo...';
+            
+            let progressContainer = document.getElementById('upload-progress-container');
+            if (!progressContainer) {
+                progressContainer = document.createElement('div');
+                progressContainer.id = 'upload-progress-container';
+                progressContainer.style.width = '100%';
+                progressContainer.style.height = '16px';
+                progressContainer.style.background = 'var(--surface-light)';
+                progressContainer.style.borderRadius = '8px';
+                progressContainer.style.marginBottom = '12px';
+                progressContainer.style.overflow = 'hidden';
+                progressContainer.style.position = 'relative';
+                
+                const progressBg = document.createElement('div');
+                progressBg.id = 'upload-progress-bg';
+                progressBg.style.position = 'absolute';
+                progressBg.style.top = '0';
+                progressBg.style.left = '0';
+                progressBg.style.height = '100%';
+                progressBg.style.width = '0%';
+                progressBg.style.background = 'var(--primary-color)';
+                progressBg.style.transition = 'width 0.3s ease';
+                
+                const progressText = document.createElement('div');
+                progressText.id = 'upload-progress-text';
+                progressText.style.position = 'absolute';
+                progressText.style.width = '100%';
+                progressText.style.textAlign = 'center';
+                progressText.style.fontSize = '11px';
+                progressText.style.fontWeight = 'bold';
+                progressText.style.lineHeight = '16px';
+                progressText.style.zIndex = '1';
+                progressText.style.color = '#fff';
+                progressText.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)';
+                progressText.textContent = '0%';
+
+                progressContainer.appendChild(progressBg);
+                progressContainer.appendChild(progressText);
+                
+                submitBtn.parentNode.insertBefore(progressContainer, submitBtn);
+            }
+            progressContainer.style.display = 'block';
+            document.getElementById('upload-progress-bg').style.width = '0%';
+            document.getElementById('upload-progress-text').textContent = '0%';
         }
 
         let uploadedImageUrls = [];
@@ -2189,6 +2233,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (imageFiles.length > 0) {
             try {
                 for (let i = 0; i < imageFiles.length; i++) {
+                    const currentPercent = Math.round((i / imageFiles.length) * 100);
+                    const progressBg = document.getElementById('upload-progress-bg');
+                    const progressText = document.getElementById('upload-progress-text');
+                    if (progressBg) progressBg.style.width = currentPercent + '%';
+                    if (progressText) progressText.textContent = currentPercent + '%';
+
                     const file = imageFiles[i].file;
                     const compressedFile = await new Promise((resolve) => {
                         const img = new Image();
@@ -2219,6 +2269,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const publicUrl = await db.uploadImageToSupabase(compressedFile);
                     if (publicUrl) {
                         uploadedImageUrls.push(publicUrl);
+                        
+                        const afterPercent = Math.round(((i + 1) / imageFiles.length) * 100);
+                        const progressBg2 = document.getElementById('upload-progress-bg');
+                        const progressText2 = document.getElementById('upload-progress-text');
+                        if (progressBg2) progressBg2.style.width = afterPercent + '%';
+                        if (progressText2) progressText2.textContent = afterPercent + '%';
                     } else {
                         throw new Error("No se pudo subir la imagen a la nube. Por favor intenta de nuevo.");
                     }
@@ -2228,6 +2284,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAlert(error.message || 'Hubo un error subiendo las imágenes.', 'Error de Imagen', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Publicar Vehículo';
+                const pc = document.getElementById('upload-progress-container');
+                if (pc) pc.style.display = 'none';
                 return;
             }
         }
@@ -2314,6 +2372,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             submitBtn.disabled = false;
             submitBtn.textContent = 'Publicar Vehículo';
+            const pc = document.getElementById('upload-progress-container');
+            if (pc) pc.style.display = 'none';
         }
     });
 
