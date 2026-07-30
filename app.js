@@ -2437,6 +2437,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let filteredCount = 0;
         const now = new Date();
+        const dayOfWeek = now.getDay();
+        const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
         
         if (period === 'todo') {
             filteredCount = soldListings.length;
@@ -2453,9 +2459,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         filteredCount++;
                     }
                 } else if (period === 'semana') {
-                    const diffTime = Math.abs(now - itemDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                    if (diffDays <= 7) filteredCount++;
+                    if (itemDate >= startOfWeek && itemDate <= endOfWeek) {
+                        filteredCount++;
+                    }
                 } else if (period === 'mes') {
                     if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) {
                         filteredCount++;
