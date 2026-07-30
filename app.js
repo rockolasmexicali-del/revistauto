@@ -4754,10 +4754,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let file of files) {
                 try {
-                    const compressed = await compressImage(file, 800);
-                    window.clientAdImages.push(compressed);
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 800;
+                                let scaleSize = 1;
+                                if (img.width > MAX_WIDTH) {
+                                    scaleSize = MAX_WIDTH / img.width;
+                                }
+                                canvas.width = img.width * scaleSize;
+                                canvas.height = img.height * scaleSize;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/jpeg', 0.8));
+                            };
+                            img.onerror = () => reject(new Error("Error cargando imagen"));
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = () => reject(new Error("Error leyendo archivo"));
+                        reader.readAsDataURL(file);
+                    });
+                    
+                    window.clientAdImages.push(dataUrl);
                 } catch(err) {
-                    console.error("Error compressing ad image", err);
+                    console.error("Error procesando imagen del anuncio", err);
                 }
             }
             
