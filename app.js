@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const costDisclaimer = document.getElementById('monthly-cost-disclaimer');
                 if (costDisclaimer) {
-                    costDisclaimer.innerHTML = `* Costo de publicación: <strong>$${globalMonthlyPrice.toFixed(2)} MXN</strong> por mes completo (30 días desde la fecha de aprobación).`;
+                    costDisclaimer.innerHTML = `* Costo de la publicación: <strong>$${globalMonthlyPrice.toFixed(2)} MXN</strong> por mes.`;
                 }
 
                 const inputPrice = document.getElementById('admin-monthly-price');
@@ -4239,6 +4239,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCloseMp) btnCloseMp.addEventListener('click', () => {
         modalMp.classList.remove('active');
+        if (!isRenewalPayment && modalPublishOptions) {
+            modalPublishOptions.classList.add('active');
+        }
     });
 
     if (btnOptionPayNow) btnOptionPayNow.addEventListener('click', () => {
