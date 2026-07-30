@@ -804,6 +804,57 @@ class Database {
         }
         return { success: true };
     }
+
+    // --- Analytics Reales ---
+    async incrementViews(id) {
+        // Incrementamos locamente primero
+        const listings = this.getAllListings();
+        const listing = listings.find(l => l.id === id);
+        if (listing) {
+            listing.views = (listing.views || 0) + 1;
+            localStorage.setItem(this.listingsKey, JSON.stringify(listings));
+        }
+
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const now = new Date();
+                const visit_date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                
+                const { error } = await supabaseClient.rpc('increment_visit', {
+                    listing_id: id,
+                    visit_date: visit_date
+                });
+                
+                if (error) {
+                    console.warn("Error RPC increment_visit, aplicando fallback local:", error.message);
+                }
+            } catch (err) {
+                console.warn("Error de red incrementando vistas:", err);
+            }
+        }
+        return listing ? listing.views : 0;
+    }
+
+    async fetchTrafficStats() {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('daily_visits')
+                    .select('*')
+                    .order('date', { ascending: true });
+                    
+                if (error) {
+                    console.warn("Error fetching daily_visits:", error.message);
+                    return [];
+                }
+                return data || [];
+            } catch (err) {
+                console.warn("Error de red obteniendo daily_visits:", err);
+                return [];
+            }
+        }
+        return [];
+    }
 }
 
 const db = new Database();

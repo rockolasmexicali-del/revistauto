@@ -1506,10 +1506,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const listing = allListings.find(l => l.id === id);
         if(!listing) return;
 
-        // Incrementar vistas
-        listing.views = (listing.views || 0) + 1;
-        localStorage.setItem(db.listingsKey, JSON.stringify(allListings));
-        updateStats();
+        // Incrementar vistas usando la nueva función analítica en segundo plano
+        db.incrementViews(id).then(() => {
+            updateStats();
+        });
 
         // Encontrar vista activa actual
         const activeView = Array.from(views).find(v => v.classList.contains('active') && v.id !== 'view-detalle');
@@ -2387,7 +2387,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const pendingCount = allListings.filter(l => l.status === 'pendiente autorizacion').length;
         
         const statViews = document.getElementById('stat-views');
-        if (statViews) statViews.textContent = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
+        if (statViews) {
+            // Inicializar con el total global (fallback visual)
+            statViews.textContent = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
+            
+            // Cargar datos reales asincrónicamente
+            db.fetchTrafficStats().then(data => {
+                window.trafficStatsCache = data;
+                const activeViewsBtn = document.querySelector('.quick-view-btn.active');
+                if (activeViewsBtn && typeof window.updateQuickViews === 'function') {
+                    const period = activeViewsBtn.getAttribute('onclick').match(/'(.*?)'/)[1];
+                    window.updateQuickViews(period, activeViewsBtn);
+                } else if (typeof window.updateQuickViews === 'function') {
+                    // Default to total
+                    window.updateQuickViews('todo', document.querySelector('.quick-view-btn[onclick*="todo"]'));
+                }
+                
+                // Actualizar la gráfica también
+                if (typeof window.renderTrafficChart === 'function') {
+                    window.renderTrafficChart();
+                }
+            });
+        }
         
         const statActive = document.getElementById('stat-active');
         if (statActive) statActive.textContent = active.length;
@@ -2475,6 +2496,63 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
+    window.updateQuickViews = function(period, btnElement) {
+        if (btnElement) {
+            const container = btnElement.parentElement;
+            const buttons = container.querySelectorAll('.quick-view-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = 'var(--surface-light)';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.borderColor = 'var(--border-color)';
+            });
+            
+            btnElement.classList.add('active');
+            btnElement.style.background = 'var(--primary-color)';
+            btnElement.style.color = 'white';
+            btnElement.style.borderColor = 'var(--primary-color)';
+        }
+
+        let filteredViews = 0;
+        
+        if (period === 'todo') {
+            const allListings = db.getAllListings();
+            filteredViews = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
+        } else {
+            const visitsData = window.trafficStatsCache || [];
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            const dayOfWeek = now.getDay();
+            const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+            
+            visitsData.forEach(row => {
+                const rowDateStr = row.date; // YYYY-MM-DD
+                const parts = rowDateStr.split('-');
+                const rowDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+                if (period === 'dia') {
+                    if (rowDateStr === todayStr) {
+                        filteredViews += row.visits || 0;
+                    }
+                } else if (period === 'semana') {
+                    if (rowDate >= startOfWeek && rowDateStr <= todayStr) { // Up to today
+                        filteredViews += row.visits || 0;
+                    }
+                } else if (period === 'mes') {
+                    if (rowDate.getMonth() === now.getMonth() && rowDate.getFullYear() === now.getFullYear()) {
+                        filteredViews += row.visits || 0;
+                    }
+                }
+            });
+        }
+        
+        const statViews = document.getElementById('stat-views');
+        if (statViews) statViews.textContent = filteredViews;
+    };
+
+
     function renderTrafficChart() {
         const chartContainer = document.getElementById('traffic-chart');
         const periodSelect = document.getElementById('traffic-period-select');
@@ -2488,19 +2566,55 @@ document.addEventListener('DOMContentLoaded', () => {
         const period = periodSelect ? periodSelect.value : '7d';
         let labels = [];
         let data = [];
+        const visitsData = window.trafficStatsCache || [];
+        const now = new Date();
 
         if (period === '7d') {
             labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-            data = [120, 250, 180, 310, 290, 450, 390];
+            data = [0, 0, 0, 0, 0, 0, 0];
+            
+            const dayOfWeek = now.getDay();
+            const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+            
+            visitsData.forEach(row => {
+                const parts = row.date.split('-');
+                const rowDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                if (rowDate >= startOfWeek) {
+                    const rowDay = rowDate.getDay();
+                    const index = rowDay === 0 ? 6 : rowDay - 1; // 0=Lun, 6=Dom
+                    if (index >= 0 && index < 7) {
+                        data[index] += row.visits || 0;
+                    }
+                }
+            });
         } else if (period === 'month') {
             labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            data = [3500, 4200, 4800, 4100, 5000, 5600, 6200, 5900, 6500, 7100, 7800, 8500];
+            data = new Array(12).fill(0);
+            
+            visitsData.forEach(row => {
+                const parts = row.date.split('-');
+                if (parseInt(parts[0]) === now.getFullYear()) {
+                    const monthIndex = parseInt(parts[1]) - 1;
+                    data[monthIndex] += row.visits || 0;
+                }
+            });
         } else if (period === 'year') {
-            labels = ['2024', '2025', '2026', '2027'];
-            data = [45000, 58000, 72000, 89000];
+            const currentYear = now.getFullYear();
+            labels = [String(currentYear - 3), String(currentYear - 2), String(currentYear - 1), String(currentYear)];
+            data = [0, 0, 0, 0];
+            
+            visitsData.forEach(row => {
+                const parts = row.date.split('-');
+                const rowYear = parseInt(parts[0]);
+                const diff = currentYear - rowYear;
+                if (diff >= 0 && diff <= 3) {
+                    data[3 - diff] += row.visits || 0;
+                }
+            });
         }
         
-        const max = Math.max(...data);
+        const max = Math.max(...data, 1); // Evitar división por cero
         
         chartContainer.innerHTML = data.map((val, i) => {
             const height = (val / max) * 100;

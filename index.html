@@ -445,10 +445,15 @@
                         <div class="stats-premium-grid" style="margin-bottom: 24px;">
                             <div class="stat-premium-card">
                                 <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><span class="material-symbols-rounded">visibility</span></div>
-                                <div class="stat-details">
+                                <div class="stat-details" style="width: 100%;">
                                     <h4>Visitas Totales</h4>
                                     <p id="stat-views" class="stat-value">0</p>
-                                    <span class="stat-trend positive" style="color: var(--success-color); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">trending_up</span> +12%</span>
+                                    <div style="display:flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+                                        <button onclick="updateQuickViews('dia', this)" class="quick-view-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Día</button>
+                                        <button onclick="updateQuickViews('semana', this)" class="quick-view-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Sem</button>
+                                        <button onclick="updateQuickViews('mes', this)" class="quick-view-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Mes</button>
+                                        <button onclick="updateQuickViews('todo', this)" class="quick-view-btn active" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--primary-color); background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">Total</button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="stat-premium-card" style="cursor: pointer;" onclick="document.querySelector('.dashboard-tab[data-tab=\'tab-inventario\']').click();">

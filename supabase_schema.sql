@@ -126,3 +126,30 @@ ON CONFLICT (id) DO NOTHING;
 CREATE POLICY "Acceso público a fotos de autos" ON storage.objects FOR SELECT USING (bucket_id = 'car-images');
 CREATE POLICY "Permitir subir fotos de autos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'car-images');
 CREATE POLICY "Permitir borrar fotos de autos" ON storage.objects FOR DELETE USING (bucket_id = 'car-images');
+
+-- 7. Tabla de Visitas Diarias (Para analíticas reales)
+CREATE TABLE IF NOT EXISTS public.daily_visits (
+    date DATE PRIMARY KEY,
+    visits INT DEFAULT 0
+);
+
+ALTER TABLE public.daily_visits ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir lectura publica de visitas" ON public.daily_visits FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion publica de visitas" ON public.daily_visits FOR ALL USING (true);
+
+-- Función segura para incrementar vistas y visitas globales al mismo tiempo
+CREATE OR REPLACE FUNCTION increment_visit(listing_id BIGINT, visit_date DATE)
+RETURNS void AS $$
+BEGIN
+    -- Incrementar en la tabla de visitas globales
+    INSERT INTO public.daily_visits (date, visits)
+    VALUES (visit_date, 1)
+    ON CONFLICT (date)
+    DO UPDATE SET visits = public.daily_visits.visits + 1;
+
+    -- Incrementar en la tabla listings
+    UPDATE public.listings 
+    SET views = COALESCE(views, 0) + 1 
+    WHERE id = listing_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
