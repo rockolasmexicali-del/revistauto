@@ -552,11 +552,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnLocateMe.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">refresh</span>';
             }
 
-            // Opciones de GPS con timeout de seguridad
+            // Opciones de GPS sin timeout para esperar la respuesta del usuario
             const options = {
                 enableHighAccuracy: false,
-                maximumAge: 300000,
-                timeout: 4000
+                maximumAge: 300000
             };
 
             navigator.geolocation.getCurrentPosition(async (position) => {
@@ -614,14 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 2. Validación en segundo plano (GPS)
         setTimeout(() => detectUserLocation(false), 300);
-
-        // 3. Timeout de seguridad por si el navegador congela la petición de GPS
-        setTimeout(() => {
-            if (window.isWaitingForInitialGps) {
-                window.isWaitingForInitialGps = false;
-                forceAllStatesAndRender();
-            }
-        }, 3500);
 
         const formCustomMake = document.getElementById('form-custom-make');
         const formCustomModel = document.getElementById('form-custom-model');
