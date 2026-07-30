@@ -537,8 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Opciones optimizadas de GPS
             const options = {
                 enableHighAccuracy: false,
-                maximumAge: 300000,
-                timeout: 5000
+                maximumAge: 300000
+                // Se elimina el timeout para que el navegador espere 
+                // indefinidamente a que el usuario responda el modal de permisos.
             };
 
             navigator.geolocation.getCurrentPosition(async (position) => {
