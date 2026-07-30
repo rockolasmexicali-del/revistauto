@@ -525,24 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        function detectUserLocation(isManualClick = false) {
-            if (!("geolocation" in navigator)) {
-                if (isManualClick) showAlert('Tu navegador no soporta geolocalización.', 'Error', 'error');
-                return;
-            }
-
-            if (btnLocateMe) {
-                btnLocateMe.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">refresh</span>';
-            }
-
-            // Opciones optimizadas de GPS
-            const options = {
-                enableHighAccuracy: false,
-                maximumAge: 300000
-                // Se elimina el timeout para que el navegador espere 
-                // indefinidamente a que el usuario responda el modal de permisos.
-            };
-
         function forceAllStatesAndRender() {
             const userStateSelect = document.getElementById('user-state-select');
             const filterState = document.getElementById('filter-state');
@@ -556,61 +538,90 @@ document.addEventListener('DOMContentLoaded', () => {
             renderFeed();
         }
 
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            try {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                const data = await res.json();
-                
-                if (data && data.address) {
-                    const stateName = data.address.state || '';
-                    const cityName = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || '';
-                    
-                    window.isWaitingForInitialGps = false;
-                    applyDetectedLocation(stateName, cityName, isManualClick);
-                } else {
-                    if (window.isWaitingForInitialGps) {
-                        window.isWaitingForInitialGps = false;
-                        forceAllStatesAndRender();
-                    }
-                }
-            } catch (e) {
-                console.error('Error detectando ubicación:', e);
+        function detectUserLocation(isManualClick = false) {
+            if (!("geolocation" in navigator)) {
+                if (isManualClick) showAlert('Tu navegador no soporta geolocalización.', 'Error', 'error');
                 if (window.isWaitingForInitialGps) {
                     window.isWaitingForInitialGps = false;
                     forceAllStatesAndRender();
                 }
-            } finally {
-                if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
+                return;
             }
-        }, () => {
-            if (isManualClick) showAlert('Permiso de ubicación denegado o no disponible.', 'Ubicación', 'warning');
-            if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
-            
+
+            if (btnLocateMe) {
+                btnLocateMe.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">refresh</span>';
+            }
+
+            // Opciones de GPS con timeout de seguridad
+            const options = {
+                enableHighAccuracy: false,
+                maximumAge: 300000,
+                timeout: 4000
+            };
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                try {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const data = await res.json();
+                    
+                    if (data && data.address) {
+                        const stateName = data.address.state || '';
+                        const cityName = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || '';
+                        
+                        window.isWaitingForInitialGps = false;
+                        applyDetectedLocation(stateName, cityName, isManualClick);
+                    } else {
+                        if (window.isWaitingForInitialGps) {
+                            window.isWaitingForInitialGps = false;
+                            forceAllStatesAndRender();
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error detectando ubicación:', e);
+                    if (window.isWaitingForInitialGps) {
+                        window.isWaitingForInitialGps = false;
+                        forceAllStatesAndRender();
+                    }
+                } finally {
+                    if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
+                }
+            }, () => {
+                if (isManualClick) showAlert('Permiso de ubicación denegado o no disponible.', 'Ubicación', 'warning');
+                if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
+                
+                if (window.isWaitingForInitialGps) {
+                    window.isWaitingForInitialGps = false;
+                    forceAllStatesAndRender();
+                }
+            }, options);
+        }
+
+        if (btnLocateMe) {
+            btnLocateMe.addEventListener('click', () => detectUserLocation(true));
+        }
+        
+        // 1. Carga inmediata desde caché
+        const cachedLocationStr = localStorage.getItem('revista_last_location');
+        if (cachedLocationStr) {
+            try {
+                const cachedLocation = JSON.parse(cachedLocationStr);
+                window.isWaitingForInitialGps = false;
+                applyDetectedLocation(cachedLocation.state, cachedLocation.city, false);
+            } catch (e) { }
+        }
+        
+        // 2. Validación en segundo plano (GPS)
+        setTimeout(() => detectUserLocation(false), 300);
+
+        // 3. Timeout de seguridad por si el navegador congela la petición de GPS
+        setTimeout(() => {
             if (window.isWaitingForInitialGps) {
                 window.isWaitingForInitialGps = false;
                 forceAllStatesAndRender();
             }
-        }, options);
-    }
-
-    if (btnLocateMe) {
-        btnLocateMe.addEventListener('click', () => detectUserLocation(true));
-    }
-    
-    // 1. Carga inmediata desde caché
-    const cachedLocationStr = localStorage.getItem('revista_last_location');
-    if (cachedLocationStr) {
-        try {
-            const cachedLocation = JSON.parse(cachedLocationStr);
-            window.isWaitingForInitialGps = false;
-            applyDetectedLocation(cachedLocation.state, cachedLocation.city, false);
-        } catch (e) { }
-    }
-    
-    // 2. Validación en segundo plano (GPS ultra rápido)
-    setTimeout(() => detectUserLocation(false), 500);
+        }, 3500);
 
         const formCustomMake = document.getElementById('form-custom-make');
         const formCustomModel = document.getElementById('form-custom-model');
