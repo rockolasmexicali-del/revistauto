@@ -350,7 +350,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hook up database sync event to refresh the UI automatically
     window.onServerDataSynced = function() {
-        renderFeed();
+        const viewInicio = document.getElementById('view-inicio');
+        // Evitamos barajear los autos si el usuario está viendo la pantalla de inicio
+        if (viewInicio && !viewInicio.classList.contains('active')) {
+            renderFeed();
+        }
+        
         if (typeof renderMyListings === 'function') renderMyListings();
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
