@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS public.listings (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 2.5 COMANDOS PARA ACTUALIZAR LA TABLA EXISTENTE CON NUEVAS COLUMNAS (EJECÚTALOS SI TE FALTA ALGUNA)
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS engine TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS ac TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS legal TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS trim TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS publisher_id TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS published_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_renewed_month TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS payment_status TEXT;
 -- 3. Habilitar la búsqueda rápida e índices
 CREATE INDEX IF NOT EXISTS idx_listings_status ON public.listings(status);
 CREATE INDEX IF NOT EXISTS idx_listings_make ON public.listings(make);

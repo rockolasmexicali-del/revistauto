@@ -266,6 +266,7 @@ class Database {
                 mileage: listing.mileage !== undefined && listing.mileage !== null ? String(listing.mileage) : '',
                 legal: listing.legal || '',
                 ac: listing.ac || '',
+                trim: listing.trim || '',
                 description: listing.description || '',
                 seller_name: listing.seller_name || listing.phone || '',
                 seller_phone: listing.phone || '',
