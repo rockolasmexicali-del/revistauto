@@ -420,6 +420,9 @@
                         <span><span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">autorenew</span> Renovaciones</span>
                         <span id="sidebar-renewals-badge" class="badge-count" style="background: var(--danger-color); color: white; border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; display: none;">0</span>
                     </button>
+                    <button class="dashboard-tab" data-tab="tab-pagos" id="sidebar-tab-pagos">
+                        <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">credit_card</span> Métodos de Pago
+                    </button>
                     <button class="dashboard-tab" data-tab="tab-finanzas" id="sidebar-tab-finanzas">
                         <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">payments</span> Finanzas
                     </button>
@@ -465,47 +468,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="config-section" style="margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                            <div>
-                                <h4 style="margin: 0; color: #3b82f6; display: flex; align-items: center; gap: 6px;">
-                                    <span class="material-symbols-rounded" style="font-size: 20px;">payments</span> Costo Mensual Base
-                                </h4>
-                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Define el costo base de publicación por mes.</p>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.2rem; color: var(--text-muted);">$</span>
-                                <input type="number" id="admin-monthly-price" style="width: 100px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1.1rem; font-weight: bold; outline: none; text-align: right;" value="500">
-                                <button id="btn-save-price" class="primary-btn" style="padding: 8px 16px;">Guardar</button>
-                            </div>
-                        </div>
-
-                        <!-- Flex Container for Mercado Pago & Chart -->
+                        <!-- Flex Container for Chart -->
                         <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch;">
-                            <!-- Configuración de Mercado Pago -->
-                            <div class="config-section" style="flex: 1; min-width: 300px; padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; flex-direction: column;">
-                            <div style="display: flex; align-items: center; justify-content: flex-start; gap: 16px; margin-bottom: 12px;">
-                                <div>
-                                    <h4 style="margin: 0; color: var(--success-color); display: flex; align-items: center; gap: 6px;">
-                                        <span class="material-symbols-rounded" style="font-size: 20px;">credit_card</span> Habilitar Pagos (Mercado Pago)
-                                    </h4>
-                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Activa la pasarela de pagos con tarjeta para los clientes.</p>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="admin-mp-enabled">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                            <div id="admin-mp-credentials" style="display: none; flex-direction: column; gap: 12px; padding-top: 12px; border-top: 1px dashed rgba(16, 185, 129, 0.3);">
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label style="font-size: 0.85rem;">Public Key (Frontend)</label>
-                                    <input type="text" id="admin-mp-public-key" placeholder="TEST-xxxx-xxxx-xxxx" style="width: 100%; max-width: 600px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label style="font-size: 0.85rem;">Access Token (Backend)</label>
-                                    <input type="password" id="admin-mp-access-token" placeholder="TEST-xxxx-xxxx-xxxx" style="width: 100%; max-width: 600px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
-                                </div>
-                            </div>
-                        </div>
 
                         <div class="chart-section" style="flex: 1; min-width: 300px; background: var(--surface-color); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
@@ -596,6 +560,58 @@
                         </div>
                         <div id="renewals-list" class="admin-list">
                             <!-- JS injected -->
+                        </div>
+                    </div>
+
+                    <!-- Tab: Métodos de Pago -->
+                    <div id="tab-pagos" class="dashboard-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px;">
+                            <h3 style="margin:0;">Configuración de Pagos y Cobros</h3>
+                        </div>
+
+                        <div class="config-section" style="margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h4 style="margin: 0; color: #3b82f6; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-rounded" style="font-size: 20px;">payments</span> Costo Mensual Base
+                                </h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Define el costo base de publicación por mes.</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2rem; color: var(--text-muted);">$</span>
+                                <input type="number" id="admin-monthly-price" style="width: 100px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1.1rem; font-weight: bold; outline: none; text-align: right;" value="500">
+                                <button id="btn-save-price" class="primary-btn" style="padding: 8px 16px;">Guardar</button>
+                            </div>
+                        </div>
+
+                        <!-- Configuración de Mercado Pago -->
+                        <div class="config-section" style="padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; flex-direction: column;">
+                            <div style="display: flex; align-items: center; justify-content: flex-start; gap: 16px; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="margin: 0; color: var(--success-color); display: flex; align-items: center; gap: 6px;">
+                                        <span class="material-symbols-rounded" style="font-size: 20px;">credit_card</span> Habilitar Pagos (Mercado Pago)
+                                    </h4>
+                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Activa la pasarela de pagos con tarjeta para los clientes.</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="admin-mp-enabled">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="admin-mp-credentials" style="display: none; flex-direction: column; gap: 12px; padding-top: 12px; border-top: 1px dashed rgba(16, 185, 129, 0.3);">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem;">Public Key (Frontend)</label>
+                                    <input type="text" id="admin-mp-public-key" readonly placeholder="TEST-xxxx-xxxx-xxxx" style="width: 100%; max-width: 600px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.1); color: var(--text-muted); font-size: 0.9rem; outline: none; opacity: 0.7; pointer-events: none;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem;">Access Token (Backend)</label>
+                                    <input type="password" id="admin-mp-access-token" readonly placeholder="TEST-xxxx-xxxx-xxxx" style="width: 100%; max-width: 600px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.1); color: var(--text-muted); font-size: 0.9rem; outline: none; opacity: 0.7; pointer-events: none;">
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <button id="btn-toggle-mp-credentials" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; padding: 8px 16px; display: inline-flex; align-items: center; gap: 6px;">
+                                        <span class="material-symbols-rounded" style="font-size: 16px;">lock</span> Editar Credenciales
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

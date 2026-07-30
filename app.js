@@ -3646,6 +3646,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Lógica para Botón de Editar Credenciales de Mercado Pago
+    const btnToggleMpCredentials = document.getElementById('btn-toggle-mp-credentials');
+    const mpPubKeyInput = document.getElementById('admin-mp-public-key');
+    const mpAccTokenInput = document.getElementById('admin-mp-access-token');
+
+    if (btnToggleMpCredentials && mpPubKeyInput && mpAccTokenInput) {
+        btnToggleMpCredentials.addEventListener('click', () => {
+            const isReadonly = mpPubKeyInput.hasAttribute('readonly');
+            
+            if (isReadonly) {
+                // Desbloquear para edición
+                mpPubKeyInput.removeAttribute('readonly');
+                mpAccTokenInput.removeAttribute('readonly');
+                mpPubKeyInput.style.pointerEvents = 'auto';
+                mpAccTokenInput.style.pointerEvents = 'auto';
+                mpPubKeyInput.style.opacity = '1';
+                mpAccTokenInput.style.opacity = '1';
+                mpPubKeyInput.style.background = 'var(--surface-light)';
+                mpAccTokenInput.style.background = 'var(--surface-light)';
+                mpPubKeyInput.style.color = 'var(--text-main)';
+                mpAccTokenInput.style.color = 'var(--text-main)';
+                mpAccTokenInput.type = 'text'; // Mostrar token temporalmente
+                
+                btnToggleMpCredentials.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">lock_open</span> Guardar y Bloquear';
+                btnToggleMpCredentials.style.background = 'var(--success-color)';
+                btnToggleMpCredentials.style.color = 'white';
+            } else {
+                // Guardar y volver a bloquear
+                if (btnSavePrice) {
+                    btnSavePrice.click(); // Reutilizamos la lógica de guardado
+                }
+                
+                mpPubKeyInput.setAttribute('readonly', 'readonly');
+                mpAccTokenInput.setAttribute('readonly', 'readonly');
+                mpPubKeyInput.style.pointerEvents = 'none';
+                mpAccTokenInput.style.pointerEvents = 'none';
+                mpPubKeyInput.style.opacity = '0.7';
+                mpAccTokenInput.style.opacity = '0.7';
+                mpPubKeyInput.style.background = 'rgba(0,0,0,0.1)';
+                mpAccTokenInput.style.background = 'rgba(0,0,0,0.1)';
+                mpPubKeyInput.style.color = 'var(--text-muted)';
+                mpAccTokenInput.style.color = 'var(--text-muted)';
+                mpAccTokenInput.type = 'password'; // Ocultar token nuevamente
+                
+                btnToggleMpCredentials.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">lock</span> Editar Credenciales';
+                btnToggleMpCredentials.style.background = 'var(--surface-light)';
+                btnToggleMpCredentials.style.color = 'var(--text-main)';
+            }
+        });
+    }
+
     // --- Admin Polling (Real-time updates) ---
     setInterval(() => {
         if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
