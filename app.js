@@ -2070,7 +2070,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 return `
-                    <div class="my-listing-card" style="cursor: default;">
+                    <div class="my-listing-card" style="cursor: pointer;" onclick="if(!event.target.closest('button')) window.openAdDetails('${ad.id}')">
                         <div class="card-img-carousel" style="width:100px; height:100px; flex-shrink:0; background:#000;">
                             <img src="${firstImg}" alt="Ad" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
