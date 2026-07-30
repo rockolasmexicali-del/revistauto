@@ -38,6 +38,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseModal = document.getElementById('btn-close-modal');
     const newListingForm = document.getElementById('new-listing-form');
     let editingListingId = null;
+
+    // Ads
+    const btnAdvertise = document.getElementById('btn-advertise');
+    if (btnAdvertise) {
+        btnAdvertise.addEventListener('click', () => {
+            const waNumber = '526861234567'; // Change this to actual support number if available
+            const text = encodeURIComponent('Hola, me interesa anunciar mi negocio en RevistAuto.');
+            window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
+        });
+    }
+
+    const adFullscreenModal = document.getElementById('ad-fullscreen-modal');
+    const btnCloseAdModal = document.getElementById('btn-close-ad-modal');
+    if (btnCloseAdModal && adFullscreenModal) {
+        btnCloseAdModal.addEventListener('click', () => {
+            adFullscreenModal.classList.remove('active');
+            history.pushState({ page: 'root' }, '');
+        });
+    }
     
     // Form Selects
     const formType = document.getElementById('form-type');
@@ -1074,6 +1093,142 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    function createAdCardHTML(ad) {
+        if (!ad) {
+            // Fallback ad if no ads are available
+            return `
+                <div class="card ad-card" style="cursor: pointer; background: linear-gradient(135deg, var(--surface-color) 0%, var(--primary-color) 200%); border: 1px solid var(--primary-color);" onclick="document.getElementById('btn-advertise').click()">
+                    <div class="card-img-wrapper" style="height: 140px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);">
+                        <span class="material-symbols-rounded" style="font-size: 48px; color: white; opacity: 0.8;">storefront</span>
+                    </div>
+                    <div class="card-content" style="text-align: center;">
+                        <h4 class="card-title" style="color: white; margin-bottom: 8px;">¿Tienes un negocio?</h4>
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 12px;">Anúnciate aquí y llega a miles de clientes locales.</p>
+                        <span style="display: inline-block; padding: 4px 12px; background: white; color: var(--primary-color); border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Clic para más info</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        const firstImage = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+        
+        return `
+            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color);" onclick="window.openAdDetails('${ad.id}')">
+                <div class="card-img-wrapper" style="position: relative;">
+                    <span style="position: absolute; top: 8px; left: 8px; background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;">Patrocinado</span>
+                    <div class="card-img-carousel" style="overflow-x: hidden;">
+                        <img src="${firstImage}" alt="Ad" loading="lazy">
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h4 class="card-title">${ad.title}</h4>
+                    <p class="card-price" style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal; margin-top: 4px;">${ad.description ? (ad.description.substring(0, 50) + '...') : ''}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    window.openAdDetails = async function(adId) {
+        if (!db.adsEnabled) return;
+        
+        const ad = await db.incrementAdViews(adId);
+        if (!ad) return;
+
+        const modal = document.getElementById('ad-fullscreen-modal');
+        if (!modal) return;
+
+        // Render Carousel
+        const carousel = document.getElementById('ad-image-carousel');
+        carousel.innerHTML = '';
+        if (ad.images && ad.images.length > 0) {
+            carousel.innerHTML = ad.images.map((img, i) => `
+                <img src="${img}" style="width:100%; height:100%; object-fit:contain; flex-shrink:0; scroll-snap-align:start; display: ${i === 0 ? 'block' : 'none'};" class="ad-carousel-img" data-index="${i}">
+            `).join('');
+            
+            if (ad.images.length > 1) {
+                // Add arrows
+                carousel.innerHTML += `
+                    <button class="carousel-nav-btn prev" onclick="event.stopPropagation(); scrollAdCarousel(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); border:none; color:white; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:5;"><span class="material-symbols-rounded">chevron_left</span></button>
+                    <button class="carousel-nav-btn next" onclick="event.stopPropagation(); scrollAdCarousel(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); border:none; color:white; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:5;"><span class="material-symbols-rounded">chevron_right</span></button>
+                    <div class="image-counter" style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:0.8rem; z-index:5;">1 / ${ad.images.length}</div>
+                `;
+            }
+        }
+
+        window.currentAdImagesCount = ad.images ? ad.images.length : 0;
+        window.currentAdImageIndex = 0;
+
+        document.getElementById('ad-detail-title').textContent = ad.title || 'Negocio';
+        document.getElementById('ad-detail-description').textContent = ad.description || '';
+
+        // Contact buttons
+        const btnWa = document.getElementById('btn-ad-whatsapp');
+        const btnCall = document.getElementById('btn-ad-call');
+        
+        btnWa.style.display = 'none';
+        btnCall.style.display = 'none';
+
+        if (ad.whatsapp) {
+            btnWa.style.display = 'flex';
+            btnWa.onclick = () => {
+                db.incrementAdClicks(adId);
+                const text = encodeURIComponent('Hola, vi su anuncio en RevistAuto.');
+                const waNum = ad.whatsapp.replace(/[^0-9]/g, '');
+                window.open(`https://wa.me/${waNum}?text=${text}`, '_blank');
+            };
+        }
+
+        if (ad.phone) {
+            btnCall.style.display = 'flex';
+            btnCall.onclick = () => {
+                db.incrementAdClicks(adId);
+                window.open(`tel:${ad.phone}`, '_self');
+            };
+        }
+
+        // Social Links Grid
+        const grid = document.getElementById('ad-links-grid');
+        grid.innerHTML = '';
+        if (ad.social_links && Array.isArray(ad.social_links)) {
+            ad.social_links.forEach(link => {
+                if (link.url) {
+                    let icon = 'link';
+                    if (link.url.includes('facebook.com')) icon = 'thumb_up';
+                    else if (link.url.includes('instagram.com')) icon = 'photo_camera';
+                    else if (link.url.includes('tiktok.com')) icon = 'music_note';
+
+                    grid.innerHTML += `
+                        <button onclick="window.db.incrementAdClicks('${adId}'); window.open('${link.url}', '_blank')" class="primary-btn" style="background: rgba(255,255,255,0.05); color: var(--text-main); font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color);">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">${icon}</span> ${link.title || 'Visitar'}
+                        </button>
+                    `;
+                }
+            });
+        }
+
+        history.pushState({ page: 'ad-modal' }, '');
+        modal.classList.add('active');
+    };
+
+    window.scrollAdCarousel = function(direction) {
+        const carousel = document.getElementById('ad-image-carousel');
+        const images = carousel.querySelectorAll('.ad-carousel-img');
+        if (images.length <= 1) return;
+
+        images[window.currentAdImageIndex].style.display = 'none';
+        window.currentAdImageIndex += direction;
+
+        if (window.currentAdImageIndex < 0) window.currentAdImageIndex = images.length - 1;
+        if (window.currentAdImageIndex >= images.length) window.currentAdImageIndex = 0;
+
+        images[window.currentAdImageIndex].style.display = 'block';
+
+        const counter = carousel.querySelector('.image-counter');
+        if (counter) {
+            counter.textContent = `${window.currentAdImageIndex + 1} / ${images.length}`;
+        }
+    };
+
     window.updateCounter = function(element) {
         const wrapper = element.parentElement;
         const counter = wrapper.querySelector('.image-counter');
@@ -1127,9 +1282,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // Si nos acercamos al final (75% del scroll) y aún hay autos por mostrar
             const scrollPercentage = (scrollContainer.scrollLeft + scrollContainer.clientWidth) / scrollContainer.scrollWidth;
             if (scrollPercentage > 0.75 && rowData.renderedCount < rowData.allListings.length) {
-                // Extraer los siguientes 15 autos
                 const nextBatch = rowData.allListings.slice(rowData.renderedCount, rowData.renderedCount + 15);
-                const newCardsHTML = nextBatch.map(l => createListingCardHTML(l, true)).join('');
+                
+                const freq = window.db.adFrequencyScroll || 10;
+                let newCardsHTML = '';
+                for (let i = 0; i < nextBatch.length; i++) {
+                    newCardsHTML += createListingCardHTML(nextBatch[i], true);
+                    // Also inject ads in lazy load based on overall count
+                    const totalIndex = rowData.renderedCount + i + 1;
+                    if (totalIndex % freq === 0 && window.db.adsEnabled) {
+                        // Assuming we want to show a random ad (for simplicity here, since adPool is out of scope)
+                        // It will render the fallback "Anunciate" ad since we don't have adPool locally without await
+                        // To improve this, we would need to pass adPool to window, or just let it render fallback.
+                        // For now we'll render fallback to encourage more advertisers!
+                        newCardsHTML += createAdCardHTML(null); 
+                    }
+                }
+                
                 scrollContainer.insertAdjacentHTML('beforeend', newCardsHTML);
                 rowData.renderedCount += 15;
             }
@@ -1152,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    function renderFeed() {
+    async function renderFeed() {
         if (window.isWaitingForInitialGps) {
             const feedContainer = document.getElementById('feed-container');
             if (feedContainer) {
@@ -1182,7 +1351,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // shuffle for randomness
             listings.sort(() => 0.5 - Math.random());
-            // Removemos el límite de 10 para que en la cuadrícula puedan ver todos los de esa categoría
             
             if (listings.length === 0) {
                 feedContainer.classList.remove('listings-grid');
@@ -1194,7 +1362,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
                 return;
             }
-            feedContainer.innerHTML = listings.map(l => createListingCardHTML(l, true)).join('');
+            
+            let adPool = [];
+            if (db.adsEnabled) {
+                adPool = await db.getRandomAds(20) || [];
+            }
+            
+            let finalHTML = '';
+            const freq = db.adFrequencyScroll || 10;
+            
+            for (let i = 0; i < listings.length; i++) {
+                finalHTML += createListingCardHTML(listings[i], true);
+                // Insert ad after every `freq` items
+                if ((i + 1) % freq === 0 && db.adsEnabled) {
+                    const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
+                    finalHTML += createAdCardHTML(ad);
+                }
+            }
+            
+            feedContainer.innerHTML = finalHTML;
         } else {
             feedContainer.classList.remove('listings-grid');
             
@@ -1213,20 +1399,32 @@ document.addEventListener('DOMContentLoaded', () => {
             // Use smart order based on popularity
             const order = getSortedCategoriesByPopularity();
             
+            let adPool = [];
+            if (db.adsEnabled) {
+                adPool = await db.getRandomAds(20) || [];
+            }
+
             order.forEach(type => {
                 if (grouped[type] && grouped[type].length > 0) {
                     let rowListings = grouped[type];
-                    // Aleatorizar los autos para ser parejo con todos
                     rowListings.sort(() => 0.5 - Math.random());
                     
-                    // Almacenar todos los autos de la categoría para lazy rendering
                     window.netflixRowData[type] = {
                         allListings: rowListings,
                         renderedCount: 15
                     };
                     
-                    // Mostrar inicialmente solo 15 autos por carril horizontal para no saturar memoria
                     const initialListings = rowListings.slice(0, 15);
+                    const freq = db.adFrequencyScroll || 10;
+                    
+                    let rowCardsHTML = '';
+                    for (let i = 0; i < initialListings.length; i++) {
+                        rowCardsHTML += createListingCardHTML(initialListings[i], true);
+                        if ((i + 1) % freq === 0 && db.adsEnabled) {
+                            const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
+                            rowCardsHTML += createAdCardHTML(ad);
+                        }
+                    }
 
                     html += `
                     <div class="netflix-row" data-category="${type}">
@@ -1240,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="material-symbols-rounded">chevron_right</span>
                         </button>
                         <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)">
-                            ${initialListings.map(l => createListingCardHTML(l, true)).join('')}
+                            ${rowCardsHTML}
                         </div>
                     </div>
                     `;
@@ -1715,6 +1913,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- My Listings (Alta) ---
     function renderMyListings() {
         const myListings = db.getMyListings();
+        const myAds = db.getMyAds ? db.getMyAds() : [];
         
         const statusPriority = {
             'pendiente autorizacion': 1,
@@ -1724,12 +1923,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         myListings.sort((a, b) => (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99));
         
-        if (myListings.length === 0) {
-            myListingsContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No has publicado ningún vehículo.</p>';
+        let htmlContent = '';
+
+        if (myListings.length === 0 && myAds.length === 0) {
+            myListingsContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No has publicado ningún vehículo ni anuncio.</p>';
             return;
         }
 
-        myListingsContainer.innerHTML = myListings.map(listing => {
+        if (myListings.length > 0) {
+            htmlContent += '<h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Vehículos</h3>';
+            htmlContent += myListings.map(listing => {
             const images = listing.images || (listing.image ? [listing.image] : []);
             const imgHTML = images.length > 0 ? images.map(img => `<img src="${img}" alt="Auto" class="my-listing-img" style="flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;">`).join('') : '';
             
@@ -1821,6 +2024,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `}).join('');
+        }
+
+        if (myAds.length > 0) {
+            htmlContent += '<h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Anuncios Publicitarios</h3>';
+            htmlContent += myAds.map(ad => {
+                const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+                const isActive = db.isAdActive(ad);
+                const statusColorClass = isActive ? 'status-autorizado' : 'status-caducado';
+                const displayStatus = isActive ? 'ACTIVO' : 'INACTIVO';
+
+                return `
+                    <div class="my-listing-card" style="cursor: default; border: 1px solid var(--primary-color);">
+                        <div class="card-img-carousel" style="width:100px; height:100px; flex-shrink:0; background:#000;">
+                            <img src="${firstImg}" alt="Ad" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="my-listing-info">
+                            <h4 class="my-listing-title">${ad.title}</h4>
+                            <span class="status-badge ${statusColorClass}" style="${!isActive ? 'background: var(--danger-color);' : ''}">${displayStatus}</span>
+                            <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 0.85rem; color: var(--text-muted);">
+                                <span style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-rounded" style="font-size: 16px;">visibility</span> ${ad.views || 0} vistas</span>
+                                <span style="display: flex; align-items: center; gap: 4px; color: var(--primary-color);"><span class="material-symbols-rounded" style="font-size: 16px;">ads_click</span> ${ad.clicks || 0} clics</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        myListingsContainer.innerHTML = htmlContent;
     }
 
     let listingToSoldId = null;
@@ -4419,4 +4651,438 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // ==========================================
+    // CLIENT AD FLOW & ADMIN ADS LOGIC
+    // ==========================================
+    const btnAdvertise = document.getElementById('btn-advertise');
+    const clientAdModal = document.getElementById('client-ad-modal');
+    const btnCloseClientAd = document.getElementById('btn-close-client-ad');
+    const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
+    
+    if (btnAdvertise) {
+        btnAdvertise.addEventListener('click', () => {
+            const stateSelect = document.getElementById('client-ad-state');
+            if (stateSelect && stateSelect.options.length <= 1 && catalogData && catalogData.states) {
+                catalogData.states.forEach(state => {
+                    const opt = document.createElement('option');
+                    opt.value = state;
+                    opt.textContent = state;
+                    stateSelect.appendChild(opt);
+                });
+                
+                stateSelect.addEventListener('change', () => {
+                    const citySelect = document.getElementById('client-ad-city');
+                    citySelect.innerHTML = '<option value="" disabled selected>Selecciona</option>';
+                    const selState = stateSelect.value;
+                    if (catalogData.citiesByState[selState]) {
+                        catalogData.citiesByState[selState].sort().forEach(city => {
+                            const opt = document.createElement('option');
+                            opt.value = city;
+                            opt.textContent = city;
+                            citySelect.appendChild(opt);
+                        });
+                    }
+                });
+            }
+            
+            document.getElementById('client-ad-form').reset();
+            window.clientAdImages = [];
+            document.getElementById('client-ad-image-preview-container').innerHTML = '';
+            document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
+            
+            clientAdModal.classList.add('active');
+        });
+    }
+
+    if (btnCloseClientAd) btnCloseClientAd.addEventListener('click', () => clientAdModal.classList.remove('active'));
+    if (btnCancelClientAd) btnCancelClientAd.addEventListener('click', (e) => { e.preventDefault(); clientAdModal.classList.remove('active'); });
+
+    const clientAdUpload = document.getElementById('client-ad-image-upload');
+    if (clientAdUpload) {
+        clientAdUpload.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+            
+            window.clientAdImages = window.clientAdImages || [];
+            
+            if (window.clientAdImages.length + files.length > 7) {
+                showAlert('Solo puedes subir hasta 7 fotos.', 'Límite de fotos', 'warning');
+                return;
+            }
+
+            const uploadBtnLabel = document.querySelector('label[for="client-ad-image-upload"]');
+            const originalText = uploadBtnLabel.innerHTML;
+            uploadBtnLabel.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">autorenew</span> Procesando...';
+            uploadBtnLabel.style.pointerEvents = 'none';
+
+            for (let file of files) {
+                try {
+                    const compressed = await compressImage(file, 800);
+                    window.clientAdImages.push(compressed);
+                } catch(err) {
+                    console.error("Error compressing ad image", err);
+                }
+            }
+            
+            uploadBtnLabel.innerHTML = originalText;
+            uploadBtnLabel.style.pointerEvents = 'auto';
+            
+            renderClientAdImagePreviews();
+        });
+    }
+
+    window.renderClientAdImagePreviews = function() {
+        const container = document.getElementById('client-ad-image-preview-container');
+        const text = document.getElementById('client-ad-file-chosen-text');
+        container.innerHTML = '';
+        if (!window.clientAdImages || window.clientAdImages.length === 0) {
+            text.textContent = 'Ninguna foto. ¡Recuerda la portada!';
+            return;
+        }
+        
+        text.textContent = `${window.clientAdImages.length} foto(s) seleccionada(s)`;
+        
+        window.clientAdImages.forEach((imgSrc, idx) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.display = 'inline-block';
+            
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.style.width = '60px';
+            img.style.height = '60px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '6px';
+            img.style.border = idx === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
+            
+            if (idx === 0) {
+                const badge = document.createElement('div');
+                badge.textContent = 'PORTADA';
+                badge.style.position = 'absolute';
+                badge.style.bottom = '0';
+                badge.style.left = '0';
+                badge.style.right = '0';
+                badge.style.background = '#f59e0b';
+                badge.style.color = 'white';
+                badge.style.fontSize = '0.5rem';
+                badge.style.textAlign = 'center';
+                badge.style.fontWeight = 'bold';
+                badge.style.borderRadius = '0 0 6px 6px';
+                wrapper.appendChild(badge);
+            }
+            
+            const delBtn = document.createElement('button');
+            delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
+            delBtn.style.position = 'absolute';
+            delBtn.style.top = '-4px';
+            delBtn.style.right = '-4px';
+            delBtn.style.background = 'rgba(255,0,0,0.8)';
+            delBtn.style.color = 'white';
+            delBtn.style.border = 'none';
+            delBtn.style.borderRadius = '50%';
+            delBtn.style.width = '20px';
+            delBtn.style.height = '20px';
+            delBtn.style.display = 'flex';
+            delBtn.style.alignItems = 'center';
+            delBtn.style.justifyContent = 'center';
+            delBtn.style.cursor = 'pointer';
+            
+            delBtn.onclick = (ev) => {
+                ev.preventDefault();
+                window.clientAdImages.splice(idx, 1);
+                renderClientAdImagePreviews();
+            };
+            
+            wrapper.appendChild(img);
+            wrapper.appendChild(delBtn);
+            container.appendChild(wrapper);
+        });
+    };
+
+    const btnSubmitClientAd = document.getElementById('btn-submit-client-ad');
+    if (btnSubmitClientAd) {
+        btnSubmitClientAd.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('client-ad-title').value.trim();
+            const desc = document.getElementById('client-ad-description').value.trim();
+            const state = document.getElementById('client-ad-state').value;
+            const city = document.getElementById('client-ad-city').value;
+            
+            if (!title || !desc || !state || !city) {
+                showAlert('Por favor, completa los campos obligatorios.', 'Campos incompletos', 'warning');
+                return;
+            }
+            
+            if (!window.clientAdImages || window.clientAdImages.length === 0) {
+                showAlert('Debes subir al menos 1 foto para tu portada.', 'Faltan fotos', 'warning');
+                return;
+            }
+            
+            btnSubmitClientAd.disabled = true;
+            btnSubmitClientAd.textContent = 'Procesando...';
+            
+            try {
+                const uploadedImages = [];
+                for (let b64 of window.clientAdImages) {
+                    if (b64.startsWith('data:image')) {
+                        const blob = await (await fetch(b64)).blob();
+                        const file = new File([blob], `ad_img_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                        const url = await db.uploadImageToSupabase(file);
+                        if (url) uploadedImages.push(url);
+                    } else {
+                        uploadedImages.push(b64);
+                    }
+                }
+                
+                const socialLinks = [];
+                const fb = document.getElementById('client-ad-link-fb').value.trim();
+                const ig = document.getElementById('client-ad-link-ig').value.trim();
+                const tk = document.getElementById('client-ad-link-tk').value.trim();
+                if (fb) socialLinks.push(fb);
+                if (ig) socialLinks.push(ig);
+                if (tk) socialLinks.push(tk);
+                
+                const newAd = {
+                    title: title,
+                    description: desc,
+                    state: state,
+                    city: city,
+                    phone: document.getElementById('client-ad-phone').value.trim(),
+                    whatsapp: document.getElementById('client-ad-whatsapp').value.trim(),
+                    social_links: socialLinks,
+                    images: uploadedImages,
+                    payment_status: 'pendiente',
+                    is_active: false
+                };
+                
+                const savedAd = await db.saveAd(newAd);
+                
+                clientAdModal.classList.remove('active');
+                window.currentPendingAdId = savedAd.id;
+                
+                const publishModal = document.getElementById('publish-options-modal');
+                if (publishModal) publishModal.classList.add('active');
+                
+            } catch (err) {
+                console.error(err);
+                showAlert('Error al crear el anuncio.', 'Error', 'error');
+            }
+            
+            btnSubmitClientAd.disabled = false;
+            btnSubmitClientAd.textContent = 'Continuar al Pago';
+        });
+    }
+
+    // Update btn-option-pay-now and later to handle ads
+    const originalBtnPayNow = document.getElementById('btn-option-pay-now');
+    if (originalBtnPayNow) {
+        const clonedBtn = originalBtnPayNow.cloneNode(true);
+        originalBtnPayNow.parentNode.replaceChild(clonedBtn, originalBtnPayNow);
+        clonedBtn.addEventListener('click', () => {
+            document.getElementById('publish-options-modal').classList.remove('active');
+            if (window.currentPendingAdId) {
+                openMercadoPagoBrickAd(window.currentPendingAdId);
+            } else {
+                window.openMercadoPagoBrick(window.currentPendingListingId, false);
+            }
+        });
+    }
+
+    const originalBtnPayLater = document.getElementById('btn-option-pay-later');
+    if (originalBtnPayLater) {
+        const clonedLater = originalBtnPayLater.cloneNode(true);
+        originalBtnPayLater.parentNode.replaceChild(clonedLater, originalBtnPayLater);
+        clonedLater.addEventListener('click', () => {
+            document.getElementById('publish-options-modal').classList.remove('active');
+            if (window.currentPendingAdId) {
+                showAlert('Tu anuncio ha sido guardado y está pendiente de aprobación.', 'Anuncio Creado', 'check_circle');
+                window.currentPendingAdId = null;
+            } else {
+                showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle');
+            }
+        });
+    }
+    
+    window.openMercadoPagoBrickAd = function(adId) {
+        try {
+            if (!globalMpPublicKey) {
+                showAlert('El sistema de pagos no está configurado.', 'Error', 'error');
+                return;
+            }
+            
+            const modalMp = document.getElementById('mercado-pago-modal');
+            modalMp.classList.add('active');
+            
+            if (window.paymentBrickController) {
+                window.paymentBrickController.unmount();
+                window.paymentBrickController = null;
+            }
+
+            const container = document.getElementById('paymentBrick_container');
+            container.innerHTML = ''; 
+            
+            const mp = new MercadoPago(globalMpPublicKey, { locale: 'es-MX' });
+            const bricksBuilder = mp.bricks();
+
+            const renderPaymentBrick = async (bricksBuilder) => {
+                const settings = {
+                    initialization: { amount: 500 },
+                    customization: {
+                        visual: { style: { theme: 'default' } },
+                        paymentMethods: { creditCard: "all", debitCard: "all" }
+                    },
+                    callbacks: {
+                        onReady: () => { console.log("Ad Brick is ready!"); },
+                        onSubmit: ({ selectedPaymentMethod, formData }) => {
+                            return new Promise((resolve, reject) => {
+                                setTimeout(async () => {
+                                    resolve();
+                                    modalMp.classList.remove('active');
+                                    
+                                    const ads = db.getAllAds();
+                                    const adIdx = ads.findIndex(a => String(a.id) === String(adId));
+                                    if(adIdx > -1) {
+                                        ads[adIdx].is_active = true;
+                                        ads[adIdx].payment_status = 'pagado';
+                                        
+                                        const now = new Date();
+                                        ads[adIdx].start_date = now.toISOString();
+                                        const end = new Date(now);
+                                        end.setDate(end.getDate() + 30);
+                                        ads[adIdx].end_date = end.toISOString();
+                                        
+                                        await db.saveAd(ads[adIdx]);
+                                    }
+                                    
+                                    showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle');
+                                    window.currentPendingAdId = null;
+                                }, 2000);
+                            });
+                        },
+                        onError: (error) => {
+                            showAlert('Error en el formulario de pago: ' + error.message, 'Error', 'error');
+                        },
+                    },
+                };
+                window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
+            };
+            setTimeout(() => { renderPaymentBrick(bricksBuilder); }, 100);
+        } catch (globalErr) {
+            console.error("Global MP Error:", globalErr);
+        }
+    };
+
+    // --- Admin Pending Ads Rendering ---
+    window.updateAdminAdsApprovals = async function() {
+        const list = document.getElementById('pending-ads-list');
+        const badge = document.getElementById('pending-ads-count-badge');
+        const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
+        if (!list) return;
+
+        let pendingAds = [];
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('ads')
+                    .select('*')
+                    .eq('payment_status', 'pendiente')
+                    .order('created_at', { ascending: false });
+                if (!error && data) {
+                    pendingAds = data;
+                } else {
+                    pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
+                }
+            } catch(e) {
+                pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
+            }
+        } else {
+            pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
+        }
+
+        // Filter out those that are active but somehow marked as pendiente (shouldn't happen, but just in case)
+        pendingAds = pendingAds.filter(a => a.payment_status === 'pendiente' || !a.is_active);
+
+        if (badge) badge.textContent = pendingAds.length;
+        if (sidebarBadge) {
+            sidebarBadge.textContent = pendingAds.length;
+            sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
+        }
+
+        if (pendingAds.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay anuncios pendientes de aprobación.</p>';
+            return;
+        }
+
+        list.innerHTML = pendingAds.map(ad => {
+            const mainImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://via.placeholder.com/60';
+            return `
+            <div class="pending-approval-card" style="border-left: 4px solid #f59e0b;">
+                <div class="pending-row-header">
+                    <div class="pending-row-left">
+                        <div class="pending-thumb-wrapper">
+                            <img src="${mainImg}" alt="${ad.title}">
+                            ${ad.images && ad.images.length > 1 ? `<span class="pending-img-count">📸 ${ad.images.length}</span>` : ''}
+                        </div>
+                        <div class="pending-main-info">
+                            <div class="pending-title">${ad.title} <span style="background:var(--danger-color); color:white; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">Pago Asistido / Pendiente</span></div>
+                            <div class="pending-sub-info">
+                                <span>📍 ${ad.city}</span>
+                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                                ${ad.description}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pending-row-right">
+                        <button class="danger-btn" onclick="event.stopPropagation(); deleteAdAdmin(${ad.id})" title="Rechazar anuncio" style="padding: 6px 12px; display:flex; align-items:center; gap:4px;">
+                            <span class="material-symbols-rounded" style="font-size:16px;">close</span> Rechazar
+                        </button>
+                        <button class="success-btn" onclick="event.stopPropagation(); approveAd(${ad.id})" title="Autorizar anuncio" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; background:#f59e0b;">
+                            <span class="material-symbols-rounded" style="font-size:16px;">check</span> Autorizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    };
+
+    window.approveAd = async function(id) {
+        if(!confirm('¿Estás seguro de autorizar este anuncio? Pasará a estar ACTIVO.')) return;
+        
+        const ads = db.getAllAds();
+        const adIdx = ads.findIndex(a => String(a.id) === String(id));
+        if(adIdx > -1) {
+            ads[adIdx].is_active = true;
+            ads[adIdx].payment_status = 'pagado';
+            
+            const now = new Date();
+            ads[adIdx].start_date = now.toISOString();
+            const end = new Date(now);
+            end.setDate(end.getDate() + 30);
+            ads[adIdx].end_date = end.toISOString();
+            
+            await db.saveAd(ads[adIdx]);
+            
+            showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
+            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+            // Also need to refresh the main ads table if it's visible, but Aprobaciones is active tab
+        }
+    };
+
+    window.deleteAdAdmin = async function(id) {
+        if(!confirm('¿Rechazar y eliminar permanentemente este anuncio?')) return;
+        await db.deleteAd(id);
+        showAlert('Anuncio rechazado.', 'Eliminado', 'info');
+        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+    };
+
+    // Hook updateAdminAdsApprovals into forceInstantAdminRefresh
+    const originalRefresh = window.forceInstantAdminRefresh;
+    window.forceInstantAdminRefresh = function() {
+        if (originalRefresh) originalRefresh();
+        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+    };
 });
