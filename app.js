@@ -4653,43 +4653,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseClientAd = document.getElementById('btn-close-client-ad');
     const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
     
+    // Next step logic
+    window.nextAdStep = function(step) {
+        document.querySelectorAll('.ad-step').forEach(el => {
+            el.style.display = 'none';
+            el.classList.remove('active-step');
+        });
+        const target = document.getElementById('client-ad-step-' + step);
+        if (target) {
+            target.style.display = 'block';
+            target.classList.add('active-step');
+        }
+    };
+
     if (btnAdvertise) {
         btnAdvertise.addEventListener('click', () => {
-            const stateSelect = document.getElementById('client-ad-state');
-            if (stateSelect && stateSelect.options.length <= 1 && catalogData && catalogData.states) {
-                catalogData.states.forEach(state => {
-                    const opt = document.createElement('option');
-                    opt.value = state;
-                    opt.textContent = state;
-                    stateSelect.appendChild(opt);
-                });
-                
-                stateSelect.addEventListener('change', () => {
-                    const citySelect = document.getElementById('client-ad-city');
-                    citySelect.innerHTML = '<option value="" disabled selected>Selecciona</option>';
-                    const selState = stateSelect.value;
-                    if (catalogData.citiesByState[selState]) {
-                        catalogData.citiesByState[selState].sort().forEach(city => {
-                            const opt = document.createElement('option');
-                            opt.value = city;
-                            opt.textContent = city;
-                            citySelect.appendChild(opt);
-                        });
-                    }
-                });
-            }
-            
-            document.getElementById('client-ad-form').reset();
+            document.getElementById('client-ad-form-step2').reset();
             window.clientAdImages = [];
             document.getElementById('client-ad-image-preview-container').innerHTML = '';
             document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
+            document.getElementById('desc-char-counter').textContent = '0/120';
             
+            // Auto-fill State and City
+            const uState = document.getElementById('user-state').value;
+            let uCity = 'Todas';
+            const activeCityBtn = document.querySelector('#home-categories .category-chip.active'); // Might be used later, but wait...
+            // the city is usually selected via checkboxes or we just put the generic one:
+            if (window.selectedCities && window.selectedCities.length > 0) {
+                uCity = window.selectedCities[0];
+            }
+            
+            document.getElementById('client-ad-state').value = (uState && uState !== 'Todos') ? uState : 'Baja California';
+            document.getElementById('client-ad-city').value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
+            
+            // Reset Progress Bar
+            document.getElementById('client-ad-progress-container').style.display = 'none';
+            document.getElementById('client-ad-progress-bar').style.width = '0%';
+            document.getElementById('client-ad-progress-text').textContent = '0%';
+            
+            const btnSubmit = document.getElementById('btn-submit-client-ad');
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Confirmar Pago';
+            }
+
+            window.nextAdStep(1);
             clientAdModal.classList.add('active');
         });
     }
 
     if (btnCloseClientAd) btnCloseClientAd.addEventListener('click', () => clientAdModal.classList.remove('active'));
-    if (btnCancelClientAd) btnCancelClientAd.addEventListener('click', (e) => { e.preventDefault(); clientAdModal.classList.remove('active'); });
+
+    // Character counter for description
+    const adDesc = document.getElementById('client-ad-description');
+    if (adDesc) {
+        adDesc.addEventListener('input', (e) => {
+            const count = e.target.value.length;
+            document.getElementById('desc-char-counter').textContent = count + '/120';
+        });
+    }
+
+    // Auto-sync WhatsApp
+    const adPhone = document.getElementById('client-ad-phone');
+    const adWhatsapp = document.getElementById('client-ad-whatsapp');
+    let waManuallyEdited = false;
+    if (adWhatsapp) {
+        adWhatsapp.addEventListener('input', () => { waManuallyEdited = true; });
+    }
+    if (adPhone) {
+        adPhone.addEventListener('input', (e) => {
+            if (!waManuallyEdited && adWhatsapp) {
+                const val = e.target.value.replace(/\D/g, '');
+                adWhatsapp.value = val ? '52' + val : '';
+            }
+        });
+    }
 
     const clientAdUpload = document.getElementById('client-ad-image-upload');
     if (clientAdUpload) {
@@ -4800,11 +4838,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const title = document.getElementById('client-ad-title').value.trim();
             const desc = document.getElementById('client-ad-description').value.trim();
-            const state = document.getElementById('client-ad-state').value;
-            const city = document.getElementById('client-ad-city').value;
+            const state = document.getElementById('client-ad-state').value.trim();
+            const city = document.getElementById('client-ad-city').value.trim();
+            const phone = document.getElementById('client-ad-phone').value.trim();
+            const wa = document.getElementById('client-ad-whatsapp').value.trim();
             
-            if (!title || !desc || !state || !city) {
-                showAlert('Por favor, completa los campos obligatorios.', 'Campos incompletos', 'warning');
+            if (!title || !desc || !state || !city || !phone || !wa) {
+                showAlert('Por favor, completa los campos obligatorios en el Paso 2.', 'Campos incompletos', 'warning');
                 return;
             }
             
@@ -4814,11 +4854,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             btnSubmitClientAd.disabled = true;
-            btnSubmitClientAd.textContent = 'Procesando...';
+            btnSubmitClientAd.textContent = 'Subiendo anuncio...';
+            
+            const progressContainer = document.getElementById('client-ad-progress-container');
+            const progressBar = document.getElementById('client-ad-progress-bar');
+            const progressText = document.getElementById('client-ad-progress-text');
+            progressContainer.style.display = 'block';
             
             try {
                 const uploadedImages = [];
-                for (let b64 of window.clientAdImages) {
+                const totalImgs = window.clientAdImages.length;
+                
+                for (let i = 0; i < totalImgs; i++) {
+                    let b64 = window.clientAdImages[i];
                     if (b64.startsWith('data:image')) {
                         const blob = await (await fetch(b64)).blob();
                         const file = new File([blob], `ad_img_${Date.now()}.jpg`, { type: 'image/jpeg' });
@@ -4827,6 +4875,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         uploadedImages.push(b64);
                     }
+                    
+                    // Update progress
+                    const pct = Math.round(((i + 1) / totalImgs) * 90); // Up to 90% for images
+                    progressBar.style.width = pct + '%';
+                    progressText.textContent = pct + '%';
                 }
                 
                 const socialLinks = [];
@@ -4837,13 +4890,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ig) socialLinks.push(ig);
                 if (tk) socialLinks.push(tk);
                 
+                progressBar.style.width = '95%';
+                progressText.textContent = '95%';
+                
                 const newAd = {
                     title: title,
                     description: desc,
                     state: state,
                     city: city,
-                    phone: document.getElementById('client-ad-phone').value.trim(),
-                    whatsapp: document.getElementById('client-ad-whatsapp').value.trim(),
+                    phone: phone,
+                    whatsapp: wa,
                     social_links: socialLinks,
                     images: uploadedImages,
                     payment_status: 'pendiente',
@@ -4852,19 +4908,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const savedAd = await db.saveAd(newAd);
                 
-                clientAdModal.classList.remove('active');
-                window.currentPendingAdId = savedAd.id;
+                progressBar.style.width = '100%';
+                progressText.textContent = '100%';
                 
-                const publishModal = document.getElementById('publish-options-modal');
-                if (publishModal) publishModal.classList.add('active');
+                setTimeout(() => {
+                    clientAdModal.classList.remove('active');
+                    window.currentPendingAdId = savedAd.id;
+                    
+                    const publishModal = document.getElementById('publish-options-modal');
+                    if (publishModal) publishModal.classList.add('active');
+                    
+                    btnSubmitClientAd.disabled = false;
+                    btnSubmitClientAd.textContent = 'Confirmar Pago';
+                    progressContainer.style.display = 'none';
+                }, 500);
                 
             } catch (err) {
                 console.error(err);
                 showAlert('Error al crear el anuncio.', 'Error', 'error');
+                btnSubmitClientAd.disabled = false;
+                btnSubmitClientAd.textContent = 'Confirmar Pago';
+                progressContainer.style.display = 'none';
             }
-            
-            btnSubmitClientAd.disabled = false;
-            btnSubmitClientAd.textContent = 'Continuar al Pago';
         });
     }
 

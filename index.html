@@ -1116,59 +1116,83 @@
                 <button id="btn-close-client-ad" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
             </div>
             
-            <div style="background: rgba(245, 158, 11, 0.1); border: 2px solid #f59e0b; padding: 16px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;">
-                <span class="material-symbols-rounded" style="color: #f59e0b; font-size: 28px;">warning</span>
-                <p style="margin: 0; font-size: 0.95rem; color: #f59e0b; line-height: 1.5;">
-                    <strong>¡MUY IMPORTANTE!</strong> La <b>Primera Foto</b> que subas será tu <b>PORTADA</b>. 
-                    Debe contener <b>SOLO el nombre de tu empresa y a qué te dedicas</b> (Ej: MIRELES Mecánica General). 
-                    No incluyas letras pequeñas ni mucha información ahí porque no se podrá leer. Usa las fotos 2 al 7 para poner tus servicios, ofertas y detalles.
-                </p>
+            <!-- BLOCK 1: Warning -->
+            <div id="client-ad-step-1" class="ad-step active-step">
+                <div style="background: rgba(245, 158, 11, 0.1); border: 2px solid #f59e0b; padding: 16px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;">
+                    <span class="material-symbols-rounded" style="color: #f59e0b; font-size: 28px;">warning</span>
+                    <p style="margin: 0; font-size: 0.95rem; color: #f59e0b; line-height: 1.5;">
+                        <strong>¡MUY IMPORTANTE!</strong> La <b>Primera Foto</b> que subas será tu <b>PORTADA</b>. 
+                        Debe contener <b>SOLO el nombre de tu empresa y a qué te dedicas</b> (Ej: MIRELES Mecánica General). 
+                        No incluyas letras pequeñas ni mucha información ahí porque no se podrá leer. Usa las fotos 2 al 7 para poner tus servicios, ofertas y detalles.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="primary-btn" onclick="document.getElementById('client-ad-modal').classList.remove('active')" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(2)" style="background: var(--primary-color); color: white; flex: 1;">Siguiente <span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
+                </div>
             </div>
 
-            <div class="modal-body" style="overflow-y: auto; flex: 1; margin-bottom: 16px; padding-right: 8px;">
-                <form id="client-ad-form" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="form-group">
-                        <label>Nombre de tu Negocio *</label>
-                        <input type="text" id="client-ad-title" required placeholder="Ej. Frenos El Cholo" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
-                    </div>
-                    <div class="form-group">
-                        <label>Descripción y Servicios *</label>
-                        <textarea id="client-ad-description" required rows="3" placeholder="Describe lo que ofreces, horarios, etc." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;"></textarea>
-                    </div>
-                    
-                    <div class="form-row" style="display: flex; gap: 12px;">
-                        <div class="form-group half" style="flex:1;">
-                            <label>Estado *</label>
-                            <select id="client-ad-state" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
-                                <option value="" disabled selected>Selecciona</option>
-                            </select>
+            <!-- BLOCK 2: General Data -->
+            <div id="client-ad-step-2" class="ad-step" style="display: none;">
+                <div class="modal-body" style="overflow-y: auto; flex: 1; padding-right: 8px;">
+                    <form id="client-ad-form-step2" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="form-group">
+                            <label>Nombre de tu Negocio *</label>
+                            <input type="text" id="client-ad-title" required placeholder="Ej. Frenos El Cholo" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
                         </div>
-                        <div class="form-group half" style="flex:1;">
-                            <label>Ciudad *</label>
-                            <select id="client-ad-city" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
-                                <option value="" disabled selected>Selecciona</option>
-                            </select>
+                        <div class="form-group">
+                            <label style="display:flex; justify-content:space-between;"><span>Descripción y Servicios *</span> <span id="desc-char-counter" style="color:var(--text-muted); font-size:0.8rem;">0/120</span></label>
+                            <textarea id="client-ad-description" required rows="3" maxlength="120" placeholder="Describe lo que ofreces, horarios, etc." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;"></textarea>
                         </div>
-                    </div>
-                    
-                    <div class="form-row" style="display: flex; gap: 12px;">
-                        <div class="form-group half" style="flex:1;">
-                            <label>Teléfono (Para llamadas)</label>
-                            <input type="tel" id="client-ad-phone" placeholder="10 dígitos" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        
+                        <div class="form-row" style="display: flex; gap: 12px;">
+                            <div class="form-group half" style="flex:1;">
+                                <label>Estado (Detectado)</label>
+                                <input type="text" id="client-ad-state" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                            </div>
+                            <div class="form-group half" style="flex:1;">
+                                <label>Ciudad (Detectada)</label>
+                                <input type="text" id="client-ad-city" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                            </div>
                         </div>
-                        <div class="form-group half" style="flex:1;">
-                            <label>WhatsApp</label>
-                            <input type="tel" id="client-ad-whatsapp" placeholder="Con clave LADA" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        
+                        <div class="form-row" style="display: flex; gap: 12px;">
+                            <div class="form-group half" style="flex:1;">
+                                <label>Teléfono (Llamadas) *</label>
+                                <input type="tel" id="client-ad-phone" required placeholder="10 dígitos" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                            </div>
+                            <div class="form-group half" style="flex:1;">
+                                <label>WhatsApp *</label>
+                                <input type="tel" id="client-ad-whatsapp" required placeholder="Con 52 al inicio" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                            </div>
                         </div>
-                    </div>
+                    </form>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(1)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(3)" style="background: var(--primary-color); color: white; flex: 1;">Siguiente <span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
+                </div>
+            </div>
 
+            <!-- BLOCK 3: Social Networks -->
+            <div id="client-ad-step-3" class="ad-step" style="display: none;">
+                <div class="modal-body" style="overflow-y: auto; flex: 1; padding-right: 8px;">
                     <div class="form-group">
                         <label>Redes Sociales (Opcional)</label>
                         <input type="url" id="client-ad-link-fb" placeholder="Pega el enlace a tu Facebook" style="width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
                         <input type="url" id="client-ad-link-ig" placeholder="Pega el enlace a tu Instagram" style="width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
                         <input type="url" id="client-ad-link-tk" placeholder="Pega el enlace a tu TikTok" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
                     </div>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(2)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(4)" style="background: var(--primary-color); color: white; flex: 1;">Siguiente <span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
+                </div>
+            </div>
 
+            <!-- BLOCK 4: Photos and Payment -->
+            <div id="client-ad-step-4" class="ad-step" style="display: none;">
+                <div class="modal-body" style="overflow-y: auto; flex: 1; padding-right: 8px;">
                     <div class="form-group" style="margin-top: 8px;">
                         <label>Fotos de tu Negocio (Máx 7) *</label>
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; border: 1px dashed var(--primary-color);">
@@ -1180,13 +1204,25 @@
                         </div>
                         <div id="client-ad-image-preview-container" class="image-preview-container" style="margin-top: 12px; display: flex; gap: 8px; overflow-x: auto;"></div>
                     </div>
-                </form>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 12px; justify-content: flex-end;">
-                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 0;">Al continuar, pasarás a la opción de pago (Costo Mensual: <b style="color: #f59e0b;">$500 MXN</b>)</p>
-                <div style="display: flex; gap: 12px;">
-                    <button id="btn-cancel-client-ad" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
-                    <button id="btn-submit-client-ad" class="success-btn" style="flex: 2; padding: 14px; font-size: 1.1rem;">Continuar al Pago</button>
+                    
+                    <!-- Progress Bar -->
+                    <div id="client-ad-progress-container" style="display: none; margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Procesando anuncio...</span>
+                            <span id="client-ad-progress-text" style="font-size: 0.85rem; font-weight: bold; color: var(--primary-color);">0%</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                            <div id="client-ad-progress-bar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 0;">Al continuar, pasarás a la opción de pago (Costo Mensual: <b style="color: #f59e0b;">$500 MXN</b>)</p>
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" class="primary-btn" onclick="window.nextAdStep(3)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
+                        <button id="btn-submit-client-ad" type="button" class="success-btn" style="flex: 2; padding: 14px; font-size: 1.1rem;">Confirmar Pago</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1375,6 +1411,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js?v=3"></script>
     <script src="db.js?v=17"></script>
-    <script src="app.js?v=39"></script>
+    <script src="app.js?v=40"></script>
 </body>
 </html>
