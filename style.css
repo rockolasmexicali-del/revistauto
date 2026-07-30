@@ -42,6 +42,23 @@ body {
     color: var(--text-main);
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
+    
+    /* Prevenir selección de texto globalmente en la app (evita el copy/paste popup en moviles) */
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Chrome y standard */
+}
+
+/* Permitir selección y focus normal solo en inputs y textareas */
+input, textarea, [contenteditable="true"] {
+    -webkit-user-select: auto !important;
+    -khtml-user-select: auto !important;
+    -moz-user-select: auto !important;
+    -ms-user-select: auto !important;
+    user-select: auto !important;
 }
 
 #app-container {
