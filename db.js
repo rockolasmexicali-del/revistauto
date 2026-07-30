@@ -165,7 +165,9 @@ class Database {
 
                     const serverIds = new Set(data.map(item => String(item.id)));
 
-                    const normalized = data.map(item => {
+                    const normalized = data
+                        .filter(item => item.status !== 'eliminado' && item.status !== 'rechazado')
+                        .map(item => {
                         const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || localMyListingsMap.has(String(item.id));
                         const localListing = localMyListingsMap.get(String(item.id));
 
@@ -326,12 +328,10 @@ class Database {
     }
 
     async deleteListing(id) {
-        const listings = this.getAllListings();
-        const listingToDelete = listings.find(l => String(l.id) === String(id));
-        const updatedListings = listings.filter(l => String(l.id) !== String(id));
-        localStorage.setItem(this.listingsKey, JSON.stringify(updatedListings));
-
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            const listings = this.getAllListings();
+            const listingToDelete = listings.find(l => String(l.id) === String(id));
+
             // 1. Eliminar permanentemente las fotos del servidor (Supabase Storage)
             if (listingToDelete && listingToDelete.images && listingToDelete.images.length > 0) {
                 const pathsToDelete = [];
@@ -354,11 +354,23 @@ class Database {
             }
 
             // 2. Eliminar permanentemente el registro de la base de datos
-            supabaseClient.from('listings').delete().eq('id', id).then(({ error }) => {
-                if (error) console.error('⚠️ Error al eliminar en Supabase:', error);
-                else console.log('✅ Anuncio eliminado permanentemente de la base de datos');
-            });
+            const { error } = await supabaseClient.from('listings').delete().eq('id', id);
+            
+            if (error) {
+                console.error('⚠️ Error al eliminar en Supabase, aplicando soft-delete:', error);
+                if (listingToDelete) {
+                    listingToDelete.status = 'eliminado';
+                    await this.saveListing(listingToDelete);
+                }
+            } else {
+                console.log('✅ Anuncio eliminado permanentemente de la base de datos');
+            }
         }
+
+        // 3. Eliminar localmente SIEMPRE para que desaparezca de la UI de quien lo borra
+        const currentListings = this.getAllListings();
+        const updatedListings = currentListings.filter(l => String(l.id) !== String(id));
+        localStorage.setItem(this.listingsKey, JSON.stringify(updatedListings));
     }
 
     getMyListings() {
