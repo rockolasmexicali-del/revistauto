@@ -188,12 +188,8 @@ class Database {
                         };
                     });
 
-                    // Preservar publicaciones creadas localmente que aún no han sido descargadas del servidor
-                    localListings.forEach(local => {
-                        if ((local.isMyListing || local.publisherId === this.uuid || local.publisher_id === this.uuid) && !serverIds.has(String(local.id))) {
-                            normalized.push(local);
-                        }
-                    });
+                    // Eliminado: Ya no preservamos publicaciones locales que no existen en el servidor
+                    // para evitar "publicaciones fantasma".
 
                     localStorage.setItem(this.listingsKey, JSON.stringify(normalized));
                     if (typeof window.onServerDataSynced === 'function') {
@@ -245,6 +241,8 @@ class Database {
 
     async saveListing(listing) {
         const listings = this.getAllListings();
+        
+        // Configurar los campos del anuncio
         if (!listing.id) {
             listing.id = Date.now();
             listing.publishedAt = new Date().toISOString();
@@ -256,23 +254,16 @@ class Database {
             if (!listing.images || listing.images.length === 0) {
                 listing.images = ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'];
             }
-            listings.push(listing);
         } else {
             listing.publisherId = listing.publisherId || listing.publisher_id || this.uuid;
             listing.publisher_id = listing.publisherId;
             listing.isMyListing = listing.isMyListing !== undefined ? listing.isMyListing : true;
-            const index = listings.findIndex(l => String(l.id) === String(listing.id));
-            if (index > -1) {
-                listings[index] = { ...listings[index], ...listing };
-            } else {
-                listings.push(listing);
-            }
         }
 
-        // Sincronizar asíncronamente con Supabase Cloud
+        // Sincronizar PRIMERO con Supabase Cloud
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const payload = {
-                id: listing.id, // Fundamental para que Supabase actualice y no duplique
+                id: listing.id,
                 title: listing.title,
                 type: listing.type,
                 make: listing.make,
@@ -311,14 +302,26 @@ class Database {
             }
             console.log('✅ Anuncio sincronizado exitosamente con Supabase Cloud');
         } else {
-            await fetch(`${this.apiBaseUrl}/listings`, {
+            const response = await fetch(`${this.apiBaseUrl}/listings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(listing)
-            }).catch(err => console.log('Guardado local (servidor offline)'));
+            });
+            if (!response.ok) {
+                throw new Error("Error al enviar publicación al servidor");
+            }
         }
 
+        // Si llegamos aquí, la subida a la nube fue un ÉXITO.
+        // Solo entonces lo guardamos en la memoria local (localStorage).
+        const index = listings.findIndex(l => String(l.id) === String(listing.id));
+        if (index > -1) {
+            listings[index] = { ...listings[index], ...listing };
+        } else {
+            listings.push(listing);
+        }
         localStorage.setItem(this.listingsKey, JSON.stringify(listings));
+        
         return listing;
     }
 
