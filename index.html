@@ -451,7 +451,7 @@
                                     <span class="stat-trend positive" style="color: var(--success-color); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">trending_up</span> +12%</span>
                                 </div>
                             </div>
-                            <div class="stat-premium-card">
+                            <div class="stat-premium-card" style="cursor: pointer;" onclick="document.querySelector('.dashboard-tab[data-tab=\'tab-inventario\']').click();">
                                 <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><span class="material-symbols-rounded">directions_car</span></div>
                                 <div class="stat-details">
                                     <h4>Autos Activos</h4>
@@ -459,12 +459,17 @@
                                     <span class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0%</span>
                                 </div>
                             </div>
-                            <div class="stat-premium-card">
-                                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;"><span class="material-symbols-rounded">sell</span></div>
-                                <div class="stat-details">
+                            <div class="stat-premium-card" style="min-height: 120px;">
+                                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; flex-shrink: 0;"><span class="material-symbols-rounded">sell</span></div>
+                                <div class="stat-details" style="width: 100%;">
                                     <h4>Autos Vendidos</h4>
                                     <p id="stat-sold" class="stat-value">0</p>
-                                    <span class="stat-trend positive" style="color: var(--success-color); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">trending_up</span> +5%</span>
+                                    <div style="display:flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+                                        <button onclick="updateQuickSales('dia', this)" class="quick-sale-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Día</button>
+                                        <button onclick="updateQuickSales('semana', this)" class="quick-sale-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Sem</button>
+                                        <button onclick="updateQuickSales('mes', this)" class="quick-sale-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Mes</button>
+                                        <button onclick="updateQuickSales('todo', this)" class="quick-sale-btn active" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--primary-color); background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">Total</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

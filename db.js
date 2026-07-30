@@ -294,7 +294,8 @@ class Database {
                 published_at: listing.publishedAt || listing.published_at || null,
                 expires_at: listing.expiresAt || listing.expires_at || null,
                 last_renewed_month: listing.lastRenewedMonth || listing.last_renewed_month || null,
-                payment_status: listing.paymentStatus || listing.payment_status || null
+                payment_status: listing.paymentStatus || listing.payment_status || null,
+                sold_at: listing.soldAt || listing.sold_at || null
             };
 
             const { data, error } = await supabaseClient.from('listings').upsert([payload]);
@@ -448,6 +449,7 @@ class Database {
         const index = listings.findIndex(l => String(l.id) === String(id));
         if (index !== -1) {
             listings[index].status = 'vendido';
+            listings[index].soldAt = new Date().toISOString();
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
             this.saveListing(listings[index]);
         }

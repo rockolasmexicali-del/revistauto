@@ -2390,15 +2390,82 @@ document.addEventListener('DOMContentLoaded', () => {
         const statActive = document.getElementById('stat-active');
         if (statActive) statActive.textContent = active.length;
         
-        const statSold = document.getElementById('stat-sold');
-        if (statSold) statSold.textContent = soldCount;
+        const activeSalesBtn = document.querySelector('.quick-sale-btn.active');
+        if (activeSalesBtn && typeof window.updateQuickSales === 'function') {
+            const period = activeSalesBtn.getAttribute('onclick').match(/'(.*?)'/)[1];
+            window.updateQuickSales(period, activeSalesBtn);
+        } else {
+            const statSold = document.getElementById('stat-sold');
+            if (statSold) statSold.textContent = soldCount;
+        }
 
         const sidebarBadge = document.getElementById('sidebar-pending-badge');
         if (sidebarBadge) {
             sidebarBadge.textContent = pendingCount;
             sidebarBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
         }
+        
+        // Renovations badge
+        const renewalsBadge = document.getElementById('sidebar-renewals-badge');
+        if (renewalsBadge) {
+            const renewalsCount = db.getPendingRenewals().length;
+            renewalsBadge.textContent = renewalsCount;
+            renewalsBadge.style.display = renewalsCount > 0 ? 'inline-block' : 'none';
+        }
     }
+
+    window.updateQuickSales = function(period, btnElement) {
+        // Update active button styling
+        const container = btnElement.parentElement;
+        const buttons = container.querySelectorAll('.quick-sale-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'var(--surface-light)';
+            btn.style.color = 'var(--text-muted)';
+            btn.style.borderColor = 'var(--border-color)';
+        });
+        
+        btnElement.classList.add('active');
+        btnElement.style.background = 'var(--primary-color)';
+        btnElement.style.color = 'white';
+        btnElement.style.borderColor = 'var(--primary-color)';
+
+        const allListings = db.getAllListings();
+        const soldListings = allListings.filter(l => l.status === 'vendido');
+        
+        let filteredCount = 0;
+        const now = new Date();
+        
+        if (period === 'todo') {
+            filteredCount = soldListings.length;
+        } else {
+            soldListings.forEach(l => {
+                // Try to determine the sale date, fallback to published date or ID timestamp
+                const dateStr = l.soldAt || l.sold_at || l.publishedAt || l.published_at || (l.id && String(l.id).length >= 13 ? new Date(parseInt(l.id)).toISOString() : null);
+                if (!dateStr) return;
+                
+                const itemDate = new Date(dateStr);
+                
+                if (period === 'dia') {
+                    if (itemDate.toDateString() === now.toDateString()) {
+                        filteredCount++;
+                    }
+                } else if (period === 'semana') {
+                    const diffTime = Math.abs(now - itemDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    if (diffDays <= 7) filteredCount++;
+                } else if (period === 'mes') {
+                    if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) {
+                        filteredCount++;
+                    }
+                }
+            });
+        }
+        
+        const statSold = document.getElementById('stat-sold');
+        if (statSold) statSold.textContent = filteredCount;
+    };
+
 
     function renderTrafficChart() {
         const chartContainer = document.getElementById('traffic-chart');
