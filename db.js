@@ -103,6 +103,7 @@ class Database {
         this.initUUID();
         this.initializeDB();
         this.syncWithServer();
+        this.initRealtime();
     }
 
     initUUID() {
@@ -112,6 +113,26 @@ class Database {
             localStorage.setItem(this.uuidKey, uuid);
         }
         this.uuid = uuid;
+    }
+
+    initRealtime() {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                this.subscription = supabaseClient
+                    .channel('public:listings')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, payload => {
+                        console.log('Real-time update received:', payload);
+                        this.syncWithServer();
+                    })
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('✅ Realtime conectado para la tabla listings');
+                        }
+                    });
+            } catch (err) {
+                console.error('Error al inicializar Supabase Realtime:', err);
+            }
+        }
     }
 
     initializeDB() {

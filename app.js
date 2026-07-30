@@ -338,6 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hook up database sync event to refresh the UI automatically
     window.onServerDataSynced = function() {
         renderFeed();
+        if (typeof renderMyListings === 'function') renderMyListings();
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
