@@ -1176,6 +1176,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="image-counter" style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:0.8rem; z-index:5;">1 / ${ad.images.length}</div>
                 `;
             }
+            
+            // Habilitar pinch zoom en estas imágenes
+            const imgs = carousel.querySelectorAll('img');
+            imgs.forEach(img => window.enablePinchZoom(img));
         }
 
         window.currentAdImagesCount = ad.images ? ad.images.length : 0;
@@ -1904,6 +1908,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
+        // Habilitar pinch zoom en estas imágenes
+        const imgs = detalleContent.querySelectorAll('.detalle-img-carousel img');
+        imgs.forEach(img => window.enablePinchZoom(img));
+
         // Mostrar Vista
         views.forEach(v => v.classList.remove('active'));
         viewDetalle.classList.add('active');
@@ -1985,6 +1993,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.scrollTo(0, savedScrollPosition);
             });
         }
+    };
+
+    window.enablePinchZoom = function(imgElement) {
+        let scale = 1;
+        let initialDistance = 0;
+        
+        imgElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+        }, {passive: false});
+
+        imgElement.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault(); 
+                const currentDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                scale = Math.min(Math.max(1, currentDistance / initialDistance), 4);
+                imgElement.style.transform = `scale(${scale})`;
+                imgElement.style.transition = 'none';
+                imgElement.style.zIndex = '100';
+                imgElement.style.position = 'relative';
+            }
+        }, {passive: false});
+
+        imgElement.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2 && scale !== 1) {
+                scale = 1;
+                imgElement.style.transform = `scale(${scale})`;
+                imgElement.style.transition = 'transform 0.3s ease';
+                setTimeout(() => {
+                    if(scale === 1) {
+                        imgElement.style.zIndex = '';
+                        imgElement.style.position = '';
+                    }
+                }, 300);
+            }
+        });
     };
 
     window.contactSeller = function(listingId) {
