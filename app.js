@@ -2023,12 +2023,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Mostrar fecha de publicación solo si está activo (no caducado y no pendiente)
+            // Mostrar fecha de vencimiento solo si está activo (no caducado y no pendiente)
             let publishedDateHTML = '';
-            if (listing.publishedAt && displayStatus !== 'CADUCADO' && listing.status !== 'pendiente autorizacion') {
-                const pubDate = new Date(listing.publishedAt);
-                const pubDateStr = pubDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-                publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Publicado el ${pubDateStr}</p>`;
+            if (listing.expiresAt && displayStatus !== 'CADUCADO' && listing.status !== 'pendiente autorizacion') {
+                const expDate = new Date(listing.expiresAt);
+                const expDateStr = expDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+                publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Vence el ${expDateStr}</p>`;
             }
 
             return `
@@ -2094,10 +2094,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 let publishedDateHTML = '';
-                if (ad.start_date && displayStatus !== 'CADUCADO' && displayStatus !== 'PENDIENTE PAGO') {
-                    const pubDate = new Date(ad.start_date);
-                    const pubDateStr = pubDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-                    publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Publicado el ${pubDateStr}</p>`;
+                if (ad.end_date && displayStatus !== 'CADUCADO' && displayStatus !== 'PENDIENTE PAGO') {
+                    const expDate = new Date(ad.end_date);
+                    const expDateStr = expDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+                    publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Vence el ${expDateStr}</p>`;
                 }
 
                 return `
