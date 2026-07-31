@@ -1239,6 +1239,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ad.social_links.forEach(link => {
                 let url = typeof link === 'string' ? link : link.url;
                 if (url) {
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = 'https://' + url;
+                    }
                     let icon = 'link';
                     let title = (typeof link === 'object' && link.title) ? link.title : 'Visitar';
                     
