@@ -1222,12 +1222,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (url) {
                     let icon = 'link';
                     let title = (typeof link === 'object' && link.title) ? link.title : 'Visitar';
-                    if (url.includes('facebook.com')) { icon = 'thumb_up'; if(title==='Visitar') title='Facebook'; }
-                    else if (url.includes('instagram.com')) { icon = 'photo_camera'; if(title==='Visitar') title='Instagram'; }
-                    else if (url.includes('tiktok.com')) { icon = 'music_note'; if(title==='Visitar') title='TikTok'; }
+                    
+                    let bgColor = 'rgba(255,255,255,0.05)';
+                    let textColor = 'var(--text-main)';
+                    let border = '1px solid var(--border-color)';
+
+                    if (url.includes('facebook.com') || url.includes('fb.me')) { 
+                        icon = 'thumb_up'; 
+                        if(title==='Visitar') title='Facebook'; 
+                        bgColor = '#1877f2'; // Facebook blue
+                        textColor = '#ffffff';
+                        border = 'none';
+                    }
+                    else if (url.includes('instagram.com') || url.includes('instagr.am')) { 
+                        icon = 'photo_camera'; 
+                        if(title==='Visitar') title='Instagram'; 
+                        bgColor = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)'; // Instagram gradient
+                        textColor = '#ffffff';
+                        border = 'none';
+                    }
+                    else if (url.includes('tiktok.com')) { 
+                        icon = 'music_note'; 
+                        if(title==='Visitar') title='TikTok'; 
+                        bgColor = '#000000'; // TikTok black
+                        textColor = '#ffffff';
+                        border = '1px solid #ffffff33';
+                    }
+                    else if (url.includes('x.com') || url.includes('twitter.com')) {
+                        icon = 'close';
+                        if(title==='Visitar') title='X (Twitter)';
+                        bgColor = '#000000';
+                        textColor = '#ffffff';
+                        border = '1px solid #ffffff33';
+                    }
+                    else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                        icon = 'play_arrow';
+                        if(title==='Visitar') title='YouTube';
+                        bgColor = '#FF0000';
+                        textColor = '#ffffff';
+                        border = 'none';
+                    }
+                    else {
+                        // Es una página web general (Visitar)
+                        if (title === 'Visitar') {
+                            try {
+                                const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
+                                title = urlObj.hostname.replace(/^www\./, '');
+                            } catch(e) {
+                                title = 'Sitio Web';
+                            }
+                        }
+                        bgColor = '#ffffff'; // Botón blanco
+                        textColor = '#000000'; // Texto negro
+                        border = 'none';
+                    }
 
                     grid.innerHTML += `
-                        <button onclick="window.db.incrementAdClicks('${adId}'); window.open('${url}', '_blank')" class="primary-btn" style="background: rgba(255,255,255,0.05); color: var(--text-main); font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color);">
+                        <button onclick="window.db.incrementAdClicks('${adId}'); window.open('${url}', '_blank')" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: ${border}; font-weight: 600;">
                             <span class="material-symbols-rounded" style="font-size: 18px;">${icon}</span> ${title}
                         </button>
                     `;
