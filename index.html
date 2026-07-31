@@ -1383,20 +1383,21 @@
                 <!-- Info del Negocio -->
                 <div style="padding: 20px;">
                     <h2 id="ad-detail-title" style="font-size: 1.8rem; margin-bottom: 4px;">Nombre del Negocio</h2>
-                    <p id="ad-detail-location" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;"><span class="material-symbols-rounded" style="font-size: 16px;">location_on</span> <span id="ad-detail-loc-text">Ubicación</span></p>
-                    <p id="ad-detail-description" style="color: var(--text-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 24px;">Descripción o servicios que ofrece el negocio.</p>
                     
-                    <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--primary-color);">Contacto</h3>
-                    
-                    <!-- Botones Principales (WhatsApp / Llamar) -->
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                        <button id="btn-ad-whatsapp" class="primary-btn" style="flex: 1; background: #25D366; display: flex; align-items: center; justify-content: center; gap: 8px; display: none;">
-                            <span class="material-symbols-rounded">chat</span> WhatsApp
-                        </button>
-                        <button id="btn-ad-call" class="primary-btn" style="flex: 1; background: #1d4ed8; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; display: none;">
-                            <span class="material-symbols-rounded">call</span> Llamar
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px;">
+                        <p id="ad-detail-location" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">location_on</span> 
+                            <span id="ad-detail-loc-text">Ubicación</span>
+                        </p>
+                        <button id="btn-ad-contactar" class="btn-contactar" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto; display: none;">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
                         </button>
                     </div>
+
+                    <p id="ad-detail-description" style="color: var(--text-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 24px;">Descripción o servicios que ofrece el negocio.</p>
+                    
+                    <h3 id="ad-links-title" style="font-size: 1.1rem; margin-bottom: 12px; color: var(--primary-color); display: none;">Enlaces Web</h3>
+                    
 
                     <!-- Cuadrícula de Redes y Web -->
                     <div id="ad-links-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">

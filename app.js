@@ -1188,35 +1188,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.getElementById('ad-detail-description').textContent = ad.description || '';
 
-        // Contact buttons
-        const btnWa = document.getElementById('btn-ad-whatsapp');
-        const btnCall = document.getElementById('btn-ad-call');
-        
-        btnWa.style.display = 'none';
-        btnCall.style.display = 'none';
+        // Contact button
+        const btnContact = document.getElementById('btn-ad-contactar');
+        btnContact.style.display = 'none';
 
-        if (ad.whatsapp) {
-            btnWa.style.display = 'flex';
-            btnWa.onclick = () => {
-                db.incrementAdClicks(adId);
-                const text = encodeURIComponent('Hola, vi su anuncio en RevistAuto.');
-                const waNum = ad.whatsapp.replace(/[^0-9]/g, '');
-                window.open(`https://wa.me/${waNum}?text=${text}`, '_blank');
-            };
-        }
+        if (ad.whatsapp || ad.phone) {
+            btnContact.style.display = 'flex';
+            btnContact.onclick = () => {
+                const btnCall = document.getElementById('btn-contact-call');
+                const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
+                
+                btnCall.style.display = ad.phone ? 'flex' : 'none';
+                btnWhatsApp.style.display = ad.whatsapp ? 'flex' : 'none';
 
-        if (ad.phone) {
-            btnCall.style.display = 'flex';
-            btnCall.onclick = () => {
-                db.incrementAdClicks(adId);
-                window.open(`tel:${ad.phone}`, '_self');
+                if (ad.phone) {
+                    const cleanPhoneCall = String(ad.phone).replace(/[^0-9]/g, '');
+                    btnCall.onclick = () => {
+                        db.incrementAdClicks(adId);
+                        window.open(`tel:${cleanPhoneCall}`, '_self');
+                        document.getElementById('contact-modal').classList.remove('active');
+                    };
+                }
+                
+                if (ad.whatsapp) {
+                    const cleanPhoneWa = String(ad.whatsapp).replace(/[^0-9]/g, '');
+                    const message = encodeURIComponent(`Hola, vi su anuncio "${ad.title}" en RevistAuto.`);
+                    btnWhatsApp.onclick = () => {
+                        db.incrementAdClicks(adId);
+                        window.open(`https://wa.me/${cleanPhoneWa}?text=${message}`, '_blank');
+                        document.getElementById('contact-modal').classList.remove('active');
+                    };
+                }
+                
+                document.getElementById('contact-modal').classList.add('active');
             };
         }
 
         // Social Links Grid
         const grid = document.getElementById('ad-links-grid');
+        const titleLinks = document.getElementById('ad-links-title');
         grid.innerHTML = '';
-        if (ad.social_links && Array.isArray(ad.social_links)) {
+        if (titleLinks) titleLinks.style.display = 'none';
+
+        if (ad.social_links && Array.isArray(ad.social_links) && ad.social_links.length > 0) {
+            if (titleLinks) titleLinks.style.display = 'block';
             ad.social_links.forEach(link => {
                 let url = typeof link === 'string' ? link : link.url;
                 if (url) {
