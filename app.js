@@ -1275,11 +1275,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (ad.phone) {
                     const cleanPhoneCall = String(ad.phone).replace(/[^0-9]/g, '');
-                    btnCall.onclick = () => {
-                        db.incrementAdClicks(adId);
-                        window.open(`tel:${cleanPhoneCall}`, '_self');
-                        document.getElementById('contact-modal').classList.remove('active');
-                    };
+                    const formattedPhone = cleanPhoneCall.length === 10 ? `${cleanPhoneCall.substring(0,3)} ${cleanPhoneCall.substring(3,6)} ${cleanPhoneCall.substring(6)}` : cleanPhoneCall;
+                    
+                    if (window.innerWidth >= 768) {
+                        btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
+                        btnCall.onclick = null;
+                        btnCall.style.cursor = 'default';
+                    } else {
+                        btnCall.innerHTML = `<span class="material-symbols-rounded">call</span> Llamar`;
+                        btnCall.style.cursor = 'pointer';
+                        btnCall.onclick = () => {
+                            db.incrementAdClicks(adId);
+                            window.open(`tel:${cleanPhoneCall}`, '_self');
+                            document.getElementById('contact-modal').classList.remove('active');
+                        };
+                    }
                 }
                 
                 if (ad.whatsapp) {
@@ -2119,15 +2129,24 @@ document.addEventListener('DOMContentLoaded', () => {
             let phone = listing.whatsapp || listing.phone || "5512345678";
             if (phone) {
                 const cleanPhone = String(phone).replace(/[^0-9]/g, '');
+                const formattedPhone = cleanPhone.length === 10 ? `${cleanPhone.substring(0,3)} ${cleanPhone.substring(3,6)} ${cleanPhone.substring(6)}` : cleanPhone;
                 const message = encodeURIComponent(`Hola, vi tu anuncio "${listing.title}" en RevistAuto. Me interesa y quisiera más información.`);
                 
                 const btnCall = document.getElementById('btn-contact-call');
                 const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
                 
-                btnCall.onclick = () => {
-                    window.open(`tel:${cleanPhone}`, '_self');
-                    document.getElementById('contact-modal').classList.remove('active');
-                };
+                if (window.innerWidth >= 768) {
+                    btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
+                    btnCall.onclick = null;
+                    btnCall.style.cursor = 'default';
+                } else {
+                    btnCall.innerHTML = `<span class="material-symbols-rounded">call</span> Llamar`;
+                    btnCall.style.cursor = 'pointer';
+                    btnCall.onclick = () => {
+                        window.open(`tel:${cleanPhone}`, '_self');
+                        document.getElementById('contact-modal').classList.remove('active');
+                    };
+                }
                 
                 btnWhatsApp.onclick = () => {
                     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
