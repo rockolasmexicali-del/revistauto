@@ -2657,6 +2657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAdminStats();
         renderAdminInventory();
         updateAdminApprovals();
+        if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
         updateAdminRenewals();
         updateBillingList();
         renderTrafficChart();
@@ -3291,6 +3292,90 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
     }
+
+    window.updateAdminPendingAds = function() {
+        let pendingAds = db.getAllAds().filter(ad => ad.payment_status === 'pendiente' && !ad.is_active);
+
+        const badge = document.getElementById('pending-ads-count-badge');
+        const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
+        const list = document.getElementById('pending-ads-list');
+
+        if (badge) badge.textContent = pendingAds.length;
+        if (sidebarBadge) {
+            sidebarBadge.textContent = pendingAds.length;
+            sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
+        }
+        
+        if (!list) return;
+
+        if (pendingAds.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay publicidad pendiente de aprobación.</p>';
+            return;
+        }
+        
+        list.innerHTML = pendingAds.map(ad => {
+            const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+            return `
+            <div class="pending-approval-card" style="margin-bottom: 12px; background: var(--surface-color); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <img src="${firstImg}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: var(--text-main);">${ad.title}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            📍 ${ad.city}, ${ad.state} | 📞 ${ad.phone}
+                        </div>
+                        <div style="font-size: 0.82rem; color: #f59e0b; font-weight: bold; margin-top: 3px;">
+                            Pendiente de Pago / Aprobación
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-direction: column;">
+                        <button class="success-btn" onclick="approveAdAdmin('${ad.id}')" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
+                            <span class="material-symbols-rounded" style="font-size:16px;">check</span> Aprobar
+                        </button>
+                        <button class="danger-btn" onclick="if(confirm('¿Rechazar y eliminar anuncio?')) deleteAdAdmin('${ad.id}')" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
+                            <span class="material-symbols-rounded" style="font-size:16px;">close</span> Rechazar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    };
+
+    window.approveAdAdmin = async function(adId) {
+        if (!confirm('¿Aprobar este anuncio publicitario? Quedará activo por 30 días.')) return;
+        try {
+            const ads = db.getAllAds();
+            const ad = ads.find(a => String(a.id) === String(adId));
+            if (ad) {
+                ad.is_active = true;
+                ad.payment_status = 'pagado';
+                const now = new Date();
+                ad.start_date = now.toISOString();
+                const end = new Date(now);
+                end.setDate(end.getDate() + 30);
+                ad.end_date = end.toISOString();
+                
+                await db.saveAd(ad);
+                showAlert('Anuncio publicitario aprobado exitosamente', 'Aprobado', 'check_circle');
+                if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
+                if (typeof renderMyListings === 'function') renderMyListings();
+            }
+        } catch(e) {
+            showAlert('Error al aprobar anuncio', 'Error', 'error');
+        }
+    };
+    
+    window.deleteAdAdmin = async function(adId) {
+        try {
+            await db.deleteAd(adId);
+            showAlert('Anuncio eliminado', 'Eliminado', 'info');
+            if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
+            if (typeof renderMyListings === 'function') renderMyListings();
+        } catch(e) {
+            showAlert('Error al eliminar anuncio', 'Error', 'error');
+        }
+    };
 
     function updateAdminRenewals() {
         const list = document.getElementById('renewals-list');
