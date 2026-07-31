@@ -1182,6 +1182,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.currentAdImageIndex = 0;
 
         document.getElementById('ad-detail-title').textContent = ad.title || 'Negocio';
+        if (document.getElementById('ad-detail-loc-text')) {
+            const loc = [ad.city, ad.state].filter(Boolean).join(', ');
+            document.getElementById('ad-detail-loc-text').textContent = loc || 'Ubicación no especificada';
+        }
         document.getElementById('ad-detail-description').textContent = ad.description || '';
 
         // Contact buttons
@@ -1214,15 +1218,17 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.innerHTML = '';
         if (ad.social_links && Array.isArray(ad.social_links)) {
             ad.social_links.forEach(link => {
-                if (link.url) {
+                let url = typeof link === 'string' ? link : link.url;
+                if (url) {
                     let icon = 'link';
-                    if (link.url.includes('facebook.com')) icon = 'thumb_up';
-                    else if (link.url.includes('instagram.com')) icon = 'photo_camera';
-                    else if (link.url.includes('tiktok.com')) icon = 'music_note';
+                    let title = (typeof link === 'object' && link.title) ? link.title : 'Visitar';
+                    if (url.includes('facebook.com')) { icon = 'thumb_up'; if(title==='Visitar') title='Facebook'; }
+                    else if (url.includes('instagram.com')) { icon = 'photo_camera'; if(title==='Visitar') title='Instagram'; }
+                    else if (url.includes('tiktok.com')) { icon = 'music_note'; if(title==='Visitar') title='TikTok'; }
 
                     grid.innerHTML += `
-                        <button onclick="window.db.incrementAdClicks('${adId}'); window.open('${link.url}', '_blank')" class="primary-btn" style="background: rgba(255,255,255,0.05); color: var(--text-main); font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color);">
-                            <span class="material-symbols-rounded" style="font-size: 18px;">${icon}</span> ${link.title || 'Visitar'}
+                        <button onclick="window.db.incrementAdClicks('${adId}'); window.open('${url}', '_blank')" class="primary-btn" style="background: rgba(255,255,255,0.05); color: var(--text-main); font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-color);">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">${icon}</span> ${title}
                         </button>
                     `;
                 }
@@ -1967,7 +1973,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (listing.status === 'pendiente autorizacion') {
                 const payInfo = getListingPaymentInfo(listing);
-                priceTextHTML = `<p style="font-size: 0.85rem; color: var(--danger-color); margin-top: 4px; font-weight: bold;">${payInfo.textDesc}</p>`;
+                priceTextHTML = `<p style="font-size: 0.75rem; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; color: var(--danger-color); margin-top: 6px; font-weight: 500; letter-spacing: 0.3px; opacity: 0.9;">${payInfo.textDesc}</p>`;
                 if (globalMpEnabled && listing.paymentStatus === 'pending') {
                     paymentBtnHTML = `<button class="primary-btn" onclick="window.openedFromDashboard=true; openMercadoPagoBrick(${listing.id}, false)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
                 }
