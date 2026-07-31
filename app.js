@@ -1157,6 +1157,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const ad = await db.incrementAdViews(adId);
         if (!ad) return;
 
+        // Establecer contexto para navegación
+        if (!window.currentAdsArray) {
+            window.currentAdsArray = db.getAllAds().filter(a => a.is_active);
+        }
+        window.currentAdObj = ad;
+
+        window.navigateAdGlobal = (direction) => {
+            const arr = window.currentAdsArray;
+            if (!arr || arr.length <= 1) return;
+            const currentIndex = arr.findIndex(a => String(a.id) === String(window.currentAdObj.id));
+            if (currentIndex === -1) return;
+            
+            let nextIndex = currentIndex + direction;
+            if (nextIndex >= arr.length) nextIndex = 0;
+            if (nextIndex < 0) nextIndex = arr.length - 1;
+            
+            const nextId = arr[nextIndex].id;
+            const modal = document.getElementById('ad-fullscreen-modal');
+            const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
+            const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+            
+            const contentDiv = modal.querySelector('.modal-content');
+            contentDiv.classList.add(animOutClass);
+            
+            setTimeout(() => {
+                contentDiv.classList.remove(animOutClass);
+                window.openAdDetails(nextId);
+                contentDiv.classList.add(animInClass);
+                setTimeout(() => contentDiv.classList.remove(animInClass), 260);
+            }, 200);
+        };
+
         const modal = document.getElementById('ad-fullscreen-modal');
         if (!modal) return;
 
@@ -2011,6 +2043,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 200); // Load new data while previous is sliding out
             };
+            window.navigateListingGlobal = navigateListing;
         }
     };
 
@@ -2109,7 +2142,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleSaveDetalle = function(id, btnElement) {
         window.toggleSave(id, btnElement);
         const isSaved = savedListingsIds.includes(id);
-        bt    // --- My Listings (Alta) ---
+        btnElement.style.color = isSaved ? '#EF4444' : 'white';
+        const icon = btnElement.querySelector('.material-symbols-rounded');
+        if(icon) {
+            icon.style.fontVariationSettings = `'FILL' ${isSaved ? '1' : '0'}`;
+        }
+    };
+
+    // --- My Listings (Alta) ---
     function renderMyListings() {
         const myListings = db.getMyListings();
         const myAds = db.getMyAds ? db.getMyAds() : [];
@@ -5664,4 +5704,48 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
     };
     } // End of CLIENT AD FLOW scope
+
+    // --- Global Fullscreen Navigation & Keyboard ---
+    document.getElementById('ad-fullscreen-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'ad-fullscreen-modal') {
+            document.getElementById('btn-close-ad-modal')?.click();
+        }
+    });
+
+    document.getElementById('view-detalle')?.addEventListener('click', (e) => {
+        if (e.target.id === 'view-detalle') {
+            window.closeListingDetails();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        const viewDetalle = document.getElementById('view-detalle');
+        if (viewDetalle && viewDetalle.classList.contains('active')) {
+            if (e.key === 'Escape') {
+                window.closeListingDetails();
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft') {
+                if (window.navigateListingGlobal) window.navigateListingGlobal(-1);
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                if (window.navigateListingGlobal) window.navigateListingGlobal(1);
+                e.preventDefault();
+            }
+            return; // Evitar procesar el ad-fullscreen-modal si ya estamos en view-detalle
+        }
+
+        const adModal = document.getElementById('ad-fullscreen-modal');
+        if (adModal && adModal.classList.contains('active')) {
+            if (e.key === 'Escape') {
+                document.getElementById('btn-close-ad-modal')?.click();
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft') {
+                if (window.navigateAdGlobal) window.navigateAdGlobal(-1);
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight') {
+                if (window.navigateAdGlobal) window.navigateAdGlobal(1);
+                e.preventDefault();
+            }
+        }
+    });
 });
