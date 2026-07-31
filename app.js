@@ -2514,35 +2514,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (progressText) progressText.textContent = currentPercent + '%';
 
                     const file = imageFiles[i].file;
-                    const compressedFile = await new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 800;
-                            let scaleSize = 1;
-                            if (img.width > MAX_WIDTH) {
-                                scaleSize = MAX_WIDTH / img.width;
-                            }
-                            canvas.width = img.width * scaleSize;
-                            canvas.height = img.height * scaleSize;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            canvas.toBlob((blob) => {
-                                if (blob) {
-                                    resolve(new File([blob], file && file.name ? file.name : 'foto.jpg', { type: 'image/jpeg' }));
-                                } else {
-                                    resolve(file); // Fallback
-                                }
-                            }, 'image/jpeg', 0.7);
-                        };
-                        img.onerror = () => resolve(file); // Fallback
-                        img.src = imageFiles[i].url;
-                    });
                     
-                    // Subir archivo comprimido a Supabase Storage en lugar de usar Base64 gigante
-                    const publicUrl = await db.uploadImageToSupabase(compressedFile);
-                    if (publicUrl) {
-                        uploadedImageUrls.push(publicUrl);
+                    if (!file) {
+                        // Imagen existente, usar URL directamente sin re-subir
+                        uploadedImageUrls.push(imageFiles[i].url);
                         
                         const afterPercent = Math.round(((i + 1) / imageFiles.length) * 100);
                         const progressBg2 = document.getElementById('upload-progress-bg');
@@ -2550,7 +2525,45 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (progressBg2) progressBg2.style.width = afterPercent + '%';
                         if (progressText2) progressText2.textContent = afterPercent + '%';
                     } else {
-                        throw new Error("No se pudo subir la imagen a la nube. Por favor intenta de nuevo.");
+                        // Imagen nueva, comprimir y subir
+                        const compressedFile = await new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 800;
+                                let scaleSize = 1;
+                                if (img.width > MAX_WIDTH) {
+                                    scaleSize = MAX_WIDTH / img.width;
+                                }
+                                canvas.width = img.width * scaleSize;
+                                canvas.height = img.height * scaleSize;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                canvas.toBlob((blob) => {
+                                    if (blob) {
+                                        resolve(new File([blob], file && file.name ? file.name : 'foto.jpg', { type: 'image/jpeg' }));
+                                    } else {
+                                        resolve(file); // Fallback
+                                    }
+                                }, 'image/jpeg', 0.7);
+                            };
+                            img.onerror = () => resolve(file); // Fallback
+                            img.src = imageFiles[i].url;
+                        });
+                        
+                        // Subir archivo comprimido a Supabase Storage
+                        const publicUrl = await db.uploadImageToSupabase(compressedFile);
+                        if (publicUrl) {
+                            uploadedImageUrls.push(publicUrl);
+                            
+                            const afterPercent = Math.round(((i + 1) / imageFiles.length) * 100);
+                            const progressBg2 = document.getElementById('upload-progress-bg');
+                            const progressText2 = document.getElementById('upload-progress-text');
+                            if (progressBg2) progressBg2.style.width = afterPercent + '%';
+                            if (progressText2) progressText2.textContent = afterPercent + '%';
+                        } else {
+                            throw new Error("No se pudo subir la imagen a la nube. Por favor intenta de nuevo.");
+                        }
                     }
                 }
             } catch (error) {
