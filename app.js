@@ -1336,9 +1336,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     grid.innerHTML += `
-                        <button onclick="window.db.incrementAdClicks('${adId}'); window.open('${url}', '_blank')" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: ${border}; font-weight: 600;">
+                        <a href="${url}" target="_blank" onclick="try{window.db.incrementAdClicks('${adId}');}catch(e){}" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: ${border}; font-weight: 600; text-decoration: none; cursor: pointer;">
                             <span class="material-symbols-rounded" style="font-size: 18px;">${icon}</span> ${title}
-                        </button>
+                        </a>
                     `;
                 }
             });
