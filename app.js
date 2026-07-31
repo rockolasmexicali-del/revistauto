@@ -5226,9 +5226,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnSubmitClientAd.disabled = false;
                         btnSubmitClientAd.textContent = 'Confirmar Pago';
                         progressContainer.style.display = 'none';
+                        if (typeof renderMyListings === 'function') renderMyListings();
                     }, 500);
                 }
-                }, 500);
                 
             } catch (err) {
                 console.error(err);
@@ -5268,6 +5268,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle');
             }
+            if (typeof renderMyListings === 'function') renderMyListings();
         });
     }
     
@@ -5324,6 +5325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     
                                     showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle');
                                     window.currentPendingAdId = null;
+                                    if (typeof renderMyListings === 'function') renderMyListings();
                                 }, 2000);
                             });
                         },
