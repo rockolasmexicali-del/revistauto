@@ -33,11 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Clear form
-            document.getElementById('client-ad-form').reset();
+            const form = document.getElementById('client-ad-form') || document.getElementById('client-ad-form-step2');
+            if(form) form.reset();
             window.clientAdImages = [];
+            window.editingAdId = null;
             document.getElementById('client-ad-image-preview-container').innerHTML = '';
             document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
-            
+            const btnSubmit = document.getElementById('btn-submit-client-ad');
+            if(btnSubmit) btnSubmit.textContent = 'Continuar al Pago';
+
             clientAdModal.classList.add('active');
         });
     }
@@ -202,28 +206,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     phone: document.getElementById('client-ad-phone').value.trim(),
                     whatsapp: document.getElementById('client-ad-whatsapp').value.trim(),
                     social_links: socialLinks,
-                    images: uploadedImages,
-                    payment_status: 'pendiente',
-                    is_active: false
+                    images: uploadedImages
                 };
-                
-                const savedAd = await db.saveAd(newAd);
-                
-                // Show payment options
-                clientAdModal.classList.remove('active');
-                
-                window.currentPendingAdId = savedAd.id;
-                
-                const publishModal = document.getElementById('publish-options-modal');
-                if (publishModal) publishModal.classList.add('active');
+
+                if (window.editingAdId) {
+                    newAd.id = window.editingAdId;
+                    const existingAd = db.getAllAds().find(a => a.id === window.editingAdId);
+                    if (existingAd) {
+                        newAd.payment_status = existingAd.payment_status;
+                        newAd.is_active = existingAd.is_active;
+                        newAd.start_date = existingAd.start_date;
+                        newAd.end_date = existingAd.end_date;
+                        newAd.views = existingAd.views;
+                        newAd.clicks = existingAd.clicks;
+                        newAd.publisher_id = existingAd.publisher_id;
+                    }
+                    
+                    await db.saveAd(newAd);
+                    showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
+                    clientAdModal.classList.remove('active');
+                    
+                    if (typeof renderMyListings === 'function') {
+                        renderMyListings();
+                    }
+                } else {
+                    newAd.payment_status = 'pendiente';
+                    newAd.is_active = false;
+                    const savedAd = await db.saveAd(newAd);
+                    
+                    clientAdModal.classList.remove('active');
+                    window.currentPendingAdId = savedAd.id;
+                    const publishModal = document.getElementById('publish-options-modal');
+                    if (publishModal) publishModal.classList.add('active');
+                }
                 
             } catch (err) {
                 console.error(err);
-                showAlert('Error al crear el anuncio.', 'Error', 'error');
+                showAlert('Error al procesar el anuncio.', 'Error', 'error');
             }
             
             btnSubmitClientAd.disabled = false;
-            btnSubmitClientAd.textContent = 'Continuar al Pago';
+            btnSubmitClientAd.textContent = window.editingAdId ? 'Guardar Cambios' : 'Continuar al Pago';
+
         });
     }
 
