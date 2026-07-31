@@ -1141,8 +1141,31 @@
                             <input type="text" id="client-ad-title" required placeholder="Ej. Frenos El Cholo" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
                         </div>
                         <div class="form-group">
-                            <label style="display:flex; justify-content:space-between;"><span>Descripción y Servicios *</span> <span id="desc-char-counter" style="color:var(--text-muted); font-size:0.8rem;">0/120</span></label>
-                            <textarea id="client-ad-description" required rows="3" maxlength="120" placeholder="Describe lo que ofreces, horarios, etc." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;"></textarea>
+                            <label style="display:flex; justify-content:space-between;"><span>Descripción y Servicios *</span> <span id="desc-char-counter" style="color:var(--text-muted); font-size:0.8rem;">0/200</span></label>
+                            <textarea id="client-ad-description" required rows="3" maxlength="200" placeholder="Describe lo que ofreces, promociones, etc." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Dirección de tu Negocio (Opcional)</label>
+                            <input type="text" id="client-ad-address" placeholder="Ej. Calle 11 #234, Col. Centro" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Horarios (Opcional)</label>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="min-width: 65px; font-size: 0.9rem; color: var(--text-muted);">Lun-Vie:</span>
+                                    <input type="text" id="client-ad-schedule-mf" placeholder="Ej. 9:00 AM - 6:00 PM" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.95rem; outline: none;">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="min-width: 65px; font-size: 0.9rem; color: var(--text-muted);">Sábados:</span>
+                                    <input type="text" id="client-ad-schedule-sat" placeholder="Ej. 9:00 AM - 2:00 PM o Cerrado" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.95rem; outline: none;">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="min-width: 65px; font-size: 0.9rem; color: var(--text-muted);">Domingos:</span>
+                                    <input type="text" id="client-ad-schedule-sun" placeholder="Ej. Cerrado" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.95rem; outline: none;">
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-row" style="display: flex; gap: 12px;">
@@ -1395,6 +1418,33 @@
                     </div>
 
                     <p id="ad-detail-description" style="color: var(--text-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 24px;">Descripción o servicios que ofrece el negocio.</p>
+                    
+                    <div id="ad-detail-address-container" style="display: none; margin-bottom: 20px;">
+                        <h4 style="font-size: 0.95rem; margin: 0 0 4px 0; color: var(--text-main); display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">map</span> Dirección
+                        </h4>
+                        <p id="ad-detail-address" style="color: var(--text-muted); font-size: 0.95rem; margin: 0;"></p>
+                    </div>
+
+                    <div id="ad-detail-schedule-container" style="display: none; margin-bottom: 24px;">
+                        <h4 style="font-size: 0.95rem; margin: 0 0 8px 0; color: var(--text-main); display: flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">schedule</span> Horarios
+                        </h4>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px;">
+                            <div id="ad-schedule-mf-row" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span style="color: var(--text-muted);">Lun - Vie</span>
+                                <span id="ad-detail-schedule-mf" style="color: var(--text-main); font-weight: 500;"></span>
+                            </div>
+                            <div id="ad-schedule-sat-row" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span style="color: var(--text-muted);">Sábados</span>
+                                <span id="ad-detail-schedule-sat" style="color: var(--text-main); font-weight: 500;"></span>
+                            </div>
+                            <div id="ad-schedule-sun-row" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span style="color: var(--text-muted);">Domingos</span>
+                                <span id="ad-detail-schedule-sun" style="color: var(--text-main); font-weight: 500;"></span>
+                            </div>
+                        </div>
+                    </div>
                     
                     <h3 id="ad-links-title" style="font-size: 1.1rem; margin-bottom: 12px; color: var(--primary-color); display: none;">Enlaces Web</h3>
                     

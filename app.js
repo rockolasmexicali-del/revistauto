@@ -1192,6 +1192,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.getElementById('ad-detail-description').textContent = ad.description || '';
 
+        // Dirección
+        const addrContainer = document.getElementById('ad-detail-address-container');
+        if (ad.address) {
+            addrContainer.style.display = 'block';
+            document.getElementById('ad-detail-address').textContent = ad.address;
+        } else {
+            addrContainer.style.display = 'none';
+        }
+
+        // Horarios
+        const schedContainer = document.getElementById('ad-detail-schedule-container');
+        if (ad.scheduleMF || ad.scheduleSat || ad.scheduleSun) {
+            schedContainer.style.display = 'block';
+            
+            const mfRow = document.getElementById('ad-schedule-mf-row');
+            if (ad.scheduleMF) {
+                mfRow.style.display = 'flex';
+                document.getElementById('ad-detail-schedule-mf').textContent = ad.scheduleMF;
+            } else { mfRow.style.display = 'none'; }
+            
+            const satRow = document.getElementById('ad-schedule-sat-row');
+            if (ad.scheduleSat) {
+                satRow.style.display = 'flex';
+                document.getElementById('ad-detail-schedule-sat').textContent = ad.scheduleSat;
+            } else { satRow.style.display = 'none'; }
+            
+            const sunRow = document.getElementById('ad-schedule-sun-row');
+            if (ad.scheduleSun) {
+                sunRow.style.display = 'flex';
+                document.getElementById('ad-detail-schedule-sun').textContent = ad.scheduleSun;
+            } else { sunRow.style.display = 'none'; }
+            
+        } else {
+            schedContainer.style.display = 'none';
+        }
+
         // Contact button
         const btnContact = document.getElementById('btn-ad-contactar');
         btnContact.style.display = 'none';
@@ -2497,6 +2533,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('client-ad-title').value = ad.title || '';
         document.getElementById('client-ad-description').value = ad.description || '';
+        document.getElementById('client-ad-address').value = ad.address || '';
+        document.getElementById('client-ad-schedule-mf').value = ad.scheduleMF || '';
+        document.getElementById('client-ad-schedule-sat').value = ad.scheduleSat || '';
+        document.getElementById('client-ad-schedule-sun').value = ad.scheduleSun || '';
+        
+        // Update character counter
+        const counter = document.getElementById('desc-char-counter');
+        if (counter) counter.textContent = `${(ad.description || '').length}/200`;
         
         const stateSelect = document.getElementById('client-ad-state');
         stateSelect.value = ad.state || '';
@@ -5106,7 +5150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adDesc) {
         adDesc.addEventListener('input', (e) => {
             const count = e.target.value.length;
-            document.getElementById('desc-char-counter').textContent = count + '/120';
+            document.getElementById('desc-char-counter').textContent = count + '/200';
         });
     }
 
@@ -5258,6 +5302,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const title = document.getElementById('client-ad-title').value.trim();
             const desc = document.getElementById('client-ad-description').value.trim();
+            const address = document.getElementById('client-ad-address').value.trim();
+            const scheduleMF = document.getElementById('client-ad-schedule-mf').value.trim();
+            const scheduleSat = document.getElementById('client-ad-schedule-sat').value.trim();
+            const scheduleSun = document.getElementById('client-ad-schedule-sun').value.trim();
+            
             const state = document.getElementById('client-ad-state').value.trim();
             const city = document.getElementById('client-ad-city').value.trim();
             const phone = document.getElementById('client-ad-phone').value.trim();
@@ -5316,6 +5365,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newAd = {
                     title: title,
                     description: desc,
+                    address: address,
+                    scheduleMF: scheduleMF,
+                    scheduleSat: scheduleSat,
+                    scheduleSun: scheduleSun,
                     state: state,
                     city: city,
                     phone: phone,
