@@ -1127,7 +1127,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openAdDetails = async function(adId) {
-        if (!db.adsEnabled) return;
         
         const ad = await db.incrementAdViews(adId);
         if (!ad) return;

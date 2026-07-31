@@ -100,6 +100,7 @@ class Database {
         this.apiBaseUrl = '/api';
         this.isServerConnected = false;
         this.uuidKey = 'revista_autos_uuid';
+        this.adsEnabled = true; // Habilita los anuncios publicitarios en la app
         this.initUUID();
         this.initializeDB();
         this.syncWithServer();
