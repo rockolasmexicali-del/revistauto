@@ -1867,3 +1867,47 @@ input:checked + .slider:before {
         display: none !important;
     }
 }
+
+/* ==========================================================================
+   PUBLICATIONS SPLIT LAYOUT (Mis Vehículos / Anuncios)
+   ========================================================================== */
+.publications-split-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 16px;
+}
+
+.pub-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.desktop-only-btn {
+    display: none !important;
+}
+
+/* My Listing Cards Fix for Button Wrapping */
+.my-listing-actions > div {
+    flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+    .publications-split-layout {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+    .pub-col {
+        flex: 1;
+        min-width: 0; /* Prevents overflow in flexbox */
+    }
+
+    .desktop-only-btn {
+        display: flex !important;
+    }
+
+    #btn-new-listing {
+        display: none !important;
+    }
+}

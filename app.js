@@ -2109,10 +2109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleSaveDetalle = function(id, btnElement) {
         window.toggleSave(id, btnElement);
         const isSaved = savedListingsIds.includes(id);
-        btnElement.style.color = isSaved ? 'var(--danger-color)' : 'var(--text-main)';
-    };
-
-    // --- My Listings (Alta) ---
+        bt    // --- My Listings (Alta) ---
     function renderMyListings() {
         const myListings = db.getMyListings();
         const myAds = db.getMyAds ? db.getMyAds() : [];
@@ -2125,16 +2122,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         myListings.sort((a, b) => (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99));
         
-        let htmlContent = '';
+        let vehiclesHTML = '';
+        let adsHTML = '';
 
-        if (myListings.length === 0 && myAds.length === 0) {
-            myListingsContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No has publicado ningún vehículo ni anuncio.</p>';
-            return;
-        }
-
-        if (myListings.length > 0) {
-            htmlContent += '<h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Vehículos</h3>';
-            htmlContent += myListings.map(listing => {
+        if (myListings.length === 0) {
+            vehiclesHTML = '<p style="color:var(--text-muted); text-align:center;">No has publicado ningún vehículo.</p>';
+        } else {
+            vehiclesHTML = myListings.map(listing => {
             const images = listing.images || (listing.image ? [listing.image] : []);
             const imgHTML = images.length > 0 ? images.map(img => `<img src="${img}" alt="Auto" class="my-listing-img" style="flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;">`).join('') : '';
             
@@ -2218,19 +2212,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="my-listing-actions" style="flex-direction: column;">
                     ${paymentBtnHTML}
-                    <div style="display: flex; gap: 8px; width: 100%;">
-                        ${(listing.status === 'autorizado' || listing.status === 'activo') ? `<button class="success-btn" onclick="confirmMarkAsSold(${listing.id})" style="flex: 1; padding: 8px;">Vendido</button>` : ''}
-                        <button class="primary-btn" onclick="openEditListing(${listing.id})" style="background:var(--surface-light); padding: 8px; flex: 1;">Editar</button>
-                        <button class="danger-btn" onclick="deleteListing(${listing.id})" style="padding: 8px; flex: 1;">Eliminar</button>
+                    <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
+                        ${(listing.status === 'autorizado' || listing.status === 'activo') ? `<button class="success-btn" onclick="confirmMarkAsSold(${listing.id})" style="flex: 1; min-width: 60px; padding: 8px;">Vendido</button>` : ''}
+                        <button class="primary-btn" onclick="openEditListing(${listing.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
+                        <button class="danger-btn" onclick="deleteListing(${listing.id})" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                     </div>
                 </div>
             </div>
         `}).join('');
         }
 
-        if (myAds.length > 0) {
-            htmlContent += '<h3 style="margin-top: 24px; margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Anuncios Publicitarios</h3>';
-            htmlContent += myAds.map(ad => {
+        if (myAds.length === 0) {
+            adsHTML = '<p style="color:var(--text-muted); text-align:center;">No has publicado ningún anuncio publicitario.</p>';
+        } else {
+            adsHTML = myAds.map(ad => {
                 const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
                 
                 let displayStatus = 'PENDIENTE PAGO';
@@ -2289,9 +2284,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="my-listing-actions" style="flex-direction: column;">
                             ${paymentBtnHTML}
-                            <div style="display: flex; gap: 8px; width: 100%;">
-                                <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1;">Editar</button>
-                                <button class="danger-btn" onclick="if(confirm('¿Eliminar este anuncio permanentemente?')) { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); }" style="padding: 8px; flex: 1;">Eliminar</button>
+                            <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
+                                <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
+                                <button class="danger-btn" onclick="if(confirm('¿Eliminar este anuncio permanentemente?')) { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); }" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                             </div>
                         </div>
                     </div>
@@ -2299,7 +2294,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('');
         }
 
-        myListingsContainer.innerHTML = htmlContent;
+        const combinedHTML = `
+            <div class="publications-split-layout">
+                <div class="pub-col">
+                    <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Vehículos</h3>
+                    <button class="primary-btn desktop-only-btn" onclick="document.getElementById('btn-new-listing').click()" style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-symbols-rounded">add</span> Nuevo Vehículo</button>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        ${vehiclesHTML}
+                    </div>
+                </div>
+                <div class="pub-col pub-col-ads">
+                    <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Anuncios Publicitarios</h3>
+                    <button class="primary-btn desktop-only-btn" onclick="document.getElementById('btn-advertise').click()" style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-symbols-rounded">add</span> Nueva Publicidad</button>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        ${adsHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+        myListingsContainer.innerHTML = combinedHTML;
     }
 
     let listingToSoldId = null;
