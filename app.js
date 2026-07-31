@@ -243,6 +243,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Global utility to compress image to base64
+    window.compressImage = function(file, maxWidth = 800) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let scaleSize = 1;
+                    if (img.width > maxWidth) {
+                        scaleSize = maxWidth / img.width;
+                    }
+                    canvas.width = img.width * scaleSize;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    };
+
 
     // --- NoSleep.js para evitar que la pantalla se apague ---
     if (window.NoSleep) {
@@ -4844,6 +4870,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Next step logic
     window.nextAdStep = function(step) {
+        const currentStepEl = document.querySelector('.ad-step.active-step');
+        if (currentStepEl) {
+            const currentStepNum = parseInt(currentStepEl.id.replace('client-ad-step-', ''));
+            if (step > currentStepNum) {
+                // Moving forward, validate required fields
+                currentStepEl.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+                const inputs = currentStepEl.querySelectorAll('input[required], select[required], textarea[required]');
+                let isValid = true;
+                let missingFields = [];
+                
+                inputs.forEach(input => {
+                    if (!input.checkValidity()) {
+                        isValid = false;
+                        input.classList.add('input-error');
+                        const formGroup = input.closest('.form-group');
+                        if (formGroup) {
+                            const label = formGroup.querySelector('label');
+                            if (label) {
+                                let labelText = label.childNodes[0].nodeValue || label.textContent;
+                                if (label.querySelector('span')) {
+                                    labelText = label.querySelector('span').textContent;
+                                }
+                                labelText = labelText.replace('*', '').trim();
+                                if (!missingFields.includes(labelText)) {
+                                    missingFields.push(labelText);
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (!isValid) {
+                    showAlert(`Faltan completar: ${missingFields.join(', ')}`, 'Información Incompleta', 'warning');
+                    return; // Stop advancing
+                }
+            }
+        }
+
         document.querySelectorAll('.ad-step').forEach(el => {
             el.style.display = 'none';
             el.classList.remove('active-step');
@@ -4859,6 +4923,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAdvertise.addEventListener('click', () => {
             document.getElementById('client-ad-form-step2').reset();
             window.clientAdImages = [];
+            window.editingAdId = null;
             document.getElementById('client-ad-image-preview-container').innerHTML = '';
             document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
             document.getElementById('desc-char-counter').textContent = '0/120';
@@ -5113,26 +5178,56 @@ document.addEventListener('DOMContentLoaded', () => {
                     phone: phone,
                     whatsapp: wa,
                     social_links: socialLinks,
-                    images: uploadedImages,
-                    payment_status: 'pendiente',
-                    is_active: false
+                    images: uploadedImages
                 };
                 
-                const savedAd = await db.saveAd(newAd);
-                
-                progressBar.style.width = '100%';
-                progressText.textContent = '100%';
-                
-                setTimeout(() => {
-                    clientAdModal.classList.remove('active');
-                    window.currentPendingAdId = savedAd.id;
+                if (window.editingAdId) {
+                    newAd.id = window.editingAdId;
+                    const existingAd = db.getAllAds().find(a => a.id === window.editingAdId);
+                    if (existingAd) {
+                        newAd.payment_status = existingAd.payment_status;
+                        newAd.is_active = existingAd.is_active;
+                        newAd.start_date = existingAd.start_date;
+                        newAd.end_date = existingAd.end_date;
+                        newAd.views = existingAd.views;
+                        newAd.clicks = existingAd.clicks;
+                        newAd.publisher_id = existingAd.publisher_id;
+                    }
                     
-                    const publishModal = document.getElementById('publish-options-modal');
-                    if (publishModal) publishModal.classList.add('active');
+                    await db.saveAd(newAd);
                     
-                    btnSubmitClientAd.disabled = false;
-                    btnSubmitClientAd.textContent = 'Confirmar Pago';
-                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    
+                    setTimeout(() => {
+                        clientAdModal.classList.remove('active');
+                        btnSubmitClientAd.disabled = false;
+                        btnSubmitClientAd.textContent = 'Guardar Cambios';
+                        progressContainer.style.display = 'none';
+                        showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
+                        if (typeof renderMyListings === 'function') renderMyListings();
+                    }, 500);
+                } else {
+                    newAd.payment_status = 'pendiente';
+                    newAd.is_active = false;
+                    
+                    const savedAd = await db.saveAd(newAd);
+                    
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    
+                    setTimeout(() => {
+                        clientAdModal.classList.remove('active');
+                        window.currentPendingAdId = savedAd.id;
+                        
+                        const publishModal = document.getElementById('publish-options-modal');
+                        if (publishModal) publishModal.classList.add('active');
+                        
+                        btnSubmitClientAd.disabled = false;
+                        btnSubmitClientAd.textContent = 'Confirmar Pago';
+                        progressContainer.style.display = 'none';
+                    }, 500);
+                }
                 }, 500);
                 
             } catch (err) {
