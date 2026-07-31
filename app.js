@@ -2085,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="my-listing-actions" style="flex-direction: column;">
                             ${paymentBtnHTML}
                             <div style="display: flex; gap: 8px; width: 100%;">
-                                <button class="primary-btn" onclick="showAlert('La edición de anuncios estará disponible próximamente.', 'Próximamente', 'info')" style="background:var(--surface-light); padding: 8px; flex: 1;">Editar</button>
+                                <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1;">Editar</button>
                                 <button class="danger-btn" onclick="if(confirm('¿Eliminar este anuncio permanentemente?')) { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); }" style="padding: 8px; flex: 1;">Eliminar</button>
                             </div>
                         </div>
@@ -2319,6 +2319,47 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    window.openEditAd = function(id) {
+        const ad = db.getAllAds().find(a => a.id === id);
+        if(!ad) return;
+        
+        window.editingAdId = id;
+        
+        document.getElementById('client-ad-title').value = ad.title || '';
+        document.getElementById('client-ad-description').value = ad.description || '';
+        
+        const stateSelect = document.getElementById('client-ad-state');
+        stateSelect.value = ad.state || '';
+        stateSelect.dispatchEvent(new Event('change'));
+        
+        setTimeout(() => {
+            document.getElementById('client-ad-city').value = ad.city || '';
+        }, 50);
+        
+        document.getElementById('client-ad-phone').value = ad.phone || '';
+        document.getElementById('client-ad-whatsapp').value = ad.whatsapp || '';
+        
+        document.getElementById('client-ad-link-fb').value = (ad.social_links && ad.social_links.length > 0) ? ad.social_links[0] : '';
+        document.getElementById('client-ad-link-ig').value = (ad.social_links && ad.social_links.length > 1) ? ad.social_links[1] : '';
+        document.getElementById('client-ad-link-tk').value = (ad.social_links && ad.social_links.length > 2) ? ad.social_links[2] : '';
+        
+        window.clientAdImages = ad.images ? [...ad.images] : [];
+        if (typeof window.renderClientAdImagePreviews === 'function') {
+            window.renderClientAdImagePreviews();
+        }
+        
+        const btnSubmit = document.getElementById('btn-submit-client-ad');
+        if (btnSubmit) btnSubmit.textContent = 'Guardar Cambios';
+        
+        const clientAdModal = document.getElementById('client-ad-modal');
+        if (clientAdModal) {
+            clientAdModal.classList.add('active');
+            if (typeof window.nextAdStep === 'function') {
+                window.nextAdStep(2);
+            }
+        }
+    };
 
     window.openEditListing = function(id) {
         const listing = db.getMyListings().find(l => l.id === id);
