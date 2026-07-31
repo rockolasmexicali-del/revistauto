@@ -1790,9 +1790,7 @@ input:checked + .slider:before {
     }
     
     .my-listings-list {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
+        display: block !important;
     }
 
     /* 4. Search View Split Layout */
@@ -1876,6 +1874,7 @@ input:checked + .slider:before {
     flex-direction: column;
     gap: 30px;
     margin-top: 16px;
+    width: 100%;
 }
 
 .pub-col {
