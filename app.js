@@ -1879,7 +1879,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nextIndex >= sameCategoryListings.length) nextIndex = 0; // Vuelve al principio
                 if (nextIndex < 0) nextIndex = sameCategoryListings.length - 1; // Va al final
                 
-                window.openListingDetails(sameCategoryListings[nextIndex].id);
+                const nextId = sameCategoryListings[nextIndex].id;
+                const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
+                const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+                
+                detalleContent.classList.add(animOutClass);
+                
+                setTimeout(() => {
+                    detalleContent.classList.remove(animOutClass);
+                    window.openListingDetails(nextId);
+                    
+                    const newDetalleContent = document.getElementById('detalle-content');
+                    if (newDetalleContent) {
+                        newDetalleContent.classList.add(animInClass);
+                        setTimeout(() => {
+                            newDetalleContent.classList.remove(animInClass);
+                        }, 260); // Clean up after animation finishes
+                    }
+                }, 200); // Load new data while previous is sliding out
             };
         }
     };

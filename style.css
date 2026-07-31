@@ -276,6 +276,7 @@ input, textarea, [contenteditable="true"] {
     object-fit: cover;
     opacity: 0.9;
     scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 .image-counter {
@@ -1238,6 +1239,7 @@ input:focus, select:focus {
     max-height: 450px;
     object-fit: cover;
     scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 .detalle-floating-btn {
@@ -1691,4 +1693,41 @@ input:checked + .slider:before {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* Card Transition Animations */
+@keyframes slideOutLeft {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes slideOutRight {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes slideInRight {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.slide-out-left {
+    animation: slideOutLeft 0.25s forwards ease-in-out;
+}
+
+.slide-out-right {
+    animation: slideOutRight 0.25s forwards ease-in-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.25s forwards ease-in-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.25s forwards ease-in-out;
 }
