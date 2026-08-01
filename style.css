@@ -1813,7 +1813,7 @@ input:checked + .slider:before {
     #view-busqueda #search-results { grid-area: results; margin-top: 0 !important; }
 
     /* 5. Ad Detail Modal Side-by-Side */
-    #view-detalle.active {
+    #view-detalle.active, #ad-fullscreen-modal.active {
         display: flex !important;
         align-items: center;
         justify-content: center;
@@ -1828,7 +1828,7 @@ input:checked + .slider:before {
         z-index: 1000;
     }
 
-    #detalle-content {
+    #detalle-content, #ad-detalle-content {
         display: flex !important;
         flex-direction: row;
         width: 100%;
@@ -1843,7 +1843,7 @@ input:checked + .slider:before {
     }
     
     /* Child element containing the carousel */
-    #detalle-content > div:first-child {
+    #detalle-content > div:first-child, #ad-detalle-content > div:first-child {
         width: 55% !important;
         padding-bottom: 0 !important; 
         border-right: 1px solid var(--border-color);
@@ -1852,7 +1852,7 @@ input:checked + .slider:before {
     }
 
     /* Info container */
-    #detalle-content > div:last-child {
+    #detalle-content > div:last-child, #ad-detalle-content > div:last-child {
         width: 45% !important;
         height: 100%;
         overflow-y: auto;
