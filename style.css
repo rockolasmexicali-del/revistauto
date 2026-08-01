@@ -1955,3 +1955,20 @@ input:checked + .slider:before {
 .global-nav-btn .material-symbols-rounded {
     font-size: 32px;
 }
+
+/* Ajustes de selector de ubicación para PC */
+@media (min-width: 768px) {
+    .city-selector {
+        width: auto !important;
+        display: inline-flex !important;
+        min-width: 360px;
+        max-width: 400px;
+    }
+    #user-state {
+        flex: 0 0 180px !important;
+    }
+    #btn-user-cities {
+        flex: 1 !important;
+        justify-content: space-between !important;
+    }
+}
