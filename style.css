@@ -1988,4 +1988,16 @@ input:checked + .slider:before {
     .desktop-nav .nav-item .material-symbols-rounded {
         font-size: 26px !important;
     }
+
+    /* Botón Anúnciate */
+    #btn-advertise {
+        padding: 10px 18px !important;
+        font-size: 1.05rem !important;
+        border-radius: 20px !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    }
+    #btn-advertise .material-symbols-rounded {
+        font-size: 22px !important;
+    }
 }
