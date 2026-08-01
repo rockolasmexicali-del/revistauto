@@ -2431,7 +2431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${paymentBtnHTML}
                             <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
                                 <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
-                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', () => { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
+                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', () => { db.deleteAd(${ad.id}); if(typeof renderMyListings === 'function') renderMyListings(); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                             </div>
                         </div>
                     </div>

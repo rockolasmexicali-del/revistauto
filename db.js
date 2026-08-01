@@ -286,9 +286,14 @@ class Database {
     }
 
     async deleteAd(id) {
+        // Eliminar del estado local INMEDIATAMENTE para reflejar el cambio en UI
+        const currentAds = this.getAllAds();
+        const updatedAds = currentAds.filter(a => String(a.id) !== String(id));
+        localStorage.setItem('revista_autos_ads', JSON.stringify(updatedAds));
+
+        // Continuar con la eliminación en la base de datos
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const ads = this.getAllAds();
-            const adToDelete = ads.find(a => String(a.id) === String(id));
+            const adToDelete = currentAds.find(a => String(a.id) === String(id));
 
             if (adToDelete && adToDelete.images && adToDelete.images.length > 0) {
                 const pathsToDelete = [];
@@ -311,10 +316,6 @@ class Database {
             const { error } = await supabaseClient.from('ads').delete().eq('id', id);
             if (error) console.error('⚠️ Error al eliminar Ad en Supabase:', error);
         }
-
-        const currentAds = this.getAllAds();
-        const updatedAds = currentAds.filter(a => String(a.id) !== String(id));
-        localStorage.setItem('revista_autos_ads', JSON.stringify(updatedAds));
     }
 
     async uploadImageToSupabase(file) {
@@ -1051,12 +1052,15 @@ class Database {
     }
 
     async deleteAd(id) {
+        // Eliminar del estado local INMEDIATAMENTE para reflejar el cambio en UI
+        const ads = this.getAllAds().filter(a => String(a.id) !== String(id));
+        localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
+
+        // Continuar con la eliminación en la base de datos
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const { error } = await supabaseClient.from('ads').delete().eq('id', id);
             if (error) console.error("Error al eliminar anuncio:", error);
         }
-        const ads = this.getAllAds().filter(a => String(a.id) !== String(id));
-        localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
     }
 
     async incrementAdViews(adId) {
