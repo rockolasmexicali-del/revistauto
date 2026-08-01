@@ -22,7 +22,7 @@ const defaultCatalogData = {
         'Sea-Doo': ['Spark', 'GTI'],
         'Kenworth': ['T680', 'T880']
     },
-    types: ['Sedán', 'Pickup', 'SUV', 'Hatchback', 'Deportivo', 'Motocicleta', 'Barco', 'Camión'],
+    types: ['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Barco', 'Camión'],
     colors: ['Blanco', 'Negro', 'Plata', 'Gris', 'Rojo', 'Azul', 'Guindo/Tinto', 'Beige', 'Amarillo', 'Verde', 'Otro'],
     states: ['Baja California', 'Sonora', 'Jalisco', 'Nuevo León', 'Puebla', 'Guanajuato', 'Querétaro', 'Yucatán', 'Quintana Roo', 'Ciudad de México'],
     citiesByState: {
@@ -85,7 +85,7 @@ const initialListings = [
     {
         id: 4,
         title: 'Honda CR-V 2019',
-        type: 'SUV',
+        type: 'Camioneta',
         make: 'Honda',
         model: 'CR-V',
         year: 2019,
@@ -183,7 +183,7 @@ const initialListings = [
     {
         id: 11,
         title: 'Audi Q5 2020',
-        type: 'SUV',
+        type: 'Camioneta',
         make: 'Audi',
         model: 'Q5',
         year: 2020,

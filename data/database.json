@@ -54,7 +54,7 @@
     {
       "id": 4,
       "title": "Honda CR-V 2019",
-      "type": "SUV",
+      "type": "Camioneta",
       "make": "Honda",
       "model": "CR-V",
       "year": 2019,
@@ -194,7 +194,7 @@
     {
       "id": 11,
       "title": "Audi Q5 2020",
-      "type": "SUV",
+      "type": "Camioneta",
       "make": "Audi",
       "model": "Q5",
       "year": 2020,
