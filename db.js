@@ -148,6 +148,7 @@ class Database {
     async syncWithServer() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
+                await this.syncAdsWithServer();
                 const { data, error } = await supabaseClient
                     .from('listings')
                     .select('*')

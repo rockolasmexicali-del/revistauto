@@ -422,6 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
+        if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
+        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
     };
 
 
@@ -3717,7 +3719,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    window.updateAdminPendingAds = function() {
+    window.updateAdminPendingAds = async function() {
+        if (typeof db !== 'undefined' && db.syncAdsWithServer) {
+            await db.syncAdsWithServer();
+        }
         let pendingAds = db.getAllAds().filter(ad => ad.payment_status === 'pendiente' && !ad.is_active);
 
         const badge = document.getElementById('pending-ads-count-badge');
@@ -5700,6 +5705,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Admin Pending Ads Rendering ---
     window.updateAdminAdsApprovals = async function() {
+        if (typeof db !== 'undefined' && db.syncAdsWithServer) {
+            await db.syncAdsWithServer();
+        }
         const list = document.getElementById('pending-ads-list');
         const badge = document.getElementById('pending-ads-count-badge');
         const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
