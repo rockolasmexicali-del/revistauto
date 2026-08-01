@@ -1239,6 +1239,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Habilitar pinch zoom en estas imágenes
             const imgs = carousel.querySelectorAll('img');
             imgs.forEach(img => window.enablePinchZoom(img));
+            
+            // Añadir soporte para deslizar (swipe)
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            carousel.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+            
+            carousel.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                const swipeDist = touchStartX - touchEndX;
+                
+                // Si la distancia es mayor a 40px, lo consideramos un swipe intencional
+                if (swipeDist > 40) {
+                    if (typeof scrollAdCarousel === 'function') scrollAdCarousel(1);
+                    else if (window.scrollAdCarousel) window.scrollAdCarousel(1);
+                } else if (swipeDist < -40) {
+                    if (typeof scrollAdCarousel === 'function') scrollAdCarousel(-1);
+                    else if (window.scrollAdCarousel) window.scrollAdCarousel(-1);
+                }
+            }, { passive: true });
         }
 
         window.currentAdImagesCount = ad.images ? ad.images.length : 0;
