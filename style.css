@@ -86,7 +86,7 @@ input, textarea, [contenteditable="true"] {
 }
 
 .app-title {
-    font-size: 1.5rem;
+    font-size: 2.2rem;
     font-weight: 700;
     background: linear-gradient(to right, #3b82f6, #8b5cf6);
     -webkit-background-clip: text;
