@@ -820,16 +820,10 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedImageFiles.forEach((itemObj, index) => {
                 const item = document.createElement('div');
                 item.className = 'image-preview-item';
-                item.style.position = 'relative';
-                item.style.display = 'inline-block';
                 
                 const img = document.createElement('img');
                 img.src = itemObj.url;
-                img.style.width = '60px';
-                img.style.height = '60px';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '6px';
-                img.style.border = index === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
+                img.style.border = index === 0 ? '2px solid #f59e0b' : 'none';
                 
                 if (index === 0) {
                     const badge = document.createElement('div');
@@ -840,10 +834,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     badge.style.right = '0';
                     badge.style.background = '#f59e0b';
                     badge.style.color = 'white';
-                    badge.style.fontSize = '0.5rem';
+                    badge.style.fontSize = '0.7rem';
                     badge.style.textAlign = 'center';
                     badge.style.fontWeight = 'bold';
-                    badge.style.borderRadius = '0 0 6px 6px';
+                    badge.style.borderRadius = '0 0 10px 10px';
+                    badge.style.padding = '2px 0';
+                    badge.style.zIndex = '2';
                     item.appendChild(badge);
                 } else {
                     const badge = document.createElement('div');
@@ -855,20 +851,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const btnRemove = document.createElement('button');
                 btnRemove.type = 'button';
-                btnRemove.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
+                btnRemove.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">close</span>';
                 btnRemove.style.position = 'absolute';
-                btnRemove.style.top = '-4px';
-                btnRemove.style.right = '-4px';
-                btnRemove.style.background = 'rgba(255,0,0,0.8)';
+                btnRemove.style.top = '-8px';
+                btnRemove.style.right = '-8px';
+                btnRemove.style.background = '#ef4444';
                 btnRemove.style.color = 'white';
-                btnRemove.style.border = 'none';
+                btnRemove.style.border = '2px solid var(--surface-color)';
                 btnRemove.style.borderRadius = '50%';
-                btnRemove.style.width = '20px';
-                btnRemove.style.height = '20px';
+                btnRemove.style.width = '24px';
+                btnRemove.style.height = '24px';
                 btnRemove.style.display = 'flex';
                 btnRemove.style.alignItems = 'center';
                 btnRemove.style.justifyContent = 'center';
                 btnRemove.style.cursor = 'pointer';
+                btnRemove.style.zIndex = '3';
+                btnRemove.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
                 
                 btnRemove.onclick = (ev) => {
                     ev.preventDefault();

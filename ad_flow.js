@@ -102,11 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const img = document.createElement('img');
             img.src = imgSrc;
-            img.style.width = '60px';
-            img.style.height = '60px';
+            img.style.width = '100px';
+            img.style.height = '100px';
             img.style.objectFit = 'cover';
-            img.style.borderRadius = '6px';
-            img.style.border = idx === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
+            img.style.borderRadius = '10px';
+            img.style.border = idx === 0 ? '2px solid #f59e0b' : 'none';
             
             if (idx === 0) {
                 const badge = document.createElement('div');
@@ -117,28 +117,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 badge.style.right = '0';
                 badge.style.background = '#f59e0b';
                 badge.style.color = 'white';
-                badge.style.fontSize = '0.5rem';
+                badge.style.fontSize = '0.7rem';
                 badge.style.textAlign = 'center';
                 badge.style.fontWeight = 'bold';
-                badge.style.borderRadius = '0 0 6px 6px';
+                badge.style.borderRadius = '0 0 10px 10px';
+                badge.style.padding = '2px 0';
+                badge.style.zIndex = '2';
                 wrapper.appendChild(badge);
             }
             
             const delBtn = document.createElement('button');
-            delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
+            delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">close</span>';
             delBtn.style.position = 'absolute';
-            delBtn.style.top = '-4px';
-            delBtn.style.right = '-4px';
-            delBtn.style.background = 'rgba(255,0,0,0.8)';
+            delBtn.style.top = '-8px';
+            delBtn.style.right = '-8px';
+            delBtn.style.background = '#ef4444';
             delBtn.style.color = 'white';
-            delBtn.style.border = 'none';
+            delBtn.style.border = '2px solid var(--surface-color)';
             delBtn.style.borderRadius = '50%';
-            delBtn.style.width = '20px';
-            delBtn.style.height = '20px';
+            delBtn.style.width = '24px';
+            delBtn.style.height = '24px';
             delBtn.style.display = 'flex';
             delBtn.style.alignItems = 'center';
             delBtn.style.justifyContent = 'center';
             delBtn.style.cursor = 'pointer';
+            delBtn.style.zIndex = '3';
+            delBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
             
             delBtn.onclick = (ev) => {
                 ev.preventDefault();
