@@ -5866,11 +5866,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 autoScrollId = null;
             }
             isAutoScrolling = false;
-            swipeCount = 0;
         }
 
         container.addEventListener('touchstart', (e) => {
-            stopAutoScroll(); // Al tocar, se detiene
+            stopAutoScroll(); // Al tocar, se detiene la animación
             touchStartX = e.changedTouches[0].screenX;
         }, { passive: true });
 
