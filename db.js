@@ -1028,18 +1028,44 @@ class Database {
     }
 
     async saveAd(ad) {
-        let isNew = !ad.id;
+        if (!ad.id) {
+            ad.id = Date.now();
+            ad.created_at = new Date().toISOString();
+        }
         if (!ad.publisher_id) ad.publisher_id = this.uuid;
         
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const payload = { ...ad };
-            if (isNew) delete payload.id; // Let DB generate ID
+            const payload = {
+                id: ad.id,
+                publisher_id: ad.publisher_id,
+                title: ad.title || '',
+                description: ad.description || '',
+                address: ad.address || '',
+                scheduleMF: ad.scheduleMF || '',
+                scheduleSat: ad.scheduleSat || '',
+                scheduleSun: ad.scheduleSun || '',
+                phone: ad.phone || '',
+                whatsapp: ad.whatsapp || '',
+                email: ad.email || '',
+                website: ad.website || '',
+                social_links: typeof ad.social_links === 'object' ? JSON.stringify(ad.social_links) : (ad.social_links || '[]'),
+                city: ad.city || '',
+                state: ad.state || '',
+                images: ad.images || [],
+                start_date: ad.start_date || null,
+                end_date: ad.end_date || null,
+                payment_status: ad.payment_status || 'pendiente',
+                is_active: ad.is_active !== undefined ? ad.is_active : false,
+                views: ad.views || 0,
+                clicks: ad.clicks || 0,
+                created_at: ad.created_at || new Date().toISOString()
+            };
             
-            const { data, error } = await supabaseClient.from('ads').upsert([payload]).select();
-            if (error) throw new Error("Error al guardar anuncio en Supabase: " + error.message);
-            
-            if (data && data.length > 0) {
-                ad = { ...ad, ...data[0] };
+            try {
+                const { error } = await supabaseClient.from('ads').upsert([payload]);
+                if (error) console.error("Error al guardar anuncio en Supabase:", error);
+            } catch (err) {
+                console.error("Excepción guardando anuncio en Supabase:", err);
             }
         }
         

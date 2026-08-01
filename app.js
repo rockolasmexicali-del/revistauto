@@ -5845,23 +5845,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.approveAd = async function(id) {
         window.appConfirm('¿Estás seguro de autorizar este anuncio? Pasará a estar ACTIVO.', async () => {
-            const ads = db.getAllAds();
-            const adIdx = ads.findIndex(a => String(a.id) === String(id));
-            if(adIdx > -1) {
-                ads[adIdx].is_active = true;
-                ads[adIdx].payment_status = 'pagado';
+            let ads = db.getAllAds();
+            let ad = ads.find(a => String(a.id) === String(id));
+
+            if (!ad && typeof supabaseClient !== 'undefined' && supabaseClient) {
+                try {
+                    const { data } = await supabaseClient.from('ads').select('*').eq('id', id);
+                    if (data && data.length > 0) ad = data[0];
+                } catch(e) {}
+            }
+
+            if (ad) {
+                ad.is_active = true;
+                ad.payment_status = 'pagado';
                 
                 const now = new Date();
-                ads[adIdx].start_date = now.toISOString();
+                ad.start_date = now.toISOString();
                 const end = new Date(now);
                 end.setDate(end.getDate() + 30);
-                ads[adIdx].end_date = end.toISOString();
+                ad.end_date = end.toISOString();
                 
-                await db.saveAd(ads[adIdx]);
+                await db.saveAd(ad);
                 
                 showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
-                if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
-                if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+                if (typeof updateAdminAdsApprovals === 'function') await updateAdminAdsApprovals();
+                if (typeof updateAdminPendingAds === 'function') await updateAdminPendingAds();
+                if (typeof renderAdminAdsTable === 'function') await renderAdminAdsTable();
             }
         });
     };
