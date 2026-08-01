@@ -1437,6 +1437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         history.pushState({ page: 'ad-modal' }, '');
+        modal.style.display = ''; // Remover cualquier display: none que haya puesto switchView
         modal.classList.add('active');
     };
 
