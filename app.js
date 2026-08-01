@@ -422,7 +422,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
-        if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
     };
@@ -3726,56 +3725,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    window.updateAdminPendingAds = async function() {
-        if (typeof db !== 'undefined' && db.syncAdsWithServer) {
-            await db.syncAdsWithServer();
-        }
-        let pendingAds = db.getAllAds().filter(ad => ad.payment_status === 'pendiente' && !ad.is_active);
-
-        const badge = document.getElementById('pending-ads-count-badge');
-        const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
-        const list = document.getElementById('pending-ads-list');
-
-        if (badge) badge.textContent = pendingAds.length;
-        if (sidebarBadge) {
-            sidebarBadge.textContent = pendingAds.length;
-            sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
-        }
-        
-        if (!list) return;
-
-        if (pendingAds.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay publicidad pendiente de aprobación.</p>';
-            return;
-        }
-        
-        list.innerHTML = pendingAds.map(ad => {
-            const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-            return `
-            <div class="pending-approval-card" style="margin-bottom: 12px; background: var(--surface-color); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <img src="${firstImg}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: bold; color: var(--text-main);">${ad.title}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">
-                            📍 ${ad.city}, ${ad.state} | 📞 ${ad.phone}
-                        </div>
-                        <div style="font-size: 0.82rem; color: #f59e0b; font-weight: bold; margin-top: 3px;">
-                            Pendiente de Pago / Aprobación
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 8px; flex-direction: column;">
-                        <button class="success-btn" onclick="approveAdAdmin('${ad.id}')" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
-                            <span class="material-symbols-rounded" style="font-size:16px;">check</span> Aprobar
-                        </button>
-                        <button class="danger-btn" onclick="window.appConfirm('¿Rechazar y eliminar anuncio?', () => deleteAdAdmin('${ad.id}'))" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
-                            <span class="material-symbols-rounded" style="font-size:16px;">close</span> Rechazar
-                        </button>
-                    </div>
-                </div>
-            </div>
-            `;
-        }).join('');
+    window.updateAdminPendingAds = function() {
+        return window.updateAdminAdsApprovals();
     };
 
     window.approveAdAdmin = async function(adId) {
@@ -5805,6 +5756,10 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarBadge.textContent = pendingAds.length;
             sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
         }
+
+        const stateKey = JSON.stringify(pendingAds);
+        if (list.dataset.lastState === stateKey) return;
+        list.dataset.lastState = stateKey;
 
         if (pendingAds.length === 0) {
             list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay anuncios pendientes de aprobación.</p>';
