@@ -119,15 +119,30 @@ class Database {
     initRealtime() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                this.subscription = supabaseClient
+                this.subscriptionListings = supabaseClient
                     .channel('public:listings')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, payload => {
-                        console.log('Real-time update received:', payload);
+                        console.log('⚡ Realtime update (listings):', payload);
                         this.syncWithServer();
                     })
                     .subscribe((status) => {
                         if (status === 'SUBSCRIBED') {
                             console.log('✅ Realtime conectado para la tabla listings');
+                        }
+                    });
+
+                this.subscriptionAds = supabaseClient
+                    .channel('public:ads')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'ads' }, async payload => {
+                        console.log('⚡ Realtime update (ads):', payload);
+                        await this.syncAdsWithServer();
+                        if (typeof window.onServerDataSynced === 'function') {
+                            window.onServerDataSynced();
+                        }
+                    })
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('✅ Realtime conectado para la tabla ads');
                         }
                     });
             } catch (err) {
@@ -995,6 +1010,7 @@ class Database {
                     }));
                     localStorage.setItem('revista_autos_ads', JSON.stringify(normalizedAds));
                     if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
+                    if (typeof window.onServerDataSynced === 'function') window.onServerDataSynced();
                 }
             } catch (err) {
                 console.error('Error fetching ads from Supabase:', err);

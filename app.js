@@ -3143,6 +3143,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetId === 'tab-publicidad') {
                 if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
             }
+            if (targetId === 'tab-renovaciones') {
+                if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+            }
         });
     });
 
