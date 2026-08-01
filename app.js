@@ -1323,8 +1323,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnWhatsApp.style.display = ad.whatsapp ? 'flex' : 'none';
 
                 if (ad.phone) {
-                    const cleanPhoneCall = String(ad.phone).replace(/[^0-9]/g, '');
-                    const formattedPhone = cleanPhoneCall.length === 10 ? `${cleanPhoneCall.substring(0,3)} ${cleanPhoneCall.substring(3,6)} ${cleanPhoneCall.substring(6)}` : cleanPhoneCall;
+                    let cleanPhoneCall = String(ad.phone).replace(/[^0-9]/g, '');
+                    if (cleanPhoneCall.length > 10) cleanPhoneCall = cleanPhoneCall.slice(-10);
+                    const formattedPhone = cleanPhoneCall.length === 10 ? `(${cleanPhoneCall.substring(0,3)})${cleanPhoneCall.substring(3,6)}-${cleanPhoneCall.substring(6)}` : cleanPhoneCall;
                     
                     if (window.innerWidth >= 768) {
                         btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
@@ -2178,8 +2179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (listing) {
             let phone = listing.whatsapp || listing.phone || "5512345678";
             if (phone) {
-                const cleanPhone = String(phone).replace(/[^0-9]/g, '');
-                const formattedPhone = cleanPhone.length === 10 ? `${cleanPhone.substring(0,3)} ${cleanPhone.substring(3,6)} ${cleanPhone.substring(6)}` : cleanPhone;
+                let cleanPhone = String(phone).replace(/[^0-9]/g, '');
+                if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
+                const formattedPhone = cleanPhone.length === 10 ? `(${cleanPhone.substring(0,3)})${cleanPhone.substring(3,6)}-${cleanPhone.substring(6)}` : cleanPhone;
                 const message = encodeURIComponent(`Hola, vi tu anuncio "${listing.title}" en RevistAuto. Me interesa y quisiera más información.`);
                 
                 const btnCall = document.getElementById('btn-contact-call');
