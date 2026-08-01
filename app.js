@@ -3144,7 +3144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
             }
         });
-    };
+    });
 
     function updateAdminStats() {
         const allListings = db.getAllListings();
