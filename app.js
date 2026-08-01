@@ -309,6 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (costDisclaimer) {
                     costDisclaimer.innerHTML = `* Costo de la publicación: <strong>$${globalMonthlyPrice.toFixed(2)} MXN</strong> por mes.`;
                 }
+                
+                const vehiclePriceNote = document.getElementById('dynamic-publish-price');
+                if (vehiclePriceNote) {
+                    vehiclePriceNote.textContent = globalMonthlyPrice.toFixed(2);
+                }
 
                 const inputPrice = document.getElementById('admin-monthly-price');
                 if (inputPrice) inputPrice.value = globalMonthlyPrice;
@@ -815,27 +820,62 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedImageFiles.forEach((itemObj, index) => {
                 const item = document.createElement('div');
                 item.className = 'image-preview-item';
+                item.style.position = 'relative';
+                item.style.display = 'inline-block';
                 
                 const img = document.createElement('img');
                 img.src = itemObj.url;
+                img.style.width = '60px';
+                img.style.height = '60px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '6px';
+                img.style.border = index === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
                 
-                const actions = document.createElement('div');
-                actions.className = 'image-preview-actions';
+                if (index === 0) {
+                    const badge = document.createElement('div');
+                    badge.textContent = 'PORTADA';
+                    badge.style.position = 'absolute';
+                    badge.style.bottom = '0';
+                    badge.style.left = '0';
+                    badge.style.right = '0';
+                    badge.style.background = '#f59e0b';
+                    badge.style.color = 'white';
+                    badge.style.fontSize = '0.5rem';
+                    badge.style.textAlign = 'center';
+                    badge.style.fontWeight = 'bold';
+                    badge.style.borderRadius = '0 0 6px 6px';
+                    item.appendChild(badge);
+                } else {
+                    const badge = document.createElement('div');
+                    badge.className = 'preview-badge';
+                    badge.textContent = index + 1;
+                    badge.style.display = 'none'; // Keep it hidden but keep it in DOM for Sortable
+                    item.appendChild(badge);
+                }
+                
                 const btnRemove = document.createElement('button');
-                btnRemove.className = 'preview-btn';
                 btnRemove.type = 'button';
-                btnRemove.style.color = 'var(--danger-color)';
-                btnRemove.innerHTML = '<span class="material-symbols-rounded">delete</span>';
-                btnRemove.onclick = () => {
+                btnRemove.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
+                btnRemove.style.position = 'absolute';
+                btnRemove.style.top = '-4px';
+                btnRemove.style.right = '-4px';
+                btnRemove.style.background = 'rgba(255,0,0,0.8)';
+                btnRemove.style.color = 'white';
+                btnRemove.style.border = 'none';
+                btnRemove.style.borderRadius = '50%';
+                btnRemove.style.width = '20px';
+                btnRemove.style.height = '20px';
+                btnRemove.style.display = 'flex';
+                btnRemove.style.alignItems = 'center';
+                btnRemove.style.justifyContent = 'center';
+                btnRemove.style.cursor = 'pointer';
+                
+                btnRemove.onclick = (ev) => {
+                    ev.preventDefault();
                     const idxToRemove = Array.from(container.children).indexOf(item);
                     if (idxToRemove > -1) {
                         selectedImageFiles.splice(idxToRemove, 1);
-                        item.remove();
-                        
-                        Array.from(container.children).forEach((child, i) => {
-                            const badge = child.querySelector('.preview-badge');
-                            if (badge) badge.textContent = i + 1;
-                        });
+                        renderImagePreviews();
                         
                         if (textElement) {
                             if (selectedImageFiles.length === 0) {
@@ -845,19 +885,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 textElement.textContent = `${selectedImageFiles.length} foto(s) lista(s)`;
                             }
                         }
-                        if(typeof updateWizardUI === 'function') updateWizardUI();
                     }
                 };
                 
-                actions.appendChild(btnRemove);
-                
-                const badge = document.createElement('div');
-                badge.className = 'preview-badge';
-                badge.textContent = index + 1;
-                
                 item.appendChild(img);
-                item.appendChild(actions);
-                item.appendChild(badge);
+                item.appendChild(btnRemove);
                 container.appendChild(item);
             });
             if(typeof updateWizardUI === 'function') updateWizardUI();
@@ -874,12 +906,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const movedItem = selectedImageFiles.splice(evt.oldIndex, 1)[0];
                     selectedImageFiles.splice(evt.newIndex, 0, movedItem);
                     
-                    // Actualizar números sin recargar el DOM para evitar parpadeos
-                    const container = document.getElementById('image-preview-container');
-                    Array.from(container.children).forEach((child, i) => {
-                        const badge = child.querySelector('.preview-badge');
-                        if (badge) badge.textContent = i + 1;
-                    });
+                    if(typeof renderImagePreviews === 'function') {
+                        renderImagePreviews();
+                    }
                 }
             });
         }

@@ -152,6 +152,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Init SortableJS for Ads
+    if (typeof Sortable !== 'undefined') {
+        setTimeout(() => {
+            const container = document.getElementById('client-ad-image-preview-container');
+            if (container) {
+                Sortable.create(container, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    onEnd: function(evt) {
+                        if (evt.oldIndex === evt.newIndex) return;
+                        const movedItem = window.clientAdImages.splice(evt.oldIndex, 1)[0];
+                        window.clientAdImages.splice(evt.newIndex, 0, movedItem);
+                        
+                        // Re-render to update PORTADA badge and styles
+                        if(typeof window.renderClientAdImagePreviews === 'function') {
+                            window.renderClientAdImagePreviews();
+                        }
+                    }
+                });
+            }
+        }, 100);
+    }
+
     // Form Submit
     const btnSubmitClientAd = document.getElementById('btn-submit-client-ad');
     if (btnSubmitClientAd) {
