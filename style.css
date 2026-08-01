@@ -1976,17 +1976,19 @@ input:checked + .slider:before {
     /* Menú de Navegación */
     .desktop-nav {
         display: flex;
-        gap: 16px;
+        gap: 40px !important; /* Más separación entre los botones */
     }
     .desktop-nav .nav-item {
         flex-direction: column !important;
-        font-size: 1.1rem !important;
-        padding: 10px 16px !important;
-        gap: 4px !important;
+        font-size: 1.25rem !important; /* Letra más grande */
+        padding: 12px 20px !important;
+        gap: 6px !important;
         border-radius: 12px !important;
+        min-width: 90px; /* Asegura que el texto no se apriete */
+        text-align: center;
     }
     .desktop-nav .nav-item .material-symbols-rounded {
-        font-size: 26px !important;
+        font-size: 34px !important; /* Íconos más grandes */
     }
 
     /* Botón Anúnciate */
