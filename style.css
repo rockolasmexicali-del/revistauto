@@ -1956,8 +1956,9 @@ input:checked + .slider:before {
     font-size: 32px;
 }
 
-/* Ajustes de selector de ubicación para PC */
+/* Ajustes de selector de ubicación y menú para PC */
 @media (min-width: 768px) {
+    /* Selector de ubicación */
     .city-selector {
         width: auto !important;
         display: inline-flex !important;
@@ -1970,5 +1971,21 @@ input:checked + .slider:before {
     #btn-user-cities {
         flex: 1 !important;
         justify-content: space-between !important;
+    }
+
+    /* Menú de Navegación */
+    .desktop-nav {
+        display: flex;
+        gap: 16px;
+    }
+    .desktop-nav .nav-item {
+        flex-direction: column !important;
+        font-size: 1.1rem !important;
+        padding: 10px 16px !important;
+        gap: 4px !important;
+        border-radius: 12px !important;
+    }
+    .desktop-nav .nav-item .material-symbols-rounded {
+        font-size: 26px !important;
     }
 }
