@@ -1,3 +1,34 @@
+window.appConfirm = function(message, onConfirm, title = '¿Estás seguro?') {
+    const modal = document.getElementById('custom-confirm-modal');
+    if (!modal) {
+        if (confirm(message)) onConfirm();
+        return;
+    }
+    
+    document.getElementById('confirm-modal-title').textContent = title;
+    document.getElementById('confirm-modal-message').textContent = message;
+    
+    const btnCancel = document.getElementById('btn-confirm-cancel');
+    const btnAccept = document.getElementById('btn-confirm-accept');
+    
+    // Remove old listeners by cloning
+    const newBtnCancel = btnCancel.cloneNode(true);
+    const newBtnAccept = btnAccept.cloneNode(true);
+    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+    btnAccept.parentNode.replaceChild(newBtnAccept, btnAccept);
+    
+    newBtnCancel.onclick = () => {
+        modal.classList.remove('active');
+    };
+    
+    newBtnAccept.onclick = () => {
+        modal.classList.remove('active');
+        onConfirm();
+    };
+    
+    modal.classList.add('active');
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     let savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
@@ -2400,7 +2431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${paymentBtnHTML}
                             <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
                                 <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
-                                <button class="danger-btn" onclick="if(confirm('¿Eliminar este anuncio permanentemente?')) { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); }" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
+                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', () => { db.deleteAd(${ad.id}); setTimeout(() => { if(typeof renderMyListings === 'function') renderMyListings(); }, 500); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                             </div>
                         </div>
                     </div>
@@ -3725,7 +3756,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="success-btn" onclick="approveAdAdmin('${ad.id}')" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
                             <span class="material-symbols-rounded" style="font-size:16px;">check</span> Aprobar
                         </button>
-                        <button class="danger-btn" onclick="if(confirm('¿Rechazar y eliminar anuncio?')) deleteAdAdmin('${ad.id}')" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
+                        <button class="danger-btn" onclick="window.appConfirm('¿Rechazar y eliminar anuncio?', () => deleteAdAdmin('${ad.id}'))" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; font-size: 0.85rem;">
                             <span class="material-symbols-rounded" style="font-size:16px;">close</span> Rechazar
                         </button>
                     </div>
@@ -3736,27 +3767,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.approveAdAdmin = async function(adId) {
-        if (!confirm('¿Aprobar este anuncio publicitario? Quedará activo por 30 días.')) return;
-        try {
-            const ads = db.getAllAds();
-            const ad = ads.find(a => String(a.id) === String(adId));
-            if (ad) {
-                ad.is_active = true;
-                ad.payment_status = 'pagado';
-                const now = new Date();
-                ad.start_date = now.toISOString();
-                const end = new Date(now);
-                end.setDate(end.getDate() + 30);
-                ad.end_date = end.toISOString();
-                
-                await db.saveAd(ad);
-                showAlert('Anuncio publicitario aprobado exitosamente', 'Aprobado', 'check_circle');
-                if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
-                if (typeof renderMyListings === 'function') renderMyListings();
+        window.appConfirm('¿Aprobar este anuncio publicitario? Quedará activo por 30 días.', async () => {
+            try {
+                const ads = db.getAllAds();
+                const ad = ads.find(a => String(a.id) === String(adId));
+                if (ad) {
+                    ad.is_active = true;
+                    ad.payment_status = 'pagado';
+                    const now = new Date();
+                    ad.start_date = now.toISOString();
+                    const end = new Date(now);
+                    end.setDate(end.getDate() + 30);
+                    ad.end_date = end.toISOString();
+                    
+                    await db.saveAd(ad);
+                    showAlert('Anuncio publicitario aprobado exitosamente', 'Aprobado', 'check_circle');
+                    if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
+                    if (typeof renderMyListings === 'function') renderMyListings();
+                }
+            } catch(e) {
+                showAlert('Error al aprobar anuncio', 'Error', 'error');
             }
-        } catch(e) {
-            showAlert('Error al aprobar anuncio', 'Error', 'error');
-        }
+        });
     };
     
     window.deleteAdAdmin = async function(adId) {
@@ -4266,39 +4298,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.deleteListingImageAdmin = async function(id, index) {
-        if (!confirm('¿Seguro que deseas eliminar esta foto de la publicación?')) return;
-        
-        const listings = db.getAllListings();
-        const listing = listings.find(l => String(l.id) === String(id));
-        if (!listing) return;
-        
-        const images = listing.images || (listing.image ? [listing.image] : []);
-        if (images.length === 0 || index >= images.length) return;
-        
-        const imgUrl = images[index];
-        images.splice(index, 1);
-        listing.images = images;
-        
-        localStorage.setItem(db.listingsKey, JSON.stringify(listings));
-        
-        try {
-            await fetch(`${db.apiBaseUrl}/listings/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ images: listing.images })
-            });
+        window.appConfirm('¿Seguro que deseas eliminar esta foto de la publicación?', async () => {
+            const listings = db.getAllListings();
+            const listing = listings.find(l => String(l.id) === String(id));
+            if (!listing) return;
             
-            if (imgUrl && imgUrl.includes('/uploads/')) {
-                const filename = imgUrl.split('/').pop();
-                try { await fetch(`${db.apiBaseUrl}/upload/${filename}`, { method: 'DELETE' }); } catch(e) {}
+            const images = listing.images || (listing.image ? [listing.image] : []);
+            if (images.length === 0 || index >= images.length) return;
+            
+            const imgUrl = images[index];
+            images.splice(index, 1);
+            listing.images = images;
+            
+            localStorage.setItem(db.listingsKey, JSON.stringify(listings));
+            
+            try {
+                await fetch(`${db.apiBaseUrl}/listings/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ images: listing.images })
+                });
+                
+                if (imgUrl && imgUrl.includes('/uploads/')) {
+                    const filename = imgUrl.split('/').pop();
+                    try { await fetch(`${db.apiBaseUrl}/upload/${filename}`, { method: 'DELETE' }); } catch(e) {}
+                }
+            } catch(e) {
+                console.error('Error eliminando foto', e);
             }
-        } catch(e) {
-            console.error('Error eliminando foto', e);
-        }
-        
-        updateAdminApprovals();
-        updateAdminRenewals();
-        showAlert('Foto eliminada correctamente.', 'Foto Eliminada', 'image');
+            
+            updateAdminApprovals();
+            updateAdminRenewals();
+            showAlert('Foto eliminada correctamente.', 'Foto Eliminada', 'image');
+        });
     };
     // Modal Action Handlers
     const btnApproveYes = document.getElementById('btn-approve-confirm-yes');
@@ -4980,18 +5012,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteUser = async function(id) {
-        if(!confirm('¿Estás seguro de eliminar este usuario?')) return;
-        try {
-            const data = await db.deleteAdminUser(id);
-            if (data.success) {
-                renderUsersAdmin();
-                showAlert('Usuario eliminado', 'Éxito', 'check_circle');
-            } else {
-                showAlert(data.error, 'Error', 'error');
+        window.appConfirm('¿Estás seguro de eliminar este usuario?', async () => {
+            try {
+                const data = await db.deleteAdminUser(id);
+                if (data.success) {
+                    renderUsersAdmin();
+                    showAlert('Usuario eliminado', 'Éxito', 'check_circle');
+                } else {
+                    showAlert(data.error, 'Error', 'error');
+                }
+            } catch(e) {
+                showAlert('Error al eliminar', 'Error', 'error');
             }
-        } catch(e) {
-            showAlert('Error al eliminar', 'Error', 'error');
-        }
+        });
     };
 
     async function renderUsersAdmin() {
@@ -5742,33 +5775,34 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.approveAd = async function(id) {
-        if(!confirm('¿Estás seguro de autorizar este anuncio? Pasará a estar ACTIVO.')) return;
-        
-        const ads = db.getAllAds();
-        const adIdx = ads.findIndex(a => String(a.id) === String(id));
-        if(adIdx > -1) {
-            ads[adIdx].is_active = true;
-            ads[adIdx].payment_status = 'pagado';
-            
-            const now = new Date();
-            ads[adIdx].start_date = now.toISOString();
-            const end = new Date(now);
-            end.setDate(end.getDate() + 30);
-            ads[adIdx].end_date = end.toISOString();
-            
-            await db.saveAd(ads[adIdx]);
-            
-            showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
-            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
-            // Also need to refresh the main ads table if it's visible, but Aprobaciones is active tab
-        }
+        window.appConfirm('¿Estás seguro de autorizar este anuncio? Pasará a estar ACTIVO.', async () => {
+            const ads = db.getAllAds();
+            const adIdx = ads.findIndex(a => String(a.id) === String(id));
+            if(adIdx > -1) {
+                ads[adIdx].is_active = true;
+                ads[adIdx].payment_status = 'pagado';
+                
+                const now = new Date();
+                ads[adIdx].start_date = now.toISOString();
+                const end = new Date(now);
+                end.setDate(end.getDate() + 30);
+                ads[adIdx].end_date = end.toISOString();
+                
+                await db.saveAd(ads[adIdx]);
+                
+                showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
+                if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+                // Also need to refresh the main ads table if it's visible, but Aprobaciones is active tab
+            }
+        });
     };
 
     window.deleteAdAdmin = async function(id) {
-        if(!confirm('¿Rechazar y eliminar permanentemente este anuncio?')) return;
-        await db.deleteAd(id);
-        showAlert('Anuncio rechazado.', 'Eliminado', 'info');
-        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+        window.appConfirm('¿Rechazar y eliminar permanentemente este anuncio?', async () => {
+            await db.deleteAd(id);
+            showAlert('Anuncio rechazado.', 'Eliminado', 'info');
+            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+        });
     };
 
     // Hook updateAdminAdsApprovals into forceInstantAdminRefresh

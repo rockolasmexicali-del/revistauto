@@ -1492,6 +1492,21 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmación Genérico -->
+    <div id="custom-confirm-modal" class="modal" style="z-index: 10005;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 24px;">
+            <div style="margin-bottom: 20px;">
+                <span class="material-symbols-rounded" style="font-size: 48px; color: var(--danger-color);">warning</span>
+            </div>
+            <h3 id="confirm-modal-title" style="margin-bottom: 12px; font-size: 1.25rem;">¿Estás seguro?</h3>
+            <p id="confirm-modal-message" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">Esta acción no se puede deshacer.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="btn-confirm-cancel" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
+                <button id="btn-confirm-accept" class="primary-btn" style="background: var(--danger-color); color: white; flex: 1;">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
     <!-- Supabase Cloud SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
