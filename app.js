@@ -1666,6 +1666,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
                         if(window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
+                        if(window.initAutoScroll) window.initAutoScroll(scrollContainer);
                     });
                 }, 50);
             }
@@ -5796,4 +5797,101 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // --- Lógica de Auto-Scroll Inteligente ---
+    window.initAutoScroll = function(container) {
+        // Prevenir inicialización múltiple
+        if (container.dataset.autoScrollInit) return;
+        container.dataset.autoScrollInit = "true";
+
+        let swipeCount = 0;
+        let lastSwipeTime = 0;
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let autoScrollId = null;
+        let swipeResetTimeout = null;
+        let isAutoScrolling = false;
+        let lastScrollLeft = -1; // para detectar si ya no avanza (llegó al final)
+
+        function startAutoScroll() {
+            if (isAutoScrolling) return;
+            isAutoScrolling = true;
+            swipeCount = 0;
+            
+            function step() {
+                if (!isAutoScrolling) return;
+                
+                // Guardamos el scroll actual antes de mover
+                const prevScroll = container.scrollLeft;
+                
+                // Sumamos 1 pixel o fracción
+                container.scrollLeft += 1;
+                
+                // Si el scroll no cambió, llegamos al final (o al límite derecho)
+                if (container.scrollLeft === prevScroll) {
+                    stopAutoScroll();
+                    return;
+                }
+                
+                autoScrollId = requestAnimationFrame(step);
+            }
+            autoScrollId = requestAnimationFrame(step);
+        }
+
+        function stopAutoScroll() {
+            if (autoScrollId) {
+                cancelAnimationFrame(autoScrollId);
+                autoScrollId = null;
+            }
+            isAutoScrolling = false;
+            swipeCount = 0;
+        }
+
+        container.addEventListener('touchstart', (e) => {
+            stopAutoScroll(); // Al tocar, se detiene
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const distance = touchStartX - touchEndX; // Positivo significa deslizar hacia la izquierda (avanzar carrusel)
+            
+            // Detectar swipe intencional (ej. > 30px)
+            if (Math.abs(distance) > 30) {
+                const now = Date.now();
+                if (now - lastSwipeTime < 3000) {
+                    // Si el último swipe fue hace menos de 3 seg
+                    swipeCount++;
+                } else {
+                    swipeCount = 1; // Reiniciar cuenta si pasó mucho tiempo
+                }
+                lastSwipeTime = now;
+
+                clearTimeout(swipeResetTimeout);
+                
+                if (swipeCount >= 2) {
+                    // Esperamos un poquito para que el scroll nativo termine la inercia, luego auto-scroll
+                    setTimeout(() => {
+                        startAutoScroll();
+                    }, 500); 
+                } else {
+                    // Si no llega al segundo swipe en 3 segundos, reset
+                    swipeResetTimeout = setTimeout(() => {
+                        swipeCount = 0;
+                    }, 3000);
+                }
+            }
+        }, { passive: true });
+
+        // Detener con clics de mouse también
+        container.addEventListener('mousedown', () => {
+            stopAutoScroll();
+        });
+        
+        // Detener al usar la rueda del ratón
+        container.addEventListener('wheel', () => {
+            stopAutoScroll();
+        }, { passive: true });
+    };
+
 });
