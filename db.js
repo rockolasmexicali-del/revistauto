@@ -44,7 +44,7 @@ const defaultCatalogData = {
         'Volkswagen': ['Polo', 'Vento', 'Virtus', 'Jetta', 'Golf', 'Nivus', 'T-Cross', 'Taos', 'Tiguan', 'Teramont', 'Amarok', 'Saveiro', 'Transporter'],
         'Yamaha': ['R6', 'MT-07', 'Fz-S', 'YZF-R1', 'Tenere 700', 'NMAX']
     },
-    types: ['Sedán', 'Pickup', 'SUV', 'Hatchback', 'Deportivo', 'Motocicleta', 'Barco', 'Camión'],
+    types: ['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Barco', 'Camión'],
     colors: ['Blanco', 'Negro', 'Plata', 'Gris', 'Rojo', 'Azul', 'Guindo/Tinto', 'Beige', 'Amarillo', 'Verde', 'Otro'],
     states: [
         'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Ciudad de México', 
