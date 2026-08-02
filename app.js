@@ -4247,14 +4247,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     whatsapp: document.getElementById('edit-whatsapp').value.trim()
                 };
                 
-                // Sincronizar local y con Supabase
-                db.saveListing(listings[listingIndex]);
-
+                // Sincronizar local y con Supabase Cloud (esperando resultado)
+                await db.saveListing(listings[listingIndex]);
 
                 closeAdminEdit();
-                updateAdminApprovals();
-                updateAdminRenewals();
-                if(typeof renderAdminInventory === 'function') renderAdminInventory();
+                
+                // Limpiar dataset.lastState para forzar re-renderizado inmediato
+                const pendingList = document.getElementById('pending-approvals-list');
+                if (pendingList) delete pendingList.dataset.lastState;
+                const renewalsList = document.getElementById('renewals-list');
+                if (renewalsList) delete renewalsList.dataset.lastState;
+                const inventoryTable = document.getElementById('inventory-table-body');
+                if (inventoryTable) delete inventoryTable.dataset.lastState;
+
+                forceInstantAdminRefresh();
                 showAlert('Los datos del vehículo han sido actualizados.', 'Datos Guardados', 'check_circle');
             }
         };
@@ -5502,7 +5508,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (window.editingAdId) {
                     newAd.id = window.editingAdId;
-                    const existingAd = db.getAllAds().find(a => a.id === window.editingAdId);
+                    const existingAd = db.getAllAds().find(a => String(a.id) === String(window.editingAdId));
                     if (existingAd) {
                         newAd.payment_status = existingAd.payment_status;
                         newAd.is_active = existingAd.is_active;
@@ -5511,9 +5517,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         newAd.views = existingAd.views;
                         newAd.clicks = existingAd.clicks;
                         newAd.publisher_id = existingAd.publisher_id;
+                        newAd.notes = existingAd.notes || [];
                     }
                     
                     await db.saveAd(newAd);
+                    window.editingAdId = null;
                     
                     progressBar.style.width = '100%';
                     progressText.textContent = '100%';
@@ -5526,6 +5534,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
                         const pendingAdsList = document.getElementById('pending-ads-list');
                         if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+                        if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
                         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
                         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
                         if (typeof renderMyListings === 'function') renderMyListings();
