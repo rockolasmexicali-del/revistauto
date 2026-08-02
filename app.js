@@ -5524,6 +5524,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnSubmitClientAd.textContent = 'Guardar Cambios';
                         progressContainer.style.display = 'none';
                         showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
+                        const pendingAdsList = document.getElementById('pending-ads-list');
+                        if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+                        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+                        if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
                         if (typeof renderMyListings === 'function') renderMyListings();
                     }, 500);
                 } else {
@@ -5775,37 +5779,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.updateAdminAdsApprovals = async function() {
-        if (typeof db !== 'undefined' && db.syncAdsWithServer) {
-            await db.syncAdsWithServer();
-        }
+    window.updateAdminAdsApprovals = function() {
         const list = document.getElementById('pending-ads-list');
         const badge = document.getElementById('pending-ads-count-badge');
         const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
         if (!list) return;
 
-        let pendingAds = [];
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('ads')
-                    .select('*')
-                    .eq('payment_status', 'pendiente')
-                    .order('created_at', { ascending: false });
-                if (!error && data) {
-                    pendingAds = data;
-                } else {
-                    pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
-                }
-            } catch(e) {
-                pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
-            }
-        } else {
-            pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
-        }
-
-        // Filter out those that are active but somehow marked as pendiente (shouldn't happen, but just in case)
-        pendingAds = pendingAds.filter(a => a.payment_status === 'pendiente' || !a.is_active);
+        let pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
 
         if (badge) badge.textContent = pendingAds.length;
         if (sidebarBadge) {
@@ -5813,7 +5793,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
         }
 
-        const stateKey = JSON.stringify(pendingAds);
+        const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',');
         if (list.dataset.lastState === stateKey) return;
         list.dataset.lastState = stateKey;
 
@@ -5904,6 +5884,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <!-- Especificaciones / Datos del Anuncio -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.85rem; background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <button class="primary-btn" onclick="event.stopPropagation(); window.openEditAd(${ad.id})" style="grid-column: 1 / -1; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">edit</span> Editar Datos de la Publicidad
+                        </button>
                         <div style="grid-column: 1 / -1; font-weight: bold; font-size: 0.95rem; color: #f59e0b; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 4px;">
                             📢 Información de la Publicidad
                         </div>
