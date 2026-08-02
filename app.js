@@ -3968,18 +3968,28 @@ document.addEventListener('DOMContentLoaded', () => {
     window.expandedAdminCards = window.expandedAdminCards || new Set();
 
     window.togglePendingDetail = function(id) {
-        const card = document.getElementById(`pending-card-${id}`);
-        const icon = document.getElementById(`pending-expand-icon-${id}`);
-        if (card) {
-            const isExpanded = card.classList.contains('expanded');
-            if (isExpanded) {
-                card.classList.remove('expanded');
-                if (icon) icon.style.transform = 'rotate(0deg)';
-                window.expandedAdminCards.delete(String(id));
-            } else {
+        const targetIdStr = String(id);
+        const isCurrentlyExpanded = window.expandedAdminCards && window.expandedAdminCards.has(targetIdStr);
+
+        // Cerrar todas las tarjetas abiertas previamente (modo acordeón)
+        if (window.expandedAdminCards) {
+            window.expandedAdminCards.forEach(openId => {
+                const openCard = document.getElementById(`pending-card-${openId}`);
+                const openIcon = document.getElementById(`pending-expand-icon-${openId}`);
+                if (openCard) openCard.classList.remove('expanded');
+                if (openIcon) openIcon.style.transform = 'rotate(0deg)';
+            });
+            window.expandedAdminCards.clear();
+        }
+
+        // Si no estaba abierta, abrir la tarjeta seleccionada
+        if (!isCurrentlyExpanded) {
+            const card = document.getElementById(`pending-card-${id}`);
+            const icon = document.getElementById(`pending-expand-icon-${id}`);
+            if (card) {
                 card.classList.add('expanded');
                 if (icon) icon.style.transform = 'rotate(180deg)';
-                window.expandedAdminCards.add(String(id));
+                window.expandedAdminCards.add(targetIdStr);
             }
         }
     };
@@ -5855,18 +5865,28 @@ document.addEventListener('DOMContentLoaded', () => {
     window.expandedAdminAdCards = window.expandedAdminAdCards || new Set();
 
     window.togglePendingAdDetail = function(id) {
-        const card = document.getElementById(`pending-ad-card-${id}`);
-        const icon = document.getElementById(`pending-ad-expand-icon-${id}`);
-        if (card) {
-            const isExpanded = card.classList.contains('expanded');
-            if (isExpanded) {
-                card.classList.remove('expanded');
-                if (icon) icon.style.transform = 'rotate(0deg)';
-                window.expandedAdminAdCards.delete(String(id));
-            } else {
+        const targetIdStr = String(id);
+        const isCurrentlyExpanded = window.expandedAdminAdCards && window.expandedAdminAdCards.has(targetIdStr);
+
+        // Cerrar todas las tarjetas abiertas previamente (modo acordeón)
+        if (window.expandedAdminAdCards) {
+            window.expandedAdminAdCards.forEach(openId => {
+                const openCard = document.getElementById(`pending-ad-card-${openId}`);
+                const openIcon = document.getElementById(`pending-ad-expand-icon-${openId}`);
+                if (openCard) openCard.classList.remove('expanded');
+                if (openIcon) openIcon.style.transform = 'rotate(0deg)';
+            });
+            window.expandedAdminAdCards.clear();
+        }
+
+        // Si no estaba abierta, abrir la tarjeta seleccionada
+        if (!isCurrentlyExpanded) {
+            const card = document.getElementById(`pending-ad-card-${id}`);
+            const icon = document.getElementById(`pending-ad-expand-icon-${id}`);
+            if (card) {
                 card.classList.add('expanded');
                 if (icon) icon.style.transform = 'rotate(180deg)';
-                window.expandedAdminAdCards.add(String(id));
+                window.expandedAdminAdCards.add(targetIdStr);
             }
         }
     };
