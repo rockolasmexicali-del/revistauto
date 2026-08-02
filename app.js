@@ -5179,6 +5179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnClosePublishOptions) btnClosePublishOptions.addEventListener('click', () => {
         modalPublishOptions.classList.remove('active');
         showAlert('Anuncio guardado. Podrás pagarlo después.', 'Pendiente de Pago', 'info');
+        if (typeof renderMyListings === 'function') renderMyListings();
         if (typeof loadAdminData === 'function') loadAdminData();
     });
 
@@ -5728,6 +5729,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnSubmitClientAd.disabled = false;
                         btnSubmitClientAd.textContent = 'Confirmar Pago';
                         if (progressContainer) progressContainer.style.display = 'none';
+                        if (typeof renderMyListings === 'function') renderMyListings();
+                        if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
 
                         window.currentPendingAdId = savedAd.id;
                         const publishModal = document.getElementById('publish-options-modal');
