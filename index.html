@@ -198,16 +198,29 @@
                             <button id="btn-close-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
                         </div>
                         <div class="wizard-progress">
-                            <span id="wizard-step-indicator" style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">Paso 1 de 5</span>
+                            <span id="wizard-step-indicator" style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">Paso 1 de 6</span>
                             <div class="wizard-bar" style="width: 100%; height: 6px; background: var(--border-color); border-radius: 4px; margin-top: 8px; overflow: hidden;">
                                 <div id="wizard-bar-fill" style="width: 20%; height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;"></div>
                             </div>
                         </div>
                         <form id="new-listing-form" style="margin-top: 20px;">
                             
-                            <!-- PASO 1 -->
+                            <!-- PASO 1 (NUEVO) -->
                             <div class="form-step" data-step="1">
-                                <h4 style="margin-bottom: 16px; color: var(--text-muted);">1. El Vehículo</h4>
+                                <div style="background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; padding: 24px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                                    <span class="material-symbols-rounded" style="color: #10b981; font-size: 48px; margin-bottom: 16px;">directions_car</span>
+                                    <h4 style="margin: 0 0 12px 0; font-size: 1.2rem; color: var(--text-main);">Publicar Vehículo</h4>
+                                    <p style="margin: 0; font-size: 1rem; color: var(--text-muted); line-height: 1.5;">
+                                        Al continuar, empezarás a publicar tu vehículo.<br><br>
+                                        Costo Mensual del Servicio:<br>
+                                        <b id="vehicle-dynamic-price" style="color: #f59e0b; font-size: 1.4rem;">$500 MXN</b>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- PASO 2 -->
+                            <div class="form-step" data-step="2" style="display: none;">
+                                <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. El Vehículo</h4>
                             <div class="form-group">
                                 <label>Marca</label>
                                 <select id="form-make" required>
@@ -241,9 +254,9 @@
                             </div>
                             </div>
 
-                            <!-- PASO 2 -->
-                            <div class="form-step" data-step="2" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. Mecánica</h4>
+                            <!-- PASO 3 -->
+                            <div class="form-step" data-step="3" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. Mecánica</h4>
                             
                             <div class="form-group">
                                 <label>Motor</label>
@@ -269,9 +282,9 @@
                             </div>
                             </div>
 
-                            <!-- PASO 3 -->
-                            <div class="form-step" data-step="3" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. Ficha Técnica</h4>
+                            <!-- PASO 4 -->
+                            <div class="form-step" data-step="4" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Ficha Técnica</h4>
 
                             <div class="form-row">
                                 <div class="form-group half">
@@ -307,9 +320,9 @@
                             </div>
                             </div>
 
-                            <!-- PASO 4 -->
-                            <div class="form-step" data-step="4" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Ubicación y Contacto</h4>
+                            <!-- PASO 5 -->
+                            <div class="form-step" data-step="5" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ubicación y Contacto</h4>
                             <div class="form-row">
                                 <div class="form-group half">
                                     <label>Estado</label>
@@ -336,9 +349,9 @@
                             </div>
                             </div>
 
-                            <!-- PASO 5 -->
-                            <div class="form-step" data-step="5" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Galería de Fotos</h4>
+                            <!-- PASO 6 -->
+                            <div class="form-step" data-step="6" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">6. Galería de Fotos</h4>
                             <div class="form-group">
                                 <label>Fotos del Vehículo (Máx 7) *</label>
                                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; border: 1px dashed var(--primary-color);">
@@ -368,7 +381,6 @@
                             </div>
 
                             <div class="wizard-buttons" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
-                                <p id="vehicle-payment-note" style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 0; display: none;">Al continuar, pasarás a la opción de pago (Costo Mensual: <b id="vehicle-dynamic-price" style="color: #f59e0b;">$500 MXN</b>)</p>
                                 <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; width: 100%;">
                                     <button type="button" id="btn-wizard-back" class="danger-btn" style="display: none; flex: 1; background: var(--surface-light);">Atrás</button>
                                     <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
@@ -1254,19 +1266,20 @@
                 <button id="btn-close-client-ad" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
             </div>
             
-            <!-- BLOCK 1: Warning -->
+            <!-- BLOCK 1: Pricing Info -->
             <div id="client-ad-step-1" class="ad-step active-step">
-                <div style="background: rgba(245, 158, 11, 0.1); border: 2px solid #f59e0b; padding: 16px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;">
-                    <span class="material-symbols-rounded" style="color: #f59e0b; font-size: 28px;">warning</span>
-                    <p style="margin: 0; font-size: 0.95rem; color: #f59e0b; line-height: 1.5;">
-                        <strong>¡MUY IMPORTANTE!</strong> La <b>Primera Foto</b> que subas será tu <b>PORTADA</b>. 
-                        Debe contener <b>SOLO el nombre de tu empresa y a qué te dedicas</b> (Ej: MIRELES Mecánica General). 
-                        No incluyas letras pequeñas ni mucha información ahí porque no se podrá leer. Usa las fotos 2 al 7 para poner tus servicios, ofertas y detalles.
+                <div style="background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; padding: 24px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                    <span class="material-symbols-rounded" style="color: #10b981; font-size: 48px; margin-bottom: 16px;">campaign</span>
+                    <h4 style="margin: 0 0 12px 0; font-size: 1.2rem; color: var(--text-main);">Publicar tu Anuncio</h4>
+                    <p style="margin: 0; font-size: 1rem; color: var(--text-muted); line-height: 1.5;">
+                        Al continuar, empezarás a crear tu anuncio.<br><br>
+                        Costo Mensual del Servicio:<br>
+                        <b id="ad-payment-note-price" style="color: #f59e0b; font-size: 1.4rem;">$500 MXN</b>
                     </p>
                 </div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
                     <button type="button" class="primary-btn" onclick="document.getElementById('client-ad-modal').classList.remove('active')" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
-                    <button type="button" class="primary-btn" onclick="window.nextAdStep(2)" style="background: var(--primary-color); color: white; flex: 1;">Siguiente <span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(2)" style="background: var(--primary-color); color: white; flex: 1;">Aceptar y Continuar <span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
                 </div>
             </div>
 
@@ -1351,8 +1364,24 @@
                 </div>
             </div>
 
-            <!-- BLOCK 4: Photos and Payment -->
+            <!-- BLOCK 4: Warning -->
             <div id="client-ad-step-4" class="ad-step" style="display: none;">
+                <div style="background: rgba(245, 158, 11, 0.1); border: 2px solid #f59e0b; padding: 16px; border-radius: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;">
+                    <span class="material-symbols-rounded" style="color: #f59e0b; font-size: 28px;">warning</span>
+                    <p style="margin: 0; font-size: 0.95rem; color: #f59e0b; line-height: 1.5;">
+                        <strong>¡MUY IMPORTANTE!</strong> La <b>Primera Foto</b> que subas será tu <b>PORTADA</b>. 
+                        Debe contener <b>SOLO el nombre de tu empresa y a qué te dedicas</b> (Ej: MIRELES Mecánica General). 
+                        No incluyas letras pequeñas ni mucha información ahí porque no se podrá leer. Usa otras fotos para describir tus servicios.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(3)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
+                    <button type="button" class="primary-btn" onclick="window.nextAdStep(5)" style="background: var(--primary-color); color: white; flex: 1;">Siguiente <span class="material-symbols-rounded" style="font-size:18px">arrow_forward</span></button>
+                </div>
+            </div>
+
+            <!-- BLOCK 5: Photos and Payment -->
+            <div id="client-ad-step-5" class="ad-step" style="display: none;">
                 <div class="modal-body" style="overflow-y: auto; flex: 1; padding-right: 8px;">
                     <div class="form-group" style="margin-top: 8px;">
                         <label>Fotos de tu Negocio (Máx 7) *</label>
@@ -1379,10 +1408,9 @@
                 </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 0;">Al continuar, pasarás a la opción de pago (Costo Mensual: <b id="ad-payment-note-price" style="color: #f59e0b;">$500 MXN</b>)</p>
                     <div style="display: flex; gap: 12px;">
-                        <button type="button" class="primary-btn" onclick="window.nextAdStep(3)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
-                        <button id="btn-submit-client-ad" type="button" class="success-btn" style="flex: 2; padding: 14px; font-size: 1.1rem;">Confirmar Pago</button>
+                        <button type="button" class="primary-btn" onclick="window.nextAdStep(4)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
+                        <button id="btn-submit-client-ad" type="button" class="success-btn" style="flex: 2; padding: 14px; font-size: 1.1rem;">Confirmar y Publicar</button>
                     </div>
                 </div>
             </div>

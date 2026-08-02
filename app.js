@@ -342,9 +342,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     costDisclaimer.innerHTML = `* Costo de la publicación: <strong>$${globalMonthlyPrice.toFixed(2)} MXN</strong> por mes.`;
                 }
                 
-                const vehiclePriceNote = document.getElementById('dynamic-publish-price');
+                const vehiclePriceNote = document.getElementById('vehicle-dynamic-price');
                 if (vehiclePriceNote) {
-                    vehiclePriceNote.textContent = globalMonthlyPrice.toFixed(2);
+                    vehiclePriceNote.textContent = `$${globalMonthlyPrice.toFixed(2)} MXN`;
                 }
 
                 const inputPrice = document.getElementById('admin-monthly-price');
@@ -2561,7 +2561,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modal behavior & Wizard
     let currentWizardStep = 1;
-    const totalWizardSteps = 5;
+    const totalWizardSteps = 6;
 
     function updateWizardUI() {
         // Update Steps Visibility
@@ -5411,7 +5411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnSubmit = document.getElementById('btn-submit-client-ad');
             if (btnSubmit) {
                 btnSubmit.disabled = false;
-                btnSubmit.textContent = 'Confirmar Pago';
+                btnSubmit.textContent = 'Confirmar y Publicar';
             }
 
             window.nextAdStep(1);
