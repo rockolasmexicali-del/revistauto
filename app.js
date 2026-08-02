@@ -2686,7 +2686,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openEditAd = function(id) {
-        const ad = db.getAllAds().find(a => a.id === id);
+        const ad = db.getAllAds().find(a => String(a.id) === String(id));
         if(!ad) return;
         
         window.editingAdId = id;
@@ -2735,7 +2735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.openEditListing = function(id) {
-        const listing = db.getMyListings().find(l => l.id === id);
+        const listing = db.getMyListings().find(l => String(l.id) === String(id));
         if(!listing) return;
         editingListingId = id;
         

@@ -286,8 +286,6 @@ class Database {
     }
 
     async saveAd(ad) {
-        const ads = this.getAllAds();
-        
         if (!ad.id) {
             ad.id = Date.now();
             ad.created_at = new Date().toISOString();
@@ -342,6 +340,7 @@ class Database {
             }
         }
 
+        const ads = this.getAllAds();
         const index = ads.findIndex(a => String(a.id) === String(ad.id));
         if (index > -1) {
             ads[index] = { ...ads[index], ...ad };
@@ -413,8 +412,6 @@ class Database {
     }
 
     async saveListing(listing) {
-        const listings = this.getAllListings();
-        
         // Configurar los campos del anuncio
         if (!listing.id) {
             listing.id = Date.now();
@@ -495,6 +492,7 @@ class Database {
 
         // Si llegamos aquí, la subida a la nube fue un ÉXITO.
         // Solo entonces lo guardamos en la memoria local (localStorage).
+        const listings = this.getAllListings();
         const index = listings.findIndex(l => String(l.id) === String(listing.id));
         if (index > -1) {
             listings[index] = { ...listings[index], ...listing };
