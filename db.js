@@ -1006,7 +1006,8 @@ class Database {
                 if (!error && Array.isArray(data)) {
                     const normalizedAds = data.map(ad => ({
                         ...ad,
-                        social_links: typeof ad.social_links === 'string' ? JSON.parse(ad.social_links) : (ad.social_links || [])
+                        social_links: typeof ad.social_links === 'string' ? JSON.parse(ad.social_links) : (ad.social_links || []),
+                        notes: typeof ad.notes === 'string' ? JSON.parse(ad.notes) : (ad.notes || [])
                     }));
                     localStorage.setItem('revista_autos_ads', JSON.stringify(normalizedAds));
                     if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
@@ -1043,6 +1044,31 @@ class Database {
         return activeAds.sort(() => 0.5 - Math.random()).slice(0, count);
     }
 
+    addAdNote(id, noteText) {
+        if (!noteText || !noteText.trim()) return null;
+        const ads = this.getAllAds();
+        const index = ads.findIndex(a => String(a.id) === String(id));
+        if (index !== -1) {
+            if (!ads[index].notes) {
+                ads[index].notes = [];
+            }
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+            
+            const newNote = {
+                id: Date.now(),
+                timestamp: `${dateStr}, ${timeStr}`,
+                text: noteText.trim()
+            };
+            ads[index].notes.unshift(newNote);
+            localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
+            this.saveAd(ads[index]);
+            return newNote;
+        }
+        return null;
+    }
+
     async saveAd(ad) {
         if (!ad.id) {
             ad.id = Date.now();
@@ -1065,6 +1091,7 @@ class Database {
                 email: ad.email || '',
                 website: ad.website || '',
                 social_links: typeof ad.social_links === 'object' ? JSON.stringify(ad.social_links) : (ad.social_links || '[]'),
+                notes: typeof ad.notes === 'object' ? JSON.stringify(ad.notes) : (ad.notes || '[]'),
                 city: ad.city || '',
                 state: ad.state || '',
                 images: ad.images || [],

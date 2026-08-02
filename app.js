@@ -5719,6 +5719,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     };
 
+    window.expandedAdminAdCards = window.expandedAdminAdCards || new Set();
+
+    window.togglePendingAdDetail = function(id) {
+        const card = document.getElementById(`pending-ad-card-${id}`);
+        const icon = document.getElementById(`pending-ad-expand-icon-${id}`);
+        if (card) {
+            const isExpanded = card.classList.contains('expanded');
+            if (isExpanded) {
+                card.classList.remove('expanded');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+                window.expandedAdminAdCards.delete(String(id));
+            } else {
+                card.classList.add('expanded');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                window.expandedAdminAdCards.add(String(id));
+            }
+        }
+    };
+
+    window.savePendingAdNote = function(id) {
+        const input = document.getElementById(`ad-note-input-${id}`);
+        if (!input || !input.value.trim()) return;
+
+        const noteText = input.value.trim();
+        const newNote = db.addAdNote(id, noteText);
+
+        if (newNote) {
+            input.value = '';
+            
+            const listEl = document.getElementById(`crm-ad-notes-list-${id}`);
+            const noMsgEl = document.getElementById(`no-ad-notes-msg-${id}`);
+            if (noMsgEl) noMsgEl.remove();
+
+            if (listEl) {
+                const noteItemHTML = `
+                    <div class="crm-note-item" style="animation: fadeIn 0.3s ease;">
+                        <div class="crm-note-time">
+                            <span class="material-symbols-rounded" style="font-size:13px; vertical-align:middle;">schedule</span> ${newNote.timestamp}
+                        </div>
+                        <div class="crm-note-text">${newNote.text}</div>
+                    </div>
+                `;
+                listEl.insertAdjacentHTML('afterbegin', noteItemHTML);
+            }
+
+            const ads = db.getAllAds();
+            const ad = ads.find(a => String(a.id) === String(id));
+            const notesCount = ad && ad.notes ? ad.notes.length : 1;
+            const badgeEl = document.getElementById(`ad-notes-badge-${id}`);
+            if (badgeEl) {
+                badgeEl.className = 'pending-notes-badge has-notes';
+                badgeEl.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM`;
+            }
+        }
+    };
+
     window.updateAdminAdsApprovals = async function() {
         if (typeof db !== 'undefined' && db.syncAdsWithServer) {
             await db.syncAdsWithServer();
@@ -5767,23 +5823,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         list.innerHTML = pendingAds.map(ad => {
-            const mainImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://via.placeholder.com/60';
+            const images = ad.images || [];
+            const mainImg = images.length > 0 ? images[0] : 'https://via.placeholder.com/60';
+            const imgGalleryHTML = images.map((img, index) => `
+                <div style="position: relative; display: inline-block;">
+                    <img src="${img}" onclick="event.stopPropagation(); window.open('${img}', '_blank')" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); flex-shrink: 0; cursor: pointer;" title="Ver imagen en tamaño completo">
+                </div>
+            `).join('');
+
+            let socialLinks = ad.social_links || [];
+            if (typeof socialLinks === 'string') {
+                try { socialLinks = JSON.parse(socialLinks); } catch(e) { socialLinks = []; }
+            }
+            const socialLinksStr = Array.isArray(socialLinks) && socialLinks.length > 0
+                ? socialLinks.map(s => typeof s === 'object' ? `${s.platform || 'Red'}: ${s.url || ''}` : s).join(', ')
+                : 'Ninguna';
+
+            let notes = ad.notes || [];
+            if (typeof notes === 'string') {
+                try { notes = JSON.parse(notes); } catch(e) { notes = []; }
+            }
+            const notesCount = notes.length;
+            const notesBadgeHTML = notesCount > 0 
+                ? `<span class="pending-notes-badge has-notes" id="ad-notes-badge-${ad.id}"><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM</span>`
+                : `<span class="pending-notes-badge" id="ad-notes-badge-${ad.id}">Sin notas</span>`;
+
+            const notesListHTML = notes.length > 0 ? notes.map(n => `
+                <div class="crm-note-item">
+                    <div class="crm-note-time">
+                        <span class="material-symbols-rounded" style="font-size:13px; vertical-align:middle;">schedule</span> ${n.timestamp}
+                    </div>
+                    <div class="crm-note-text">${n.text}</div>
+                </div>
+            `).join('') : `<p id="no-ad-notes-msg-${ad.id}" style="color:var(--text-muted); font-size:0.82rem; margin:0;">No hay notas registradas aún. Escribe abajo para dejar evidencia.</p>`;
+
+            const isExpanded = window.expandedAdminAdCards && window.expandedAdminAdCards.has(String(ad.id));
+
             return `
-            <div class="pending-approval-card" style="border-left: 4px solid #f59e0b;">
-                <div class="pending-row-header">
+            <div class="pending-approval-card ${isExpanded ? 'expanded' : ''}" id="pending-ad-card-${ad.id}" style="border-left: 4px solid #f59e0b;">
+                <div class="pending-row-header" onclick="togglePendingAdDetail(${ad.id})">
                     <div class="pending-row-left">
                         <div class="pending-thumb-wrapper">
                             <img src="${mainImg}" alt="${ad.title}">
-                            ${ad.images && ad.images.length > 1 ? `<span class="pending-img-count">📸 ${ad.images.length}</span>` : ''}
+                            ${images.length > 1 ? `<span class="pending-img-count">📸 ${images.length}</span>` : ''}
                         </div>
                         <div class="pending-main-info">
-                            <div class="pending-title">${ad.title} <span style="background:var(--danger-color); color:white; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">Pago Asistido / Pendiente</span></div>
+                            <div class="pending-title">${ad.title || 'Sin título'} <span style="background:var(--danger-color); color:white; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">Pago Asistido / Pendiente</span></div>
                             <div class="pending-sub-info">
-                                <span>📍 ${ad.city}</span>
-                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone}</span>
+                                <span>📍 ${ad.state ? ad.state + ' / ' : ''}${ad.city || ''}</span>
+                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone || 'Sin tel'}</span>
+                                ${notesBadgeHTML}
                             </div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-                                ${ad.description}
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${ad.description || 'Sin descripción'}
                             </div>
                         </div>
                     </div>
@@ -5794,6 +5886,62 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="success-btn" onclick="event.stopPropagation(); approveAd(${ad.id})" title="Autorizar anuncio" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; background:#f59e0b;">
                             <span class="material-symbols-rounded" style="font-size:16px;">check</span> Autorizar
                         </button>
+                        <span id="pending-ad-expand-icon-${ad.id}" class="material-symbols-rounded" style="transition: transform 0.2s; color: var(--text-muted); ${isExpanded ? 'transform: rotate(180deg);' : ''}">expand_more</span>
+                    </div>
+                </div>
+
+                <!-- Panel Expandible de Detalle y CRM de Anuncio -->
+                <div class="pending-detail-panel">
+                    <!-- Fotos del Anuncio -->
+                    ${images.length > 0 ? `
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Fotos del Anuncio (${images.length}):</div>
+                            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin;">
+                                ${imgGalleryHTML}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Especificaciones / Datos del Anuncio -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.85rem; background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="grid-column: 1 / -1; font-weight: bold; font-size: 0.95rem; color: #f59e0b; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 4px;">
+                            📢 Información de la Publicidad
+                        </div>
+                        <div><strong>Título:</strong> ${ad.title || '-'}</div>
+                        <div><strong>Estado / Ciudad:</strong> ${ad.state ? ad.state + ' / ' : ''}${ad.city || '-'}</div>
+                        <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')" title="Clic para copiar">${ad.phone || '-'}</span></div>
+                        ${ad.whatsapp ? `<div><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.whatsapp}', 'WhatsApp')" title="Clic para copiar">${ad.whatsapp}</span></div>` : ''}
+                        <div><strong>Correo:</strong> ${ad.email || '-'}</div>
+                        <div><strong>Sitio Web / Link:</strong> ${ad.website ? `<a href="${ad.website.startsWith('http') ? ad.website : 'https://' + ad.website}" target="_blank" style="color:var(--primary-color); text-decoration:underline;">${ad.website}</a>` : '-'}</div>
+                        <div><strong>Dirección:</strong> ${ad.address || '-'}</div>
+                        <div><strong>Horario L-V:</strong> ${ad.scheduleMF || '-'}</div>
+                        <div><strong>Horario Sáb:</strong> ${ad.scheduleSat || '-'}</div>
+                        <div><strong>Horario Dom:</strong> ${ad.scheduleSun || '-'}</div>
+                        <div style="grid-column: 1 / -1;"><strong>Redes Sociales:</strong> ${socialLinksStr}</div>
+                        <div style="grid-column: 1 / -1; background: var(--surface-light); padding: 8px; border-radius: 6px; margin-top: 4px;">
+                            <strong>Descripción completa:</strong><br>
+                            <span style="color: var(--text-main); white-space: pre-wrap;">${ad.description || 'Sin descripción'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Módulo CRM de Bitácora / Notas de Seguimiento de Anuncios -->
+                    <div class="crm-notes-container" style="margin-top: 14px;">
+                        <div class="crm-notes-header">
+                            <span style="display:flex; align-items:center; gap:6px;">
+                                <span class="material-symbols-rounded" style="color:#f59e0b;">history_edu</span>
+                                Bitácora de Evidencia / Seguimiento CRM (Anuncio)
+                            </span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">Historial guardado permanente</span>
+                        </div>
+                        <div class="crm-notes-list" id="crm-ad-notes-list-${ad.id}">
+                            ${notesListHTML}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" id="ad-note-input-${ad.id}" placeholder="Escribe un avance o seguimiento de esta publicidad (ej: llamada, pago recibido)..." style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--surface-light); color:var(--text-main); font-size:0.85rem; outline:none;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); savePendingAdNote(${ad.id}); }">
+                            <button class="primary-btn" onclick="savePendingAdNote(${ad.id})" style="width:auto; padding:8px 14px; font-size:0.85rem; border-radius:6px; background:#f59e0b;">
+                                <span class="material-symbols-rounded" style="font-size:16px;">save</span> Guardar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
