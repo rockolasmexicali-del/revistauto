@@ -4258,14 +4258,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 try {
                     await db.saveListing(updatedListing);
+                    if (updatedListing._pendingSync) {
+                        showAlert('Guardado en tu dispositivo. Se subirá a la nube automáticamente cuando vuelva la conexión.', 'Guardado Offline', 'warning');
+                    } else {
+                        showAlert('Los datos del vehículo han sido actualizados con éxito en la nube.', 'Datos Guardados', 'check_circle');
+                    }
                 } catch(err) {
                     console.error("Error al guardar vehículo en Supabase:", err);
                     const localListings = JSON.parse(localStorage.getItem(db.listingsKey) || '[]');
                     const lIdx = localListings.findIndex(l => String(l.id) === String(adminEditTargetId));
                     if (lIdx > -1) {
-                        localListings[lIdx] = { ...localListings[lIdx], ...updatedListing };
+                        localListings[lIdx] = { ...localListings[lIdx], ...updatedListing, _pendingSync: true };
                         localStorage.setItem(db.listingsKey, JSON.stringify(localListings));
                     }
+                    showAlert('Guardado en tu dispositivo. Se subirá a la nube automáticamente cuando vuelva la conexión.', 'Guardado Offline', 'warning');
                 }
 
                 closeAdminEdit();
@@ -4283,8 +4289,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
                 if (typeof renderAdminInventory === 'function') renderAdminInventory();
                 if (typeof renderFeed === 'function') renderFeed();
-
-                showAlert('Los datos del vehículo han sido actualizados con éxito.', 'Datos Guardados', 'check_circle');
             }
         };
     }
@@ -5542,14 +5546,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     try {
                         await db.saveAd(updatedAd);
+                        if (updatedAd._pendingSync) {
+                            showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
+                        } else {
+                            showAlert('¡Anuncio actualizado con éxito en la nube!', 'Actualizado en la Nube', 'check_circle');
+                        }
                     } catch(err) {
                         console.error("Error guardando ad en Supabase:", err);
                         const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
                         const adIdx = localAds.findIndex(a => String(a.id) === String(window.editingAdId));
                         if (adIdx > -1) {
-                            localAds[adIdx] = { ...localAds[adIdx], ...updatedAd };
+                            localAds[adIdx] = { ...localAds[adIdx], ...updatedAd, _pendingSync: true };
                             localStorage.setItem('revista_autos_ads', JSON.stringify(localAds));
                         }
+                        showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
                     }
 
                     window.editingAdId = null;

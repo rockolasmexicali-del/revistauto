@@ -218,19 +218,30 @@ class Database {
                         });
                         const mergedPayments = Array.from(paymentsMap.values());
 
+                        // Si la publicación local tenía cambios pendientes de sincronización por estar offline, preservarlos
+                        let mergedFields = { ...item };
+                        if (localListing && localListing._pendingSync) {
+                            mergedFields = {
+                                ...item,
+                                ...localListing
+                            };
+                            // Reintentar sincronizar a la nube de fondo
+                            this.saveListing(localListing).catch(e => console.warn('Retry sync listing failed:', e));
+                        }
+
                         return {
-                            ...item,
-                            engine: item.engine || item.motor || (localListing ? localListing.engine : ''),
-                            legal: item.legal || item.situacion || (localListing ? localListing.legal : ''),
-                            ac: item.ac || (localListing ? localListing.ac : ''),
-                            mileage: item.mileage !== undefined && item.mileage !== null ? String(item.mileage) : (localListing ? localListing.mileage : ''),
-                            phone: item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
-                            whatsapp: item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
+                            ...mergedFields,
+                            engine: mergedFields.engine || item.engine || item.motor || (localListing ? localListing.engine : ''),
+                            legal: mergedFields.legal || item.legal || item.situacion || (localListing ? localListing.legal : ''),
+                            ac: mergedFields.ac || item.ac || (localListing ? localListing.ac : ''),
+                            mileage: mergedFields.mileage !== undefined && mergedFields.mileage !== null ? String(mergedFields.mileage) : (localListing ? localListing.mileage : ''),
+                            phone: mergedFields.seller_phone || mergedFields.phone || item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
+                            whatsapp: mergedFields.seller_whatsapp || mergedFields.whatsapp || item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
                             publishedAt: item.published_at || item.publishedAt || (localListing ? localListing.publishedAt : null),
                             expiresAt: item.expires_at || item.expiresAt || (localListing ? localListing.expiresAt : null),
                             lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
                             paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
-                            images: item.images && item.images.length > 0 ? item.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
+                            images: mergedFields.images && mergedFields.images.length > 0 ? mergedFields.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
                             notes: mergedNotes,
                             payments: mergedPayments,
                             publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
@@ -317,10 +328,17 @@ class Database {
                 created_at: ad.created_at
             };
 
-            const { data, error } = await supabaseClient.from('ads').upsert([payload]);
-            if (error) {
-                console.error('⚠️ Error al guardar el Ad en Supabase:', error);
-                throw new Error("Error al enviar anuncio a la nube: " + error.message);
+            try {
+                const { data, error } = await supabaseClient.from('ads').upsert([payload]);
+                if (error) {
+                    console.error('⚠️ Error al guardar el Ad en Supabase:', error);
+                    ad._pendingSync = true;
+                } else {
+                    delete ad._pendingSync;
+                }
+            } catch(e) {
+                console.error('⚠️ Excepción al guardar Ad en Supabase:', e);
+                ad._pendingSync = true;
             }
         }
 
@@ -451,12 +469,19 @@ class Database {
                 sold_at: listing.soldAt || listing.sold_at || null
             };
 
-            const { data, error } = await supabaseClient.from('listings').upsert([payload]);
-            if (error) {
-                console.error('⚠️ Error al guardar en Supabase:', error);
-                throw new Error("Error al enviar publicación a la nube: " + error.message);
+            try {
+                const { data, error } = await supabaseClient.from('listings').upsert([payload]);
+                if (error) {
+                    console.error('⚠️ Error al guardar en Supabase:', error);
+                    listing._pendingSync = true;
+                } else {
+                    delete listing._pendingSync;
+                    console.log('✅ Anuncio sincronizado exitosamente con Supabase Cloud');
+                }
+            } catch(e) {
+                console.error('⚠️ Excepción al guardar en Supabase:', e);
+                listing._pendingSync = true;
             }
-            console.log('✅ Anuncio sincronizado exitosamente con Supabase Cloud');
         } else {
             const response = await fetch(`${this.apiBaseUrl}/listings`, {
                 method: 'POST',
@@ -1067,8 +1092,14 @@ class Database {
                             socialLinks = localAd.social_links;
                         }
 
+                        let mergedAd = { ...ad };
+                        if (localAd && localAd._pendingSync) {
+                            mergedAd = { ...ad, ...localAd };
+                            this.saveAd(localAd).catch(e => console.warn('Retry sync ad failed:', e));
+                        }
+
                         return {
-                            ...ad,
+                            ...mergedAd,
                             social_links: socialLinks,
                             notes: mergedNotes
                         };
