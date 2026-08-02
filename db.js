@@ -307,6 +307,7 @@ class Database {
                 city: ad.city || '',
                 state: ad.state || '',
                 images: ad.images || [],
+                notes: ad.notes || [],
                 start_date: ad.start_date || null,
                 end_date: ad.end_date || null,
                 payment_status: ad.payment_status,

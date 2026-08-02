@@ -4219,13 +4219,18 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             if (adminEditTargetId === null) return;
             
-            const price = parseFloat(document.getElementById('edit-price').value);
-            const year = parseInt(document.getElementById('edit-year').value);
+            const rawPriceStr = (document.getElementById('edit-price').value || '').toString().replace(/[^0-9.]/g, '');
+            const price = parseFloat(rawPriceStr);
+            
+            const rawYearStr = (document.getElementById('edit-year').value || '').toString().replace(/[^0-9]/g, '');
+            const year = parseInt(rawYearStr, 10);
+            
             const make = document.getElementById('edit-make').value.trim();
             const model = document.getElementById('edit-model').value.trim();
             const phone = document.getElementById('edit-phone').value.trim();
+            const wa = document.getElementById('edit-whatsapp').value.trim();
             
-            if (!price || !year || !make || !model || !phone) {
+            if (isNaN(price) || !price || isNaN(year) || !year || !make || !model || !phone) {
                 showAlert('Por favor llena los campos requeridos (Precio, Año, Marca, Modelo, Teléfono).', 'Faltan datos', 'warning');
                 return;
             }
@@ -4234,8 +4239,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const listingIndex = listings.findIndex(l => String(l.id) === String(adminEditTargetId));
             
             if (listingIndex > -1) {
-                listings[listingIndex] = {
+                const newTitle = `${make} ${model} ${year}`.toUpperCase();
+                const updatedListing = {
                     ...listings[listingIndex],
+                    title: newTitle,
                     price: price,
                     year: year,
                     mileage: document.getElementById('edit-mileage').value.trim(),
@@ -4244,11 +4251,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: document.getElementById('edit-type').value.trim(),
                     transmission: document.getElementById('edit-transmission').value.trim(),
                     phone: phone,
-                    whatsapp: document.getElementById('edit-whatsapp').value.trim()
+                    seller_phone: phone,
+                    whatsapp: wa,
+                    seller_whatsapp: wa
                 };
                 
-                // Sincronizar local y con Supabase Cloud (esperando resultado)
-                await db.saveListing(listings[listingIndex]);
+                try {
+                    await db.saveListing(updatedListing);
+                } catch(err) {
+                    console.error("Error al guardar vehículo en Supabase:", err);
+                    const localListings = JSON.parse(localStorage.getItem(db.listingsKey) || '[]');
+                    const lIdx = localListings.findIndex(l => String(l.id) === String(adminEditTargetId));
+                    if (lIdx > -1) {
+                        localListings[lIdx] = { ...localListings[lIdx], ...updatedListing };
+                        localStorage.setItem(db.listingsKey, JSON.stringify(localListings));
+                    }
+                }
 
                 closeAdminEdit();
                 
@@ -4260,8 +4278,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const inventoryTable = document.getElementById('inventory-table-body');
                 if (inventoryTable) delete inventoryTable.dataset.lastState;
 
-                forceInstantAdminRefresh();
-                showAlert('Los datos del vehículo han sido actualizados.', 'Datos Guardados', 'check_circle');
+                if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+                if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+                if (typeof renderAdminInventory === 'function') renderAdminInventory();
+                if (typeof renderFeed === 'function') renderFeed();
+
+                showAlert('Los datos del vehículo han sido actualizados con éxito.', 'Datos Guardados', 'check_circle');
             }
         };
     }
@@ -5441,43 +5464,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const phone = document.getElementById('client-ad-phone').value.trim();
             const wa = document.getElementById('client-ad-whatsapp').value.trim();
             
-            if (!title || !desc || !state || !city || !phone || !wa) {
-                showAlert('Por favor, completa los campos obligatorios en el Paso 2.', 'Campos incompletos', 'warning');
+            if (!title || !desc || !state || !city) {
+                showAlert('Por favor, completa los campos obligatorios (Título, Descripción, Estado y Ciudad).', 'Campos incompletos', 'warning');
                 return;
             }
             
-            if (!window.clientAdImages || window.clientAdImages.length === 0) {
+            if (!window.editingAdId && (!window.clientAdImages || window.clientAdImages.length === 0)) {
                 showAlert('Debes subir al menos 1 foto para tu portada.', 'Faltan fotos', 'warning');
                 return;
             }
             
             btnSubmitClientAd.disabled = true;
-            btnSubmitClientAd.textContent = 'Subiendo anuncio...';
+            btnSubmitClientAd.textContent = 'Guardando anuncio...';
             
             const progressContainer = document.getElementById('client-ad-progress-container');
             const progressBar = document.getElementById('client-ad-progress-bar');
             const progressText = document.getElementById('client-ad-progress-text');
-            progressContainer.style.display = 'block';
+            if (progressContainer) progressContainer.style.display = 'block';
             
             try {
                 const uploadedImages = [];
-                const totalImgs = window.clientAdImages.length;
+                const imagesToProcess = window.clientAdImages || [];
+                const totalImgs = imagesToProcess.length;
                 
                 for (let i = 0; i < totalImgs; i++) {
-                    let b64 = window.clientAdImages[i];
-                    if (b64.startsWith('data:image')) {
+                    let b64 = imagesToProcess[i];
+                    if (b64 && b64.startsWith('data:image')) {
                         const blob = await (await fetch(b64)).blob();
                         const file = new File([blob], `ad_img_${Date.now()}.jpg`, { type: 'image/jpeg' });
                         const url = await db.uploadImageToSupabase(file);
                         if (url) uploadedImages.push(url);
-                    } else {
+                    } else if (b64) {
                         uploadedImages.push(b64);
                     }
                     
-                    // Update progress
-                    const pct = Math.round(((i + 1) / totalImgs) * 90); // Up to 90% for images
-                    progressBar.style.width = pct + '%';
-                    progressText.textContent = pct + '%';
+                    if (progressBar && progressText) {
+                        const pct = Math.round(((i + 1) / Math.max(totalImgs, 1)) * 90);
+                        progressBar.style.width = pct + '%';
+                        progressText.textContent = pct + '%';
+                    }
                 }
                 
                 const socialLinks = [];
@@ -5488,80 +5513,108 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ig) socialLinks.push(ig);
                 if (tk) socialLinks.push(tk);
                 
-                progressBar.style.width = '95%';
-                progressText.textContent = '95%';
-                
-                const newAd = {
-                    title: title,
-                    description: desc,
-                    address: address,
-                    scheduleMF: scheduleMF,
-                    scheduleSat: scheduleSat,
-                    scheduleSun: scheduleSun,
-                    state: state,
-                    city: city,
-                    phone: phone,
-                    whatsapp: wa,
-                    social_links: socialLinks,
-                    images: uploadedImages
-                };
+                if (progressBar && progressText) {
+                    progressBar.style.width = '95%';
+                    progressText.textContent = '95%';
+                }
                 
                 if (window.editingAdId) {
-                    newAd.id = window.editingAdId;
                     const existingAd = db.getAllAds().find(a => String(a.id) === String(window.editingAdId));
-                    if (existingAd) {
-                        newAd.payment_status = existingAd.payment_status;
-                        newAd.is_active = existingAd.is_active;
-                        newAd.start_date = existingAd.start_date;
-                        newAd.end_date = existingAd.end_date;
-                        newAd.views = existingAd.views;
-                        newAd.clicks = existingAd.clicks;
-                        newAd.publisher_id = existingAd.publisher_id;
-                        newAd.notes = existingAd.notes || [];
-                    }
+                    const finalImages = uploadedImages.length > 0 ? uploadedImages : (existingAd ? existingAd.images : []);
+
+                    const updatedAd = {
+                        ...(existingAd || {}),
+                        id: window.editingAdId,
+                        title: title,
+                        description: desc,
+                        address: address,
+                        scheduleMF: scheduleMF,
+                        scheduleSat: scheduleSat,
+                        scheduleSun: scheduleSun,
+                        state: state,
+                        city: city,
+                        phone: phone,
+                        whatsapp: wa,
+                        social_links: socialLinks,
+                        images: finalImages,
+                        notes: existingAd ? (existingAd.notes || []) : []
+                    };
                     
-                    await db.saveAd(newAd);
+                    try {
+                        await db.saveAd(updatedAd);
+                    } catch(err) {
+                        console.error("Error guardando ad en Supabase:", err);
+                        const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
+                        const adIdx = localAds.findIndex(a => String(a.id) === String(window.editingAdId));
+                        if (adIdx > -1) {
+                            localAds[adIdx] = { ...localAds[adIdx], ...updatedAd };
+                            localStorage.setItem('revista_autos_ads', JSON.stringify(localAds));
+                        }
+                    }
+
                     window.editingAdId = null;
                     
-                    progressBar.style.width = '100%';
-                    progressText.textContent = '100%';
+                    if (progressBar && progressText) {
+                        progressBar.style.width = '100%';
+                        progressText.textContent = '100%';
+                    }
                     
                     setTimeout(() => {
-                        clientAdModal.classList.remove('active');
+                        const clientAdModal = document.getElementById('client-ad-modal');
+                        if (clientAdModal) clientAdModal.classList.remove('active');
                         btnSubmitClientAd.disabled = false;
                         btnSubmitClientAd.textContent = 'Guardar Cambios';
-                        progressContainer.style.display = 'none';
+                        if (progressContainer) progressContainer.style.display = 'none';
+                        
                         showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
+                        
                         const pendingAdsList = document.getElementById('pending-ads-list');
                         if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+                        const adminAdsTable = document.getElementById('admin-ads-table-body');
+                        if (adminAdsTable) delete adminAdsTable.dataset.lastState;
+
                         if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
                         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
                         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
                         if (typeof renderMyListings === 'function') renderMyListings();
-                    }, 500);
+                    }, 300);
                 } else {
-                    newAd.payment_status = 'pendiente';
-                    newAd.is_active = false;
-                    
+                    const newAd = {
+                        title: title,
+                        description: desc,
+                        address: address,
+                        scheduleMF: scheduleMF,
+                        scheduleSat: scheduleSat,
+                        scheduleSun: scheduleSun,
+                        state: state,
+                        city: city,
+                        phone: phone,
+                        whatsapp: wa,
+                        social_links: socialLinks,
+                        images: uploadedImages,
+                        payment_status: 'pendiente',
+                        is_active: false
+                    };
+
                     const savedAd = await db.saveAd(newAd);
                     
-                    progressBar.style.width = '100%';
-                    progressText.textContent = '100%';
-                    
+                    if (progressBar && progressText) {
+                        progressBar.style.width = '100%';
+                        progressText.textContent = '100%';
+                    }
+
                     setTimeout(() => {
-                        clientAdModal.classList.remove('active');
-                        window.currentPendingAdId = savedAd.id;
-                        
-                        const publishModal = document.getElementById('publish-options-modal');
-                        if (publishModal) publishModal.classList.add('active');
-                        
+                        const clientAdModal = document.getElementById('client-ad-modal');
+                        if (clientAdModal) clientAdModal.classList.remove('active');
                         btnSubmitClientAd.disabled = false;
                         btnSubmitClientAd.textContent = 'Confirmar Pago';
-                        progressContainer.style.display = 'none';
-                        if (typeof renderMyListings === 'function') renderMyListings();
-                    }, 500);
+                        if (progressContainer) progressContainer.style.display = 'none';
+
+                        window.currentPendingAdId = savedAd.id;
+                        const publishModal = document.getElementById('publish-options-modal');
+                        if (publishModal) publishModal.classList.add('active');
+                    }, 300);
                 }
-                
             } catch (err) {
                 console.error(err);
                 showAlert('Error al crear el anuncio.', 'Error', 'error');
