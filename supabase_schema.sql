@@ -42,6 +42,7 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS published_at TIMESTAMP WITH
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_renewed_month TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS payment_status TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sold_at TIMESTAMP WITH TIME ZONE;
 
 -- 2.6 COMANDO PARA CAMBIAR MILEAGE A TEXTO (EJECÚTALO PARA ARREGLAR EL ERROR DE "invalid input syntax for type integer")
 ALTER TABLE public.listings ALTER COLUMN mileage TYPE TEXT USING mileage::TEXT;
@@ -166,11 +167,16 @@ CREATE TABLE IF NOT EXISTS public.ads (
     publisher_id TEXT,             -- Para vincularlo al cliente ("Mis Anuncios")
     title TEXT NOT NULL,           -- Nombre del Negocio (Ej. Frenos El Cholo)
     description TEXT,              -- Texto gancho o servicios
+    address TEXT,                  -- Dirección física del negocio
+    "scheduleMF" TEXT,             -- Horario Lunes a Viernes
+    "scheduleSat" TEXT,            -- Horario Sábado
+    "scheduleSun" TEXT,            -- Horario Domingo
     phone TEXT,                    -- Para el botón "Llamar"
     whatsapp TEXT,                 -- Para el botón "WhatsApp"
     email TEXT,                    -- Para el botón de Correo
     website TEXT,                  -- Para el botón de Página Web
     social_links JSONB DEFAULT '[]'::jsonb, -- Arreglo para múltiples redes (Face, Insta, TikTok)
+    notes JSONB DEFAULT '[]'::jsonb,        -- Bitácora de notas CRM del Administrador
     city TEXT NOT NULL,            -- Filtro de ciudad en el Feed
     state TEXT NOT NULL,           -- Filtro de estado
     images TEXT[] DEFAULT '{}',    -- Las 7 imágenes comprimidas
