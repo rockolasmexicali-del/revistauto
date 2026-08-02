@@ -100,7 +100,9 @@ class Database {
         this.apiBaseUrl = '/api';
         this.isServerConnected = false;
         this.uuidKey = 'revista_autos_uuid';
-        this.adsEnabled = true; // Habilita los anuncios publicitarios en la app
+        const savedSettings = JSON.parse(localStorage.getItem('revista_settings') || '{}');
+        this.adsEnabled = savedSettings.ads_enabled !== undefined ? savedSettings.ads_enabled : true; // Habilita los anuncios publicitarios en la app
+        this.adFrequencyScroll = savedSettings.ad_frequency_scroll !== undefined ? Number(savedSettings.ad_frequency_scroll) : 10;
         this.initUUID();
         this.initializeDB();
         this.syncWithServer();
@@ -815,27 +817,32 @@ class Database {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const { data, error } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
             if (data) {
-                return { 
-                    success: true, 
-                    settings: {
-                        monthlyPrice: data.monthlyprice !== undefined ? data.monthlyprice : (data.monthlyPrice || 500),
-                        adMonthlyPrice: data.admonthlyprice !== undefined ? data.admonthlyprice : (data.adMonthlyPrice || 500),
-                        mercadoPagoEnabled: data.mercadopagoenabled !== undefined ? data.mercadopagoenabled : (data.mercadoPagoEnabled || false),
-                        mpPublicKey: data.mppublickey !== undefined ? data.mppublickey : (data.mpPublicKey || ''),
-                        mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || ''),
-                        ads_enabled: data.ads_enabled !== undefined ? data.ads_enabled : true,
-                        ad_frequency_scroll: data.ad_frequency_scroll !== undefined ? data.ad_frequency_scroll : 10
-                    } 
+                const s = { 
+                    monthlyPrice: data.monthlyprice !== undefined ? data.monthlyprice : (data.monthlyPrice || 500),
+                    adMonthlyPrice: data.admonthlyprice !== undefined ? data.admonthlyprice : (data.adMonthlyPrice || 500),
+                    mercadoPagoEnabled: data.mercadopagoenabled !== undefined ? data.mercadopagoenabled : (data.mercadoPagoEnabled || false),
+                    mpPublicKey: data.mppublickey !== undefined ? data.mppublickey : (data.mpPublicKey || ''),
+                    mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || ''),
+                    ads_enabled: data.ads_enabled !== undefined ? data.ads_enabled : true,
+                    ad_frequency_scroll: data.ad_frequency_scroll !== undefined ? Number(data.ad_frequency_scroll) : 10
                 };
+                this.adsEnabled = s.ads_enabled;
+                this.adFrequencyScroll = s.ad_frequency_scroll;
+                return { success: true, settings: s };
             }
             if (error) console.error('Error fetching settings:', error);
         }
         const local = localStorage.getItem('revista_settings');
-        return { success: true, settings: local ? JSON.parse(local) : defaultSettings };
+        const parsedLocal = local ? JSON.parse(local) : defaultSettings;
+        this.adsEnabled = parsedLocal.ads_enabled !== undefined ? parsedLocal.ads_enabled : true;
+        this.adFrequencyScroll = parsedLocal.ad_frequency_scroll !== undefined ? Number(parsedLocal.ad_frequency_scroll) : 10;
+        return { success: true, settings: parsedLocal };
     }
 
     async saveSettings(settings) {
         localStorage.setItem('revista_settings', JSON.stringify(settings));
+        if (settings.ads_enabled !== undefined) this.adsEnabled = settings.ads_enabled;
+        if (settings.ad_frequency_scroll !== undefined) this.adFrequencyScroll = Number(settings.ad_frequency_scroll);
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 // Postgres guarda columnas sin comillas en minúsculas. Mapeamos de camelCase a minúsculas
