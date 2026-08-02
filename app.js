@@ -1333,16 +1333,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Si la distancia es mayor a 40px, lo consideramos un swipe intencional
                 if (swipeDist > 40) {
-                    if (ad.images && ad.images.length > 1 && window.currentAdImageIndex < ad.images.length - 1) {
+                    if (ad.images && ad.images.length > 1) {
                         if (typeof scrollAdCarousel === 'function') scrollAdCarousel(1);
-                    } else if (window.navigateAdGlobal) {
-                        window.navigateAdGlobal(1);
                     }
                 } else if (swipeDist < -40) {
-                    if (ad.images && ad.images.length > 1 && window.currentAdImageIndex > 0) {
+                    if (ad.images && ad.images.length > 1) {
                         if (typeof scrollAdCarousel === 'function') scrollAdCarousel(-1);
-                    } else if (window.navigateAdGlobal) {
-                        window.navigateAdGlobal(-1);
                     }
                 }
             }, { passive: true });
@@ -1521,6 +1517,29 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const infoDiv = modal.querySelector('.detalle-info');
+        if (infoDiv && !infoDiv.dataset.swipeInitialized) {
+            infoDiv.dataset.swipeInitialized = 'true';
+            let startX = 0;
+            let endX = 0;
+
+            infoDiv.addEventListener('touchstart', (e) => {
+                startX = e.changedTouches[0].screenX;
+            }, {passive: true});
+
+            infoDiv.addEventListener('touchend', (e) => {
+                if (e.target.closest('button') || e.target.closest('.btn-contactar') || e.target.closest('a')) return;
+
+                endX = e.changedTouches[0].screenX;
+                const threshold = 50;
+                if (endX < startX - threshold) {
+                    if(window.navigateAdGlobal) window.navigateAdGlobal(1);
+                } else if (endX > startX + threshold) {
+                    if(window.navigateAdGlobal) window.navigateAdGlobal(-1);
+                }
+            }, {passive: true});
+        }
+
         history.pushState({ page: 'ad-modal' }, '');
         modal.style.display = ''; // Remover cualquier display: none que haya puesto switchView
         modal.classList.add('active');
@@ -1532,11 +1551,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (images.length <= 1) return;
 
         images[window.currentAdImageIndex].style.display = 'none';
-        window.currentAdImageIndex += direction;
-
-        if (window.currentAdImageIndex < 0) window.currentAdImageIndex = images.length - 1;
-        if (window.currentAdImageIndex >= images.length) window.currentAdImageIndex = 0;
-
+        
+        let nextIndex = window.currentAdImageIndex + direction;
+        if (nextIndex < 0 || nextIndex >= images.length) {
+            images[window.currentAdImageIndex].style.display = 'block';
+            return;
+        }
+        
+        window.currentAdImageIndex = nextIndex;
         images[window.currentAdImageIndex].style.display = 'block';
 
         const counter = carousel.querySelector('.image-counter');
