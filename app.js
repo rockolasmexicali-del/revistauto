@@ -6072,26 +6072,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     ` : ''}
 
                     <!-- Especificaciones / Datos del Anuncio -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.85rem; background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <button class="primary-btn" onclick="event.stopPropagation(); window.openAdminEditAdModal(${ad.id})" style="grid-column: 1 / -1; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
+                    <div style="background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem;">
+                        <button class="primary-btn" onclick="event.stopPropagation(); window.openAdminEditAdModal(${ad.id})" style="width: 100%; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
                             <span class="material-symbols-rounded" style="font-size: 16px;">edit</span> Editar Datos de la Publicidad
                         </button>
-                        <div style="grid-column: 1 / -1; font-weight: bold; font-size: 0.95rem; color: #f59e0b; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 4px;">
-                            📢 Información de la Publicidad
+                        
+                        <div style="font-weight: bold; font-size: 0.95rem; color: #f59e0b; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">campaign</span> Información de la Publicidad
                         </div>
-                        <div><strong>Título:</strong> ${ad.title || '-'}</div>
-                        <div><strong>Estado / Ciudad:</strong> ${ad.state ? ad.state + ' / ' : ''}${ad.city || '-'}</div>
-                        <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')" title="Clic para copiar">${ad.phone || '-'}</span></div>
-                        ${ad.whatsapp ? `<div><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.whatsapp}', 'WhatsApp')" title="Clic para copiar">${ad.whatsapp}</span></div>` : ''}
-                        <div><strong>Correo:</strong> ${ad.email || '-'}</div>
-                        <div><strong>Sitio Web / Link:</strong> ${ad.website ? `<a href="${ad.website.startsWith('http') ? ad.website : 'https://' + ad.website}" target="_blank" style="color:var(--primary-color); text-decoration:underline;">${ad.website}</a>` : '-'}</div>
-                        <div><strong>Dirección:</strong> ${ad.address || '-'}</div>
-                        <div><strong>Horario L-V:</strong> ${ad.scheduleMF || '-'}</div>
-                        <div><strong>Horario Sáb:</strong> ${ad.scheduleSat || '-'}</div>
-                        <div><strong>Horario Dom:</strong> ${ad.scheduleSun || '-'}</div>
-                        <div style="grid-column: 1 / -1;"><strong>Redes Sociales:</strong> ${socialLinksStr}</div>
-                        <div style="grid-column: 1 / -1; background: var(--surface-light); padding: 8px; border-radius: 6px; margin-top: 4px;">
-                            <strong>Descripción completa:</strong><br>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div><strong>Título:</strong> ${ad.title || '-'}</div>
+                                <div><strong>Dirección:</strong> ${ad.address || '-'}</div>
+                                <div><strong>Estado / Ciudad:</strong> ${ad.state ? ad.state + ' / ' : ''}${ad.city || '-'}</div>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')" title="Clic para copiar">${ad.phone || '-'}</span></div>
+                                <div><strong>WhatsApp:</strong> ${ad.whatsapp ? `<span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.whatsapp}', 'WhatsApp')" title="Clic para copiar">${ad.whatsapp}</span>` : '-'}</div>
+                                <div><strong>Correo:</strong> ${ad.email || '-'}</div>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div><strong>Horario L-V:</strong> ${ad.scheduleMF || '-'}</div>
+                                <div><strong>Horario Sáb:</strong> ${ad.scheduleSat || '-'}</div>
+                                <div><strong>Horario Dom:</strong> ${ad.scheduleSun || '-'}</div>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div><strong>Sitio Web / Link:</strong> ${ad.website ? `<a href="${ad.website.startsWith('http') ? ad.website : 'https://' + ad.website}" target="_blank" style="color:var(--primary-color); text-decoration:underline;">${ad.website}</a>` : '-'}</div>
+                                <div><strong>Redes Sociales:</strong> ${socialLinksStr}</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--surface-light); padding: 10px; border-radius: 6px; margin-top: 16px;">
+                            <strong style="display: block; margin-bottom: 4px;">Descripción completa:</strong>
                             <span style="color: var(--text-main); white-space: pre-wrap;">${ad.description || 'Sin descripción'}</span>
                         </div>
                     </div>
