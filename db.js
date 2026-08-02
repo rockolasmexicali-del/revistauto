@@ -173,11 +173,9 @@ class Database {
                     this.isServerConnected = true;
                     
                     const localListings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
-                    const localMyListingsMap = new Map();
+                    const localListingsMap = new Map();
                     localListings.forEach(l => {
-                        if (l.isMyListing || l.publisherId === this.uuid || l.publisher_id === this.uuid) {
-                            localMyListingsMap.set(String(l.id), l);
-                        }
+                        localListingsMap.set(String(l.id), l);
                     });
 
                     const serverIds = new Set(data.map(item => String(item.id)));
@@ -185,8 +183,40 @@ class Database {
                     const normalized = data
                         .filter(item => item.status !== 'eliminado' && item.status !== 'rechazado')
                         .map(item => {
-                        const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || localMyListingsMap.has(String(item.id));
-                        const localListing = localMyListingsMap.get(String(item.id));
+                        const localListing = localListingsMap.get(String(item.id));
+                        const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || (localListing && localListing.isMyListing);
+
+                        // Preservar y fusionar notas CRM
+                        let serverNotes = [];
+                        if (item.notes) {
+                            try { serverNotes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes; } catch(e) { serverNotes = []; }
+                        }
+                        let localNotes = localListing && Array.isArray(localListing.notes) ? localListing.notes : [];
+
+                        const notesMap = new Map();
+                        [...serverNotes, ...localNotes].forEach(n => {
+                            if (n && n.text) {
+                                const key = n.id || `${n.timestamp}_${n.text}`;
+                                if (!notesMap.has(key)) notesMap.set(key, n);
+                            }
+                        });
+                        const mergedNotes = Array.from(notesMap.values());
+
+                        // Preservar y fusionar pagos
+                        let serverPayments = [];
+                        if (item.payments) {
+                            try { serverPayments = typeof item.payments === 'string' ? JSON.parse(item.payments) : item.payments; } catch(e) { serverPayments = []; }
+                        }
+                        let localPayments = localListing && Array.isArray(localListing.payments) ? localListing.payments : [];
+
+                        const paymentsMap = new Map();
+                        [...serverPayments, ...localPayments].forEach(p => {
+                            if (p && (p.amount !== undefined || p.id)) {
+                                const key = p.id || `${p.date}_${p.amount}`;
+                                if (!paymentsMap.has(key)) paymentsMap.set(key, p);
+                            }
+                        });
+                        const mergedPayments = Array.from(paymentsMap.values());
 
                         return {
                             ...item,
@@ -201,14 +231,13 @@ class Database {
                             lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
                             paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
                             images: item.images && item.images.length > 0 ? item.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
+                            notes: mergedNotes,
+                            payments: mergedPayments,
                             publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
                             publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
                             isMyListing: isMine
                         };
                     });
-
-                    // Eliminado: Ya no preservamos publicaciones locales que no existen en el servidor
-                    // para evitar "publicaciones fantasma".
 
                     localStorage.setItem(this.listingsKey, JSON.stringify(normalized));
                     if (typeof window.onServerDataSynced === 'function') {
@@ -228,6 +257,8 @@ class Database {
         const listings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
         return listings.map(l => ({
             ...l,
+            notes: Array.isArray(l.notes) ? l.notes : (typeof l.notes === 'string' ? JSON.parse(l.notes || '[]') : []),
+            payments: Array.isArray(l.payments) ? l.payments : (typeof l.payments === 'string' ? JSON.parse(l.payments || '[]') : []),
             isMyListing: l.publisherId === this.uuid || l.publisher_id === this.uuid
         }));
     }
@@ -237,6 +268,8 @@ class Database {
         const ads = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
         return ads.map(a => ({
             ...a,
+            notes: Array.isArray(a.notes) ? a.notes : (typeof a.notes === 'string' ? JSON.parse(a.notes || '[]') : []),
+            social_links: Array.isArray(a.social_links) ? a.social_links : (typeof a.social_links === 'string' ? JSON.parse(a.social_links || '[]') : []),
             isMyAd: a.publisher_id === this.uuid
         }));
     }
@@ -1004,11 +1037,42 @@ class Database {
                     .order('created_at', { ascending: false });
 
                 if (!error && Array.isArray(data)) {
-                    const normalizedAds = data.map(ad => ({
-                        ...ad,
-                        social_links: typeof ad.social_links === 'string' ? JSON.parse(ad.social_links) : (ad.social_links || []),
-                        notes: typeof ad.notes === 'string' ? JSON.parse(ad.notes) : (ad.notes || [])
-                    }));
+                    const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
+                    const localAdsMap = new Map();
+                    localAds.forEach(a => localAdsMap.set(String(a.id), a));
+
+                    const normalizedAds = data.map(ad => {
+                        const localAd = localAdsMap.get(String(ad.id));
+                        
+                        let serverNotes = [];
+                        if (ad.notes) {
+                            try { serverNotes = typeof ad.notes === 'string' ? JSON.parse(ad.notes) : ad.notes; } catch(e) { serverNotes = []; }
+                        }
+                        let localNotes = localAd && Array.isArray(localAd.notes) ? localAd.notes : [];
+
+                        const notesMap = new Map();
+                        [...serverNotes, ...localNotes].forEach(n => {
+                            if (n && n.text) {
+                                const key = n.id || `${n.timestamp}_${n.text}`;
+                                if (!notesMap.has(key)) notesMap.set(key, n);
+                            }
+                        });
+                        const mergedNotes = Array.from(notesMap.values());
+
+                        let socialLinks = [];
+                        if (ad.social_links) {
+                            try { socialLinks = typeof ad.social_links === 'string' ? JSON.parse(ad.social_links) : ad.social_links; } catch(e) { socialLinks = []; }
+                        } else if (localAd && localAd.social_links) {
+                            socialLinks = localAd.social_links;
+                        }
+
+                        return {
+                            ...ad,
+                            social_links: socialLinks,
+                            notes: mergedNotes
+                        };
+                    });
+
                     localStorage.setItem('revista_autos_ads', JSON.stringify(normalizedAds));
                     if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
                     if (typeof window.onServerDataSynced === 'function') window.onServerDataSynced();
