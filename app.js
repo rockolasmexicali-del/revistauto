@@ -79,6 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseAdModal.addEventListener('click', () => {
             adFullscreenModal.classList.remove('active');
             history.pushState({ page: 'root' }, '');
+            if (window.pendingNextListingIdAfterAd) {
+                const nextId = window.pendingNextListingIdAfterAd;
+                window.pendingNextListingIdAfterAd = null;
+                window.openListingDetails(nextId);
+            }
         });
     }
     
@@ -2002,6 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
             previousViewId = activeView.id;
             // Guardamos el scroll de la ventana antes de ocultar la vista
             savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
+            window.detailSwipesCount = 0; // Reiniciar contador de deslizamientos al abrir desde catálogo
         }
 
         const isSaved = savedListingsIds.includes(id);
@@ -2143,6 +2149,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nextIndex >= sameCategoryListings.length) nextIndex = 0; // Vuelve al principio
                 if (nextIndex < 0) nextIndex = sameCategoryListings.length - 1; // Va al final
                 
+                // Inserción de publicidad según la frecuencia configurada al deslizar entre vehículos
+                window.detailSwipesCount = (window.detailSwipesCount || 0) + 1;
+                const freq = db.adFrequencyScroll || 10;
+                
+                if (db.adsEnabled && (window.detailSwipesCount % freq === 0)) {
+                    const adPool = db.getRandomAds(1) || [];
+                    if (adPool.length > 0) {
+                        const ad = adPool[0];
+                        window.detailSwipesCount = 0; // Se reinicia el conteo a 0 tras mostrar el anuncio
+                        window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
+                        window.openAdDetails(ad.id);
+                        return;
+                    }
+                }
+
                 const nextId = sameCategoryListings[nextIndex].id;
                 const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
                 const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
