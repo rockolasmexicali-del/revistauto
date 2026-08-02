@@ -298,6 +298,29 @@ class Database {
             ad.social_links = ad.social_links || [];
         }
 
+        if (!ad.ref_number) {
+            const existingAds = this.getAllAds();
+            const existingRefs = new Set(existingAds.map(a => a.ref_number).filter(r => r));
+            let digits = 5;
+            let maxAttempts = 50;
+            let ref;
+            while (true) {
+                let min = Math.pow(10, digits - 1);
+                let max = Math.pow(10, digits) - 1;
+                let found = false;
+                for (let i = 0; i < maxAttempts; i++) {
+                    ref = Math.floor(Math.random() * (max - min + 1)) + min;
+                    if (!existingRefs.has(ref)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+                digits++; // Expand number of digits if namespace is too crowded
+            }
+            ad.ref_number = ref;
+        }
+
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const payload = {
                 id: ad.id,
@@ -321,6 +344,7 @@ class Database {
                 end_date: ad.end_date || null,
                 payment_status: ad.payment_status,
                 is_active: ad.is_active,
+                ref_number: ad.ref_number,
                 views: ad.views || 0,
                 clicks: ad.clicks || 0,
                 created_at: ad.created_at

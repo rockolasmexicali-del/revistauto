@@ -2434,6 +2434,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="my-listing-info">
                             <h4 class="my-listing-title">${ad.title}</h4>
+                            ${ad.ref_number ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ref: #${ad.ref_number}</div>` : ''}
                             <div style="display: flex; gap: 12px; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted);">
                                 <span style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-rounded" style="font-size: 16px;">visibility</span> ${ad.views || 0} vistas</span>
                                 <span style="display: flex; align-items: center; gap: 4px; color: var(--primary-color);"><span class="material-symbols-rounded" style="font-size: 16px;">ads_click</span> ${ad.clicks || 0} clics</span>
@@ -3532,7 +3533,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listener de búsqueda (evitar duplicar listener)
         if (searchInput && !searchInput.dataset.hasListener) {
             searchInput.dataset.hasListener = 'true';
-            searchInput.addEventListener('input', () => updateAdminApprovals());
+            searchInput.addEventListener('input', () => {
+                updateAdminApprovals();
+                if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+            });
         }
 
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -4751,6 +4755,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('stat-views').textContent = totalViews;
         document.getElementById('stat-active').textContent = active;
         document.getElementById('stat-sold').textContent = sold;
+        
+        const allAds = db.getAllAds();
+        const activeAdsCount = allAds.filter(ad => db.isAdActive(ad)).length;
+        const statActiveAds = document.getElementById('stat-active-ads');
+        if (statActiveAds) statActiveAds.textContent = activeAdsCount;
     }
 
     // --- Input Formatters & Event Listeners ---
@@ -5849,7 +5858,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(e => console.warn('Sync ads error (background):', e));
         }
 
-        const ads = db.getAllAds();
+
+
+        const searchInput = document.getElementById('ads-search-input');
+        if (searchInput && !searchInput.dataset.hasListener) {
+            searchInput.dataset.hasListener = 'true';
+            searchInput.addEventListener('input', () => window.renderAdminAdsTable());
+        }
+
+        let ads = db.getAllAds();
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        if (query) {
+            ads = ads.filter(a => 
+                (a.title && a.title.toLowerCase().includes(query)) ||
+                (a.phone && a.phone.includes(query)) ||
+                (a.ref_number && String(a.ref_number).includes(query))
+            );
+        }
         const stateKey = JSON.stringify(ads);
         if (tbody.dataset.lastState === stateKey) return;
         tbody.dataset.lastState = stateKey;
@@ -5982,7 +6007,17 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
         }
 
-        const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',');
+        const searchInput = document.getElementById('pending-search-input');
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        if (query) {
+            pendingAds = pendingAds.filter(a => 
+                (a.title && a.title.toLowerCase().includes(query)) ||
+                (a.phone && a.phone.includes(query)) ||
+                (a.ref_number && String(a.ref_number).includes(query))
+            );
+        }
+
+        const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',') + '_' + query;
         if (list.dataset.lastState === stateKey) return;
         list.dataset.lastState = stateKey;
 
