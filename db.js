@@ -1113,12 +1113,8 @@ class Database {
         }
     }
 
-    getAllAds() {
-        return JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
-    }
-
     getMyAds() {
-        return this.getAllAds().filter(ad => ad.publisher_id === this.uuid);
+        return this.getAllAds().filter(ad => ad.publisher_id === this.uuid || ad.isMyAd);
     }
 
     isAdActive(ad) {
@@ -1161,70 +1157,6 @@ class Database {
             return newNote;
         }
         return null;
-    }
-
-    async saveAd(ad) {
-        if (!ad.id) {
-            ad.id = Date.now();
-            ad.created_at = new Date().toISOString();
-        }
-        if (!ad.publisher_id) ad.publisher_id = this.uuid;
-        
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const payload = {
-                id: ad.id,
-                publisher_id: ad.publisher_id,
-                title: ad.title || '',
-                description: ad.description || '',
-                address: ad.address || '',
-                scheduleMF: ad.scheduleMF || '',
-                scheduleSat: ad.scheduleSat || '',
-                scheduleSun: ad.scheduleSun || '',
-                phone: ad.phone || '',
-                whatsapp: ad.whatsapp || '',
-                email: ad.email || '',
-                website: ad.website || '',
-                social_links: typeof ad.social_links === 'object' ? JSON.stringify(ad.social_links) : (ad.social_links || '[]'),
-                notes: typeof ad.notes === 'object' ? JSON.stringify(ad.notes) : (ad.notes || '[]'),
-                city: ad.city || '',
-                state: ad.state || '',
-                images: ad.images || [],
-                start_date: ad.start_date || null,
-                end_date: ad.end_date || null,
-                payment_status: ad.payment_status || 'pendiente',
-                is_active: ad.is_active !== undefined ? ad.is_active : false,
-                views: ad.views || 0,
-                clicks: ad.clicks || 0,
-                created_at: ad.created_at || new Date().toISOString()
-            };
-            
-            try {
-                const { error } = await supabaseClient.from('ads').upsert([payload]);
-                if (error) console.error("Error al guardar anuncio en Supabase:", error);
-            } catch (err) {
-                console.error("Excepción guardando anuncio en Supabase:", err);
-            }
-        }
-        
-        const ads = this.getAllAds();
-        const index = ads.findIndex(a => String(a.id) === String(ad.id));
-        if (index > -1) ads[index] = ad;
-        else ads.push(ad);
-        
-        localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
-        return ad;
-    }
-
-    async deleteAd(id) {
-        // Eliminar del estado local INMEDIATAMENTE para reflejar el cambio en UI
-        const ads = this.getAllAds().filter(a => String(a.id) !== String(id));
-        localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
-
-        // Continuar con la eliminación en la base de datos
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const { error } = await supabaseClient.from('ads').delete().eq('id', id);
-            if (error) console.error("Error al eliminar anuncio:", error);
-        }
     }
 
     async incrementAdViews(adId) {
