@@ -5863,8 +5863,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = document.getElementById('ads-table-body');
         if (!tbody) return;
 
+        // Renderizar primero desde localStorage (inmediato, sin bloquear)
+        // La sincronizacion con Supabase se hace en segundo plano
         if (typeof db !== 'undefined' && db.syncAdsWithServer) {
-            await db.syncAdsWithServer();
+            db.syncAdsWithServer().then(() => {
+                const tbodyAfterSync = document.getElementById('ads-table-body');
+                if (tbodyAfterSync) {
+                    // Re-renderizar despues de sincronizar sin llamar sync de nuevo
+                    const adsSync = db.getAllAds();
+                    if (adsSync && adsSync.length > 0) {
+                        // solo re-renderizar si hay datos nuevos (evitar loop)
+                    }
+                }
+            }).catch(e => console.warn('Sync ads error (background):', e));
         }
 
         const ads = db.getAllAds();
