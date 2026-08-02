@@ -822,7 +822,9 @@ class Database {
                         adMonthlyPrice: data.admonthlyprice !== undefined ? data.admonthlyprice : (data.adMonthlyPrice || 500),
                         mercadoPagoEnabled: data.mercadopagoenabled !== undefined ? data.mercadopagoenabled : (data.mercadoPagoEnabled || false),
                         mpPublicKey: data.mppublickey !== undefined ? data.mppublickey : (data.mpPublicKey || ''),
-                        mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || '')
+                        mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || ''),
+                        ads_enabled: data.ads_enabled !== undefined ? data.ads_enabled : true,
+                        ad_frequency_scroll: data.ad_frequency_scroll !== undefined ? data.ad_frequency_scroll : 10
                     } 
                 };
             }

@@ -375,6 +375,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (mpPubKey) mpPubKey.value = globalMpPublicKey || '';
                 if (mpAccToken) mpAccToken.value = data.settings.mpAccessToken || '';
+                
+                const adToggle = document.getElementById('admin-ad-toggle');
+                const adFreq = document.getElementById('admin-ad-frequency');
+                if (adToggle) adToggle.checked = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
+                if (adFreq) adFreq.value = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
             }
         } catch (e) { console.error('Error loading settings', e); }
     }
@@ -4779,50 +4784,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Logica para Configuración del Costo Mensual Base
     const btnSavePrice = document.getElementById('btn-save-price');
-    const inputMonthlyPrice = document.getElementById('admin-monthly-price');
-    const inputAdMonthlyPrice = document.getElementById('admin-ad-monthly-price');
+    const btnSaveAdConfig = document.getElementById('btn-save-ad-config');
     
-    if (btnSavePrice) {
-        btnSavePrice.addEventListener('click', async () => {
-            const val = inputMonthlyPrice ? Number(inputMonthlyPrice.value) : 500;
-            const adVal = inputAdMonthlyPrice ? Number(inputAdMonthlyPrice.value) : 500;
-            const mpEnabled = document.getElementById('admin-mp-enabled') ? document.getElementById('admin-mp-enabled').checked : false;
-            const mpPubKey = document.getElementById('admin-mp-public-key') ? document.getElementById('admin-mp-public-key').value.trim() : '';
-            const mpAccToken = document.getElementById('admin-mp-access-token') ? document.getElementById('admin-mp-access-token').value.trim() : '';
-            try {
-                const settingsPayload = { 
-                    monthlyPrice: val,
-                    adMonthlyPrice: adVal,
-                    mercadoPagoEnabled: mpEnabled,
-                    mpPublicKey: mpPubKey,
-                    mpAccessToken: mpAccToken
-                };
-                const data = await db.saveSettings(settingsPayload);
-                if (data.success) {
-                    globalMonthlyPrice = val;
-                    globalAdMonthlyPrice = adVal;
-                    globalMpEnabled = mpEnabled;
-                    globalMpPublicKey = mpPubKey;
-                    
-                    const adPaymentNote = document.getElementById('ad-payment-note-price');
-                    if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
-                    
-                    const publishPriceText = document.getElementById('publish-price-text');
-                    if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
-                    
-                    showAlert('Configuración general y de pagos guardada correctamente.', 'Guardado', 'check_circle');
-                    if (document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) {
-                        renderMyListings(); 
-                    }
-                } else {
-                    showAlert('Error del servidor: ' + data.error, 'Error', 'error');
+    async function saveAllSettings() {
+        const inputMonthlyPrice = document.getElementById('admin-monthly-price');
+        const inputAdMonthlyPrice = document.getElementById('admin-ad-monthly-price');
+        
+        const val = inputMonthlyPrice ? Number(inputMonthlyPrice.value) : 500;
+        const adVal = inputAdMonthlyPrice ? Number(inputAdMonthlyPrice.value) : 500;
+        const mpEnabled = document.getElementById('admin-mp-enabled') ? document.getElementById('admin-mp-enabled').checked : false;
+        const mpPubKey = document.getElementById('admin-mp-public-key') ? document.getElementById('admin-mp-public-key').value.trim() : '';
+        const mpAccToken = document.getElementById('admin-mp-access-token') ? document.getElementById('admin-mp-access-token').value.trim() : '';
+        const adsEnabled = document.getElementById('admin-ad-toggle') ? document.getElementById('admin-ad-toggle').checked : true;
+        const adFreq = document.getElementById('admin-ad-frequency') ? Number(document.getElementById('admin-ad-frequency').value) : 10;
+        
+        try {
+            const settingsPayload = { 
+                monthlyPrice: val,
+                adMonthlyPrice: adVal,
+                mercadoPagoEnabled: mpEnabled,
+                mpPublicKey: mpPubKey,
+                mpAccessToken: mpAccToken,
+                ads_enabled: adsEnabled,
+                ad_frequency_scroll: adFreq
+            };
+            const data = await db.saveSettings(settingsPayload);
+            if (data.success) {
+                globalMonthlyPrice = val;
+                globalAdMonthlyPrice = adVal;
+                globalMpEnabled = mpEnabled;
+                globalMpPublicKey = mpPubKey;
+                
+                const adPaymentNote = document.getElementById('ad-payment-note-price');
+                if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                
+                const publishPriceText = document.getElementById('publish-price-text');
+                if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
+                
+                showAlert('Configuración guardada correctamente.', 'Éxito', 'check_circle');
+                if (document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) {
+                    if (typeof renderMyListings === 'function') renderMyListings(); 
                 }
-            } catch (e) {
-                console.error('Error guardando config:', e);
-                showAlert('Hubo un error al guardar.', 'Error', 'error');
+            } else {
+                showAlert('Error del servidor: ' + (data.error || 'Desconocido'), 'Error', 'error');
             }
-        });
+        } catch (e) {
+            console.error('Error guardando config:', e);
+            showAlert('Hubo un error al guardar.', 'Error', 'error');
+        }
     }
+
+    if (btnSavePrice) btnSavePrice.addEventListener('click', saveAllSettings);
+    if (btnSaveAdConfig) btnSaveAdConfig.addEventListener('click', saveAllSettings);
 
     // Lógica para Botón de Editar Credenciales de Mercado Pago
     const btnToggleMpCredentials = document.getElementById('btn-toggle-mp-credentials');
