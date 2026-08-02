@@ -3024,8 +3024,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (editingListingId) {
-                updatedData.id = editingListingId;
-                await db.saveListing(updatedData);
+                const allListings = db.getAllListings();
+                const existingListing = allListings.find(l => String(l.id) === String(editingListingId)) || {};
+                
+                // Mezclar los datos nuevos con los existentes para NO perder estatus, fechas, id, etc.
+                const finalData = { ...existingListing, ...updatedData, id: editingListingId };
+                
+                await db.saveListing(finalData);
                 showAlert('¡Vehículo actualizado con éxito!', 'Actualizado', 'check_circle');
                 finishWizardSubmit();
             } else {
