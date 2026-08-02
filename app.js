@@ -2459,6 +2459,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
+        const stateKey = JSON.stringify(myListings) + '_' + JSON.stringify(myAds);
+        if (myListingsContainer.dataset.lastState === stateKey) return;
+        myListingsContainer.dataset.lastState = stateKey;
+        
         myListingsContainer.innerHTML = combinedHTML;
     }
 
@@ -5869,16 +5873,21 @@ document.addEventListener('DOMContentLoaded', () => {
             db.syncAdsWithServer().then(() => {
                 const tbodyAfterSync = document.getElementById('ads-table-body');
                 if (tbodyAfterSync) {
-                    // Re-renderizar despues de sincronizar sin llamar sync de nuevo
                     const adsSync = db.getAllAds();
-                    if (adsSync && adsSync.length > 0) {
-                        // solo re-renderizar si hay datos nuevos (evitar loop)
+                    const stateKeySync = JSON.stringify(adsSync);
+                    if (tbodyAfterSync.dataset.lastState !== stateKeySync) {
+                        delete tbodyAfterSync.dataset.lastState;
+                        window.renderAdminAdsTable();
                     }
                 }
             }).catch(e => console.warn('Sync ads error (background):', e));
         }
 
         const ads = db.getAllAds();
+        const stateKey = JSON.stringify(ads);
+        if (tbody.dataset.lastState === stateKey) return;
+        tbody.dataset.lastState = stateKey;
+
         if (!ads || ads.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color:var(--text-muted);">No hay anuncios registrados.</td></tr>';
             return;
