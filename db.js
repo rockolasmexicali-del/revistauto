@@ -787,7 +787,7 @@ class Database {
 
     // --- Nuevos métodos para Supabase (Settings, Auth, Locations) ---
     async getSettings() {
-        const defaultSettings = { monthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10 };
+        const defaultSettings = { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10 };
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const { data, error } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
             if (data) {
@@ -795,6 +795,7 @@ class Database {
                     success: true, 
                     settings: {
                         monthlyPrice: data.monthlyprice !== undefined ? data.monthlyprice : (data.monthlyPrice || 500),
+                        adMonthlyPrice: data.admonthlyprice !== undefined ? data.admonthlyprice : (data.adMonthlyPrice || 500),
                         mercadoPagoEnabled: data.mercadopagoenabled !== undefined ? data.mercadopagoenabled : (data.mercadoPagoEnabled || false),
                         mpPublicKey: data.mppublickey !== undefined ? data.mppublickey : (data.mpPublicKey || ''),
                         mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || '')
@@ -815,6 +816,7 @@ class Database {
                 const payload = { 
                     id: 1, 
                     monthlyprice: settings.monthlyPrice,
+                    admonthlyprice: settings.adMonthlyPrice,
                     mercadopagoenabled: settings.mercadoPagoEnabled,
                     mppublickey: settings.mpPublicKey,
                     mpaccesstoken: settings.mpAccessToken,

@@ -691,14 +691,27 @@
                         <div class="config-section" style="margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h4 style="margin: 0; color: #3b82f6; display: flex; align-items: center; gap: 6px;">
-                                    <span class="material-symbols-rounded" style="font-size: 20px;">payments</span> Costo Mensual Base
+                                    <span class="material-symbols-rounded" style="font-size: 20px;">payments</span> Costo Mensual Base (Vehículos)
                                 </h4>
-                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Define el costo base de publicación por mes.</p>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Define el costo base de publicación de vehículos por mes.</p>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.2rem; color: var(--text-muted);">$</span>
                                 <input type="number" id="admin-monthly-price" style="width: 100px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1.1rem; font-weight: bold; outline: none; text-align: right;" value="500">
-                                <button id="btn-save-price" class="primary-btn" style="padding: 8px 16px;">Guardar</button>
+                            </div>
+                        </div>
+
+                        <div class="config-section" style="margin-bottom: 24px; padding: 16px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h4 style="margin: 0; color: #f59e0b; display: flex; align-items: center; gap: 6px;">
+                                    <span class="material-symbols-rounded" style="font-size: 20px;">campaign</span> Costo Mensual Publicidad
+                                </h4>
+                                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Define el costo de anuncios publicitarios por mes.</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2rem; color: var(--text-muted);">$</span>
+                                <input type="number" id="admin-ad-monthly-price" style="width: 100px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1.1rem; font-weight: bold; outline: none; text-align: right;" value="500">
+                                <button id="btn-save-price" class="primary-btn" style="padding: 8px 16px;">Guardar Costos</button>
                             </div>
                         </div>
 
@@ -1352,7 +1365,7 @@
                 </div>
                 
                 <div style="display: flex; flex-direction: column; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 0;">Al continuar, pasarás a la opción de pago (Costo Mensual: <b style="color: #f59e0b;">$500 MXN</b>)</p>
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 0;">Al continuar, pasarás a la opción de pago (Costo Mensual: <b id="ad-payment-note-price" style="color: #f59e0b;">$500 MXN</b>)</p>
                     <div style="display: flex; gap: 12px;">
                         <button type="button" class="primary-btn" onclick="window.nextAdStep(3)" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Atrás</button>
                         <button id="btn-submit-client-ad" type="button" class="success-btn" style="flex: 2; padding: 14px; font-size: 1.1rem;">Confirmar Pago</button>

@@ -325,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initHistoryState();
     
     let globalMonthlyPrice = 500;
+    let globalAdMonthlyPrice = 500;
     let globalMpEnabled = false;
     let globalMpPublicKey = '';
 
@@ -348,6 +349,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const inputPrice = document.getElementById('admin-monthly-price');
                 if (inputPrice) inputPrice.value = globalMonthlyPrice;
+
+                globalAdMonthlyPrice = data.settings.adMonthlyPrice !== undefined ? data.settings.adMonthlyPrice : 500;
+                
+                const inputAdPrice = document.getElementById('admin-ad-monthly-price');
+                if (inputAdPrice) inputAdPrice.value = globalAdMonthlyPrice;
+
+                const adPaymentNote = document.getElementById('ad-payment-note-price');
+                if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                
+                const publishPriceText = document.getElementById('publish-price-text');
+                if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
 
                 const mpToggle = document.getElementById('admin-mp-enabled');
                 const mpCreds = document.getElementById('admin-mp-credentials');
@@ -4759,16 +4771,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logica para Configuración del Costo Mensual Base
     const btnSavePrice = document.getElementById('btn-save-price');
     const inputMonthlyPrice = document.getElementById('admin-monthly-price');
+    const inputAdMonthlyPrice = document.getElementById('admin-ad-monthly-price');
     
-    if (btnSavePrice && inputMonthlyPrice) {
+    if (btnSavePrice) {
         btnSavePrice.addEventListener('click', async () => {
-            const val = Number(inputMonthlyPrice.value);
+            const val = inputMonthlyPrice ? Number(inputMonthlyPrice.value) : 500;
+            const adVal = inputAdMonthlyPrice ? Number(inputAdMonthlyPrice.value) : 500;
             const mpEnabled = document.getElementById('admin-mp-enabled') ? document.getElementById('admin-mp-enabled').checked : false;
             const mpPubKey = document.getElementById('admin-mp-public-key') ? document.getElementById('admin-mp-public-key').value.trim() : '';
             const mpAccToken = document.getElementById('admin-mp-access-token') ? document.getElementById('admin-mp-access-token').value.trim() : '';
             try {
                 const settingsPayload = { 
                     monthlyPrice: val,
+                    adMonthlyPrice: adVal,
                     mercadoPagoEnabled: mpEnabled,
                     mpPublicKey: mpPubKey,
                     mpAccessToken: mpAccToken
@@ -4776,8 +4791,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await db.saveSettings(settingsPayload);
                 if (data.success) {
                     globalMonthlyPrice = val;
+                    globalAdMonthlyPrice = adVal;
                     globalMpEnabled = mpEnabled;
                     globalMpPublicKey = mpPubKey;
+                    
+                    const adPaymentNote = document.getElementById('ad-payment-note-price');
+                    if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                    
+                    const publishPriceText = document.getElementById('publish-price-text');
+                    if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
+                    
                     showAlert('Configuración general y de pagos guardada correctamente.', 'Guardado', 'check_circle');
                     if (document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) {
                         renderMyListings(); 
@@ -5758,7 +5781,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const renderPaymentBrick = async (bricksBuilder) => {
                 const settings = {
-                    initialization: { amount: 500 },
+                    initialization: { amount: Number(globalAdMonthlyPrice) || 500 },
                     customization: {
                         visual: { style: { theme: 'default' } },
                         paymentMethods: { creditCard: "all", debitCard: "all" }
