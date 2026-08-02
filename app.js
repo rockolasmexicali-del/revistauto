@@ -2686,8 +2686,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openEditAd = function(id) {
-        if (typeof window.openAdminEditAdModal === 'function') {
-            window.openAdminEditAdModal(id);
+        const ad = db.getAllAds().find(a => String(a.id) === String(id));
+        if(!ad) return;
+        
+        window.editingAdId = id;
+        
+        document.getElementById('client-ad-title').value = ad.title || '';
+        document.getElementById('client-ad-description').value = ad.description || '';
+        document.getElementById('client-ad-address').value = ad.address || '';
+        document.getElementById('client-ad-schedule-mf').value = ad.scheduleMF || '';
+        document.getElementById('client-ad-schedule-sat').value = ad.scheduleSat || '';
+        document.getElementById('client-ad-schedule-sun').value = ad.scheduleSun || '';
+        
+        const counter = document.getElementById('desc-char-counter');
+        if (counter) counter.textContent = `${(ad.description || '').length}/200`;
+        
+        const stateSelect = document.getElementById('client-ad-state');
+        stateSelect.value = ad.state || '';
+        stateSelect.dispatchEvent(new Event('change'));
+        
+        setTimeout(() => {
+            document.getElementById('client-ad-city').value = ad.city || '';
+        }, 50);
+        
+        document.getElementById('client-ad-phone').value = ad.phone || '';
+        document.getElementById('client-ad-whatsapp').value = ad.whatsapp || '';
+        
+        document.getElementById('client-ad-link-fb').value = (ad.social_links && ad.social_links.length > 0) ? ad.social_links[0] : '';
+        document.getElementById('client-ad-link-ig').value = (ad.social_links && ad.social_links.length > 1) ? ad.social_links[1] : '';
+        document.getElementById('client-ad-link-tk').value = (ad.social_links && ad.social_links.length > 2) ? ad.social_links[2] : '';
+        
+        window.clientAdImages = ad.images ? [...ad.images] : [];
+        if (typeof window.renderClientAdImagePreviews === 'function') {
+            window.renderClientAdImagePreviews();
+        }
+        
+        const btnSubmit = document.getElementById('btn-submit-client-ad');
+        if (btnSubmit) btnSubmit.textContent = 'Guardar Cambios';
+        
+        const clientAdModal = document.getElementById('client-ad-modal');
+        if (clientAdModal) {
+            clientAdModal.classList.add('active');
+            if (typeof window.nextAdStep === 'function') {
+                window.nextAdStep(2);
+            }
         }
     };
 
