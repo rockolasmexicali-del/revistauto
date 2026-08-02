@@ -1901,8 +1901,6 @@ input:checked + .slider:before {
 
     #ad-fullscreen-modal #ad-image-carousel {
         border-radius: 0 !important;
-        height: 45vh !important;
-        min-height: 300px !important;
     }
 
     #ad-fullscreen-modal .detalle-info {

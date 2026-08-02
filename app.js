@@ -1304,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         carousel.innerHTML = '';
         if (ad.images && ad.images.length > 0) {
             carousel.innerHTML = ad.images.map((img, i) => `
-                <img src="${img}" style="width:100%; height:100%; object-fit:contain; flex-shrink:0; scroll-snap-align:start; display: ${i === 0 ? 'block' : 'none'};" class="ad-carousel-img" data-index="${i}">
+                <img src="${img}" style="display: ${i === 0 ? 'block' : 'none'}; width: 100%;" class="ad-carousel-img" data-index="${i}">
             `).join('');
             
             if (ad.images.length > 1) {
