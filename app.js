@@ -4853,6 +4853,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
                 
                 showAlert('Configuración guardada correctamente.', 'Éxito', 'check_circle');
+                if (typeof renderFeed === 'function') renderFeed();
                 if (document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) {
                     if (typeof renderMyListings === 'function') renderMyListings(); 
                 }
