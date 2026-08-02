@@ -3083,6 +3083,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAdminInventory();
         updateAdminApprovals();
         if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
+        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+        if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
         updateAdminRenewals();
         updateBillingList();
         renderTrafficChart();
@@ -3998,10 +4000,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (renewalsList) delete renewalsList.dataset.lastState;
         const inventoryTable = document.getElementById('inventory-table-body');
         if (inventoryTable) delete inventoryTable.dataset.lastState;
+        const pendingAdsList = document.getElementById('pending-ads-list');
+        if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+        const adsTableBody = document.getElementById('ads-table-body');
+        if (adsTableBody) delete adsTableBody.dataset.lastState;
 
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
+        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+        if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof renderFeed === 'function') renderFeed();
         if (typeof renderMyListings === 'function') renderMyListings();
