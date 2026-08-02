@@ -380,6 +380,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const adFreq = document.getElementById('admin-ad-frequency');
                 if (adToggle) adToggle.checked = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
                 if (adFreq) adFreq.value = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
+                
+                if (window.db) {
+                    window.db.adsEnabled = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
+                    window.db.adFrequencyScroll = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
+                }
             }
         } catch (e) { console.error('Error loading settings', e); }
     }
@@ -4814,6 +4819,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalAdMonthlyPrice = adVal;
                 globalMpEnabled = mpEnabled;
                 globalMpPublicKey = mpPubKey;
+                
+                if (window.db) {
+                    window.db.adsEnabled = adsEnabled;
+                    window.db.adFrequencyScroll = adFreq;
+                }
                 
                 const adPaymentNote = document.getElementById('ad-payment-note-price');
                 if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
