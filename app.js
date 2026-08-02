@@ -1251,6 +1251,23 @@ document.addEventListener('DOMContentLoaded', () => {
         window.currentAdObj = ad;
 
         window.navigateAdGlobal = (direction) => {
+            // Si el anuncio se activó durante la navegación de vehículos en la vista de detalle
+            if (window.pendingNextListingIdAfterAd || window.pendingPrevListingIdAfterAd) {
+                const targetId = direction === 1 ? window.pendingNextListingIdAfterAd : window.pendingPrevListingIdAfterAd;
+                window.pendingNextListingIdAfterAd = null;
+                window.pendingPrevListingIdAfterAd = null;
+                
+                const adModal = document.getElementById('ad-fullscreen-modal');
+                if (adModal) adModal.classList.remove('active');
+                
+                if (targetId) {
+                    window.openListingDetails(targetId);
+                } else {
+                    window.closeListingDetails();
+                }
+                return;
+            }
+
             const arr = window.currentAdsArray;
             if (!arr || arr.length <= 1) return;
             const currentIndex = arr.findIndex(a => String(a.id) === String(window.currentAdObj.id));
@@ -1265,14 +1282,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
             const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
             
-            const contentDiv = modal.querySelector('.modal-content');
-            contentDiv.classList.add(animOutClass);
+            const contentDiv = modal.querySelector('.modal-content') || modal.querySelector('.detalle-wrapper');
+            if (contentDiv) contentDiv.classList.add(animOutClass);
             
             setTimeout(() => {
-                contentDiv.classList.remove(animOutClass);
+                if (contentDiv) contentDiv.classList.remove(animOutClass);
                 window.openAdDetails(nextId);
-                contentDiv.classList.add(animInClass);
-                setTimeout(() => contentDiv.classList.remove(animInClass), 260);
+                if (contentDiv) {
+                    contentDiv.classList.add(animInClass);
+                    setTimeout(() => contentDiv.classList.remove(animInClass), 260);
+                }
             }, 200);
         };
 
@@ -1314,11 +1333,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Si la distancia es mayor a 40px, lo consideramos un swipe intencional
                 if (swipeDist > 40) {
-                    if (typeof scrollAdCarousel === 'function') scrollAdCarousel(1);
-                    else if (window.scrollAdCarousel) window.scrollAdCarousel(1);
+                    if (ad.images && ad.images.length > 1 && window.currentAdImageIndex < ad.images.length - 1) {
+                        if (typeof scrollAdCarousel === 'function') scrollAdCarousel(1);
+                    } else if (window.navigateAdGlobal) {
+                        window.navigateAdGlobal(1);
+                    }
                 } else if (swipeDist < -40) {
-                    if (typeof scrollAdCarousel === 'function') scrollAdCarousel(-1);
-                    else if (window.scrollAdCarousel) window.scrollAdCarousel(-1);
+                    if (ad.images && ad.images.length > 1 && window.currentAdImageIndex > 0) {
+                        if (typeof scrollAdCarousel === 'function') scrollAdCarousel(-1);
+                    } else if (window.navigateAdGlobal) {
+                        window.navigateAdGlobal(-1);
+                    }
                 }
             }, { passive: true });
         }
@@ -2159,6 +2184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const ad = adPool[0];
                         window.detailSwipesCount = 0; // Se reinicia el conteo a 0 tras mostrar el anuncio
                         window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
+                        window.pendingPrevListingIdAfterAd = sameCategoryListings[currentIndex].id;
                         window.openAdDetails(ad.id);
                         return;
                     }
