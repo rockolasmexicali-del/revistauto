@@ -1289,6 +1289,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (contentDiv) contentDiv.classList.remove(animOutClass);
                 window.openAdDetails(nextId);
                 if (contentDiv) {
+                    void contentDiv.offsetWidth; // Forzar reflow para reiniciar la animación
                     contentDiv.classList.add(animInClass);
                     setTimeout(() => contentDiv.classList.remove(animInClass), 260);
                 }

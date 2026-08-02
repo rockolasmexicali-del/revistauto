@@ -1565,11 +1565,12 @@
         <div class="detalle-container" style="max-width: 1200px; margin: 0 auto; padding: 0 16px 80px 16px; width: 100%;">
             <div id="ad-detalle-content" class="detalle-wrapper" style="border-radius: 16px; background: var(--surface-light); margin-top: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow: hidden;">
                 
+                <!-- Navigation Arrows (Orejas) -->
+                <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateAdGlobal) window.navigateAdGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
+                <button class="global-nav-btn next desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateAdGlobal) window.navigateAdGlobal(1);"><span class="material-symbols-rounded">arrow_forward_ios</span></button>
+
                 <!-- Child 1: Carousel -->
                 <div style="position: relative; width: 100%;">
-                    <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateAdGlobal) window.navigateAdGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
-                    <button class="global-nav-btn next desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateAdGlobal) window.navigateAdGlobal(1);"><span class="material-symbols-rounded">arrow_forward_ios</span></button>
-                    
                     <div id="ad-image-carousel" style="width: 100%; height: 50vh; min-height: 400px; position: relative; overflow: hidden; background: #000; border-radius: 16px 16px 0 0;">
                         <!-- Imágenes inyectadas aquí -->
                     </div>
