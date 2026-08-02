@@ -2686,51 +2686,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openEditAd = function(id) {
-        const ad = db.getAllAds().find(a => String(a.id) === String(id));
-        if(!ad) return;
-        
-        window.editingAdId = id;
-        
-        document.getElementById('client-ad-title').value = ad.title || '';
-        document.getElementById('client-ad-description').value = ad.description || '';
-        document.getElementById('client-ad-address').value = ad.address || '';
-        document.getElementById('client-ad-schedule-mf').value = ad.scheduleMF || '';
-        document.getElementById('client-ad-schedule-sat').value = ad.scheduleSat || '';
-        document.getElementById('client-ad-schedule-sun').value = ad.scheduleSun || '';
-        
-        // Update character counter
-        const counter = document.getElementById('desc-char-counter');
-        if (counter) counter.textContent = `${(ad.description || '').length}/200`;
-        
-        const stateSelect = document.getElementById('client-ad-state');
-        stateSelect.value = ad.state || '';
-        stateSelect.dispatchEvent(new Event('change'));
-        
-        setTimeout(() => {
-            document.getElementById('client-ad-city').value = ad.city || '';
-        }, 50);
-        
-        document.getElementById('client-ad-phone').value = ad.phone || '';
-        document.getElementById('client-ad-whatsapp').value = ad.whatsapp || '';
-        
-        document.getElementById('client-ad-link-fb').value = (ad.social_links && ad.social_links.length > 0) ? ad.social_links[0] : '';
-        document.getElementById('client-ad-link-ig').value = (ad.social_links && ad.social_links.length > 1) ? ad.social_links[1] : '';
-        document.getElementById('client-ad-link-tk').value = (ad.social_links && ad.social_links.length > 2) ? ad.social_links[2] : '';
-        
-        window.clientAdImages = ad.images ? [...ad.images] : [];
-        if (typeof window.renderClientAdImagePreviews === 'function') {
-            window.renderClientAdImagePreviews();
-        }
-        
-        const btnSubmit = document.getElementById('btn-submit-client-ad');
-        if (btnSubmit) btnSubmit.textContent = 'Guardar Cambios';
-        
-        const clientAdModal = document.getElementById('client-ad-modal');
-        if (clientAdModal) {
-            clientAdModal.classList.add('active');
-            if (typeof window.nextAdStep === 'function') {
-                window.nextAdStep(2);
-            }
+        if (typeof window.openAdminEditAdModal === 'function') {
+            window.openAdminEditAdModal(id);
         }
     };
 
@@ -4293,6 +4250,106 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    let adminEditAdTargetId = null;
+
+    window.openAdminEditAdModal = function(id) {
+        const ad = db.getAllAds().find(a => String(a.id) === String(id));
+        if (!ad) return;
+        adminEditAdTargetId = id;
+        
+        document.getElementById('edit-ad-title').value = ad.title || '';
+        document.getElementById('edit-ad-description').value = ad.description || '';
+        document.getElementById('edit-ad-state').value = ad.state || '';
+        document.getElementById('edit-ad-city').value = ad.city || '';
+        document.getElementById('edit-ad-phone').value = ad.phone || '';
+        document.getElementById('edit-ad-whatsapp').value = ad.whatsapp || '';
+        document.getElementById('edit-ad-address').value = ad.address || '';
+        document.getElementById('edit-ad-schedule-mf').value = ad.scheduleMF || '';
+        document.getElementById('edit-ad-schedule-sat').value = ad.scheduleSat || '';
+        document.getElementById('edit-ad-schedule-sun').value = ad.scheduleSun || '';
+        document.getElementById('edit-ad-website').value = ad.website || '';
+
+        const modal = document.getElementById('admin-edit-ad-modal');
+        if (modal) modal.classList.add('active');
+    };
+
+    const btnCloseAdminEditAd = document.getElementById('btn-close-admin-edit-ad');
+    const btnCancelAdminEditAd = document.getElementById('btn-cancel-admin-edit-ad');
+    const btnSaveAdminEditAd = document.getElementById('btn-save-admin-edit-ad');
+
+    function closeAdminEditAd() {
+        adminEditAdTargetId = null;
+        const modal = document.getElementById('admin-edit-ad-modal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    if (btnCloseAdminEditAd) btnCloseAdminEditAd.onclick = closeAdminEditAd;
+    if (btnCancelAdminEditAd) btnCancelAdminEditAd.onclick = (e) => { e.preventDefault(); closeAdminEditAd(); };
+    if (btnSaveAdminEditAd) {
+        btnSaveAdminEditAd.onclick = async (e) => {
+            e.preventDefault();
+            if (adminEditAdTargetId === null) return;
+
+            const title = document.getElementById('edit-ad-title').value.trim();
+            const desc = document.getElementById('edit-ad-description').value.trim();
+
+            if (!title || !desc) {
+                showAlert('Por favor llena los campos requeridos (Título y Descripción).', 'Faltan datos', 'warning');
+                return;
+            }
+
+            const ads = db.getAllAds();
+            const adIndex = ads.findIndex(a => String(a.id) === String(adminEditAdTargetId));
+
+            if (adIndex > -1) {
+                const updatedAd = {
+                    ...ads[adIndex],
+                    title: title,
+                    description: desc,
+                    state: document.getElementById('edit-ad-state').value.trim(),
+                    city: document.getElementById('edit-ad-city').value.trim(),
+                    phone: document.getElementById('edit-ad-phone').value.trim(),
+                    whatsapp: document.getElementById('edit-ad-whatsapp').value.trim(),
+                    address: document.getElementById('edit-ad-address').value.trim(),
+                    scheduleMF: document.getElementById('edit-ad-schedule-mf').value.trim(),
+                    scheduleSat: document.getElementById('edit-ad-schedule-sat').value.trim(),
+                    scheduleSun: document.getElementById('edit-ad-schedule-sun').value.trim(),
+                    website: document.getElementById('edit-ad-website').value.trim()
+                };
+
+                try {
+                    await db.saveAd(updatedAd);
+                    if (updatedAd._pendingSync) {
+                        showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
+                    } else {
+                        showAlert('Los datos de la publicidad han sido actualizados con éxito en la nube.', 'Datos Guardados', 'check_circle');
+                    }
+                } catch(err) {
+                    console.error("Error al guardar publicidad en Supabase:", err);
+                    const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
+                    const adIdx = localAds.findIndex(a => String(a.id) === String(adminEditAdTargetId));
+                    if (adIdx > -1) {
+                        localAds[adIdx] = { ...localAds[adIdx], ...updatedAd, _pendingSync: true };
+                        localStorage.setItem('revista_autos_ads', JSON.stringify(localAds));
+                    }
+                    showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
+                }
+
+                closeAdminEditAd();
+
+                // Limpiar dataset.lastState para forzar re-renderizado inmediato
+                const pendingAdsList = document.getElementById('pending-ads-list');
+                if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+                const adminAdsTable = document.getElementById('admin-ads-table-body');
+                if (adminAdsTable) delete adminAdsTable.dataset.lastState;
+
+                if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+                if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+            }
+        };
+    }
+
     window.deleteListingImageAdmin = async function(id, index) {
         window.appConfirm('¿Seguro que deseas eliminar esta foto de la publicación?', async () => {
             const listings = db.getAllListings();
@@ -5786,7 +5843,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${statusBadge}</td>
                     <td>
                         <div style="display:flex; gap:6px;">
-                            <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
+                            <button class="primary-btn" onclick="window.openAdminEditAdModal(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
                             <button class="danger-btn" onclick="window.appConfirm('¿Eliminar esta publicidad?', () => { db.deleteAd(${ad.id}); setTimeout(() => renderAdminAdsTable(), 300); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
                         </div>
                     </td>
@@ -5956,7 +6013,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <!-- Especificaciones / Datos del Anuncio -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.85rem; background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <button class="primary-btn" onclick="event.stopPropagation(); window.openEditAd(${ad.id})" style="grid-column: 1 / -1; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
+                        <button class="primary-btn" onclick="event.stopPropagation(); window.openAdminEditAdModal(${ad.id})" style="grid-column: 1 / -1; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
                             <span class="material-symbols-rounded" style="font-size: 16px;">edit</span> Editar Datos de la Publicidad
                         </button>
                         <div style="grid-column: 1 / -1; font-weight: bold; font-size: 0.95rem; color: #f59e0b; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 4px;">

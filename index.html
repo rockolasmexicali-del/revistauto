@@ -1089,7 +1089,7 @@
         </div>
     </div>
 
-    <!-- Admin Edit Modal -->
+    <!-- Admin Edit Modal (Autos) -->
     <div id="admin-edit-modal" class="modal" style="z-index: 10000;">
         <div class="modal-content" style="max-width: 500px; text-align: left; padding: 24px; max-height: 90vh; display: flex; flex-direction: column; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%);">
             <div class="modal-header" style="justify-content: space-between; margin-bottom: 16px;">
@@ -1145,6 +1145,76 @@
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
                 <button id="btn-cancel-admin-edit" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
                 <button id="btn-save-admin-edit" class="primary-btn" style="background: var(--success-color); color: white; flex: 1;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Edit Modal (Publicidad) -->
+    <div id="admin-edit-ad-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 550px; text-align: left; padding: 24px; max-height: 90vh; display: flex; flex-direction: column; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%);">
+            <div class="modal-header" style="justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem; margin: 0; color: #f59e0b; display:flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-rounded">edit_note</span> Editar Datos de la Publicidad
+                </h3>
+                <button id="btn-close-admin-edit-ad" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; flex: 1; margin-bottom: 16px; padding-right: 8px;">
+                <form id="admin-edit-ad-form" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Título del Negocio / Anuncio *</label>
+                        <input type="text" id="edit-ad-title" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.95rem; outline: none;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Descripción *</label>
+                        <textarea id="edit-ad-description" required rows="3" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none; resize: vertical;"></textarea>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 12px;">
+                        <div class="form-group half" style="flex:1;">
+                            <label style="font-weight: 600;">Estado</label>
+                            <input type="text" id="edit-ad-state" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                        </div>
+                        <div class="form-group half" style="flex:1;">
+                            <label style="font-weight: 600;">Ciudad</label>
+                            <input type="text" id="edit-ad-city" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 12px;">
+                        <div class="form-group half" style="flex:1;">
+                            <label style="font-weight: 600;">Teléfono</label>
+                            <input type="tel" id="edit-ad-phone" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                        </div>
+                        <div class="form-group half" style="flex:1;">
+                            <label style="font-weight: 600;">WhatsApp</label>
+                            <input type="tel" id="edit-ad-whatsapp" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Dirección Física</label>
+                        <input type="text" id="edit-ad-address" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 8px;">
+                        <div class="form-group" style="flex:1;">
+                            <label style="font-weight: 600; font-size: 0.8rem;">Horario L-V</label>
+                            <input type="text" id="edit-ad-schedule-mf" placeholder="Ej: 9:00 AM - 6:00 PM" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label style="font-weight: 600; font-size: 0.8rem;">Horario Sáb</label>
+                            <input type="text" id="edit-ad-schedule-sat" placeholder="Ej: 9:00 AM - 2:00 PM" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label style="font-weight: 600; font-size: 0.8rem;">Horario Dom</label>
+                            <input type="text" id="edit-ad-schedule-sun" placeholder="Ej: Cerrado" style="width: 100%; padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Sitio Web / Link</label>
+                        <input type="url" id="edit-ad-website" placeholder="https://..." style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                    </div>
+                </form>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="btn-cancel-admin-edit-ad" class="primary-btn" style="background: var(--surface-light); color: var(--text-main); flex: 1;">Cancelar</button>
+                <button id="btn-save-admin-edit-ad" class="primary-btn" style="background: #f59e0b; color: white; flex: 1;">Guardar Cambios</button>
             </div>
         </div>
     </div>
