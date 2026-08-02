@@ -1864,6 +1864,18 @@ input:checked + .slider:before {
         height: 100% !important;
         min-height: 500px;
     }
+
+    /* Remove black bars and make image fill the container on desktop */
+    .detalle-img-carousel {
+        height: 100% !important;
+        background: var(--surface-color) !important;
+    }
+
+    .detalle-img-carousel img {
+        max-height: none !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
 }
 
 @media (max-width: 767px) {

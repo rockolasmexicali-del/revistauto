@@ -3441,38 +3441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchInput) searchInput.addEventListener('input', () => renderAdminInventory());
         }
 
-        let activeListings = [];
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('listings')
-                    .select('*')
-                    .eq('status', 'autorizado')
-                    .order('created_at', { ascending: false });
-                if (!error && data) {
-                    activeListings = data.map(item => ({
-                        ...item,
-                        engine: item.engine || item.motor || '',
-                        legal: item.legal || item.situacion || '',
-                        ac: item.ac || '',
-                        mileage: item.mileage !== undefined && item.mileage !== null ? String(item.mileage) : '',
-                        phone: item.seller_phone || item.phone || '',
-                        whatsapp: item.seller_whatsapp || item.whatsapp || '',
-                        publishedAt: item.published_at || item.publishedAt || null,
-                        expiresAt: item.expires_at || item.expiresAt || null,
-                        paymentStatus: item.payment_status || item.paymentStatus || null,
-                        images: item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'],
-                        publisherId: item.publisherId || item.publisher_id || ''
-                    }));
-                } else {
-                    activeListings = db.getAllListings().filter(l => l.status === 'autorizado');
-                }
-            } catch(e) {
-                activeListings = db.getAllListings().filter(l => l.status === 'autorizado');
-            }
-        } else {
-            activeListings = db.getAllListings().filter(l => l.status === 'autorizado');
-        }
+        let activeListings = db.getAllListings().filter(l => l.status === 'autorizado' || l.status === 'activo');
 
         // Apply filters
         const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -3540,38 +3509,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!list) return;
 
-        let pending = [];
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('listings')
-                    .select('*')
-                    .eq('status', 'pendiente autorizacion')
-                    .order('created_at', { ascending: false });
-                if (!error && data) {
-                    pending = data.map(item => ({
-                        ...item,
-                        engine: item.engine || item.motor || '',
-                        legal: item.legal || item.situacion || '',
-                        ac: item.ac || '',
-                        mileage: item.mileage !== undefined && item.mileage !== null ? String(item.mileage) : '',
-                        phone: item.seller_phone || item.phone || '',
-                        whatsapp: item.seller_whatsapp || item.whatsapp || '',
-                        publishedAt: item.published_at || item.publishedAt || null,
-                        expiresAt: item.expires_at || item.expiresAt || null,
-                        paymentStatus: item.payment_status || item.paymentStatus || null,
-                        images: item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'],
-                        publisherId: item.publisherId || item.publisher_id || ''
-                    }));
-                } else {
-                    pending = db.getAllListings().filter(l => l.status === 'pendiente autorizacion');
-                }
-            } catch(e) {
-                pending = db.getAllListings().filter(l => l.status === 'pendiente autorizacion');
-            }
-        } else {
-            pending = db.getAllListings().filter(l => l.status === 'pendiente autorizacion');
-        }
+        let pending = db.getAllListings().filter(l => l.status === 'pendiente autorizacion');
         if (badge) badge.textContent = pending.length;
 
         if (sidebarBadge) {
