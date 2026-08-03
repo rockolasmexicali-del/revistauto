@@ -1158,17 +1158,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+        window.advanceCategoryRow = function(categoryType) {
+            const row = document.querySelector(`.netflix-row[data-category="${categoryType}"]`);
+            if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const scrollContainer = row.querySelector('.netflix-row-scroll');
+                if (scrollContainer) {
+                    const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                    if (scrollContainer.scrollLeft >= maxScroll - 20) {
+                        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+                    } else {
+                        const scrollAmount = Math.max(scrollContainer.clientWidth * 0.75, 160);
+                        scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    }
+                }
+            }
+        };
+
         // Event delegation para hacer que funcione tanto en los nuevos botones como en el 'Todos' original
         homeCategories.addEventListener('click', (e) => {
             const btn = e.target.closest('.category-chip');
             if (!btn) return;
+
+            const type = btn.getAttribute('data-type');
+
+            // Si estamos en la vista 'Todos' y hacen clic en una categoría específica que tiene fila horizontal
+            if (currentFeedCategory === 'Todos' && type !== 'Todos') {
+                const targetRow = document.querySelector(`.netflix-row[data-category="${type}"]`);
+                if (targetRow) {
+                    document.querySelectorAll('#home-categories .category-chip').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    window.advanceCategoryRow(type);
+                    btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    return;
+                }
+            }
 
             // Remover clase active de todos y asignarla al clickeado
             document.querySelectorAll('#home-categories .category-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
             
             // Actualizar el feed
-            currentFeedCategory = btn.getAttribute('data-type');
+            currentFeedCategory = type;
             renderFeed();
 
             // Mover el botón clickeado hacia el centro de la vista
@@ -1795,7 +1826,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     html += `
                     <div class="netflix-row" data-category="${type}">
-                        <h3 class="netflix-row-title" onclick="document.querySelector('.category-chip[data-type=\\'${type}\\']').click()" style="cursor: pointer;">
+                        <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer;">
                             ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
                         </h3>
                         <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
