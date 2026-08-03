@@ -43,6 +43,7 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH T
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_renewed_month TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS payment_status TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sold_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS ref_number INTEGER;
 
 -- 2.6 COMANDO PARA CAMBIAR MILEAGE A TEXTO (EJECÚTALO PARA ARREGLAR EL ERROR DE "invalid input syntax for type integer")
 ALTER TABLE public.listings ALTER COLUMN mileage TYPE TEXT USING mileage::TEXT;
@@ -184,6 +185,7 @@ CREATE TABLE IF NOT EXISTS public.ads (
     end_date TIMESTAMP WITH TIME ZONE,   -- Fecha de fin de la pauta
     payment_status TEXT DEFAULT 'pagado', -- Control interno del admin
     is_active BOOLEAN DEFAULT true,       -- Botón para pausar un anuncio específico
+    ref_number INTEGER,                   -- Referencia visible para el cliente
     views INT DEFAULT 0,           -- Contador de vistas para el cliente
     clicks INT DEFAULT 0,          -- Contador de clics para el cliente
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
