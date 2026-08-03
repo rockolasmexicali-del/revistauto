@@ -1191,10 +1191,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderFeed();
 
             // Centrar el botón seleccionado en la barra horizontal con scroll suave
-            const btnLeft = btn.offsetLeft;
-            const btnWidth = btn.offsetWidth;
-            const containerWidth = homeCategories.offsetWidth;
-            const targetScroll = btnLeft - (containerWidth / 2) + (btnWidth / 2);
+            const containerRect = homeCategories.getBoundingClientRect();
+            const btnRect = btn.getBoundingClientRect();
+            const targetScroll = homeCategories.scrollLeft
+                + btnRect.left
+                - containerRect.left
+                - (containerRect.width / 2)
+                + (btnRect.width / 2);
             homeCategories.scrollTo({ left: targetScroll, behavior: 'smooth' });
         });
 
