@@ -2937,7 +2937,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        currentWizardStep = 1;
+        if (listing.status === 'activo' || listing.status === 'autorizado' || listing.status === 'vendido') {
+            currentWizardStep = 2;
+        } else {
+            currentWizardStep = 1;
+        }
         updateWizardUI();
         newListingModal.classList.add('active');
     };
