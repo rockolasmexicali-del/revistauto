@@ -1182,15 +1182,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const type = btn.getAttribute('data-type');
 
+            // Guardar posición actual del scroll ANTES de renderFeed
+            // porque populateHomeCategories() resetea scrollLeft a 0
+            const savedScroll = homeCategories.scrollLeft;
+
             // Actualizar el feed con la categoría seleccionada (cuadrícula o vista completa)
-            // NOTA: renderFeed() llama populateHomeCategories() que recrea los chips del DOM
             currentFeedCategory = type;
             renderFeed();
 
-            // Re-buscar el botón DESPUÉS de renderFeed porque populateHomeCategories
-            // destruye y recrea los chips, dejando la referencia anterior desconectada
+            // Re-buscar el botón en el DOM fresco (populateHomeCategories recrea los chips)
             const freshBtn = homeCategories.querySelector(`.category-chip[data-type="${type}"]`);
             if (freshBtn) {
+                // Restaurar la posición anterior al instante para que el scroll
+                // suave arranque desde ahí y no desde 0 (evita el salto a "Todos")
+                homeCategories.scrollLeft = savedScroll;
+
                 const containerRect = homeCategories.getBoundingClientRect();
                 const btnRect = freshBtn.getBoundingClientRect();
                 const targetScroll = homeCategories.scrollLeft
