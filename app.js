@@ -1717,6 +1717,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- Búsqueda en Cascada (3 niveles) ---
+    // Construye la lista ordenada para el swipe en fullscreen cuando viene de Búsqueda Avanzada.
+    // Nivel 1: resultados exactos de la búsqueda
+    // Nivel 2: mismo modelo, no en nivel 1
+    // Nivel 3: misma categoría/tipo, no en nivel 1 ni 2
+    function buildSearchSwipeQueue(startingId, ctx) {
+        if (!ctx || !ctx.level1) return null;
+        const allActive = db.getAllListings().filter(l => db.isListingActive(l));
+        const startingListing = allActive.find(l => l.id === startingId);
+        if (!startingListing) return null;
+
+        const level1 = ctx.level1;
+        const level1Ids = new Set(level1.map(l => l.id));
+
+        // Nivel 2: mismo modelo, no está en el nivel 1
+        const level2 = allActive.filter(l =>
+            !level1Ids.has(l.id) &&
+            l.model && startingListing.model &&
+            l.model.toLowerCase() === startingListing.model.toLowerCase()
+        );
+
+        // Nivel 3: misma categoría/tipo, no está en nivel 1 ni nivel 2
+        const level2Ids = new Set(level2.map(l => l.id));
+        const level3 = allActive.filter(l =>
+            !level1Ids.has(l.id) &&
+            !level2Ids.has(l.id) &&
+            l.type === startingListing.type
+        );
+
+        return [...level1, ...level2, ...level3];
+    }
+
     async function renderFeed() {
         if (window.isWaitingForInitialGps) {
             const feedContainer = document.getElementById('feed-container');
@@ -2080,6 +2112,10 @@ document.addEventListener('DOMContentLoaded', () => {
         searchFiltersContainer.style.pointerEvents = 'none';
 
         searchResults.innerHTML = results.map(l => createListingCardHTML(l, false)).join('');
+
+        // Guardar contexto de búsqueda para el swipe en cascada (3 niveles) en fullscreen
+        window.currentSearchContext = { criteria, level1: [...results], searchQuery: queryText };
+        window.searchCascadeList = null; // Resetear para que se reconstruya al abrir la siguiente tarjeta
     });
 
     // --- Saved / Library ---
@@ -2117,6 +2153,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Guardamos el scroll de la ventana antes de ocultar la vista
             savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
             window.detailSwipesCount = 0; // Reiniciar contador de deslizamientos al abrir desde catálogo
+
+            // Modo cascada: si viene de Búsqueda Avanzada, activar swipe en 3 niveles
+            if (activeView.id === 'view-busqueda' && window.currentSearchContext) {
+                // Construir la cola de 3 niveles (se construye una vez por búsqueda)
+                if (!window.searchCascadeList) {
+                    window.searchCascadeList = buildSearchSwipeQueue(id, window.currentSearchContext);
+                }
+            } else {
+                // Viene de Inicio, Favoritos u otra sección: usar navegación normal
+                window.searchCascadeList = null;
+            }
         }
 
         const isSaved = savedListingsIds.includes(id);
@@ -2248,7 +2295,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }, {passive: true});
 
             const navigateListing = (direction) => {
-                const sameCategoryListings = db.getAllListings().filter(l => l.status === 'autorizado' && l.type === listing.type);
+                // Modo cascada de búsqueda (3 niveles) o navegación normal por categoría
+                let sameCategoryListings;
+                if (window.searchCascadeList && window.searchCascadeList.length > 0) {
+                    // Usar la cola de 3 niveles construida desde la búsqueda avanzada
+                    sameCategoryListings = window.searchCascadeList;
+                } else {
+                    // Comportamiento normal: navegar por la misma categoría
+                    sameCategoryListings = db.getAllListings().filter(l => db.isListingActive(l) && l.type === listing.type);
+                }
                 if (sameCategoryListings.length <= 1) return;
                 
                 const currentIndex = sameCategoryListings.findIndex(l => l.id === listing.id);
