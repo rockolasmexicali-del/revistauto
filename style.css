@@ -1978,7 +1978,7 @@ input:checked + .slider:before {
         display: flex !important;
     }
 
-    #btn-new-listing {
+    .desktop-hidden {
         display: none !important;
     }
 }
