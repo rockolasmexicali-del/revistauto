@@ -349,7 +349,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const vehiclePriceNote = document.getElementById('vehicle-dynamic-price');
                 if (vehiclePriceNote) {
-                    vehiclePriceNote.textContent = `$${globalMonthlyPrice.toFixed(2)} MXN`;
+                    if (Number(globalMonthlyPrice) === 0) {
+                        vehiclePriceNote.textContent = 'Gratis';
+                        vehiclePriceNote.style.color = '#10b981';
+                    } else {
+                        vehiclePriceNote.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
+                        vehiclePriceNote.style.color = '#f59e0b';
+                    }
                 }
 
                 const inputPrice = document.getElementById('admin-monthly-price');
@@ -3139,13 +3145,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 finishWizardSubmit(); // Call instantly so it renders in the background
                 
-                if (globalMpEnabled) {
-                    // Mostrar modal de opciones
+                if (Number(globalMonthlyPrice) === 0) {
+                    // Flujo Gratuito: Ocultar Mercado Pago y mostrar modal de revisión
+                    const optionsModal = document.getElementById('publish-options-modal');
+                    if (optionsModal) {
+                        document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
+                        document.getElementById('publish-modal-desc').textContent = 'Tu vehículo entrará a un breve proceso de revisión por nuestro equipo. En pocos minutos será autorizado y estará visible en la plataforma durante un mes. ¿Deseas publicarlo ahora?';
+                        
+                        document.getElementById('btn-option-pay-now').style.display = 'none';
+                        
+                        const icon = document.getElementById('publish-later-icon');
+                        if (icon) icon.textContent = 'check_circle';
+                        const title = document.getElementById('publish-later-title');
+                        if (title) title.textContent = 'Subir Anuncio';
+                        const desc = document.getElementById('publish-later-desc');
+                        if (desc) desc.textContent = 'Haz clic aquí para enviar tu anuncio a revisión y publicarlo sin costo.';
+                        
+                        optionsModal.classList.add('active');
+                    }
+                    window.currentPendingListingId = newListing.id;
+                    newListingModal.classList.remove('active');
+                } else if (globalMpEnabled) {
+                    // Mostrar modal de opciones normal
                     const optionsModal = document.getElementById('publish-options-modal');
                     const priceText = document.getElementById('publish-price-text');
                     if (priceText) priceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
                     
-                    if (optionsModal) optionsModal.classList.add('active');
+                    if (optionsModal) {
+                        document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
+                        document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
+                        document.getElementById('btn-option-pay-now').style.display = 'flex';
+                        const icon = document.getElementById('publish-later-icon');
+                        if (icon) icon.textContent = 'support_agent';
+                        const title = document.getElementById('publish-later-title');
+                        if (title) title.textContent = 'Pago Asistido / Revisión';
+                        const desc = document.getElementById('publish-later-desc');
+                        if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
+                        
+                        optionsModal.classList.add('active');
+                    }
                     
                     // Guardar ref al carro que acabamos de crear
                     window.currentPendingListingId = newListing.id;

@@ -1516,10 +1516,10 @@
     <div id="publish-options-modal" class="modal" style="z-index: 10001;">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h3>¡Casi listo!</h3>
+                <h3 id="publish-modal-title">¡Casi listo!</h3>
                 <button id="btn-close-publish-options" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
             </div>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">¿Cómo deseas activar tu anuncio?</p>
+            <p id="publish-modal-desc" style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">¿Cómo deseas activar tu anuncio?</p>
             
             <div style="display: flex; flex-direction: column; gap: 16px;">
                 <!-- Card 1: Pago en Línea -->
@@ -1536,11 +1536,11 @@
                 <!-- Card 2: Pago Asistido -->
                 <div id="btn-option-pay-later" style="background: var(--surface-light); border: 2px solid transparent; border-radius: 12px; padding: 20px; cursor: pointer; display: flex; gap: 16px; align-items: center; transition: all 0.3s ease;">
                     <div style="background: rgba(107, 114, 128, 0.1); color: var(--text-muted); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <span class="material-symbols-rounded" style="font-size: 28px;">support_agent</span>
+                        <span id="publish-later-icon" class="material-symbols-rounded" style="font-size: 28px;">support_agent</span>
                     </div>
                     <div>
-                        <h4 style="margin: 0 0 4px 0; font-size: 1.1rem; color: var(--text-main);">Pago Asistido / Revisión</h4>
-                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.</p>
+                        <h4 id="publish-later-title" style="margin: 0 0 4px 0; font-size: 1.1rem; color: var(--text-main);">Pago Asistido / Revisión</h4>
+                        <p id="publish-later-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.</p>
                     </div>
                 </div>
             </div>
