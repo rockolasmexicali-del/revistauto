@@ -1214,14 +1214,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ad) {
             // Fallback ad if no ads are available
             return `
-                <div class="card ad-card" style="cursor: pointer; background: linear-gradient(135deg, var(--surface-color) 0%, var(--primary-color) 200%); border: 1px solid var(--primary-color);" onclick="document.getElementById('btn-advertise').click()">
-                    <div class="card-img-wrapper" style="height: 140px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);">
-                        <span class="material-symbols-rounded" style="font-size: 48px; color: white; opacity: 0.8;">storefront</span>
-                    </div>
-                    <div class="card-content" style="text-align: center;">
-                        <h4 class="card-title" style="color: white; margin-bottom: 8px;">¿Tienes un negocio?</h4>
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 12px;">Anúnciate aquí y llega a miles de clientes locales.</p>
-                        <span style="display: inline-block; padding: 4px 12px; background: white; color: var(--primary-color); border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Clic para más info</span>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <span style="font-size: 0.7rem; font-weight: 700; color: var(--primary-color); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.85;">Patrocinador</span>
+                    <div class="card ad-card" style="cursor: pointer; background: linear-gradient(135deg, var(--surface-color) 0%, var(--primary-color) 200%); border: 1px solid var(--primary-color); width: 100%;" onclick="document.getElementById('btn-advertise').click()">
+                        <div class="card-img-wrapper" style="height: 150px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);">
+                            <span class="material-symbols-rounded" style="font-size: 48px; color: white; opacity: 0.8;">storefront</span>
+                        </div>
+                        <div class="card-content" style="text-align: center; padding: 10px 8px;">
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: white; color: var(--primary-color); border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.18);">
+                                <span style="font-size: 1rem;">👆</span> Toca para ver detalles
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1230,16 +1233,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const firstImage = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
         
         return `
-            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column;" onclick="window.openAdDetails('${ad.id}')">
-                <div style="background: var(--primary-color); color: white; text-align: center; padding: 4px; font-size: 0.75rem; font-weight: bold; width: 100%; border-radius: 15px 15px 0 0;">Patrocinador</div>
-                <div class="card-img-wrapper" style="position: relative; overflow: hidden;">
-                    <div class="card-img-carousel" style="overflow-x: hidden;">
-                        <img src="${firstImage}" alt="Ad" loading="lazy">
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <span style="font-size: 0.7rem; font-weight: 700; color: var(--primary-color); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.85;">Patrocinador</span>
+                <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; width: 100%;" onclick="window.openAdDetails('${ad.id}')">
+                    <div class="card-img-wrapper" style="position: relative; overflow: hidden; height: 160px; background: #000;">
+                        <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; display: block;">
                     </div>
-                </div>
-                <div class="card-content">
-                    <h4 class="card-title">${ad.title}</h4>
-                    <p class="card-price" style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal; margin-top: 4px;">${ad.description ? (ad.description.substring(0, 50) + '...') : ''}</p>
+                    <div class="card-content" style="text-align: center; padding: 10px 8px;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--primary-color); color: white; border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.25);">
+                            <span style="font-size: 1rem;">👆</span> Toca para ver detalles
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
