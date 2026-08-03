@@ -1214,35 +1214,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ad) {
             // Fallback ad if no ads are available
             return `
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <span style="font-size: 0.7rem; font-weight: 700; color: var(--primary-color); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.85;">Patrocinador</span>
-                    <div class="card ad-card" style="cursor: pointer; background: linear-gradient(135deg, var(--surface-color) 0%, var(--primary-color) 200%); border: 1px solid var(--primary-color); width: 100%;" onclick="document.getElementById('btn-advertise').click()">
-                        <div class="card-img-wrapper" style="height: 150px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);">
-                            <span class="material-symbols-rounded" style="font-size: 48px; color: white; opacity: 0.8;">storefront</span>
-                        </div>
-                        <div class="card-content" style="text-align: center; padding: 10px 8px;">
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: white; color: var(--primary-color); border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.18);">
-                                <span style="font-size: 1rem;">👆</span> Toca para ver detalles
-                            </div>
-                        </div>
+            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden;" onclick="document.getElementById('btn-advertise').click()">
+                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.08em;">
+                    Patrocinador
+                </div>
+                <div class="card-img-wrapper" style="background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-top: none;">
+                    <span class="material-symbols-rounded" style="font-size: 48px; color: white; opacity: 0.8;">storefront</span>
+                </div>
+                <div class="card-content" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 12px 10px;">
+                    <div style="width: 100%; background: transparent; color: var(--primary-color); text-align: center; font-weight: 600; font-size: 0.85rem;">
+                        <span style="font-size: 1rem; margin-right: 4px;">👆</span> Toca para ver detalles
                     </div>
                 </div>
+            </div>
             `;
         }
 
         const firstImage = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
         
         return `
-            <div style="display: flex; flex-direction: column; align-items: center;">
-                <span style="font-size: 0.7rem; font-weight: 700; color: var(--primary-color); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; opacity: 0.85;">Patrocinador</span>
-                <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; width: 100%;" onclick="window.openAdDetails('${ad.id}')">
-                    <div class="card-img-wrapper" style="position: relative; overflow: hidden; height: 160px; background: #000;">
-                        <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; display: block;">
-                    </div>
-                    <div class="card-content" style="text-align: center; padding: 10px 8px;">
-                        <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--primary-color); color: white; border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.25);">
-                            <span style="font-size: 1rem;">👆</span> Toca para ver detalles
-                        </div>
+            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden;" onclick="window.openAdDetails('${ad.id}')">
+                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.08em;">
+                    Patrocinador
+                </div>
+                <div class="card-img-wrapper" style="background: #000; flex-shrink: 0; border-top: none;">
+                    <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+                </div>
+                <div class="card-content" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 12px 10px;">
+                    <div style="width: 100%; background: transparent; color: var(--primary-color); text-align: center; font-weight: 600; font-size: 0.85rem;">
+                        <span style="font-size: 1rem; margin-right: 4px;">👆</span> Toca para ver detalles
                     </div>
                 </div>
             </div>
