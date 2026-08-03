@@ -1182,23 +1182,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const type = btn.getAttribute('data-type');
 
-            // Remover clase active de todos y asignarla al clickeado
-            document.querySelectorAll('#home-categories .category-chip').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-
             // Actualizar el feed con la categoría seleccionada (cuadrícula o vista completa)
+            // NOTA: renderFeed() llama populateHomeCategories() que recrea los chips del DOM
             currentFeedCategory = type;
             renderFeed();
 
-            // Centrar el botón seleccionado en la barra horizontal con scroll suave
-            const containerRect = homeCategories.getBoundingClientRect();
-            const btnRect = btn.getBoundingClientRect();
-            const targetScroll = homeCategories.scrollLeft
-                + btnRect.left
-                - containerRect.left
-                - (containerRect.width / 2)
-                + (btnRect.width / 2);
-            homeCategories.scrollTo({ left: targetScroll, behavior: 'smooth' });
+            // Re-buscar el botón DESPUÉS de renderFeed porque populateHomeCategories
+            // destruye y recrea los chips, dejando la referencia anterior desconectada
+            const freshBtn = homeCategories.querySelector(`.category-chip[data-type="${type}"]`);
+            if (freshBtn) {
+                const containerRect = homeCategories.getBoundingClientRect();
+                const btnRect = freshBtn.getBoundingClientRect();
+                const targetScroll = homeCategories.scrollLeft
+                    + btnRect.left
+                    - containerRect.left
+                    - (containerRect.width / 2)
+                    + (btnRect.width / 2);
+                homeCategories.scrollTo({ left: targetScroll, behavior: 'smooth' });
+            }
         });
 
     function createListingCardHTML(listing, hideHeart = false) {
