@@ -1190,8 +1190,12 @@ document.addEventListener('DOMContentLoaded', () => {
             currentFeedCategory = type;
             renderFeed();
 
-            // Mover el botón clickeado hacia el centro de la barra horizontal
-            btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            // Centrar el botón seleccionado en la barra horizontal con scroll suave
+            const btnLeft = btn.offsetLeft;
+            const btnWidth = btn.offsetWidth;
+            const containerWidth = homeCategories.offsetWidth;
+            const targetScroll = btnLeft - (containerWidth / 2) + (btnWidth / 2);
+            homeCategories.scrollTo({ left: targetScroll, behavior: 'smooth' });
         });
 
     function createListingCardHTML(listing, hideHeart = false) {
