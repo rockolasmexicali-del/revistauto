@@ -227,6 +227,8 @@ class Database {
                                 ...item,
                                 ...localListing
                             };
+                            delete mergedFields._pendingSync;
+                            delete localListing._pendingSync;
                             // Reintentar sincronizar a la nube de fondo
                             this.saveListing(localListing).catch(e => console.warn('Retry sync listing failed:', e));
                         }
@@ -1153,6 +1155,8 @@ class Database {
                         let mergedAd = { ...ad };
                         if (localAd && localAd._pendingSync) {
                             mergedAd = { ...ad, ...localAd };
+                            delete mergedAd._pendingSync;
+                            delete localAd._pendingSync;
                             this.saveAd(localAd).catch(e => console.warn('Retry sync ad failed:', e));
                         }
 
