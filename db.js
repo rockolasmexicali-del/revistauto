@@ -1198,6 +1198,19 @@ class Database {
         let ad = this.getAllAds().find(a => String(a.id) === String(adId));
         if (!ad) return null;
         
+        // Evitar múltiples conteos por sesión para la misma publicidad
+        let viewedThisSession = [];
+        try {
+            viewedThisSession = JSON.parse(sessionStorage.getItem('revista_ads_viewed_session') || '[]');
+        } catch (e) {}
+
+        if (viewedThisSession.includes(String(adId))) {
+            return ad;
+        }
+
+        viewedThisSession.push(String(adId));
+        sessionStorage.setItem('revista_ads_viewed_session', JSON.stringify(viewedThisSession));
+
         ad.views = (ad.views || 0) + 1;
         const ads = this.getAllAds();
         const idx = ads.findIndex(a => String(a.id) === String(adId));
