@@ -58,24 +58,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 let locationSource = { states: [], citiesByState: {} };
 
                 try {
-                    const data = await db.getActiveLocations();
-                    if (data && data.success && data.locations && Object.keys(data.locations).length > 0) {
-                        locationSource = {
-                            states: Object.keys(data.locations),
-                            citiesByState: data.locations
-                        };
+                    // Build locations from the same data the feed uses:
+                    // active listings already synced to localStorage via Supabase realtime
+                    const activeListings = db.getAllListings().filter(l => db.isListingActive(l));
+
+                    if (activeListings.length > 0) {
+                        const locMap = {};
+                        activeListings.forEach(l => {
+                            const state = l.state || '';
+                            const city  = l.city  || '';
+                            if (state && city) {
+                                if (!locMap[state]) locMap[state] = [];
+                                if (!locMap[state].includes(city)) locMap[state].push(city);
+                            }
+                        });
+                        const states = Object.keys(locMap);
+                        if (states.length > 0) {
+                            locationSource = { states, citiesByState: locMap };
+                        }
+                    }
+
+                    // Fallback: try the async API if localStorage had nothing
+                    if (locationSource.states.length === 0) {
+                        const data = await db.getActiveLocations();
+                        if (data && data.success && data.locations && Object.keys(data.locations).length > 0) {
+                            locationSource = {
+                                states: Object.keys(data.locations),
+                                citiesByState: data.locations
+                            };
+                        }
                     }
                 } catch (e) {
-                    console.warn('Ad form: getActiveLocations failed, using fallback', e);
+                    console.warn('Ad form: error building locations', e);
                 }
 
-                // Fallback 1: use window.activeLocations if DB call returned nothing
+                // Fallback: window.activeLocations (populated at app startup)
                 if (locationSource.states.length === 0 && window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0) {
                     locationSource = window.activeLocations;
                 }
 
-                // Fallback 2: use full catalog so user is never left with empty selects
-                if (locationSource.states.length === 0 && typeof catalogData !== 'undefined' && catalogData.states) {
+                // Last resort: full catalog so selects are never empty
+                if (locationSource.states.length === 0 && typeof catalogData !== 'undefined' && catalogData && catalogData.states) {
                     locationSource = { states: catalogData.states, citiesByState: catalogData.citiesByState };
                 }
 
