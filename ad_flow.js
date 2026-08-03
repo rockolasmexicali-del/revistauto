@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
     
     if (btnAdvertise) {
-        btnAdvertise.addEventListener('click', async () => {
+        btnAdvertise.addEventListener('click', () => {
             // --- 1. Clear text/image fields manually (NOT form.reset() which wipes selects) ---
             const titleEl       = document.getElementById('client-ad-title');
             const descEl        = document.getElementById('client-ad-description');
@@ -46,60 +46,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Open modal immediately so user sees it right away
             clientAdModal.classList.add('active');
 
-            // --- 2. Fetch active locations directly from DB (async, always fresh) ---
+            // --- 2. Populate state/city selects ---
+            // Use window.activeLocations — the EXACT same source as the Inicio feed filter.
+            // It is populated at app startup by populateSelects() → db.getActiveLocations().
             const stateSelect = document.getElementById('client-ad-state');
             const citySelect  = document.getElementById('client-ad-city');
 
             if (stateSelect && citySelect) {
-                // Show loading state while fetching
-                stateSelect.innerHTML = '<option value="" disabled selected>Cargando estados...</option>';
-                citySelect.innerHTML  = '<option value="" disabled selected>Selecciona una ciudad</option>';
-
-                let locationSource = { states: [], citiesByState: {} };
-
-                try {
-                    // Build locations from the same data the feed uses:
-                    // active listings already synced to localStorage via Supabase realtime
-                    const activeListings = db.getAllListings().filter(l => db.isListingActive(l));
-
-                    if (activeListings.length > 0) {
-                        const locMap = {};
-                        activeListings.forEach(l => {
-                            const state = l.state || '';
-                            const city  = l.city  || '';
-                            if (state && city) {
-                                if (!locMap[state]) locMap[state] = [];
-                                if (!locMap[state].includes(city)) locMap[state].push(city);
-                            }
-                        });
-                        const states = Object.keys(locMap);
-                        if (states.length > 0) {
-                            locationSource = { states, citiesByState: locMap };
-                        }
-                    }
-
-                    // Fallback: try the async API if localStorage had nothing
-                    if (locationSource.states.length === 0) {
-                        const data = await db.getActiveLocations();
-                        if (data && data.success && data.locations && Object.keys(data.locations).length > 0) {
-                            locationSource = {
-                                states: Object.keys(data.locations),
-                                citiesByState: data.locations
-                            };
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Ad form: error building locations', e);
-                }
-
-                // Fallback: window.activeLocations (populated at app startup)
-                if (locationSource.states.length === 0 && window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0) {
+                // Determine source: prefer activeLocations (real vehicles), fallback to full catalog
+                let locationSource;
+                if (window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0) {
                     locationSource = window.activeLocations;
-                }
-
-                // Last resort: full catalog so selects are never empty
-                if (locationSource.states.length === 0 && typeof catalogData !== 'undefined' && catalogData && catalogData.states) {
+                } else if (typeof catalogData !== 'undefined' && catalogData && catalogData.states) {
                     locationSource = { states: catalogData.states, citiesByState: catalogData.citiesByState };
+                } else {
+                    locationSource = { states: [], citiesByState: {} };
                 }
 
                 // Helper: fill cities dropdown for a given state
@@ -114,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
-                // Build state dropdown (clone to avoid duplicate event listeners)
+                // Build state dropdown — clone to prevent duplicate event listeners on each open
                 const newStateSelect = stateSelect.cloneNode(false);
                 stateSelect.parentNode.replaceChild(newStateSelect, stateSelect);
                 newStateSelect.innerHTML = '<option value="" disabled selected>Selecciona un estado</option>';
@@ -126,18 +87,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 newStateSelect.addEventListener('change', () => fillCitiesForState(newStateSelect.value));
 
-                // Reset cities to placeholder
+                // Reset city to placeholder
                 citySelect.innerHTML = '<option value="" disabled selected>Selecciona una ciudad</option>';
 
-                // --- 3. Pre-select user's detected location from localStorage cache ---
+                // --- Pre-select the user's current location from localStorage cache ---
+                // (saved by applyDetectedLocation when GPS runs at app startup)
                 try {
                     const cachedStr = localStorage.getItem('revista_last_location');
                     if (cachedStr) {
-                        const cached = JSON.parse(cachedStr);
+                        const cached     = JSON.parse(cachedStr);
                         const cachedState = cached.state || '';
                         const cachedCity  = cached.city  || '';
 
-                        // Match state (case-insensitive, partial match — same logic as the feed)
+                        // Match state — same partial/case-insensitive logic as applyDetectedLocation
                         const matchedState = locationSource.states.find(s =>
                             s.toLowerCase() === cachedState.toLowerCase() ||
                             cachedState.toLowerCase().includes(s.toLowerCase())
@@ -147,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             newStateSelect.value = matchedState;
                             fillCitiesForState(matchedState);
 
-                            // Try to match city
+                            // Match city
                             const cities = locationSource.citiesByState[matchedState] || [];
                             const matchedCity = cities.find(c =>
                                 c.toLowerCase() === cachedCity.toLowerCase() ||
@@ -160,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } catch (e) {
-                    console.warn('Ad form: could not pre-select location from cache', e);
+                    console.warn('Ad form: could not pre-select location', e);
                 }
             }
         });
