@@ -1327,11 +1327,15 @@
                         <div class="form-row" style="display: flex; gap: 12px;">
                             <div class="form-group half" style="flex:1;">
                                 <label>Estado *</label>
-                                <input type="text" id="client-ad-state" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                                <select id="client-ad-state" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none; cursor: pointer;">
+                                    <option value="" disabled selected>Selecciona un estado</option>
+                                </select>
                             </div>
                             <div class="form-group half" style="flex:1;">
                                 <label>Ciudad *</label>
-                                <input type="text" id="client-ad-city" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
+                                <select id="client-ad-city" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none; cursor: pointer;">
+                                    <option value="" disabled selected>Selecciona una ciudad</option>
+                                </select>
                             </div>
                         </div>
                         

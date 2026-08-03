@@ -7,40 +7,87 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (btnAdvertise) {
         btnAdvertise.addEventListener('click', () => {
-            // Populate states for ad modal
-            const stateSelect = document.getElementById('client-ad-state');
-            if (stateSelect && stateSelect.options.length <= 1 && catalogData && catalogData.states) {
-                catalogData.states.forEach(state => {
-                    const opt = document.createElement('option');
-                    opt.value = state;
-                    opt.textContent = state;
-                    stateSelect.appendChild(opt);
-                });
-                
-                stateSelect.addEventListener('change', () => {
-                    const citySelect = document.getElementById('client-ad-city');
-                    citySelect.innerHTML = '<option value="" disabled selected>Selecciona</option>';
-                    const selState = stateSelect.value;
-                    if (catalogData.citiesByState[selState]) {
-                        catalogData.citiesByState[selState].sort().forEach(city => {
-                            const opt = document.createElement('option');
-                            opt.value = city;
-                            opt.textContent = city;
-                            citySelect.appendChild(opt);
-                        });
-                    }
-                });
-            }
-            
-            // Clear form
+            // --- 1. Clear the form first (resets text inputs, etc.) ---
             const form = document.getElementById('client-ad-form') || document.getElementById('client-ad-form-step2');
-            if(form) form.reset();
+            if (form) form.reset();
             window.clientAdImages = [];
             window.editingAdId = null;
             document.getElementById('client-ad-image-preview-container').innerHTML = '';
             document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
             const btnSubmit = document.getElementById('btn-submit-client-ad');
-            if(btnSubmit) btnSubmit.textContent = 'Continuar al Pago';
+            if (btnSubmit) btnSubmit.textContent = 'Continuar al Pago';
+
+            // --- 2. Populate state/city selects with active vehicle locations ---
+            const stateSelect = document.getElementById('client-ad-state');
+            const citySelect  = document.getElementById('client-ad-city');
+
+            if (stateSelect && citySelect) {
+                // Source: activeLocations (real vehicles) with fallback to full catalog
+                const locationSource = (window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0)
+                    ? window.activeLocations
+                    : (catalogData ? { states: catalogData.states, citiesByState: catalogData.citiesByState } : { states: [], citiesByState: {} });
+
+                // Helper: fill cities dropdown for a given state
+                function fillCitiesForState(stateName) {
+                    citySelect.innerHTML = '<option value="" disabled selected>Selecciona una ciudad</option>';
+                    const cities = (locationSource.citiesByState[stateName] || []).slice().sort();
+                    cities.forEach(city => {
+                        const opt = document.createElement('option');
+                        opt.value = city;
+                        opt.textContent = city;
+                        citySelect.appendChild(opt);
+                    });
+                }
+
+                // Re-build state options and attach cascade listener (clone to avoid duplicate listeners)
+                const newStateSelect = stateSelect.cloneNode(false); // cloneNode(false) = no children
+                stateSelect.parentNode.replaceChild(newStateSelect, stateSelect);
+                newStateSelect.innerHTML = '<option value="" disabled selected>Selecciona un estado</option>';
+                locationSource.states.slice().sort().forEach(state => {
+                    const opt = document.createElement('option');
+                    opt.value = state;
+                    opt.textContent = state;
+                    newStateSelect.appendChild(opt);
+                });
+                newStateSelect.addEventListener('change', () => fillCitiesForState(newStateSelect.value));
+
+                // Reset cities to placeholder
+                citySelect.innerHTML = '<option value="" disabled selected>Selecciona una ciudad</option>';
+
+                // --- 3. Pre-select user's detected location from localStorage cache ---
+                try {
+                    const cachedStr = localStorage.getItem('revista_last_location');
+                    if (cachedStr) {
+                        const cached = JSON.parse(cachedStr);
+                        const cachedState = cached.state || '';
+                        const cachedCity  = cached.city  || '';
+
+                        // Match state (case-insensitive, partial match — same logic as the feed)
+                        const matchedState = locationSource.states.find(s =>
+                            s.toLowerCase() === cachedState.toLowerCase() ||
+                            cachedState.toLowerCase().includes(s.toLowerCase())
+                        );
+
+                        if (matchedState) {
+                            newStateSelect.value = matchedState;
+                            fillCitiesForState(matchedState);
+
+                            // Try to match city
+                            const cities = locationSource.citiesByState[matchedState] || [];
+                            const matchedCity = cities.find(c =>
+                                c.toLowerCase() === cachedCity.toLowerCase() ||
+                                cachedCity.toLowerCase().includes(c.toLowerCase()) ||
+                                c.toLowerCase().includes(cachedCity.toLowerCase())
+                            );
+                            if (matchedCity) {
+                                citySelect.value = matchedCity;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Ad form: could not pre-select location from cache', e);
+                }
+            }
 
             clientAdModal.classList.add('active');
         });
