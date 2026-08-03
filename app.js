@@ -1182,27 +1182,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const type = btn.getAttribute('data-type');
 
-            // Si estamos en la vista 'Todos' y hacen clic en una categoría específica que tiene fila horizontal
-            if (currentFeedCategory === 'Todos' && type !== 'Todos') {
-                const targetRow = document.querySelector(`.netflix-row[data-category="${type}"]`);
-                if (targetRow) {
-                    document.querySelectorAll('#home-categories .category-chip').forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    window.advanceCategoryRow(type);
-                    btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    return;
-                }
-            }
-
             // Remover clase active de todos y asignarla al clickeado
             document.querySelectorAll('#home-categories .category-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
-            
-            // Actualizar el feed
+
+            // Actualizar el feed con la categoría seleccionada (cuadrícula o vista completa)
             currentFeedCategory = type;
             renderFeed();
 
-            // Mover el botón clickeado hacia el centro de la vista
+            // Mover el botón clickeado hacia el centro de la barra horizontal
             btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         });
 
