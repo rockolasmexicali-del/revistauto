@@ -1226,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color);" onclick="window.openAdDetails('${ad.id}')">
                 <div class="card-img-wrapper" style="position: relative;">
-                    <span style="position: absolute; top: 8px; left: 8px; background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;">Patrocinado</span>
+                    <span style="position: absolute; top: 8px; left: 8px; background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;">Patrocinador</span>
                     <div class="card-img-carousel" style="overflow-x: hidden;">
                         <img src="${firstImage}" alt="Ad" loading="lazy">
                     </div>
