@@ -1267,15 +1267,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: -14px; min-height: calc(100% + 14px); z-index: 10;" onclick="${clickAction}">
-                <div class="card-img-wrapper" style="background: transparent; flex-shrink: 0; border-top: none;">
-                    <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9; display: block;">
-                </div>
-                <div class="card-content" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 12px 10px;">
-                    <div style="width: 100%; background: transparent; color: var(--primary-color); text-align: center; font-weight: 600; font-size: 0.85rem;">
-                        <span style="font-size: 1rem; margin-right: 4px;">👆</span> Toca para ver detalles
+                <div style="position: relative; flex: 1; overflow: hidden; min-height: 0;">
+                    <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9; display: block; position: absolute; top: 0; left: 0;">
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); padding: 18px 8px 8px; text-align: center;">
+                        <span style="color: white; font-weight: 600; font-size: 0.8rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+                            <span style="font-size: 0.9rem; margin-right: 3px;">👆</span> Toca para ver detalles
+                        </span>
                     </div>
                 </div>
-                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.08em;">
+                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.08em;">
                     Patrocinador
                 </div>
             </div>
