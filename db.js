@@ -950,8 +950,8 @@ class Database {
             return { success: true, locations: locationsMap };
         }
 
-        // Fallback default
-        return { success: true, locations: { "Nuevo León": ["Monterrey", "San Pedro", "San Nicolás"], "Jalisco": ["Guadalajara", "Zapopan"] } };
+        // No active vehicles found — return empty so callers use their own fallback
+        return { success: true, locations: {} };
     }
 
     async loginAdmin(username, password) {
