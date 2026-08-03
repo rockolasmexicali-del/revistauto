@@ -1224,9 +1224,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const firstImage = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
         
         return `
-            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color);" onclick="window.openAdDetails('${ad.id}')">
-                <div class="card-img-wrapper" style="position: relative;">
-                    <span style="position: absolute; top: 8px; left: 8px; background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 2;">Patrocinador</span>
+            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); position: relative; overflow: visible;" onclick="window.openAdDetails('${ad.id}')">
+                <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--primary-color); color: white; padding: 2px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 10; white-space: nowrap;">Patrocinador</span>
+                <div class="card-img-wrapper" style="position: relative; border-radius: 15px 15px 0 0; overflow: hidden;">
                     <div class="card-img-carousel" style="overflow-x: hidden;">
                         <img src="${firstImage}" alt="Ad" loading="lazy">
                     </div>
