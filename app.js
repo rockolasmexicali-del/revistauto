@@ -1210,7 +1210,17 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    function createAdCardHTML(ad) {
+    window.openAdFromCatalog = function(adId, prevListingId, nextListingId) {
+        if (prevListingId && prevListingId !== 'null' && prevListingId !== 'undefined') {
+            window.pendingPrevListingIdAfterAd = parseInt(prevListingId, 10) || prevListingId;
+        }
+        if (nextListingId && nextListingId !== 'null' && nextListingId !== 'undefined') {
+            window.pendingNextListingIdAfterAd = parseInt(nextListingId, 10) || nextListingId;
+        }
+        window.openAdDetails(adId);
+    };
+
+    function createAdCardHTML(ad, prevId = null, nextId = null) {
         if (!ad) {
             // Fallback ad if no ads are available
             return `
@@ -1232,8 +1242,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const firstImage = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
         
+        const clickAction = (prevId && nextId) 
+            ? `window.openAdFromCatalog('${ad.id}', '${prevId}', '${nextId}')`
+            : `window.openAdDetails('${ad.id}')`;
+
         return `
-            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden;" onclick="window.openAdDetails('${ad.id}')">
+            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden;" onclick="${clickAction}">
                 <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.08em;">
                     Patrocinador
                 </div>
@@ -1725,7 +1739,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Insert ad after every `freq` items
                 if ((i + 1) % freq === 0 && db.adsEnabled) {
                     const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
-                    finalHTML += createAdCardHTML(ad);
+                    const prevId = listings[i].id;
+                    const nextId = (i + 1 < listings.length) ? listings[i + 1].id : listings[0].id;
+                    finalHTML += createAdCardHTML(ad, prevId, nextId);
                 }
             }
             
@@ -1771,7 +1787,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         rowCardsHTML += createListingCardHTML(initialListings[i], true);
                         if ((i + 1) % freq === 0 && db.adsEnabled) {
                             const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
-                            rowCardsHTML += createAdCardHTML(ad);
+                            const prevId = initialListings[i].id;
+                            const nextId = (i + 1 < initialListings.length) ? initialListings[i + 1].id : initialListings[0].id;
+                            rowCardsHTML += createAdCardHTML(ad, prevId, nextId);
                         }
                     }
 
