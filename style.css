@@ -1876,6 +1876,10 @@ input:checked + .slider:before {
         height: 100% !important;
         object-fit: cover !important;
     }
+
+    #ad-image-carousel img {
+        object-fit: contain !important;
+    }
 }
 
 @media (max-width: 767px) {

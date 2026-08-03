@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const costDisclaimer = document.getElementById('monthly-cost-disclaimer');
                 if (costDisclaimer) {
-                    costDisclaimer.innerHTML = `* Costo de la publicación: <strong>$${globalMonthlyPrice.toFixed(2)} MXN</strong> por mes.`;
+                    costDisclaimer.innerHTML = '';
                 }
                 
                 const vehiclePriceNote = document.getElementById('vehicle-dynamic-price');
