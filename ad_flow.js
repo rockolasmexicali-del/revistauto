@@ -6,26 +6,78 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
     
     if (btnAdvertise) {
-        btnAdvertise.addEventListener('click', () => {
-            // --- 1. Clear the form first (resets text inputs, etc.) ---
-            const form = document.getElementById('client-ad-form') || document.getElementById('client-ad-form-step2');
-            if (form) form.reset();
+        btnAdvertise.addEventListener('click', async () => {
+            // --- 1. Clear text/image fields manually (NOT form.reset() which wipes selects) ---
+            const titleEl       = document.getElementById('client-ad-title');
+            const descEl        = document.getElementById('client-ad-description');
+            const addressEl     = document.getElementById('client-ad-address');
+            const scheduleMfEl  = document.getElementById('client-ad-schedule-mf');
+            const scheduleSatEl = document.getElementById('client-ad-schedule-sat');
+            const scheduleSunEl = document.getElementById('client-ad-schedule-sun');
+            const phoneEl       = document.getElementById('client-ad-phone');
+            const whatsappEl    = document.getElementById('client-ad-whatsapp');
+            const fbEl          = document.getElementById('client-ad-link-fb');
+            const igEl          = document.getElementById('client-ad-link-ig');
+            const tkEl          = document.getElementById('client-ad-link-tk');
+            const charCounter   = document.getElementById('desc-char-counter');
+
+            if (titleEl)       titleEl.value       = '';
+            if (descEl)        descEl.value        = '';
+            if (addressEl)     addressEl.value     = '';
+            if (scheduleMfEl)  scheduleMfEl.value  = '';
+            if (scheduleSatEl) scheduleSatEl.value = '';
+            if (scheduleSunEl) scheduleSunEl.value = '';
+            if (phoneEl)       phoneEl.value       = '';
+            if (whatsappEl)    whatsappEl.value    = '';
+            if (fbEl)          fbEl.value          = '';
+            if (igEl)          igEl.value          = '';
+            if (tkEl)          tkEl.value          = '';
+            if (charCounter)   charCounter.textContent = '0/200';
+
             window.clientAdImages = [];
             window.editingAdId = null;
-            document.getElementById('client-ad-image-preview-container').innerHTML = '';
-            document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
+            const previewContainer = document.getElementById('client-ad-image-preview-container');
+            const fileText = document.getElementById('client-ad-file-chosen-text');
+            if (previewContainer) previewContainer.innerHTML = '';
+            if (fileText) fileText.textContent = 'Ninguna foto. ¡Recuerda la portada!';
             const btnSubmit = document.getElementById('btn-submit-client-ad');
             if (btnSubmit) btnSubmit.textContent = 'Continuar al Pago';
 
-            // --- 2. Populate state/city selects with active vehicle locations ---
+            // Open modal immediately so user sees it right away
+            clientAdModal.classList.add('active');
+
+            // --- 2. Fetch active locations directly from DB (async, always fresh) ---
             const stateSelect = document.getElementById('client-ad-state');
             const citySelect  = document.getElementById('client-ad-city');
 
             if (stateSelect && citySelect) {
-                // Source: activeLocations (real vehicles) with fallback to full catalog
-                const locationSource = (window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0)
-                    ? window.activeLocations
-                    : (catalogData ? { states: catalogData.states, citiesByState: catalogData.citiesByState } : { states: [], citiesByState: {} });
+                // Show loading state while fetching
+                stateSelect.innerHTML = '<option value="" disabled selected>Cargando estados...</option>';
+                citySelect.innerHTML  = '<option value="" disabled selected>Selecciona una ciudad</option>';
+
+                let locationSource = { states: [], citiesByState: {} };
+
+                try {
+                    const data = await db.getActiveLocations();
+                    if (data && data.success && data.locations && Object.keys(data.locations).length > 0) {
+                        locationSource = {
+                            states: Object.keys(data.locations),
+                            citiesByState: data.locations
+                        };
+                    }
+                } catch (e) {
+                    console.warn('Ad form: getActiveLocations failed, using fallback', e);
+                }
+
+                // Fallback 1: use window.activeLocations if DB call returned nothing
+                if (locationSource.states.length === 0 && window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0) {
+                    locationSource = window.activeLocations;
+                }
+
+                // Fallback 2: use full catalog so user is never left with empty selects
+                if (locationSource.states.length === 0 && typeof catalogData !== 'undefined' && catalogData.states) {
+                    locationSource = { states: catalogData.states, citiesByState: catalogData.citiesByState };
+                }
 
                 // Helper: fill cities dropdown for a given state
                 function fillCitiesForState(stateName) {
@@ -39,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
-                // Re-build state options and attach cascade listener (clone to avoid duplicate listeners)
-                const newStateSelect = stateSelect.cloneNode(false); // cloneNode(false) = no children
+                // Build state dropdown (clone to avoid duplicate event listeners)
+                const newStateSelect = stateSelect.cloneNode(false);
                 stateSelect.parentNode.replaceChild(newStateSelect, stateSelect);
                 newStateSelect.innerHTML = '<option value="" disabled selected>Selecciona un estado</option>';
                 locationSource.states.slice().sort().forEach(state => {
@@ -88,8 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.warn('Ad form: could not pre-select location from cache', e);
                 }
             }
-
-            clientAdModal.classList.add('active');
         });
     }
 
