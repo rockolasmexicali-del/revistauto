@@ -246,6 +246,7 @@ class Database {
                             images: mergedFields.images && mergedFields.images.length > 0 ? mergedFields.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
                             notes: mergedNotes,
                             payments: mergedPayments,
+                            ref_number: item.ref_number || item.ref_number || (localListing ? localListing.ref_number : null),
                             publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
                             publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
                             isMyListing: isMine
@@ -456,6 +457,29 @@ class Database {
             listing.isMyListing = listing.isMyListing !== undefined ? listing.isMyListing : true;
         }
 
+        if (!listing.ref_number) {
+            const existingListings = this.getAllListings();
+            const existingRefs = new Set(existingListings.map(l => l.ref_number).filter(r => r));
+            let digits = 5;
+            let maxAttempts = 50;
+            let ref;
+            while (true) {
+                let min = Math.pow(10, digits - 1);
+                let max = Math.pow(10, digits) - 1;
+                let found = false;
+                for (let i = 0; i < maxAttempts; i++) {
+                    ref = Math.floor(Math.random() * (max - min + 1)) + min;
+                    if (!existingRefs.has(ref)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+                digits++;
+            }
+            listing.ref_number = ref;
+        }
+
         // Sincronizar PRIMERO con Supabase Cloud
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const payload = {
@@ -489,7 +513,8 @@ class Database {
                 expires_at: listing.expiresAt || listing.expires_at || null,
                 last_renewed_month: listing.lastRenewedMonth || listing.last_renewed_month || null,
                 payment_status: listing.paymentStatus || listing.payment_status || null,
-                sold_at: listing.soldAt || listing.sold_at || null
+                sold_at: listing.soldAt || listing.sold_at || null,
+                ref_number: listing.ref_number
             };
 
             try {

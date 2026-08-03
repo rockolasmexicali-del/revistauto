@@ -2437,6 +2437,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Vence el ${expDateStr}</p>`;
             }
 
+            const refNum = listing.ref_number || (String(listing.id).length >= 5 ? String(listing.id).slice(-5) : listing.id);
+
             return `
             <div class="my-listing-card" style="cursor: pointer;" onclick="if(!event.target.closest('button')) openListingDetails(${listing.id})">
                 <div class="card-img-carousel" style="width:100px; height:100px; flex-shrink:0; background:#000;">
@@ -2444,6 +2446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="my-listing-info">
                     <h4 class="my-listing-title">${listing.title || `${listing.make} ${listing.model} ${listing.year}`}</h4>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ref: #${refNum}</div>
                     <p style="color: var(--primary-color); font-weight: bold; margin-bottom: 4px;">$${listing.price.toLocaleString('es-MX')}</p>
                     <span class="status-badge ${statusColorClass}" style="${statusColorClass === 'status-caducado' ? 'background: var(--danger-color);' : (statusColorClass === 'status-renovar' ? 'background: #f59e0b;' : '')}">${displayStatus}</span>
                     ${priceTextHTML}
