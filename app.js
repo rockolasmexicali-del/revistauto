@@ -5478,6 +5478,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabAprobaciones) tabAprobaciones.style.display = '';
             if (tabRenovaciones) tabRenovaciones.style.display = '';
             if (tabPublicidad)   tabPublicidad.style.display = '';
+            // Ocultar configuración global de anuncios
+            const adConfigSection = document.querySelector('#tab-publicidad .config-section');
+            if (adConfigSection) adConfigSection.style.display = 'none';
             // Abrir Aprobaciones por defecto
             const defaultTab = document.querySelector('.dashboard-tab[data-tab="tab-aprobaciones"]');
             if (defaultTab) defaultTab.click();
@@ -5498,6 +5501,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabPublicidad) tabPublicidad.style.display = '';
             if (tabFinanzas)   tabFinanzas.style.display = 'flex';
             if (tabUsuarios)   tabUsuarios.style.display = 'flex';
+            // Mostrar configuración global de anuncios para admin completo
+            const adConfigSection = document.querySelector('#tab-publicidad .config-section');
+            if (adConfigSection) adConfigSection.style.display = '';
         }
     }
 
