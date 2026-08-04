@@ -3736,6 +3736,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 (l.make && l.make.toLowerCase().includes(q)) ||
                 (l.model && l.model.toLowerCase().includes(q)) ||
                 (l.phone && l.phone.includes(q)) ||
+                (l.ref_number && String(l.ref_number).includes(q)) ||
                 (String(l.id).includes(q))
             );
         }
