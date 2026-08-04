@@ -1455,8 +1455,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('ad-detail-title').textContent = ad.title || 'Negocio';
         if (document.getElementById('ad-detail-loc-text')) {
-            const loc = [ad.city, ad.state].filter(Boolean).join(', ');
-            document.getElementById('ad-detail-loc-text').textContent = loc || 'Ubicación no especificada';
+            const rawCity = (ad.city || '').split(',')[0].trim();
+            const formattedCity = rawCity ? rawCity.toLowerCase().replace(/(?:^|\s|-)\S/g, char => char.toUpperCase()) : '';
+            document.getElementById('ad-detail-loc-text').textContent = formattedCity || 'Ubicación no especificada';
         }
         document.getElementById('ad-detail-description').textContent = ad.description || '';
 
