@@ -1616,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     grid.innerHTML += `
-                        <a href="${url}" target="_blank" onclick="try{window.db.incrementAdClicks('${adId}');}catch(e){}" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.9rem; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; border: ${border}; font-weight: 600; text-decoration: none; cursor: pointer;">
+                        <a href="${url}" target="_blank" onclick="try{window.db.incrementAdClicks('${adId}');}catch(e){}" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.88rem; padding: 9px 16px; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: ${border}; font-weight: 700; text-decoration: none; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.25); transition: transform 0.2s ease;">
                             <span class="material-symbols-rounded" style="font-size: 18px;">${icon}</span> ${title}
                         </a>
                     `;
