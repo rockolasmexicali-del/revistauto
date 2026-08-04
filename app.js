@@ -3443,10 +3443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const statViews = document.getElementById('stat-views');
         if (statViews) {
-            // Inicializar con el total global (fallback visual)
-            statViews.textContent = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
-            
-            // Cargar datos reales asincrónicamente
+            // Cargar datos reales asincrónicamente (sin fallback que cause parpadeo)
             db.fetchTrafficStats().then(data => {
                 window.trafficStatsCache = data;
                 const activeViewsBtn = document.querySelector('.quick-view-btn.active');
