@@ -789,38 +789,52 @@ class Database {
     }
 
     addPayment(listingId, amount, receiptImage, type = 'Aprobación', method = 'manual') {
+        // --- Compatibilidad con el sistema anterior: guardar dentro del listing ---
         const listings = this.getAllListings();
         const index = listings.findIndex(l => String(l.id) === String(listingId));
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+        
+        const newPayment = {
+            id: Date.now(),
+            date: `${dateStr}, ${timeStr}`,
+            dateISO: now.toISOString(),
+            amount: amount,
+            receiptImage: receiptImage || null,
+            type: type,
+            method: method, // 'mercadopago' | 'manual'
+            listingId: String(listingId),
+            listingTitle: index !== -1 ? listings[index].title : `ID ${listingId}`,
+            listingCity: index !== -1 ? (listings[index].city || '') : ''
+        };
+
+        // Guardar dentro del listing (legacy)
         if (index !== -1) {
-            if (!listings[index].payments) {
-                listings[index].payments = [];
-            }
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
-            
-            const newPayment = {
-                id: Date.now(),
-                date: `${dateStr}, ${timeStr}`,
-                dateISO: now.toISOString(),
-                amount: amount,
-                receiptImage: receiptImage || null,
-                type: type,
-                method: method // 'mercadopago' | 'manual'
-            };
+            if (!listings[index].payments) listings[index].payments = [];
             listings[index].payments.push(newPayment);
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
             this.saveListing(listings[index]);
-            
-            // Add CRM Note
             this.addListingNote(listingId, `Pago registrado: $${amount} MXN (${type}) [${method === 'mercadopago' ? 'Tarjeta MP' : 'Manual'}]`);
-
-            return newPayment;
         }
-        return null;
+
+        // --- STORAGE INDEPENDIENTE: los pagos sobreviven al borrar publicaciones ---
+        const logKey = 'revista_payments_log';
+        const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+        log.unshift(newPayment);
+        localStorage.setItem(logKey, JSON.stringify(log));
+
+        return newPayment;
     }
 
     getAllPayments() {
+        // Priorizar el log independiente (sobrevive a borrado de listings)
+        const logKey = 'revista_payments_log';
+        const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+        if (log.length > 0) {
+            return log.sort((a, b) => (b.id || 0) - (a.id || 0));
+        }
+        // Fallback: leer desde los listings (sistema anterior)
         const listings = this.getAllListings();
         let allPayments = [];
         listings.forEach(l => {
@@ -830,12 +844,34 @@ class Database {
                         ...p,
                         listingId: l.id,
                         listingTitle: l.title,
+                        listingCity: l.city || '',
                         timestamp: p.id
                     });
                 });
             }
         });
-        return allPayments.sort((a, b) => b.timestamp - a.timestamp);
+        // Si encontramos pagos legacy, migrarlos al nuevo log
+        if (allPayments.length > 0) {
+            localStorage.setItem(logKey, JSON.stringify(allPayments.sort((a,b) => (b.id||0)-(a.id||0))));
+        }
+        return allPayments.sort((a, b) => (b.id || b.timestamp || 0) - (a.id || a.timestamp || 0));
+    }
+
+    deletePayment(paymentId) {
+        const logKey = 'revista_payments_log';
+        const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+        const filtered = log.filter(p => String(p.id) !== String(paymentId));
+        localStorage.setItem(logKey, JSON.stringify(filtered));
+        return filtered;
+    }
+
+    deletePayments(paymentIds) {
+        const logKey = 'revista_payments_log';
+        const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+        const idSet = new Set(paymentIds.map(String));
+        const filtered = log.filter(p => !idSet.has(String(p.id)));
+        localStorage.setItem(logKey, JSON.stringify(filtered));
+        return filtered;
     }
 
     // --- Nuevos métodos para Supabase (Settings, Auth, Locations) ---

@@ -3397,9 +3397,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(v.id === targetId) v.classList.add('active');
             });
 
-            // Cargar corte de caja al abrir Finanzas
+            // Cargar corte de caja y historial al abrir Finanzas
             if (targetId === 'tab-finanzas') {
                 renderCorteCaja(corteCurrentPeriod);
+                if (typeof updateBillingList === 'function') updateBillingList();
             }
             if (targetId === 'tab-publicidad') {
                 if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
@@ -4206,6 +4207,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pendingAdsList) delete pendingAdsList.dataset.lastState;
         const adsTableBody = document.getElementById('ads-table-body');
         if (adsTableBody) delete adsTableBody.dataset.lastState;
+        // Invalidar caché del historial de cobros
+        const billingBody = document.getElementById('billing-table-body');
+        if (billingBody) delete billingBody.dataset.lastState;
 
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
@@ -4215,6 +4219,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof renderFeed === 'function') renderFeed();
         if (typeof renderMyListings === 'function') renderMyListings();
+        // Refrescar historial de cobros solo si Finanzas está activa
+        const finanzasView = document.getElementById('tab-finanzas');
+        if (finanzasView && finanzasView.classList.contains('active')) {
+            if (typeof updateBillingList === 'function') updateBillingList();
+        }
     }
 
     window.expandedAdminCards = window.expandedAdminCards || new Set();
@@ -4954,7 +4963,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnExportExcel) btnExportExcel.addEventListener('click', exportCorteToExcel);
 
     function updateBillingList() {
-
         const tbody = document.getElementById('billing-table-body');
         if (!tbody) return;
         
@@ -4964,8 +4972,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tbody.dataset.lastState === stateKey) return;
         tbody.dataset.lastState = stateKey;
 
+        // Limpiar listeners anteriores en el select-all
+        const selectAllCb = document.getElementById('billing-select-all');
+        const btnDeleteSelected = document.getElementById('btn-delete-selected-payments');
+        const selectedCountEl = document.getElementById('selected-payments-count');
+
+        // Helper: recalcular cuántos están seleccionados
+        function updateSelectionState() {
+            const checked = tbody.querySelectorAll('.billing-row-cb:checked');
+            const count = checked.length;
+            if (selectedCountEl) selectedCountEl.textContent = count;
+            if (btnDeleteSelected) {
+                btnDeleteSelected.style.display = count > 0 ? 'flex' : 'none';
+            }
+            if (selectAllCb) {
+                const all = tbody.querySelectorAll('.billing-row-cb');
+                selectAllCb.checked = all.length > 0 && count === all.length;
+                selectAllCb.indeterminate = count > 0 && count < all.length;
+            }
+        }
+
         if (payments.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 24px;">No hay registros de cobros aún.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding: 24px;">No hay registros de cobros aún.</td></tr>';
+            if (btnDeleteSelected) btnDeleteSelected.style.display = 'none';
+            if (selectAllCb) selectAllCb.checked = false;
             return;
         }
 
@@ -4975,15 +5005,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 : `<span style="color:var(--text-muted); font-size:0.85rem; display: block; text-align: center;">Efectivo / Sin Ticket</span>`;
             
             return `
-            <tr>
-                <td>${payment.date}</td>
-                <td><strong>${payment.listingTitle}</strong> (ID: ${payment.listingId})<br><span style="font-size:0.8rem; color:var(--text-muted);">${payment.type}</span></td>
-                <td style="color: var(--success-color); font-weight:bold;">$${parseFloat(payment.amount).toLocaleString('es-MX')} MXN</td>
+            <tr data-payment-id="${payment.id}" class="billing-row">
+                <td style="text-align:center; vertical-align:middle; padding: 8px 4px;">
+                    <input type="checkbox" class="billing-row-cb" data-id="${payment.id}" 
+                        style="cursor:pointer; width:16px; height:16px; accent-color: var(--danger-color);"
+                        onchange="window._billingCbChanged(this)">
+                </td>
+                <td style="white-space:nowrap; font-size:0.9rem;">${payment.date}</td>
+                <td><strong>${payment.listingTitle || '—'}</strong>${payment.listingId ? ` <span style="font-size:0.8rem;color:var(--text-muted);">(ID: ${payment.listingId})</span>` : ''}<br><span style="font-size:0.8rem; color:var(--text-muted);">${payment.type || ''}</span></td>
+                <td style="color: var(--success-color); font-weight:bold; white-space:nowrap;">$${parseFloat(payment.amount).toLocaleString('es-MX')} MXN</td>
                 <td style="text-align: center; vertical-align: middle;">${receiptBtn}</td>
             </tr>
             `;
         }).join('');
+
+        // Registrar handler global de cambio de checkbox (evita duplicar listeners)
+        window._billingCbChanged = function(cb) {
+            const row = cb.closest('tr');
+            if (row) {
+                row.style.background = cb.checked ? 'rgba(239,68,68,0.08)' : '';
+            }
+            updateSelectionState();
+        };
+
+        // Select-all: registrar una sola vez por renderizado
+        if (selectAllCb) {
+            const newSelectAll = selectAllCb.cloneNode(true);
+            selectAllCb.parentNode.replaceChild(newSelectAll, selectAllCb);
+            newSelectAll.addEventListener('change', () => {
+                tbody.querySelectorAll('.billing-row-cb').forEach(cb => {
+                    cb.checked = newSelectAll.checked;
+                    const row = cb.closest('tr');
+                    if (row) row.style.background = cb.checked ? 'rgba(239,68,68,0.08)' : '';
+                });
+                updateSelectionState();
+            });
+        }
+
+        // Botón Borrar Seleccionados
+        if (btnDeleteSelected) {
+            const newBtn = btnDeleteSelected.cloneNode(true);
+            btnDeleteSelected.parentNode.replaceChild(newBtn, btnDeleteSelected);
+            newBtn.addEventListener('click', () => {
+                const checked = tbody.querySelectorAll('.billing-row-cb:checked');
+                if (checked.length === 0) return;
+                window.appConfirm(
+                    `¿Eliminar ${checked.length} registro(s) del historial? Esta acción no se puede deshacer.`,
+                    () => {
+                        const ids = Array.from(checked).map(cb => cb.dataset.id);
+                        db.deletePayments(ids);
+                        // Forzar re-render del historial
+                        if (tbody.dataset) delete tbody.dataset.lastState;
+                        updateBillingList();
+                        showAlert(`${ids.length} registro(s) eliminados del historial.`, 'Registros Eliminados', 'delete_sweep');
+                    }
+                );
+            });
+        }
+
+        updateSelectionState();
     }
+
 
     function updateStats() {
         const listings = db.getAllListings();
@@ -5133,8 +5215,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
             if (typeof db !== 'undefined' && db.syncWithServer) {
                 db.syncWithServer().then(() => {
-                    if (typeof loadAdminData === 'function') {
-                        loadAdminData();
+                    // Refrescar vistas activas
+                    if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+                    if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+                    if (typeof updateAdminStats === 'function') updateAdminStats();
+                    // Historial de cobros solo si Finanzas está visible
+                    const finanzasView = document.getElementById('tab-finanzas');
+                    if (finanzasView && finanzasView.classList.contains('active')) {
+                        if (typeof updateBillingList === 'function') updateBillingList();
                     }
                 }).catch(err => console.error('Error in admin polling:', err));
             }
