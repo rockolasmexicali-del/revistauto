@@ -3466,6 +3466,14 @@ document.addEventListener('DOMContentLoaded', () => {
             renewalsBadge.textContent = renewalsCount;
             renewalsBadge.style.display = renewalsCount > 0 ? 'inline-block' : 'none';
         }
+
+        // Active Ads stat
+        const allAds = db.getAllAds();
+        const activeAdsCount = allAds.filter(ad => db.isAdActive(ad)).length;
+        const statActiveAds = document.getElementById('stat-active-ads');
+        if (statActiveAds) {
+            statActiveAds.textContent = activeAdsCount;
+        }
     }
 
     window.updateQuickSales = function(period, btnElement) {
