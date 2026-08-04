@@ -1341,15 +1341,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetId = direction === 1 ? window.pendingNextListingIdAfterAd : window.pendingPrevListingIdAfterAd;
                 window.pendingNextListingIdAfterAd = null;
                 window.pendingPrevListingIdAfterAd = null;
-                
+
                 const adModal = document.getElementById('ad-fullscreen-modal');
-                if (adModal) adModal.classList.remove('active');
-                
-                if (targetId) {
-                    window.openListingDetails(targetId);
-                } else {
-                    window.closeListingDetails();
-                }
+                const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
+                const animInClass  = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+
+                // 1. Anuncio hace slide-out
+                const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
+                if (contentDiv) contentDiv.classList.add(animOutClass);
+
+                setTimeout(() => {
+                    // 2. Quitar el modal
+                    if (contentDiv) contentDiv.classList.remove(animOutClass);
+                    if (adModal) adModal.classList.remove('active');
+
+                    if (targetId) {
+                        // 3. Cargar el auto nuevo
+                        window.openListingDetails(targetId);
+                        // 4. Auto nuevo entra con slide-in
+                        setTimeout(() => {
+                            const detalleContent = document.getElementById('detalle-content');
+                            if (detalleContent) {
+                                void detalleContent.offsetWidth;
+                                detalleContent.classList.add(animInClass);
+                                setTimeout(() => detalleContent.classList.remove(animInClass), 260);
+                            }
+                        }, 50);
+                    } else {
+                        window.closeListingDetails();
+                    }
+                }, 200);
                 return;
             }
 
