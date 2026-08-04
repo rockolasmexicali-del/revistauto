@@ -2349,10 +2349,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const adPool = db.getRandomAds(1) || [];
                     if (adPool.length > 0) {
                         const ad = adPool[0];
-                        window.detailSwipesCount = 0; // Se reinicia el conteo a 0 tras mostrar el anuncio
+                        window.detailSwipesCount = 0;
                         window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
                         window.pendingPrevListingIdAfterAd = sameCategoryListings[currentIndex].id;
-                        window.openAdDetails(ad.id);
+
+                        // Misma animación que auto→auto: salida del auto, entrada del anuncio
+                        const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
+                        const animInClass  = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+                        detalleContent.classList.add(animOutClass);
+
+                        setTimeout(() => {
+                            detalleContent.classList.remove(animOutClass);
+                            window.openAdDetails(ad.id).then(() => {
+                                const adModal = document.getElementById('ad-fullscreen-modal');
+                                const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
+                                if (contentDiv) {
+                                    void contentDiv.offsetWidth; // forzar reflow
+                                    contentDiv.classList.add(animInClass);
+                                    setTimeout(() => contentDiv.classList.remove(animInClass), 260);
+                                }
+                            });
+                        }, 200);
                         return;
                     }
                 }
