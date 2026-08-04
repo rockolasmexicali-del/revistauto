@@ -572,20 +572,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if(formState.value && formState.value !== "") formState.dispatchEvent(new Event('change'));
 
         // ==========================================
-        // Populating states (para el Form de Publicidad, todo México)
+        // Populating states (para el Form de Publicidad, solo donde hay autos)
         // ==========================================
         const clientAdState = document.getElementById('client-ad-state');
         const clientAdCity = document.getElementById('client-ad-city');
         if (clientAdState && clientAdCity) {
-            catalogData.states.forEach(state => {
+            window.activeLocations.states.forEach(state => {
                 clientAdState.innerHTML += `<option value="${state}">${state}</option>`;
             });
 
             clientAdState.addEventListener('change', (e) => {
                 const state = e.target.value;
                 clientAdCity.innerHTML = '<option value="" disabled selected>Selecciona una ciudad</option>';
-                if (catalogData.citiesByState[state]) {
-                    catalogData.citiesByState[state].forEach(city => {
+                if (window.activeLocations.citiesByState[state]) {
+                    window.activeLocations.citiesByState[state].forEach(city => {
                         clientAdCity.innerHTML += `<option value="${city}">${city}</option>`;
                     });
                 } else {
