@@ -3702,10 +3702,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const city = cityFilter ? cityFilter.value : 'Todas';
 
         if (q) {
-            activeListings = activeListings.filter(l => 
+            activeListings = activeListings.filter(l =>
                 (l.title && l.title.toLowerCase().includes(q)) ||
                 (l.make && l.make.toLowerCase().includes(q)) ||
-                (l.model && l.model.toLowerCase().includes(q))
+                (l.model && l.model.toLowerCase().includes(q)) ||
+                (l.phone && l.phone.includes(q)) ||
+                (String(l.id).includes(q))
             );
         }
 
@@ -3734,8 +3736,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tbody.innerHTML = activeListings.map(listing => {
             const img = listing.images && listing.images.length > 0 ? listing.images[0] : (listing.image || 'https://via.placeholder.com/50');
+            const refNum = listing.ref_number || listing.id;
             return `
             <tr>
+                <td style="text-align:center; padding: 6px 4px;">
+                    <span style="display:inline-block; background:rgba(99,102,241,0.12); color:var(--primary-color); border-radius:6px; padding:3px 7px; font-size:0.75rem; font-weight:700; letter-spacing:0.03em; white-space:nowrap;">#${refNum}</span>
+                </td>
                 <td>
                     <img src="${img}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
                 </td>
@@ -6263,7 +6269,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ads = ads.filter(a => 
                 (a.title && a.title.toLowerCase().includes(query)) ||
                 (a.phone && a.phone.includes(query)) ||
-                (a.ref_number && String(a.ref_number).includes(query))
+                (a.ref_number && String(a.ref_number).includes(query)) ||
+                (String(a.id).includes(query))
             );
         }
         const stateKey = JSON.stringify(ads);
@@ -6271,13 +6278,14 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.dataset.lastState = stateKey;
 
         if (!ads || ads.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color:var(--text-muted);">No hay anuncios registrados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color:var(--text-muted);">No hay anuncios registrados.</td></tr>';
             return;
         }
 
         tbody.innerHTML = ads.map(ad => {
             const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-            
+            const refNum = ad.ref_number || ad.id;
+
             let statusBadge = '<span class="status-badge status-pendiente">Pendiente</span>';
             if (ad.is_active) {
                 statusBadge = '<span class="status-badge status-autorizado" style="background: var(--success-color); color: white;">Activo</span>';
@@ -6296,6 +6304,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return `
                 <tr>
+                    <td style="text-align:center; padding: 6px 4px;">
+                        <span style="display:inline-block; background:rgba(245,158,11,0.12); color:#f59e0b; border-radius:6px; padding:3px 7px; font-size:0.75rem; font-weight:700; letter-spacing:0.03em; white-space:nowrap;">#${refNum}</span>
+                    </td>
                     <td style="display:flex; align-items:center; gap:10px; padding: 8px;">
                         <img src="${firstImg}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">
                         <div>
@@ -6310,7 +6321,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>
                         <div style="display:flex; gap:6px;">
                             <button class="primary-btn" onclick="window.openAdminEditAdModal(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
-                            <button class="danger-btn" onclick="window.appConfirm('¿Eliminar esta publicidad?', () => { db.deleteAd(${ad.id}); setTimeout(() => renderAdminAdsTable(), 300); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
+                            <button class="danger-btn" onclick="window.appConfirm('\u00bfEliminar esta publicidad?', () => { db.deleteAd(${ad.id}); setTimeout(() => renderAdminAdsTable(), 300); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
                         </div>
                     </td>
                 </tr>
