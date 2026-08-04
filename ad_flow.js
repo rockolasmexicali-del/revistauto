@@ -53,12 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const citySelect  = document.getElementById('client-ad-city');
 
             if (stateSelect && citySelect) {
-                // Determine source: prefer activeLocations (real vehicles), fallback to full catalog
+                // Usa SIEMPRE el catálogo completo para que puedan publicitar en cualquier estado/ciudad
                 let locationSource;
-                if (window.activeLocations && window.activeLocations.states && window.activeLocations.states.length > 0) {
-                    locationSource = window.activeLocations;
-                } else if (typeof catalogData !== 'undefined' && catalogData && catalogData.states) {
+                if (typeof catalogData !== 'undefined' && catalogData && catalogData.states) {
                     locationSource = { states: catalogData.states, citiesByState: catalogData.citiesByState };
+                } else if (window.activeLocations && window.activeLocations.states) {
+                    locationSource = window.activeLocations;
                 } else {
                     locationSource = { states: [], citiesByState: {} };
                 }
