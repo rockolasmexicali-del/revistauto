@@ -1616,33 +1616,33 @@
 
                     <p id="ad-detail-description" style="color: var(--text-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 24px; text-align: justify;"></p>
                     
-                    <!-- Horarios e Integración con Redes Sociales (Lado a Lado) -->
-                    <div id="ad-detail-schedule-social-wrapper" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 20px; flex-wrap: wrap;">
+                    <!-- Horarios e Integración con Redes Sociales (Lado a Lado sin wrap) -->
+                    <div id="ad-detail-schedule-social-wrapper" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 20px; flex-wrap: nowrap; width: 100%;">
                         <!-- Izquierda: Horarios -->
-                        <div id="ad-detail-schedule-container" style="display: none; flex: 1; min-width: 170px;">
-                            <h4 style="font-size: 0.95rem; margin: 0 0 10px 0; color: var(--text-main); display: flex; align-items: center; gap: 6px; font-weight: 700;">
-                                <span class="material-symbols-rounded" style="font-size: 18px;">schedule</span> Horarios
+                        <div id="ad-detail-schedule-container" style="display: none; flex: 1.1; min-width: 0;">
+                            <h4 style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-main); display: flex; align-items: center; gap: 6px; font-weight: 700;">
+                                <span class="material-symbols-rounded" style="font-size: 17px;">schedule</span> Horarios
                             </h4>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <div id="ad-schedule-mf-row" style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
-                                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-weight: 500; min-width: 75px; text-align: center;">Lun - Vie</span>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div id="ad-schedule-mf-row" style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem;">
+                                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 5px; font-weight: 500; min-width: 62px; text-align: center; font-size: 0.75rem;">Lun - Vie</span>
                                     <span id="ad-detail-schedule-mf" style="color: var(--text-main); font-weight: 500;"></span>
                                 </div>
-                                <div id="ad-schedule-sat-row" style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
-                                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-weight: 500; min-width: 75px; text-align: center;">Sábados</span>
+                                <div id="ad-schedule-sat-row" style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem;">
+                                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 5px; font-weight: 500; min-width: 62px; text-align: center; font-size: 0.75rem;">Sábados</span>
                                     <span id="ad-detail-schedule-sat" style="color: var(--text-main); font-weight: 500;"></span>
                                 </div>
-                                <div id="ad-schedule-sun-row" style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
-                                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-weight: 500; min-width: 75px; text-align: center;">Domingos</span>
+                                <div id="ad-schedule-sun-row" style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem;">
+                                    <span style="color: var(--text-muted); background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 5px; font-weight: 500; min-width: 62px; text-align: center; font-size: 0.75rem;">Domingos</span>
                                     <span id="ad-detail-schedule-sun" style="color: var(--text-main); font-weight: 500;"></span>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Derecha: Redes Sociales / Enlaces Web -->
-                        <div id="ad-links-container" style="flex: 1; min-width: 170px; max-width: 220px; display: flex; flex-direction: column; gap: 8px;">
-                            <h3 id="ad-links-title" style="font-size: 0.95rem; margin-bottom: 4px; color: var(--primary-color); display: none;">Enlaces</h3>
-                            <div id="ad-links-grid" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div id="ad-links-container" style="flex: 1; min-width: 0; max-width: 150px; display: flex; flex-direction: column; gap: 6px; margin-top: 25px;">
+                            <h3 id="ad-links-title" style="display: none !important;">Enlaces</h3>
+                            <div id="ad-links-grid" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                                 <!-- Inyectado por JS -->
                             </div>
                         </div>
