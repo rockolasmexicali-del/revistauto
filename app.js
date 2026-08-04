@@ -2977,9 +2977,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Editar desde el panel admin (busca en todos los listings)
+    window.openEditListingAdmin = function(id) {
+        const listing = db.getAllListings().find(l => String(l.id) === String(id));
+        if (!listing) { showAlert('No se encontró la publicación.', 'Error', 'error'); return; }
+        window._editFromAdmin = true;
+        // Cerrar el modal del admin y abrir el form de edición
+        const adminModal = document.getElementById('admin-dashboard-modal');
+        if (adminModal) adminModal.classList.remove('active');
+        // Navegar a view-alta donde está el formulario
+        views.forEach(v => v.classList.remove('active'));
+        const viewAlta = document.getElementById('view-alta');
+        if (viewAlta) viewAlta.classList.add('active');
+        // Reutilizar openEditListing con el listing encontrado
+        _openEditListingWithData(listing);
+    };
+
     window.openEditListing = function(id) {
         const listing = db.getMyListings().find(l => String(l.id) === String(id));
         if(!listing) return;
+        window._editFromAdmin = false;
+        _openEditListingWithData(listing);
+    };
+
+    function _openEditListingWithData(listing) {
+        const id = listing.id;
         editingListingId = id;
         
         let fType = document.getElementById('form-type');
@@ -3088,7 +3110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateWizardUI();
         newListingModal.classList.add('active');
-    };
+    }
 
     const submitBtn = document.getElementById('btn-wizard-submit');
     submitBtn.addEventListener('click', async (e) => {
@@ -3340,6 +3362,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function finishWizardSubmit() {
+            const wasAdminEdit = window._editFromAdmin === true;
+            window._editFromAdmin = false;
             editingListingId = null;
             newListingForm.reset();
             newListingModal.classList.remove('active');
@@ -3349,11 +3373,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const inventoryTable = document.getElementById('inventory-table-body');
             if (inventoryTable) delete inventoryTable.dataset.lastState;
 
-            renderMyListings();
-            if (typeof forceInstantAdminRefresh === 'function') {
-                forceInstantAdminRefresh();
-            } else if(typeof loadAdminData === 'function') {
-                loadAdminData();
+            if (wasAdminEdit) {
+                // Regresar al panel admin en la pestaña de inventario
+                const adminModal = document.getElementById('admin-dashboard-modal');
+                if (adminModal) adminModal.classList.add('active');
+                // Activar el tab de inventario
+                document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
+                const invTab = document.querySelector('.dashboard-tab[data-tab="tab-inventario"]');
+                if (invTab) invTab.classList.add('active');
+                const invView = document.getElementById('tab-inventario');
+                if (invView) invView.classList.add('active');
+                renderAdminInventory();
+                updateAdminStats();
+            } else {
+                renderMyListings();
+                if (typeof forceInstantAdminRefresh === 'function') {
+                    forceInstantAdminRefresh();
+                } else if(typeof loadAdminData === 'function') {
+                    loadAdminData();
+                }
             }
             submitBtn.disabled = false;
             submitBtn.textContent = 'Publicar Vehículo';
@@ -3782,6 +3821,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>$${listing.price.toLocaleString()}</td>
                 <td>${listing.views || 0}</td>
                 <td>
+                    <button class="icon-btn" onclick="openEditListingAdmin(${listing.id})" style="color: #10b981;" title="Editar publicación"><span class="material-symbols-rounded">edit</span></button>
                     <button class="icon-btn" onclick="document.getElementById('admin-dashboard-modal').classList.remove('active'); openListingDetails(${listing.id})" style="color: var(--primary-color);" title="Ver publicación"><span class="material-symbols-rounded">visibility</span></button>
                     <button class="icon-btn" onclick="deleteListingAdmin(${listing.id})" style="color: var(--danger-color);" title="Eliminar"><span class="material-symbols-rounded">delete</span></button>
                 </td>
