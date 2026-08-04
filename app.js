@@ -5241,21 +5241,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Configurar qué pestañas puede ver el usuario
     function setupAdminPermissions() {
-        const role = window.currentAdminUser.role;
+        const role = window.currentAdminUser ? window.currentAdminUser.role : 'empleado';
+        const tabGeneral = document.querySelector('.dashboard-tab[data-tab="tab-general"]');
+        const tabInventario = document.querySelector('.dashboard-tab[data-tab="tab-inventario"]');
+        const tabAprobaciones = document.querySelector('.dashboard-tab[data-tab="tab-aprobaciones"]');
+        const tabRenovaciones = document.querySelector('.dashboard-tab[data-tab="tab-renovaciones"]');
+        const tabPagos = document.getElementById('sidebar-tab-pagos');
+        const tabPublicidad = document.getElementById('sidebar-tab-publicidad');
         const tabFinanzas = document.getElementById('sidebar-tab-finanzas');
         const tabUsuarios = document.getElementById('sidebar-tab-usuarios');
-        const tabGeneral = document.querySelector('.dashboard-tab[data-tab="tab-general"]');
 
-        if (role === 'empleado') {
-            if(tabFinanzas) tabFinanzas.style.display = 'none';
-            if(tabUsuarios) tabUsuarios.style.display = 'none';
-            if(tabGeneral) tabGeneral.style.display = 'none';
+        if (role === 'empleado_limitado') {
+            // Solo puede ver: Aprobaciones, Renovaciones, Publicidad, Dar de Alta, Cerrar Sesión
+            if (tabGeneral)    tabGeneral.style.display = 'none';
+            if (tabInventario) tabInventario.style.display = 'none';
+            if (tabPagos)      tabPagos.style.display = 'none';
+            if (tabFinanzas)   tabFinanzas.style.display = 'none';
+            if (tabUsuarios)   tabUsuarios.style.display = 'none';
+            // Asegurar que los tabs permitidos son visibles
+            if (tabAprobaciones) tabAprobaciones.style.display = '';
+            if (tabRenovaciones) tabRenovaciones.style.display = '';
+            if (tabPublicidad)   tabPublicidad.style.display = '';
+            // Abrir Aprobaciones por defecto
+            const defaultTab = document.querySelector('.dashboard-tab[data-tab="tab-aprobaciones"]');
+            if (defaultTab) defaultTab.click();
+        } else if (role === 'empleado') {
+            if (tabFinanzas) tabFinanzas.style.display = 'none';
+            if (tabUsuarios) tabUsuarios.style.display = 'none';
+            if (tabGeneral)  tabGeneral.style.display = 'none';
             // Abrir inventario por defecto
-            document.querySelector('.dashboard-tab[data-tab="tab-inventario"]').click();
+            const invTab = document.querySelector('.dashboard-tab[data-tab="tab-inventario"]');
+            if (invTab) invTab.click();
         } else {
-            if(tabFinanzas) tabFinanzas.style.display = 'flex';
-            if(tabUsuarios) tabUsuarios.style.display = 'flex';
-            if(tabGeneral) tabGeneral.style.display = 'flex';
+            // Admin: mostrar todo
+            if (tabGeneral)    tabGeneral.style.display = '';
+            if (tabInventario) tabInventario.style.display = '';
+            if (tabAprobaciones) tabAprobaciones.style.display = '';
+            if (tabRenovaciones) tabRenovaciones.style.display = '';
+            if (tabPagos)      tabPagos.style.display = 'flex';
+            if (tabPublicidad) tabPublicidad.style.display = '';
+            if (tabFinanzas)   tabFinanzas.style.display = 'flex';
+            if (tabUsuarios)   tabUsuarios.style.display = 'flex';
         }
     }
 
@@ -5377,10 +5403,15 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = await db.getAdminUsers();
             if (data.success) {
+                const roleLabel = (role) => {
+                    if (role === 'admin') return '<span style="color:var(--primary-color); font-weight:bold;">Control Total</span>';
+                    if (role === 'empleado_limitado') return '<span style="color:#f59e0b; font-weight:bold;">Empleado Limitado</span>';
+                    return 'Empleado';
+                };
                 usersTableBody.innerHTML = data.users.map(u => `
                     <tr>
                         <td><strong>${u.username}</strong></td>
-                        <td>${u.role === 'admin' ? '<span style="color:var(--primary-color); font-weight:bold;">Control Total</span>' : 'Empleado'}</td>
+                        <td>${roleLabel(u.role)}</td>
                         <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px;">
                             ${u.role === 'admin' ? 'Todo' : 
                                 ((u.allowedStates && u.allowedStates.length ? 'Estados: ' + u.allowedStates.join(', ') + '<br>' : '') + 
@@ -6112,7 +6143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
-
         const searchInput = document.getElementById('ads-search-input');
         if (searchInput && !searchInput.dataset.hasListener) {
             searchInput.dataset.hasListener = 'true';
@@ -6120,6 +6150,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let ads = db.getAllAds();
+
+        // --- FILTRO EMPLEADO LIMITADO: solo ve anuncios de su región ---
+        const currentRole = window.currentAdminUser ? window.currentAdminUser.role : null;
+        if (currentRole === 'empleado_limitado' && window.currentAdminUser) {
+            const allowedStates = window.currentAdminUser.allowedStates || [];
+            const allowedCities = window.currentAdminUser.allowedCities || [];
+            if (allowedStates.length > 0 || allowedCities.length > 0) {
+                ads = ads.filter(a => {
+                    const adState = (a.state || '').trim();
+                    const adCity  = (a.city  || '').trim();
+                    // Si el estado completo está permitido
+                    if (allowedStates.includes(adState)) return true;
+                    // Si la ciudad específica está permitida
+                    if (allowedCities.includes(adCity)) return true;
+                    return false;
+                });
+            }
+        }
+        // --- FIN FILTRO EMPLEADO LIMITADO ---
+
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         if (query) {
             ads = ads.filter(a => 
