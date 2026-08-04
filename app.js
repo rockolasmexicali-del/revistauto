@@ -571,6 +571,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if(formState.value && formState.value !== "") formState.dispatchEvent(new Event('change'));
 
+        // ==========================================
+        // Populating states (para el Form de Publicidad, todo México)
+        // ==========================================
+        const clientAdState = document.getElementById('client-ad-state');
+        const clientAdCity = document.getElementById('client-ad-city');
+        if (clientAdState && clientAdCity) {
+            catalogData.states.forEach(state => {
+                clientAdState.innerHTML += `<option value="${state}">${state}</option>`;
+            });
+
+            clientAdState.addEventListener('change', (e) => {
+                const state = e.target.value;
+                clientAdCity.innerHTML = '<option value="" disabled selected>Selecciona una ciudad</option>';
+                if (catalogData.citiesByState[state]) {
+                    catalogData.citiesByState[state].forEach(city => {
+                        clientAdCity.innerHTML += `<option value="${city}">${city}</option>`;
+                    });
+                } else {
+                    clientAdCity.innerHTML = '<option value="" disabled selected>No hay ciudades</option>';
+                }
+            });
+            if(clientAdState.value && clientAdState.value !== "") clientAdState.dispatchEvent(new Event('change'));
+        }
+
         // Feed State changes -> updates selectedCities to all cities in that state
         userStateSelect.addEventListener('change', (e) => {
             const state = e.target.value;
@@ -5763,8 +5787,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 uCity = window.selectedCities[0];
             }
             
-            document.getElementById('client-ad-state').value = (uState && uState !== 'Todos') ? uState : 'Baja California';
-            document.getElementById('client-ad-city').value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
+            const stateEl = document.getElementById('client-ad-state');
+            const cityEl = document.getElementById('client-ad-city');
+            if (stateEl) {
+                stateEl.value = (uState && uState !== 'Todos') ? uState : 'Baja California';
+                stateEl.dispatchEvent(new Event('change'));
+            }
+            if (cityEl) {
+                setTimeout(() => {
+                    cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
+                }, 50);
+            }
             
             // Reset Progress Bar
             document.getElementById('client-ad-progress-container').style.display = 'none';
