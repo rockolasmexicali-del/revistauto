@@ -2915,7 +2915,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-    btnCloseModal.addEventListener('click', () => newListingModal.classList.remove('active'));
+    btnCloseModal.addEventListener('click', () => {
+        newListingModal.classList.remove('active');
+        if (window._editFromAdmin === true) {
+            window._editFromAdmin = false;
+            editingListingId = null;
+            const adminModal = document.getElementById('admin-dashboard-modal');
+            if (adminModal) adminModal.classList.add('active');
+            document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
+            const invTab = document.querySelector('.dashboard-tab[data-tab="tab-inventario"]');
+            if (invTab) invTab.classList.add('active');
+            const invView = document.getElementById('tab-inventario');
+            if (invView) invView.classList.add('active');
+        }
+    });
 
     const formPriceInput = document.getElementById('form-price');
     if (formPriceInput) {
