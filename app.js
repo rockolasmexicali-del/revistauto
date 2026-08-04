@@ -78,7 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCloseAdModal && adFullscreenModal) {
         btnCloseAdModal.addEventListener('click', () => {
             adFullscreenModal.classList.remove('active');
-            history.pushState({ page: 'root' }, '');
+            // Consumir la entrada de historial que se creó al abrir el modal,
+            // en vez de acumular una nueva con pushState.
+            if (history.state && history.state.page === 'ad-modal') {
+                history.back();
+            }
             if (window.pendingNextListingIdAfterAd) {
                 const nextId = window.pendingNextListingIdAfterAd;
                 window.pendingNextListingIdAfterAd = null;
@@ -6510,6 +6514,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.navigateAdGlobal) window.navigateAdGlobal(1);
                 e.preventDefault();
             }
+        }
+    });
+
+    // --- Botón Atrás del Navegador / Móvil (popstate) ---
+    window.addEventListener('popstate', (e) => {
+        // Si el ad-fullscreen-modal está abierto y el usuario presiona atrás,
+        // cerrarlo sin hacer otro history.back() (ya fue consumido por el navegador).
+        const adModal = document.getElementById('ad-fullscreen-modal');
+        if (adModal && adModal.classList.contains('active')) {
+            adModal.classList.remove('active');
+            window.pendingNextListingIdAfterAd = null;
+            window.pendingPrevListingIdAfterAd = null;
+            return;
         }
     });
 
