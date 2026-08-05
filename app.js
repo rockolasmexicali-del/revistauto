@@ -128,8 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filter Selects
     const filterState = document.getElementById('filter-state');
     const filterCity = document.getElementById('filter-city');
-    const filterMinYear = document.getElementById('filter-min-year');
-    const filterMaxYear = document.getElementById('filter-max-year');
+    const filterYear = document.getElementById('filter-year');
     const filterTransmission = document.getElementById('filter-transmission');
     const filterLegal = document.getElementById('filter-legal');
 
@@ -2139,8 +2138,8 @@ document.addEventListener('DOMContentLoaded', () => {
             searchInput.value = '';
 
             // Resetear los filtros secundarios
-            document.getElementById('filter-min-year').value = '';
-            document.getElementById('filter-max-year').value = '';
+            const filterYearEl = document.getElementById('filter-year');
+            if (filterYearEl) filterYearEl.value = '';
 
             filterTransmission.value = 'Todas';
             if (window.customFilterTransmissionSelect) window.customFilterTransmissionSelect.update();
@@ -2205,8 +2204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const criteria = {
             query: queryText,
             cities: searchCities,
-            minYear: Number(filterMinYear.value) || null,
-            maxYear: Number(filterMaxYear.value) || null,
+            year: filterYear ? (Number(filterYear.value) || null) : null,
             transmission: filterTransmission.value,
             legal: filterLegal.value,
             color: filterColor ? filterColor.value : 'Todos'

@@ -660,6 +660,9 @@ class Database {
         if (criteria.cities && criteria.cities.length > 0) {
             results = results.filter(l => criteria.cities.includes(l.city));
         }
+        if (criteria.year) {
+            results = results.filter(l => Number(l.year) === Number(criteria.year));
+        }
         if (criteria.minYear) {
             results = results.filter(l => Number(l.year) >= criteria.minYear);
         }
