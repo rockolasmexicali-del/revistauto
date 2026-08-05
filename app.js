@@ -2037,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const adModal = document.getElementById('ad-fullscreen-modal');
         if (adModal && (adModal.classList.contains('active') || adModal.style.display === 'flex' || adModal.style.display === 'block')) {
             adModal.classList.remove('active');
-            adModal.style.display = 'none';
+            adModal.style.display = '';
             window.pendingNextListingIdAfterAd = null;
             window.pendingPrevListingIdAfterAd = null;
             
@@ -2052,19 +2052,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Check Other Specific Modals
         if (citiesModal && (citiesModal.style.display === 'flex' || citiesModal.classList.contains('active'))) {
-            citiesModal.style.display = 'none';
+            citiesModal.style.display = '';
             citiesModal.classList.remove('active');
             history.pushState({ page: 'root' }, '');
             return;
         }
         if (newListingModal && (newListingModal.style.display === 'flex' || newListingModal.classList.contains('active'))) {
-            newListingModal.style.display = 'none';
+            newListingModal.style.display = '';
             newListingModal.classList.remove('active');
             history.pushState({ page: 'root' }, '');
             return;
         }
         if (adminDashboardModal && (adminDashboardModal.style.display === 'flex' || adminDashboardModal.classList.contains('active'))) {
-            adminDashboardModal.style.display = 'none';
+            adminDashboardModal.style.display = '';
             adminDashboardModal.classList.remove('active');
             history.pushState({ page: 'root' }, '');
             return;
@@ -2074,7 +2074,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeModal = document.querySelector('.modal.active');
         if (activeModal && activeModal.id !== 'exit-modal') {
             activeModal.classList.remove('active');
-            activeModal.style.display = 'none';
+            activeModal.style.display = '';
             history.pushState({ page: 'root' }, '');
             return;
         }
