@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS public.catalog (
 CREATE TABLE IF NOT EXISTS public.settings (
     id INT PRIMARY KEY DEFAULT 1,
     monthlyPrice NUMERIC(12,2) DEFAULT 500,
+    adMonthlyPrice NUMERIC(12,2) DEFAULT 500,
     mercadoPagoEnabled BOOLEAN DEFAULT false,
     mpPublicKey TEXT,
     mpAccessToken TEXT,
@@ -72,6 +73,8 @@ CREATE TABLE IF NOT EXISTS public.settings (
     ad_frequency_scroll INT DEFAULT 10,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS adMonthlyPrice NUMERIC(12,2) DEFAULT 500;
 
 -- 4.2 Tabla de Ubicaciones Activas (Locations)
 CREATE TABLE IF NOT EXISTS public.locations (

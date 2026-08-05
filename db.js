@@ -249,6 +249,7 @@ class Database {
                             notes: mergedNotes,
                             payments: mergedPayments,
                             ref_number: item.ref_number || item.ref_number || (localListing ? localListing.ref_number : null),
+                            old_price: item.old_price !== undefined && item.old_price !== null ? Number(item.old_price) : (localListing ? localListing.old_price : null),
                             publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
                             publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
                             isMyListing: isMine
@@ -1199,6 +1200,9 @@ class Database {
 
                         return {
                             ...mergedAd,
+                            scheduleMF: ad.scheduleMF || ad.schedulemf || '',
+                            scheduleSat: ad.scheduleSat || ad.schedulesat || '',
+                            scheduleSun: ad.scheduleSun || ad.schedulesun || '',
                             social_links: socialLinks,
                             notes: mergedNotes
                         };
