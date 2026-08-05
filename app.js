@@ -1350,7 +1350,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openAdDetails = async function(adId) {
         
-        const ad = await db.incrementAdViews(adId);
+        let ad = db.getAllAds().find(a => String(a.id) === String(adId));
+        if (!ad) {
+            ad = await db.incrementAdViews(adId);
+        } else {
+            db.incrementAdViews(adId); // fire and forget para evitar parpadeo
+        }
         if (!ad) return;
 
         // Establecer contexto para navegación
@@ -2455,14 +2460,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         setTimeout(() => {
                             // NO quitamos animOutClass aquí — el auto queda fuera de pantalla
                             // sin parpadear mientras el modal del anuncio carga
+                            const adModal = document.getElementById('ad-fullscreen-modal');
+                            const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
+                            
+                            // Preparar animación ANTES de que el modal sea visible
+                            if (contentDiv) {
+                                contentDiv.classList.add(animInClass);
+                            }
+
                             window.openAdDetails(ad.id).then(() => {
                                 // Ahora el modal ya cubre la pantalla: reset del auto sin que se vea
                                 detalleContent.classList.remove(animOutClass);
-                                const adModal = document.getElementById('ad-fullscreen-modal');
-                                const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
                                 if (contentDiv) {
-                                    void contentDiv.offsetWidth;
-                                    contentDiv.classList.add(animInClass);
                                     setTimeout(() => contentDiv.classList.remove(animInClass), 260);
                                 }
                             });
