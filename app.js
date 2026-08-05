@@ -2086,21 +2086,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 5. User wants to exit (only if at root view)
         if (exitModal) {
-            exitModal.style.display = 'flex';
-            history.pushState({ page: 'root' }, '');
+            if (exitModal.classList.contains('active') || exitModal.style.display === 'flex') {
+                exitModal.classList.remove('active');
+                exitModal.style.display = '';
+                history.pushState({ page: 'root' }, '');
+            } else {
+                exitModal.classList.add('active');
+                history.pushState({ page: 'root' }, '');
+            }
         }
     }
 
     if (btnExitNo) {
         btnExitNo.addEventListener('click', () => {
-            exitModal.style.display = 'none';
+            exitModal.classList.remove('active');
+            exitModal.style.display = '';
         });
     }
 
     if (btnExitYes) {
         btnExitYes.addEventListener('click', () => {
             isExiting = true;
-            exitModal.style.display = 'none';
+            exitModal.classList.remove('active');
+            exitModal.style.display = '';
             history.back(); 
         });
     }
