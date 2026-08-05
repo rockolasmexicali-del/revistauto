@@ -2256,9 +2256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeView = Array.from(views).find(v => v.classList.contains('active') && v.id !== 'view-detalle');
         if(activeView) {
             previousViewId = activeView.id;
-            // Guardamos el scroll de la ventana antes de ocultar la vista
-            savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
-            window.detailSwipesCount = 0; // Reiniciar contador de deslizamientos al abrir desde catálogo
+            
+            const isAlreadyInDetalle = viewDetalle.classList.contains('active');
+            if (!isAlreadyInDetalle) {
+                // Guardamos el scroll de la ventana antes de mostrar la vista de detalle
+                savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
+                window.detailSwipesCount = 0; // Reiniciar contador de deslizamientos al abrir desde catálogo
+            }
 
             // Modo cascada: si viene de Búsqueda Avanzada, activar swipe en 3 niveles
             if (activeView.id === 'view-busqueda' && window.currentSearchContext) {
@@ -2380,7 +2384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetalle.style.left = '0';
         viewDetalle.style.width = '100%';
         viewDetalle.style.height = '100vh';
-        viewDetalle.style.zIndex = '1000';
+        viewDetalle.style.zIndex = '900';
         viewDetalle.style.overflowY = 'auto';
         viewDetalle.style.backgroundColor = 'var(--bg-color)';
         
