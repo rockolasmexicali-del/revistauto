@@ -481,6 +481,9 @@
                     <button class="dashboard-tab" data-tab="tab-usuarios" id="sidebar-tab-usuarios">
                         <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">group</span> Usuarios
                     </button>
+                    <button class="dashboard-tab" data-tab="tab-bitacora" id="sidebar-tab-bitacora">
+                        <span class="material-symbols-rounded" style="vertical-align: middle; margin-right: 8px;">history</span> Bitácora de Actividad
+                    </button>
                     
                     <button id="btn-admin-add-listing" class="primary-btn" style="margin-top: auto; padding: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
                         <span class="material-symbols-rounded" style="font-size: 18px;">add_circle</span> Dar de Alta
@@ -894,6 +897,28 @@
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body">
+                                    <!-- JS injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Tab: Bitácora -->
+                    <div id="tab-bitacora" class="dashboard-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                            <h3>Bitácora de Actividad</h3>
+                        </div>
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha / Hora</th>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Acción</th>
+                                        <th>Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-log-table-body">
                                     <!-- JS injected -->
                                 </tbody>
                             </table>

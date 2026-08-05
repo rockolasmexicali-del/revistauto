@@ -1317,6 +1317,75 @@ class Database {
             }
         }
     }
+
+    // ============================================
+    // AUDIT LOG (BITÁCORA DE ACTIVIDAD)
+    // ============================================
+
+    async logActivity(action, details) {
+        const currentUser = window.currentAdminUser;
+        if (!currentUser) return null;
+
+        const payload = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            user_username: currentUser.username || 'Desconocido',
+            user_role: currentUser.role || 'Desconocido',
+            action: action,
+            details: details
+        };
+
+        // Guardar localmente
+        const logs = JSON.parse(localStorage.getItem('revista_activity_logs') || '[]');
+        logs.unshift(payload); // Insert at beginning
+        if (logs.length > 500) logs.length = 500; // Keep only last 500 locally
+        localStorage.setItem('revista_activity_logs', JSON.stringify(logs));
+
+        // Subir a supabase
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                // If the table 'activity_logs' doesn't exist, this might fail silently,
+                // but local logs will still work.
+                await supabaseClient.from('activity_logs').insert([payload]);
+            } catch (err) {
+                console.warn('Error saving activity log to Supabase:', err);
+            }
+        }
+
+        return payload;
+    }
+
+    async getAuditLogs() {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('activity_logs')
+                    .select('*')
+                    .order('timestamp', { ascending: false })
+                    .limit(200);
+
+                if (!error && data) {
+                    // Normalize data just in case
+                    const normalized = data.map(log => ({
+                        id: log.id,
+                        timestamp: log.timestamp || log.created_at,
+                        user_username: log.user_username || log.user,
+                        user_role: log.user_role || log.role,
+                        action: log.action,
+                        details: log.details
+                    }));
+                    localStorage.setItem('revista_activity_logs', JSON.stringify(normalized));
+                    return { success: true, logs: normalized };
+                }
+            } catch (err) {
+                console.warn('Error fetching activity logs from Supabase:', err);
+            }
+        }
+        
+        // Fallback to local
+        const logs = JSON.parse(localStorage.getItem('revista_activity_logs') || '[]');
+        return { success: true, logs: logs };
+    }
 }
 
 const db = new Database();
