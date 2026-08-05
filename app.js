@@ -31,6 +31,18 @@ window.appConfirm = function(message, onConfirm, title = '¿Estás seguro?') {
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
+    window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
+    window.getSessionRandomValue = function(id) {
+        // Genera un número pseudo-aleatorio consistente basado en el ID y la semilla de la sesión
+        let hash = 0;
+        const str = String(id) + '_' + window.sessionSeed;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return hash;
+    };
+
     let savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
     let currentFeedCategory = 'Todos';
 
@@ -1841,8 +1853,8 @@ document.addEventListener('DOMContentLoaded', () => {
             feedContainer.classList.add('listings-grid');
             listings = listings.filter(l => l.type === currentFeedCategory);
             
-            // Orden estable (más recientes primero) en vez de random
-            listings.sort((a, b) => b.id - a.id);
+            // Orden aleatorio fijo por sesión (mezcla autos nuevos y viejos de forma estable)
+            listings.sort((a, b) => window.getSessionRandomValue(a.id) - window.getSessionRandomValue(b.id));
             
             if (listings.length === 0) {
                 feedContainer.classList.remove('listings-grid');
@@ -1901,8 +1913,8 @@ document.addEventListener('DOMContentLoaded', () => {
             order.forEach(type => {
                 if (grouped[type] && grouped[type].length > 0) {
                     let rowListings = grouped[type];
-                    // Orden estable en vez de random
-                    rowListings.sort((a, b) => b.id - a.id);
+                    // Orden aleatorio fijo por sesión
+                    rowListings.sort((a, b) => window.getSessionRandomValue(a.id) - window.getSessionRandomValue(b.id));
                     
                     window.netflixRowData[type] = {
                         allListings: rowListings,
