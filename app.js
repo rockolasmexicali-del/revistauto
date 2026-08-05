@@ -77,16 +77,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseAdModal = document.getElementById('btn-close-ad-modal');
     if (btnCloseAdModal && adFullscreenModal) {
         btnCloseAdModal.addEventListener('click', () => {
-            adFullscreenModal.classList.remove('active');
-            // Consumir la entrada de historial que se creó al abrir el modal,
-            // en vez de acumular una nueva con pushState.
+            // Guardar ID siguiente si es que existe antes de que se limpie
+            const nextId = window.pendingNextListingIdAfterAd;
+            
             if (history.state && history.state.page === 'ad-modal') {
+                // Si venimos del historial normal, usar history.back()
+                // Esto disparará popstate, que a su vez cerrará el modal limpiamente.
                 history.back();
-            }
-            if (window.pendingNextListingIdAfterAd) {
-                const nextId = window.pendingNextListingIdAfterAd;
+            } else {
+                // Fallback por si acaso no hay history
+                adFullscreenModal.classList.remove('active');
+                adFullscreenModal.style.display = 'none';
                 window.pendingNextListingIdAfterAd = null;
-                window.openListingDetails(nextId);
+                window.pendingPrevListingIdAfterAd = null;
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, savedScrollPosition);
+                });
+            }
+            
+            if (nextId) {
+                setTimeout(() => {
+                    window.openListingDetails(nextId);
+                }, 100);
             }
         });
     }
@@ -1404,6 +1416,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('ad-fullscreen-modal');
         if (!modal) return;
 
+        // Guardar la posición de scroll actual antes de mostrar el modal (igual que en los autos)
+        savedScrollPosition = window.scrollY || document.documentElement.scrollTop;
+
         // Render Carousel
         const carousel = document.getElementById('ad-image-carousel');
         carousel.innerHTML = '';
@@ -1826,8 +1841,8 @@ document.addEventListener('DOMContentLoaded', () => {
             feedContainer.classList.add('listings-grid');
             listings = listings.filter(l => l.type === currentFeedCategory);
             
-            // shuffle for randomness
-            listings.sort(() => 0.5 - Math.random());
+            // Orden estable (más recientes primero) en vez de random
+            listings.sort((a, b) => b.id - a.id);
             
             if (listings.length === 0) {
                 feedContainer.classList.remove('listings-grid');
@@ -1886,7 +1901,8 @@ document.addEventListener('DOMContentLoaded', () => {
             order.forEach(type => {
                 if (grouped[type] && grouped[type].length > 0) {
                     let rowListings = grouped[type];
-                    rowListings.sort(() => 0.5 - Math.random());
+                    // Orden estable en vez de random
+                    rowListings.sort((a, b) => b.id - a.id);
                     
                     window.netflixRowData[type] = {
                         allListings: rowListings,
@@ -2005,31 +2021,60 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePopState(e) {
         if (isExiting) return;
 
-        // 1. Check Modals
-        if (citiesModal && citiesModal.style.display === 'flex') {
-            citiesModal.style.display = 'none';
-            history.pushState({ page: 'root' }, '');
-            return;
-        }
-        if (newListingModal && newListingModal.style.display === 'flex') {
-            newListingModal.style.display = 'none';
-            history.pushState({ page: 'root' }, '');
-            return;
-        }
-        if (adminDashboardModal && adminDashboardModal.style.display === 'flex') {
-            adminDashboardModal.style.display = 'none';
+        // 1. Check Fullscreen Ad Modal
+        const adModal = document.getElementById('ad-fullscreen-modal');
+        if (adModal && (adModal.classList.contains('active') || adModal.style.display === 'flex' || adModal.style.display === 'block')) {
+            adModal.classList.remove('active');
+            adModal.style.display = 'none';
+            window.pendingNextListingIdAfterAd = null;
+            window.pendingPrevListingIdAfterAd = null;
+            
+            // Restaurar scroll position
+            requestAnimationFrame(() => {
+                window.scrollTo(0, savedScrollPosition);
+            });
+            
             history.pushState({ page: 'root' }, '');
             return;
         }
 
-        // 2. Check Detailed View
+        // 2. Check Other Specific Modals
+        if (citiesModal && (citiesModal.style.display === 'flex' || citiesModal.classList.contains('active'))) {
+            citiesModal.style.display = 'none';
+            citiesModal.classList.remove('active');
+            history.pushState({ page: 'root' }, '');
+            return;
+        }
+        if (newListingModal && (newListingModal.style.display === 'flex' || newListingModal.classList.contains('active'))) {
+            newListingModal.style.display = 'none';
+            newListingModal.classList.remove('active');
+            history.pushState({ page: 'root' }, '');
+            return;
+        }
+        if (adminDashboardModal && (adminDashboardModal.style.display === 'flex' || adminDashboardModal.classList.contains('active'))) {
+            adminDashboardModal.style.display = 'none';
+            adminDashboardModal.classList.remove('active');
+            history.pushState({ page: 'root' }, '');
+            return;
+        }
+        
+        // 3. Generic active modals check (e.g. contact-modal, client-ad-modal)
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal && activeModal.id !== 'exit-modal') {
+            activeModal.classList.remove('active');
+            activeModal.style.display = 'none';
+            history.pushState({ page: 'root' }, '');
+            return;
+        }
+
+        // 4. Check Detailed View (Cars)
         if (viewDetalle && viewDetalle.classList.contains('active')) {
             closeListingDetails();
             history.pushState({ page: 'root' }, '');
             return;
         }
 
-        // 3. User wants to exit
+        // 5. User wants to exit (only if at root view)
         if (exitModal) {
             exitModal.style.display = 'flex';
             history.pushState({ page: 'root' }, '');
@@ -6803,19 +6848,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.navigateAdGlobal) window.navigateAdGlobal(1);
                 e.preventDefault();
             }
-        }
-    });
-
-    // --- Botón Atrás del Navegador / Móvil (popstate) ---
-    window.addEventListener('popstate', (e) => {
-        // Si el ad-fullscreen-modal está abierto y el usuario presiona atrás,
-        // cerrarlo sin hacer otro history.back() (ya fue consumido por el navegador).
-        const adModal = document.getElementById('ad-fullscreen-modal');
-        if (adModal && adModal.classList.contains('active')) {
-            adModal.classList.remove('active');
-            window.pendingNextListingIdAfterAd = null;
-            window.pendingPrevListingIdAfterAd = null;
-            return;
         }
     });
 
