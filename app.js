@@ -1583,7 +1583,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (titleLinks) titleLinks.style.display = 'none';
 
         if (ad.social_links && Array.isArray(ad.social_links) && ad.social_links.length > 0) {
-            if (titleLinks) titleLinks.style.display = 'block';
             ad.social_links.forEach(link => {
                 let url = typeof link === 'string' ? link : link.url;
                 if (url) {
@@ -1648,8 +1647,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     grid.innerHTML += `
-                        <a href="${url}" target="_blank" onclick="try{window.db.incrementAdClicks('${adId}');}catch(e){}" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.78rem; padding: 6px 10px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 5px; border: ${border}; font-weight: 700; text-decoration: none; cursor: pointer; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.2s ease;">
-                            <span class="material-symbols-rounded" style="font-size: 15px;">${icon}</span> ${title}
+                        <a href="${url}" target="_blank" onclick="try{window.db.incrementAdClicks('${adId}');}catch(e){}" class="primary-btn" style="background: ${bgColor}; color: ${textColor}; font-size: 0.88rem; padding: 9px 14px; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: ${border}; font-weight: 700; text-decoration: none; cursor: pointer; width: 100%; box-shadow: 0 3px 10px rgba(0,0,0,0.25); transition: transform 0.2s ease;">
+                            <span class="material-symbols-rounded" style="font-size: 17px;">${icon}</span> ${title}
                         </a>
                     `;
                 }
@@ -5950,7 +5949,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.editingAdId = null;
             document.getElementById('client-ad-image-preview-container').innerHTML = '';
             document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
-            document.getElementById('desc-char-counter').textContent = '0/120';
+            document.getElementById('desc-char-counter').textContent = '0/142';
             
             // Auto-fill State and City
             const uState = document.getElementById('user-state').value;
@@ -5996,7 +5995,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adDesc) {
         adDesc.addEventListener('input', (e) => {
             const count = e.target.value.length;
-            document.getElementById('desc-char-counter').textContent = count + '/200';
+            document.getElementById('desc-char-counter').textContent = count + '/142';
         });
     }
 

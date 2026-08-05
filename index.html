@@ -1307,8 +1307,8 @@
                             <input type="text" id="client-ad-title" required placeholder="Ej. Frenos El Cholo" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;">
                         </div>
                         <div class="form-group">
-                            <label style="display:flex; justify-content:space-between;"><span>Descripción y Servicios *</span> <span id="desc-char-counter" style="color:var(--text-muted); font-size:0.8rem;">0/200</span></label>
-                            <textarea id="client-ad-description" required rows="3" maxlength="200" placeholder="Describe lo que ofreces, promociones, etc." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;"></textarea>
+                            <label style="display:flex; justify-content:space-between;"><span>Descripción y Servicios *</span> <span id="desc-char-counter" style="color:var(--text-muted); font-size:0.8rem;">0/142</span></label>
+                            <textarea id="client-ad-description" required rows="3" maxlength="142" placeholder="Describe lo que ofreces, promociones, etc." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 1rem; outline: none;"></textarea>
                         </div>
                         
                         <div class="form-group">
@@ -1605,11 +1605,11 @@
                                 <span class="material-symbols-rounded" style="font-size: 16px;">location_on</span> 
                                 <span id="ad-detail-loc-text">Ubicación</span>
                             </p>
-                            <div id="ad-detail-address-container" style="display: none; padding-left: 20px;">
-                                <p id="ad-detail-address" style="color: var(--text-muted); font-size: 0.75rem; margin: 0; opacity: 0.85; line-height: 1.35; max-width: 250px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;"></p>
+                            <div id="ad-detail-address-container" style="display: none; padding-left: 0; margin-top: 2px;">
+                                <p id="ad-detail-address" style="color: var(--text-muted); font-size: 0.82rem; margin: 0; opacity: 0.85; line-height: 1.35; max-width: 250px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;"></p>
                             </div>
                         </div>
-                        <button id="btn-ad-contactar" class="btn-contactar" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto; display: none;">
+                        <button id="btn-ad-contactar" class="btn-contactar" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto; display: none; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-weight: 700; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
                             <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
                         </button>
                     </div>
@@ -1640,8 +1640,8 @@
                         </div>
                         
                         <!-- Derecha: Redes Sociales / Enlaces Web -->
-                        <div id="ad-links-container" style="flex: 1; min-width: 0; max-width: 150px; display: flex; flex-direction: column; gap: 6px;">
-                            <h4 id="ad-links-title" style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-main); font-weight: 700; display: none;">Enlaces</h4>
+                        <div id="ad-links-container" style="flex: 1.2; min-width: 0; max-width: 190px; display: flex; flex-direction: column; gap: 6px;">
+                            <h4 id="ad-links-title" style="display: none;">Enlaces</h4>
                             <div id="ad-links-grid" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
                                 <!-- Inyectado por JS -->
                             </div>
