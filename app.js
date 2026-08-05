@@ -2321,8 +2321,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="detalle-info">
                 <h2 class="detalle-title">${listing.title}</h2>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px;">
-                    <div class="detalle-price" style="margin-bottom: 0;">$${listing.price.toLocaleString('es-MX')}</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 12px;">
+                    <div>
+                        <div class="detalle-price" style="margin-bottom: 0;">$${listing.price.toLocaleString('es-MX')}</div>
+                        <div class="detalle-city-pulsing">${listing.city}</div>
+                    </div>
                     <button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
                         <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
                     </button>
@@ -2369,10 +2372,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="detalle-item">
                         <span class="detalle-label">A/C</span>
                         <span class="detalle-value">${listing.ac || '-'}</span>
-                    </div>
-                    <div class="detalle-item">
-                        <span class="detalle-label">Ciudad</span>
-                        <span class="detalle-value">${listing.city}</span>
                     </div>
                     <div class="detalle-item" style="grid-column: 2 / span 2; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;">
                         <span class="detalle-label" style="text-transform: uppercase;">Vistas</span>

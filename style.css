@@ -1277,6 +1277,28 @@ input:focus, select:focus {
     margin-bottom: 20px;
 }
 
+.detalle-city-pulsing {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-color, #ffffff);
+    margin-top: 2px;
+    animation: cityPulse 1.8s infinite ease-in-out;
+    transform-origin: left center;
+    display: inline-block;
+}
+
+@keyframes cityPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.45;
+        transform: scale(1.03);
+    }
+}
+
+
 .detalle-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
