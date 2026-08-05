@@ -1279,7 +1279,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="card-content">
                     <h4 class="card-title">${(listing.title || `${listing.make} ${listing.model} ${listing.year}`).replace(listing.year, '').replace(/\s+/g, ' ').trim()}</h4>
-                    <p class="card-price">$${listing.price.toLocaleString('es-MX')}</p>
+                    <p class="card-price">
+                        $${listing.price.toLocaleString('es-MX')}
+                        ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.7rem; color: var(--text-muted); text-decoration: line-through; margin-left: 4px;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
+                    </p>
                     <div class="card-meta">
                         <span>${listing.year}</span>
                         <span><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle; margin-right:2px; margin-top:-2px;">location_on</span>${listing.city}</span>
@@ -2323,7 +2326,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 12px;">
                     <div>
-                        <div class="detalle-price" style="margin-bottom: 0;">$${listing.price.toLocaleString('es-MX')}</div>
+                        <div class="detalle-price" style="margin-bottom: 0;">
+                            $${listing.price.toLocaleString('es-MX')}
+                            ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.85rem; color: var(--text-muted); text-decoration: line-through; margin-left: 6px; font-weight: normal;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
+                        </div>
                         <div class="detalle-city-pulsing">${listing.city}</div>
                     </div>
                     <button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
@@ -2724,7 +2730,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="my-listing-info">
                     <h4 class="my-listing-title">${listing.title || `${listing.make} ${listing.model} ${listing.year}`}</h4>
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ref: #${refNum}</div>
-                    <p style="color: var(--primary-color); font-weight: bold; margin-bottom: 4px;">$${listing.price.toLocaleString('es-MX')}</p>
+                    <p style="color: var(--primary-color); font-weight: bold; margin-bottom: 4px;">
+                        $${listing.price.toLocaleString('es-MX')}
+                        ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.75rem; color: var(--text-muted); text-decoration: line-through; margin-left: 4px; font-weight: normal;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
+                    </p>
                     <span class="status-badge ${statusColorClass}" style="${statusColorClass === 'status-caducado' ? 'background: var(--danger-color);' : (statusColorClass === 'status-renovar' ? 'background: #f59e0b;' : '')}">${displayStatus}</span>
                     ${priceTextHTML}
                     ${publishedDateHTML}
@@ -3436,6 +3445,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editingListingId) {
                 const allListings = db.getAllListings();
                 const existingListing = allListings.find(l => String(l.id) === String(editingListingId)) || {};
+                
+                // Lógica de bajada de precio (Conservar el máximo original)
+                const newPrice = updatedData.price;
+                const currentPrice = existingListing.price || 0;
+                
+                if (newPrice < currentPrice) {
+                    if (!existingListing.old_price) {
+                        updatedData.old_price = currentPrice;
+                    } else {
+                        updatedData.old_price = existingListing.old_price;
+                    }
+                } else if (newPrice > currentPrice) {
+                    if (existingListing.old_price && newPrice >= existingListing.old_price) {
+                        updatedData.old_price = null;
+                    } else if (existingListing.old_price) {
+                        updatedData.old_price = existingListing.old_price;
+                    }
+                } else {
+                    if (existingListing.old_price !== undefined) {
+                         updatedData.old_price = existingListing.old_price;
+                    }
+                }
                 
                 // Mezclar los datos nuevos con los existentes para NO perder estatus, fechas, id, etc.
                 const finalData = { ...existingListing, ...updatedData, id: editingListingId };

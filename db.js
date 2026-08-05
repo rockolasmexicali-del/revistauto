@@ -516,7 +516,8 @@ class Database {
                 last_renewed_month: listing.lastRenewedMonth || listing.last_renewed_month || null,
                 payment_status: listing.paymentStatus || listing.payment_status || null,
                 sold_at: listing.soldAt || listing.sold_at || null,
-                ref_number: listing.ref_number
+                ref_number: listing.ref_number,
+                old_price: listing.old_price !== undefined ? listing.old_price : null
             };
 
             try {
