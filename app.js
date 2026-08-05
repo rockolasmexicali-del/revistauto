@@ -3696,6 +3696,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetId === 'tab-renovaciones') {
                 if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
             }
+            if (targetId === 'tab-bitacora') {
+                if (typeof renderAdminAuditLog === 'function') renderAdminAuditLog();
+            }
         });
     });
 
@@ -4154,6 +4157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}</span>
                                 <span>📍 ${listing.city}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar teléfono">📞 ${listing.phone}</span>
+                                ${listing.whatsapp ? `<a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.82rem; color: ${listing.paymentStatus === 'paid' ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: bold; margin-top: 3px;">
@@ -4202,7 +4206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
                         <div><strong>Ubicación:</strong> ${listing.state ? listing.state + ', ' : ''}${listing.city}</div>
                         <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar al portapapeles">${listing.phone}</span></div>
-                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span></div>` : ''}
+                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span> <a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:8px;" onclick="event.stopPropagation();">Abrir Chat</a></div>` : ''}
                     </div>
 
                     <!-- Módulo CRM de Bitácora / Notas de Seguimiento -->
@@ -4384,6 +4388,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}</span>
                                 <span>📍 ${listing.city}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${listing.phone}', 'Teléfono')">📞 ${listing.phone}</span>
+                                ${listing.whatsapp ? `<a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.82rem; color: var(--danger-color); font-weight: bold; margin-top: 3px;">
@@ -4432,7 +4437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
                         <div><strong>Ubicación:</strong> ${listing.state ? listing.state + ', ' : ''}${listing.city}</div>
                         <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar al portapapeles">${listing.phone}</span></div>
-                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span></div>` : ''}
+                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span> <a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:8px;" onclick="event.stopPropagation();">Abrir Chat</a></div>` : ''}
                     </div>
 
                     <!-- Módulo CRM de Bitácora / Notas de Seguimiento -->
@@ -4492,6 +4497,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.remove('active');
             
+            db.logActivity('Renovación de vehículo', `Publicación #${id} renovada por 30 días.`);
+
             forceInstantAdminRefresh();
             showAlert('Publicación renovada por 30 días más.', 'Renovación Exitosa', 'autorenew');
         }
@@ -4687,6 +4694,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.remove('active');
 
+            db.logActivity('Aprobación de vehículo', `Publicación #${id} aprobada.`);
+
             forceInstantAdminRefresh();
             showAlert('La publicación ha sido aprobada exitosamente.', 'Publicación Aprobada', 'check_circle');
         }
@@ -4705,6 +4714,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const modal = document.getElementById('reject-confirm-modal');
         if (modal) modal.classList.remove('active');
+
+        db.logActivity('Baja de vehículo', `Publicación #${id} eliminada.`);
 
         forceInstantAdminRefresh();
         showAlert('La publicación ha sido eliminada del sistema.', 'Publicación Eliminada', 'info');
@@ -4787,6 +4798,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 try {
                     await db.saveListing(updatedListing);
+                    db.logActivity('Edición de vehículo', `Publicación #${adminEditTargetId} editada.`);
                     if (updatedListing._pendingSync) {
                         showAlert('Guardado en tu dispositivo. Se subirá a la nube automáticamente cuando vuelva la conexión.', 'Guardado Offline', 'warning');
                     } else {
@@ -5639,6 +5651,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tabPublicidad = document.getElementById('sidebar-tab-publicidad');
         const tabFinanzas = document.getElementById('sidebar-tab-finanzas');
         const tabUsuarios = document.getElementById('sidebar-tab-usuarios');
+        const tabBitacora = document.getElementById('sidebar-tab-bitacora');
 
         if (role === 'empleado_limitado') {
             // Solo puede ver: Aprobaciones, Renovaciones, Publicidad, Dar de Alta, Cerrar Sesión
@@ -5647,6 +5660,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabPagos)      tabPagos.style.display = 'none';
             if (tabFinanzas)   tabFinanzas.style.display = 'none';
             if (tabUsuarios)   tabUsuarios.style.display = 'none';
+            if (tabBitacora)   tabBitacora.style.display = 'none'; // OCULTO PARA LIMITADO
             // Asegurar que los tabs permitidos son visibles
             if (tabAprobaciones) tabAprobaciones.style.display = '';
             if (tabRenovaciones) tabRenovaciones.style.display = '';
@@ -5661,6 +5675,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabFinanzas) tabFinanzas.style.display = 'none';
             if (tabUsuarios) tabUsuarios.style.display = 'none';
             if (tabGeneral)  tabGeneral.style.display = 'none';
+            if (tabBitacora) tabBitacora.style.display = 'flex';
             // Abrir inventario por defecto
             const invTab = document.querySelector('.dashboard-tab[data-tab="tab-inventario"]');
             if (invTab) invTab.click();
@@ -5674,6 +5689,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabPublicidad) tabPublicidad.style.display = '';
             if (tabFinanzas)   tabFinanzas.style.display = 'flex';
             if (tabUsuarios)   tabUsuarios.style.display = 'flex';
+            if (tabBitacora)   tabBitacora.style.display = 'flex';
             // Mostrar configuración global de anuncios para admin completo
             const adConfigSection = document.querySelector('#tab-publicidad .config-section');
             if (adConfigSection) adConfigSection.style.display = '';
@@ -5683,6 +5699,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // GESTIÓN DE USUARIOS
     const usersTableBody = document.getElementById('users-table-body');
     const adminUserModal = document.getElementById('admin-user-modal');
+
+    // ==========================================
+    // UTILIDADES PARA WHATSAPP
+    // ==========================================
+    window.buildWhatsAppUrl = function(phone, listingTitle) {
+        if (!phone) return '#';
+        let cleanPhone = String(phone).replace(/\D/g, '');
+        if (cleanPhone.length === 10) {
+            cleanPhone = '521' + cleanPhone; // Lada México por defecto
+        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) {
+            cleanPhone = '521' + cleanPhone.substring(2);
+        }
+        const text = encodeURIComponent(`Hola, te contactamos de RevistAuto sobre tu publicación '${listingTitle}'. Te recordamos que tu anuncio está próximo a vencer. ¿Te gustaría renovarlo por 30 días más?`);
+        return `https://wa.me/${cleanPhone}?text=${text}`;
+    };
+
+    // ==========================================
+    // BITÁCORA DE ACTIVIDAD (AUDIT LOG)
+    // ==========================================
+    window.renderAdminAuditLog = async function() {
+        const tbody = document.getElementById('audit-log-table-body');
+        if (!tbody) return;
+
+        const data = await db.getAuditLogs();
+        if (data && data.success && data.logs) {
+            if (data.logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No hay registros en la bitácora.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.logs.map(log => {
+                const dateObj = new Date(log.timestamp);
+                const dateStr = dateObj.toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'2-digit' });
+                const timeStr = dateObj.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+                return `
+                <tr>
+                    <td>${dateStr} <br><small style="color:var(--text-muted)">${timeStr}</small></td>
+                    <td><strong>${log.user_username}</strong></td>
+                    <td><span style="font-size:0.8rem; background:var(--surface-light); padding:2px 6px; border-radius:4px;">${log.user_role}</span></td>
+                    <td>${log.action}</td>
+                    <td><small style="color:var(--text-muted)">${log.details || ''}</small></td>
+                </tr>
+                `;
+            }).join('');
+        }
+    };
+
     
     document.getElementById('btn-admin-add-user')?.addEventListener('click', () => {
         document.getElementById('admin-user-form').reset();
