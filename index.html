@@ -78,78 +78,80 @@
 
             <!-- View: Busqueda -->
             <section id="view-busqueda" class="view">
-                <div class="section-header">
-                    <h2>Búsqueda Avanzada</h2>
-                </div>
-                <div class="search-bar-container">
-                    <span class="material-symbols-rounded search-icon">search</span>
-                    <input type="text" id="search-input" placeholder="Busca por Marca o Modelo (Ej. Honda, Nissan, Jetta...)">
-                </div>
-                <div id="search-filters-container" style="transition: all 0.3s ease;">
-                    <h4 style="margin-bottom: 12px; color: var(--text-main);">Ubicación</h4>
-                    <div class="filter-row">
-                        <div class="filter-group half">
-                            <label>Estado</label>
-                            <select id="filter-state">
-                                <option value="Todos">Todos los estados</option>
-                            </select>
-                        </div>
-                        <div class="filter-group half">
-                            <label>Ciudad</label>
-                            <select id="filter-city">
-                                <option value="Todas">Todas</option>
-                            </select>
-                        </div>
+                <div class="search-left-panel">
+                    <div class="section-header">
+                        <h2>Búsqueda Avanzada</h2>
                     </div>
+                    <div class="search-bar-container">
+                        <span class="material-symbols-rounded search-icon">search</span>
+                        <input type="text" id="search-input" placeholder="Busca por Marca o Modelo (Ej. Honda, Nissan, Jetta...)">
+                    </div>
+                    <div id="search-filters-container" style="transition: all 0.3s ease;">
+                        <h4 style="margin-bottom: 12px; color: var(--text-main);">Ubicación</h4>
+                        <div class="filter-row">
+                            <div class="filter-group half">
+                                <label>Estado</label>
+                                <select id="filter-state">
+                                    <option value="Todos">Todos los estados</option>
+                                </select>
+                            </div>
+                            <div class="filter-group half">
+                                <label>Ciudad</label>
+                                <select id="filter-city">
+                                    <option value="Todas">Todas</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <h4 style="margin-bottom: 12px; color: var(--text-main); margin-top: 16px;">Detalles</h4>
-                    <div class="filter-row">
-                        <div class="filter-group half">
-                            <label>Año</label>
-                            <input type="number" id="filter-year" placeholder="Ej. 2015">
+                        <h4 style="margin-bottom: 12px; color: var(--text-main); margin-top: 16px;">Detalles</h4>
+                        <div class="filter-row">
+                            <div class="filter-group half">
+                                <label>Año</label>
+                                <input type="number" id="filter-year" placeholder="Ej. 2015">
+                            </div>
+                            <div class="filter-group half">
+                                <label>Color</label>
+                                <select id="filter-color">
+                                    <option value="Todos" selected>Cualquiera</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="filter-group half">
-                            <label>Color</label>
-                            <select id="filter-color">
-                                <option value="Todos" selected>Cualquiera</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="filter-row">
-                        <div class="filter-group half">
-                            <label>Transmisión</label>
-                            <select id="filter-transmission">
-                                <option value="Todas" selected>Cualquiera</option>
-                                <option value="Automática">Automática</option>
-                                <option value="Manual">Manual</option>
-                            </select>
+                        <div class="filter-row">
+                            <div class="filter-group half">
+                                <label>Transmisión</label>
+                                <select id="filter-transmission">
+                                    <option value="Todas" selected>Cualquiera</option>
+                                    <option value="Automática">Automática</option>
+                                    <option value="Manual">Manual</option>
+                                </select>
+                            </div>
+                            <div class="filter-group half">
+                                <label>Situación Legal</label>
+                                <select id="filter-legal">
+                                    <option value="Todas" selected>Cualquiera</option>
+                                    <option value="Nacional">Nacional</option>
+                                    <option value="Fronterizo">Fronterizo</option>
+                                    <option value="Americano">Americano</option>
+                                    <option value="Decreto">Decreto</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="filter-group half">
-                            <label>Situación Legal</label>
-                            <select id="filter-legal">
-                                <option value="Todas" selected>Cualquiera</option>
-                                <option value="Nacional">Nacional</option>
-                                <option value="Fronterizo">Fronterizo</option>
-                                <option value="Americano">Americano</option>
-                                <option value="Decreto">Decreto</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <h4 style="display: none; margin-bottom: 12px; color: var(--text-main); margin-top: 16px;">Presupuesto</h4>
-                    <div class="filter-row" style="display: none;">
-                        <div class="filter-group half">
-                            <label>Precio Mín. ($)</label>
-                            <input type="number" id="filter-min-price" placeholder="0">
+                        <h4 style="display: none; margin-bottom: 12px; color: var(--text-main); margin-top: 16px;">Presupuesto</h4>
+                        <div class="filter-row" style="display: none;">
+                            <div class="filter-group half">
+                                <label>Precio Mín. ($)</label>
+                                <input type="number" id="filter-min-price" placeholder="0">
+                            </div>
+                            <div class="filter-group half">
+                                <label>Precio Máx. ($)</label>
+                                <input type="number" id="filter-max-price" placeholder="Sin límite">
+                            </div>
                         </div>
-                        <div class="filter-group half">
-                            <label>Precio Máx. ($)</label>
-                            <input type="number" id="filter-max-price" placeholder="Sin límite">
-                        </div>
+                        
+                        <button id="btn-search" class="primary-btn" style="margin-top: 24px;">Buscar Resultados</button>
                     </div>
-                    
-                    <button id="btn-search" class="primary-btn" style="margin-top: 24px;">Buscar Resultados</button>
                 </div>
                 
                 <div id="search-results" class="listings-grid" style="margin-top: 16px;">

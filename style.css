@@ -1821,18 +1821,22 @@ input:checked + .slider:before {
     #view-busqueda.active {
         display: grid !important;
         grid-template-columns: 320px 1fr;
-        grid-template-areas: 
-            "header header"
-            "search results"
-            "filters results";
-        gap: 20px 30px;
+        gap: 30px;
         align-items: start;
     }
     
-    #view-busqueda .section-header { grid-area: header; margin-bottom: 0; }
-    #view-busqueda .search-bar-container { grid-area: search; width: 100%; margin-bottom: 0; }
-    #view-busqueda #search-filters-container { grid-area: filters; position: sticky; top: 100px; }
-    #view-busqueda #search-results { grid-area: results; margin-top: 0 !important; }
+    .search-left-panel {
+        border-right: 1px solid var(--glass-border);
+        padding-right: 30px;
+        position: sticky;
+        top: 100px;
+        height: max-content;
+    }
+
+    #view-busqueda .section-header { margin-bottom: 16px; }
+    #view-busqueda .search-bar-container { width: 100%; margin-bottom: 20px; }
+    #view-busqueda #search-filters-container { position: static; }
+    #view-busqueda #search-results { margin-top: 0 !important; }
 
     /* 5. Ad Detail Modal Side-by-Side */
     #view-detalle.active, #ad-fullscreen-modal.active {
