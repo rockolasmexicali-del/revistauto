@@ -2395,6 +2395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetalle.style.backgroundColor = 'var(--bg-color)';
         
         viewDetalle.classList.add('active');
+        history.pushState({ page: 'listing-details' }, '');
 
         // Lógica de Swipe para navegar entre autos de la misma categoría
         const infoDiv = detalleContent.querySelector('.detalle-info');
