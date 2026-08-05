@@ -2370,8 +2370,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgs = detalleContent.querySelectorAll('.detalle-img-carousel img');
         imgs.forEach(img => window.enablePinchZoom(img));
 
-        // Mostrar Vista
-        views.forEach(v => v.classList.remove('active'));
+        // Mostrar Vista (Como Modal/Overlay para no perder el scroll del fondo)
+        views.forEach(v => {
+            if(v.id !== previousViewId) v.classList.remove('active');
+        });
+        
+        viewDetalle.style.position = 'fixed';
+        viewDetalle.style.top = '0';
+        viewDetalle.style.left = '0';
+        viewDetalle.style.width = '100%';
+        viewDetalle.style.height = '100vh';
+        viewDetalle.style.zIndex = '1000';
+        viewDetalle.style.overflowY = 'auto';
+        viewDetalle.style.backgroundColor = 'var(--bg-color)';
+        
         viewDetalle.classList.add('active');
 
         // Lógica de Swipe para navegar entre autos de la misma categoría
@@ -2479,23 +2491,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.closeListingDetails = function() {
-        views.forEach(v => v.classList.remove('active'));
-        const prev = document.getElementById(previousViewId);
-        if(prev) {
-            prev.classList.add('active');
-            // Ya no llamamos a renderFeed() aquí para no perder el scroll ni el filtro actual
-            if(previousViewId === 'view-biblioteca') renderSavedListings();
-            
-            // Restaurar el scroll
-            requestAnimationFrame(() => {
-                window.scrollTo(0, savedScrollPosition);
-            });
-        } else {
-            document.getElementById('view-inicio').classList.add('active');
-            requestAnimationFrame(() => {
-                window.scrollTo(0, savedScrollPosition);
-            });
-        }
+        const viewDetalle = document.getElementById('view-detalle');
+        if (viewDetalle) viewDetalle.classList.remove('active');
+        
+        // No necesitamos volver a agregar .active al prev porque nunca se le quitó
+        if(previousViewId === 'view-biblioteca') renderSavedListings();
+        
+        // Restaurar el scroll (por seguridad, aunque el fondo nunca se ocultó)
+        requestAnimationFrame(() => {
+            window.scrollTo(0, savedScrollPosition);
+        });
     };
 
     window.enablePinchZoom = function(imgElement) {
