@@ -1,3 +1,7 @@
+/* 
+   ad_flow.js ha sido depurado por duplicidad.
+   Toda la lógica de anuncios de cliente se encuentra activa y centralizada en app.js.
+*/
 // --- Client Ad Flow Logic ---
 document.addEventListener('DOMContentLoaded', () => {
     const btnAdvertise = document.getElementById('btn-advertise');

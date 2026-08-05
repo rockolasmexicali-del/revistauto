@@ -11,17 +11,11 @@ window.appConfirm = function(message, onConfirm, title = '¿Estás seguro?') {
     const btnCancel = document.getElementById('btn-confirm-cancel');
     const btnAccept = document.getElementById('btn-confirm-accept');
     
-    // Remove old listeners by cloning
-    const newBtnCancel = btnCancel.cloneNode(true);
-    const newBtnAccept = btnAccept.cloneNode(true);
-    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
-    btnAccept.parentNode.replaceChild(newBtnAccept, btnAccept);
-    
-    newBtnCancel.onclick = () => {
+    btnCancel.onclick = () => {
         modal.classList.remove('active');
     };
     
-    newBtnAccept.onclick = () => {
+    btnAccept.onclick = () => {
         modal.classList.remove('active');
         onConfirm();
     };
@@ -3077,10 +3071,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const stateSelect = document.getElementById('client-ad-state');
         stateSelect.value = ad.state || '';
         stateSelect.dispatchEvent(new Event('change'));
-        
-        setTimeout(() => {
-            document.getElementById('client-ad-city').value = ad.city || '';
-        }, 50);
+        if (ad.city) document.getElementById('client-ad-city').value = ad.city;
         
         document.getElementById('client-ad-phone').value = ad.phone || '';
         document.getElementById('client-ad-whatsapp').value = ad.whatsapp || '';
@@ -5967,9 +5958,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 stateEl.dispatchEvent(new Event('change'));
             }
             if (cityEl) {
-                setTimeout(() => {
-                    cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
-                }, 50);
+                cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
             }
             
             // Reset Progress Bar
