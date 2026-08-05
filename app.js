@@ -2094,7 +2094,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 5. User wants to exit (only if at root view)
+        // 5. Check if active view is not view-inicio (return to view-inicio first)
+        const viewInicio = document.getElementById('view-inicio');
+        const isInicioActive = viewInicio && viewInicio.classList.contains('active');
+
+        if (!isInicioActive) {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            const inicioNav = Array.from(navItems).find(n => n.getAttribute('data-target') === 'view-inicio');
+            if (inicioNav) inicioNav.classList.add('active');
+
+            views.forEach(v => {
+                v.classList.remove('active');
+                if (v.id === 'view-inicio') v.classList.add('active');
+            });
+            if (typeof renderFeed === 'function') renderFeed();
+            history.pushState({ page: 'root' }, '');
+            return;
+        }
+
+        // 6. User wants to exit (only if at root view / view-inicio)
         if (exitModal) {
             if (exitModal.classList.contains('active') || exitModal.style.display === 'flex') {
                 exitModal.classList.remove('active');
@@ -2102,15 +2120,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 history.pushState({ page: 'root' }, '');
             } else {
                 exitModal.classList.add('active');
+                exitModal.style.display = 'flex';
                 history.pushState({ page: 'root' }, '');
             }
         }
     }
 
+    // Garantizar pila de historial tras primer toque en móviles
+    function ensureHistoryStack() {
+        if (!history.state || history.state.page !== 'root') {
+            try { history.pushState({ page: 'root' }, ''); } catch(e) {}
+        }
+    }
+    document.addEventListener('touchstart', ensureHistoryStack, { passive: true });
+    document.addEventListener('click', ensureHistoryStack, { passive: true });
+
+    // Escuchar atajos globales de teclado (Backspace / Escape)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' || e.key === 'Escape') {
+            const activeEl = document.activeElement;
+            const isInput = activeEl && (
+                activeEl.tagName === 'INPUT' || 
+                activeEl.tagName === 'TEXTAREA' || 
+                activeEl.isContentEditable
+            );
+            if (!isInput) {
+                e.preventDefault();
+                handlePopState(e);
+            }
+        }
+    });
+
     if (btnExitNo) {
         btnExitNo.addEventListener('click', () => {
             exitModal.classList.remove('active');
             exitModal.style.display = '';
+            if (!history.state || history.state.page !== 'root') {
+                try { history.pushState({ page: 'root' }, ''); } catch(e) {}
+            }
         });
     }
 
@@ -2531,6 +2578,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // No necesitamos volver a agregar .active al prev porque nunca se le quitó
         if(previousViewId === 'view-biblioteca') renderSavedListings();
         
+        // Sincronizar el estado del historial si tenía abierto el detalle
+        if (history.state && history.state.page === 'listing-details') {
+            try { history.replaceState({ page: 'root' }, ''); } catch(e) {}
+        }
+
         // Restaurar el scroll (por seguridad, aunque el fondo nunca se ocultó)
         requestAnimationFrame(() => {
             window.scrollTo(0, savedScrollPosition);
