@@ -1675,6 +1675,13 @@ document.addEventListener('DOMContentLoaded', () => {
         history.pushState({ page: 'ad-modal' }, '');
         modal.style.display = ''; // Remover cualquier display: none que haya puesto switchView
         modal.classList.add('active');
+
+        const carouselAd = document.getElementById('ad-image-carousel');
+        if (carouselAd && ad.images && ad.images.length > 1) {
+            carouselAd.addEventListener('touchstart', window.stopFullscreenAutoplay, {passive: true});
+            carouselAd.addEventListener('mousedown', window.stopFullscreenAutoplay);
+            window.startFullscreenAutoplay(true, ad.images.length);
+        }
     };
 
     window.scrollAdCarousel = function(direction) {
@@ -2034,6 +2041,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Check Fullscreen Ad Modal
         const adModal = document.getElementById('ad-fullscreen-modal');
         if (adModal && (adModal.classList.contains('active') || adModal.style.display === 'flex' || adModal.style.display === 'block')) {
+            if (window.stopFullscreenAutoplay) window.stopFullscreenAutoplay();
             adModal.classList.remove('active');
             adModal.style.display = '';
             window.pendingNextListingIdAfterAd = null;
@@ -2397,6 +2405,13 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetalle.classList.add('active');
         history.pushState({ page: 'listing-details' }, '');
 
+        const carousel = detalleContent.querySelector('.detalle-img-carousel');
+        if (carousel && images.length > 1) {
+            carousel.addEventListener('touchstart', window.stopFullscreenAutoplay, {passive: true});
+            carousel.addEventListener('mousedown', window.stopFullscreenAutoplay);
+            window.startFullscreenAutoplay(false, images.length);
+        }
+
         // Lógica de Swipe para navegar entre autos de la misma categoría
         const infoDiv = detalleContent.querySelector('.detalle-info');
         if (infoDiv) {
@@ -2506,6 +2521,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.closeListingDetails = function() {
+        if (window.stopFullscreenAutoplay) window.stopFullscreenAutoplay();
         const viewDetalle = document.getElementById('view-detalle');
         if (viewDetalle) viewDetalle.classList.remove('active');
         
@@ -6877,6 +6893,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // --- Autoplay Fullscreen Carousels ---
+    let autoplayInterval = null;
+
+    window.startFullscreenAutoplay = function(isAd = false, imagesLength = 0) {
+        if (imagesLength <= 1) return;
+        window.stopFullscreenAutoplay();
+
+        autoplayInterval = setInterval(() => {
+            if (isAd) {
+                if (window.scrollAdCarousel) window.scrollAdCarousel(1);
+            } else {
+                const carousel = document.querySelector('.detalle-img-carousel');
+                if (carousel) {
+                    const scrollAmount = carousel.clientWidth;
+                    if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
+                        carousel.scrollTo({ left: 0, behavior: 'smooth' });
+                    } else {
+                        carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    }
+                }
+            }
+        }, 4000);
+    };
+
+    window.stopFullscreenAutoplay = function() {
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+            autoplayInterval = null;
+        }
+    };
 
     // --- Lógica de Auto-Scroll Inteligente ---
     window.initAutoScroll = function(container) {
