@@ -2069,3 +2069,60 @@ input:checked + .slider:before {
         font-size: 22px !important;
     }
 }
+
+/* --- Efecto Destello / Flash para Botones de Redes Sociales --- */
+.social-btn-link {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.social-btn-link:active,
+.social-btn-link.flash-active {
+    transform: scale(0.94) !important;
+    filter: brightness(1.7) contrast(1.1) !important;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 0.6) !important;
+    animation: socialPulseFlash 0.35s ease-out forwards;
+}
+
+.social-btn-link::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.social-btn-link:active::after,
+.social-btn-link.flash-active::after {
+    opacity: 1;
+    animation: flashShine 0.35s ease-out forwards;
+}
+
+@keyframes socialPulseFlash {
+    0% {
+        filter: brightness(1);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    }
+    40% {
+        filter: brightness(2) contrast(1.2);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 0 15px rgba(255, 255, 255, 0.8);
+    }
+    100% {
+        filter: brightness(1.2);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+}
+
+@keyframes flashShine {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.5); }
+}
+

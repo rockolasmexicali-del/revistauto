@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (fbEl)          fbEl.value          = '';
             if (igEl)          igEl.value          = '';
             if (tkEl)          tkEl.value          = '';
-            if (charCounter)   charCounter.textContent = '0/200';
+            if (charCounter)   charCounter.textContent = '0/220';
 
             window.clientAdImages = [];
             window.editingAdId = null;
