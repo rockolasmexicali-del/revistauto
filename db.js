@@ -1018,21 +1018,11 @@ class Database {
                     };
                 }
             } catch (err) {
-                console.warn("Error de red al consultar admin_users en Supabase, aplicando fallback:", err);
+                console.warn("Error de red al consultar admin_users en Supabase:", err);
             }
         }
         
-        // Fallback seguro en caso de que la tabla aún no tenga el usuario admin o no haya red
-        if (username === 'admin' && password === 'admin') {
-            return { 
-                success: true, 
-                token: 'fake-token',
-                role: 'admin',
-                user: { id: 0, username: 'admin', role: 'admin' }
-            };
-        }
-
-        return { success: false, error: 'Credenciales inválidas' };
+        return { success: false, error: 'Usuario o contraseña incorrectos' };
     }
 
     async getAdminUsers() {
@@ -1059,16 +1049,26 @@ class Database {
             try {
                 const dbUser = {
                     ...user,
-                    allowedstates: user.allowedStates,
-                    allowedcities: user.allowedCities
+                    allowedstates: user.allowedStates || [],
+                    allowedcities: user.allowedCities || []
                 };
                 delete dbUser.allowedStates;
                 delete dbUser.allowedCities;
                 
-                const { error } = await supabaseClient.from('admin_users').upsert([dbUser]);
-                if (error) console.warn("Error guardando adminUser en Supabase:", error.message);
+                if (dbUser.id) {
+                    dbUser.id = Number(dbUser.id);
+                } else {
+                    delete dbUser.id;
+                }
+                
+                const { error } = await supabaseClient.from('admin_users').upsert([dbUser], { onConflict: 'username' });
+                if (error) {
+                    console.warn("Error guardando adminUser en Supabase:", error.message);
+                    return { success: false, error: error.message };
+                }
             } catch (err) {
                 console.warn("Error de red guardando adminUser en Supabase:", err);
+                return { success: false, error: err.message || 'Error de conexión' };
             }
         }
         return { success: true };
@@ -1077,10 +1077,14 @@ class Database {
     async deleteAdminUser(id) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                const { error } = await supabaseClient.from('admin_users').delete().eq('id', id);
-                if (error) console.warn("Error eliminando adminUser en Supabase:", error.message);
+                const { error } = await supabaseClient.from('admin_users').delete().eq('id', Number(id));
+                if (error) {
+                    console.warn("Error eliminando adminUser en Supabase:", error.message);
+                    return { success: false, error: error.message };
+                }
             } catch (err) {
                 console.warn("Error de red eliminando adminUser en Supabase:", err);
+                return { success: false, error: err.message || 'Error de conexión' };
             }
         }
         return { success: true };

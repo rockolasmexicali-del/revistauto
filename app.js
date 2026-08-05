@@ -5814,11 +5814,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id) Object.assign(payload, { id }); // Add ID if updating
             const data = await db.saveAdminUser(payload);
             if (data.success) {
+                db.logActivity(id ? 'Edición de Usuario' : 'Creación de Usuario', `Usuario ${username} (${role}) ${id ? 'actualizado' : 'creado'}.`);
                 adminUserModal.classList.remove('active');
                 renderUsersAdmin();
                 showAlert('Usuario guardado con éxito', 'Éxito', 'check_circle');
             } else {
-                showAlert(data.error, 'Error', 'error');
+                showAlert(data.error || 'Error al guardar en Supabase', 'Error', 'error');
             }
         } catch(err) {
             showAlert('Error al guardar usuario', 'Error', 'error');
@@ -5844,10 +5845,11 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await db.deleteAdminUser(id);
                 if (data.success) {
+                    db.logActivity('Eliminación de Usuario', `Usuario #${id} eliminado.`);
                     renderUsersAdmin();
                     showAlert('Usuario eliminado', 'Éxito', 'check_circle');
                 } else {
-                    showAlert(data.error, 'Error', 'error');
+                    showAlert(data.error || 'Error al eliminar', 'Error', 'error');
                 }
             } catch(e) {
                 showAlert('Error al eliminar', 'Error', 'error');
