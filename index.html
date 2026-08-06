@@ -929,8 +929,21 @@
                     </div>
                     <!-- Tab: Bitácora -->
                     <div id="tab-bitacora" class="dashboard-view">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                            <h3>Bitácora de Actividad</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; flex-wrap:wrap; gap:12px;">
+                            <h3 style="margin:0;">Bitácora de Actividad</h3>
+                            <button id="btn-export-audit" class="primary-btn" style="padding: 8px 16px; font-size: 0.9rem; background: #217346; display:flex; align-items:center; gap:6px;">
+                                <span class="material-symbols-rounded">download</span> Exportar a Excel
+                            </button>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+                            <select id="audit-filter-city" class="form-select" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none; flex:1; min-width:120px;">
+                                <option value="Todas">Todas las Ciudades</option>
+                            </select>
+                            <select id="audit-filter-user" class="form-select" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none; flex:1; min-width:120px;">
+                                <option value="Todos">Todos los Usuarios</option>
+                            </select>
+                            <input type="month" id="audit-filter-date" class="form-select" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.88rem; outline:none; flex:1; min-width:120px;">
+                            <button id="btn-clear-audit-filters" class="secondary-btn" style="padding: 8px 16px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white;">Limpiar</button>
                         </div>
                         <div class="admin-table-container">
                             <table class="admin-table">
@@ -941,13 +954,17 @@
                                         <th>Acción</th>
                                         <th>Ciudad</th>
                                         <th>Referencia</th>
-                                        <th>Detalles</th>
                                     </tr>
                                 </thead>
                                 <tbody id="audit-log-table-body">
                                     <!-- JS injected -->
                                 </tbody>
                             </table>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding: 12px; background: var(--surface-light); border-radius: 8px;">
+                            <button id="audit-prev-page" class="secondary-btn" style="padding: 6px 12px; font-size: 0.85rem;" disabled>Anterior</button>
+                            <span id="audit-page-info" style="font-size: 0.9rem; color: var(--text-muted);">Página 1 de 1</span>
+                            <button id="audit-next-page" class="secondary-btn" style="padding: 6px 12px; font-size: 0.85rem;" disabled>Siguiente</button>
                         </div>
                     </div>
                 </main>

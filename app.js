@@ -5823,32 +5823,181 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // BITÁCORA DE ACTIVIDAD (AUDIT LOG)
     // ==========================================
+    let auditCurrentPage = 1;
+    let auditItemsPerPage = 50;
+    let auditFilteredLogs = [];
+    let auditAllLogs = [];
+    let auditFiltersLoaded = false;
+
     window.renderAdminAuditLog = async function() {
         const tbody = document.getElementById('audit-log-table-body');
         if (!tbody) return;
 
         const data = await db.getAuditLogs();
         if (data && data.success && data.logs) {
-            if (data.logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No hay registros en la bitácora.</td></tr>';
-                return;
+            auditAllLogs = data.logs;
+
+            // Populate filters only once
+            if (!auditFiltersLoaded) {
+                const citySelect = document.getElementById('audit-filter-city');
+                const userSelect = document.getElementById('audit-filter-user');
+                
+                const cities = new Set(data.logs.map(l => l.city).filter(c => c && c !== 'N/A' && c !== 'Todas'));
+                const users = new Set(data.logs.map(l => l.user_username).filter(u => u && u !== 'Desconocido'));
+
+                if (citySelect) {
+                    cities.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c; opt.textContent = c;
+                        citySelect.appendChild(opt);
+                    });
+                }
+                if (userSelect) {
+                    users.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u; opt.textContent = u;
+                        userSelect.appendChild(opt);
+                    });
+                }
+                auditFiltersLoaded = true;
             }
-            tbody.innerHTML = data.logs.map(log => {
-                const dateObj = new Date(log.timestamp);
-                const dateStr = dateObj.toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'2-digit' });
-                const timeStr = dateObj.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-                return `
-                <tr>
-                    <td>${dateStr} <br><small style="color:var(--text-muted)">${timeStr}</small></td>
-                    <td><strong>${log.user_username}</strong></td>
-                    <td>${log.action}</td>
-                    <td>${log.city || '-'}</td>
-                    <td>${log.reference || '-'}</td>
-                </tr>
-                `;
-            }).join('');
+
+            applyAuditFilters();
         }
     };
+
+    function applyAuditFilters() {
+        const cityFilter = document.getElementById('audit-filter-city')?.value || 'Todas';
+        const userFilter = document.getElementById('audit-filter-user')?.value || 'Todos';
+        const dateFilter = document.getElementById('audit-filter-date')?.value || ''; // Format YYYY-MM
+
+        auditFilteredLogs = auditAllLogs.filter(log => {
+            if (cityFilter !== 'Todas' && log.city !== cityFilter) return false;
+            if (userFilter !== 'Todos' && log.user_username !== userFilter) return false;
+            if (dateFilter) {
+                const logDate = new Date(log.timestamp);
+                const logMonth = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}`;
+                if (logMonth !== dateFilter) return false;
+            }
+            return true;
+        });
+
+        auditCurrentPage = 1;
+        drawAuditTable();
+    }
+
+    function drawAuditTable() {
+        const tbody = document.getElementById('audit-log-table-body');
+        if (!tbody) return;
+
+        if (auditFilteredLogs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No hay registros que coincidan.</td></tr>';
+            const pageInfo = document.getElementById('audit-page-info');
+            if (pageInfo) pageInfo.textContent = 'Página 1 de 1';
+            const prevBtn = document.getElementById('audit-prev-page');
+            if (prevBtn) prevBtn.disabled = true;
+            const nextBtn = document.getElementById('audit-next-page');
+            if (nextBtn) nextBtn.disabled = true;
+            return;
+        }
+
+        const totalPages = Math.ceil(auditFilteredLogs.length / auditItemsPerPage);
+        if (auditCurrentPage > totalPages) auditCurrentPage = totalPages;
+
+        const startIndex = (auditCurrentPage - 1) * auditItemsPerPage;
+        const pageLogs = auditFilteredLogs.slice(startIndex, startIndex + auditItemsPerPage);
+
+        tbody.innerHTML = pageLogs.map(log => {
+            const dateObj = new Date(log.timestamp);
+            const dateStr = dateObj.toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'2-digit' });
+            const timeStr = dateObj.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+            
+            // Format reference link if it looks like Publicación #...
+            let refHtml = log.reference || '-';
+            const pubMatch = refHtml.match(/Publicación #(\d+)/i);
+            if (pubMatch && (log.action.includes('vehículo') || log.action.includes('vehiculo'))) {
+                const pubId = pubMatch[1];
+                refHtml = refHtml.replace(/Publicación #\d+/i, `<a href="#" onclick="event.preventDefault(); window.openAdminEditModal('${pubId}')" style="color:var(--primary-color); text-decoration:none;">$&</a>`);
+            }
+
+            return `
+            <tr>
+                <td>${dateStr} <br><small style="color:var(--text-muted)">${timeStr}</small></td>
+                <td><strong>${log.user_username}</strong></td>
+                <td>${log.action}</td>
+                <td>${log.city || '-'}</td>
+                <td>${refHtml}</td>
+            </tr>
+            `;
+        }).join('');
+
+        const pageInfo = document.getElementById('audit-page-info');
+        const prevBtn = document.getElementById('audit-prev-page');
+        const nextBtn = document.getElementById('audit-next-page');
+
+        if (pageInfo) pageInfo.textContent = `Página ${auditCurrentPage} de ${totalPages}`;
+        if (prevBtn) prevBtn.disabled = auditCurrentPage === 1;
+        if (nextBtn) nextBtn.disabled = auditCurrentPage === totalPages;
+    }
+
+    // Event listeners for Audit Logs
+    document.getElementById('audit-filter-city')?.addEventListener('change', applyAuditFilters);
+    document.getElementById('audit-filter-user')?.addEventListener('change', applyAuditFilters);
+    document.getElementById('audit-filter-date')?.addEventListener('change', applyAuditFilters);
+    
+    document.getElementById('btn-clear-audit-filters')?.addEventListener('click', () => {
+        if(document.getElementById('audit-filter-city')) document.getElementById('audit-filter-city').value = 'Todas';
+        if(document.getElementById('audit-filter-user')) document.getElementById('audit-filter-user').value = 'Todos';
+        if(document.getElementById('audit-filter-date')) document.getElementById('audit-filter-date').value = '';
+        applyAuditFilters();
+    });
+
+    document.getElementById('audit-prev-page')?.addEventListener('click', () => {
+        if (auditCurrentPage > 1) {
+            auditCurrentPage--;
+            drawAuditTable();
+        }
+    });
+
+    document.getElementById('audit-next-page')?.addEventListener('click', () => {
+        const totalPages = Math.ceil(auditFilteredLogs.length / auditItemsPerPage);
+        if (auditCurrentPage < totalPages) {
+            auditCurrentPage++;
+            drawAuditTable();
+        }
+    });
+
+    window.exportAuditToExcel = function() {
+        if (!auditFilteredLogs || auditFilteredLogs.length === 0) {
+            showAlert('No hay registros para exportar.', 'Sin datos', 'info');
+            return;
+        }
+
+        if (typeof XLSX === 'undefined') {
+            showAlert('Error: La biblioteca para exportar a Excel no está cargada.', 'Error', 'error');
+            return;
+        }
+
+        const dataToExport = auditFilteredLogs.map(log => {
+            const dateObj = new Date(log.timestamp);
+            return {
+                'Fecha': dateObj.toLocaleDateString('es-MX'),
+                'Hora': dateObj.toLocaleTimeString('es-MX'),
+                'Usuario': log.user_username,
+                'Acción': log.action,
+                'Ciudad': log.city || 'N/A',
+                'Referencia': log.reference || 'N/A'
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Bitácora");
+
+        XLSX.writeFile(workbook, "Bitacora_Actividad_RevistAuto.xlsx");
+    };
+
+    document.getElementById('btn-export-audit')?.addEventListener('click', window.exportAuditToExcel);
 
     
     document.getElementById('btn-admin-add-user')?.addEventListener('click', () => {
