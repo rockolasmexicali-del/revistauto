@@ -2595,11 +2595,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const freq = db.adFrequencyScroll || 10;
                 
                 if (db.adsEnabled && (window.detailSwipesCount % freq === 0)) {
+                    window.detailSwipesCount = 0; // Reiniciar contador siempre al alcanzar la frecuencia
                     const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
-                    const adPool = db.getRandomAds(1, activeCities) || [];
-                    if (adPool.length > 0 && adPool[0] !== null) {
+                    const adPool = db.getRandomAds(1, activeCities, false) || []; // false = Excluir fallback "Anúnciate Aquí"
+                    if (adPool.length > 0 && adPool[0]) {
                         const ad = adPool[0];
-                        window.detailSwipesCount = 0;
                         window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
                         window.pendingPrevListingIdAfterAd = sameCategoryListings[currentIndex].id;
 

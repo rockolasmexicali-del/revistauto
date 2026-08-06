@@ -1237,7 +1237,7 @@ class Database {
         return true;
     }
 
-    getRandomAds(count, city = null) {
+    getRandomAds(count, city = null, includeFallback = true) {
         let activeAds = this.getAllAds().filter(ad => this.isAdActive(ad));
         if (city) {
             const cities = Array.isArray(city) ? city : [city];
@@ -1249,7 +1249,7 @@ class Database {
         
         const limit = this.adFallbackLimit !== undefined ? this.adFallbackLimit : 21;
         let resultPool = [...activeAds];
-        if (activeAds.length < limit) {
+        if (includeFallback && activeAds.length < limit) {
             resultPool.push(null);
         }
 
