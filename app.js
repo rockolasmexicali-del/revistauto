@@ -410,12 +410,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const adToggle = document.getElementById('admin-ad-toggle');
                 const adFreq = document.getElementById('admin-ad-frequency');
+                const adFallbackLimitContainer = document.getElementById('admin-ad-fallback-limit-container');
+                const adFallbackLimit = document.getElementById('admin-ad-fallback-limit');
                 if (adToggle) adToggle.checked = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
                 if (adFreq) adFreq.value = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
+                if (adFallbackLimit) adFallbackLimit.value = data.settings.ad_fallback_limit !== undefined ? data.settings.ad_fallback_limit : 21;
+                
+                // Hide fallback limit setting for non-admins
+                if (adFallbackLimitContainer) {
+                    if (window.currentAdminUser && window.currentAdminUser.role === 'admin') {
+                        adFallbackLimitContainer.style.display = 'flex';
+                    } else {
+                        adFallbackLimitContainer.style.display = 'none';
+                    }
+                }
                 
                 if (window.db) {
                     window.db.adsEnabled = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
                     window.db.adFrequencyScroll = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
+                    window.db.adFallbackLimit = data.settings.ad_fallback_limit !== undefined ? data.settings.ad_fallback_limit : 21;
                 }
             }
         } catch (e) { console.error('Error loading settings', e); }
@@ -5436,6 +5449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mpAccToken = document.getElementById('admin-mp-access-token') ? document.getElementById('admin-mp-access-token').value.trim() : '';
         const adsEnabled = document.getElementById('admin-ad-toggle') ? document.getElementById('admin-ad-toggle').checked : true;
         const adFreq = document.getElementById('admin-ad-frequency') ? Number(document.getElementById('admin-ad-frequency').value) : 10;
+        const adFallbackLimit = document.getElementById('admin-ad-fallback-limit') ? Number(document.getElementById('admin-ad-fallback-limit').value) : 21;
         
         try {
             const settingsPayload = { 
@@ -5445,7 +5459,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpPublicKey: mpPubKey,
                 mpAccessToken: mpAccToken,
                 ads_enabled: adsEnabled,
-                ad_frequency_scroll: adFreq
+                ad_frequency_scroll: adFreq,
+                ad_fallback_limit: adFallbackLimit
             };
             const data = await db.saveSettings(settingsPayload);
             if (data.success) {
@@ -5457,6 +5472,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.db) {
                     window.db.adsEnabled = adsEnabled;
                     window.db.adFrequencyScroll = adFreq;
+                    window.db.adFallbackLimit = adFallbackLimit;
                 }
                 
                 const adPaymentNote = document.getElementById('ad-payment-note-price');

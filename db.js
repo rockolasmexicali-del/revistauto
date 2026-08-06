@@ -1246,7 +1246,14 @@ class Database {
                 activeAds = activeAds.filter(ad => ad.city && validCities.includes(ad.city));
             }
         }
-        return activeAds.sort(() => 0.5 - Math.random()).slice(0, count);
+        
+        const limit = this.adFallbackLimit !== undefined ? this.adFallbackLimit : 21;
+        let resultPool = [...activeAds];
+        if (activeAds.length < limit) {
+            resultPool.push(null);
+        }
+
+        return resultPool.sort(() => 0.5 - Math.random()).slice(0, count);
     }
 
     addAdNote(id, noteText) {

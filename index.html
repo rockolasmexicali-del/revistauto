@@ -681,9 +681,13 @@
                                 <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Activa/Desactiva todos los anuncios y ajusta la frecuencia (ej. cada 10 autos).</p>
                             </div>
                             <div style="display: flex; align-items: center; gap: 16px;">
+                                <div id="admin-ad-fallback-limit-container" style="display: flex; align-items: center; gap: 8px;">
+                                    <label style="font-size: 0.85rem; color: var(--text-muted);" title="Ocultar comodín 'Anúnciate Aquí' si la ciudad tiene esta cantidad de anuncios pagados activos">Ocultar comodín tras:</label>
+                                    <input type="number" id="admin-ad-fallback-limit" style="width: 60px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); text-align: center; outline: none;" value="21" min="1">
+                                </div>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <label style="font-size: 0.85rem; color: var(--text-muted);">Frecuencia:</label>
-                                    <input type="number" id="admin-ad-frequency" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); text-align: center; outline: none;" value="10">
+                                    <input type="number" id="admin-ad-frequency" style="width: 60px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); text-align: center; outline: none;" value="10">
                                 </div>
                                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                     <span style="font-size: 0.85rem; color: var(--text-muted);">Activar:</span>
