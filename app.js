@@ -1743,15 +1743,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }, {passive: true});
 
             infoDiv.addEventListener('touchend', (e) => {
-                if (e.target.closest('button') || e.target.closest('.btn-contactar') || e.target.closest('a')) return;
-
                 endX = e.changedTouches[0].screenX;
                 const threshold = 50;
-                if (endX < startX - threshold) {
-                    if(window.navigateAdGlobal) window.navigateAdGlobal(1);
-                } else if (endX > startX + threshold) {
-                    if(window.navigateAdGlobal) window.navigateAdGlobal(-1);
+                
+                // Si la distancia es mayor al threshold, es un swipe y navegamos
+                if (Math.abs(endX - startX) > threshold) {
+                    if (endX < startX - threshold) {
+                        if(window.navigateAdGlobal) window.navigateAdGlobal(1);
+                    } else if (endX > startX + threshold) {
+                        if(window.navigateAdGlobal) window.navigateAdGlobal(-1);
+                    }
                 }
+                // Si no superó el threshold (fue solo un toque), 
+                // permitimos que el navegador dispare el click normal del botón
             }, {passive: true});
         }
 
@@ -2556,19 +2560,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }, {passive: true});
 
             infoDiv.addEventListener('touchend', (e) => {
-                // No activar si se tocó el botón de contactar u otros botones
-                if (e.target.closest('button') || e.target.closest('.btn-contactar')) return;
-
                 endX = e.changedTouches[0].screenX;
                 
                 const threshold = 50; // mínimo movimiento en píxeles
-                if (endX < startX - threshold) {
-                    // Swipe Izquierda -> Siguiente
-                    navigateListing(1);
-                } else if (endX > startX + threshold) {
-                    // Swipe Derecha -> Anterior
-                    navigateListing(-1);
+                
+                // Si la distancia es mayor al threshold, es un swipe y navegamos
+                if (Math.abs(endX - startX) > threshold) {
+                    if (endX < startX - threshold) {
+                        // Swipe Izquierda -> Siguiente
+                        navigateListing(1);
+                    } else if (endX > startX + threshold) {
+                        // Swipe Derecha -> Anterior
+                        navigateListing(-1);
+                    }
                 }
+                // Si no superó el threshold (fue solo un toque), 
+                // permitimos que el navegador dispare el click normal del botón
             }, {passive: true});
 
             const navigateListing = (direction) => {
