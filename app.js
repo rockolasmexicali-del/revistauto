@@ -6536,8 +6536,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.currentPendingAdId) {
                 showAlert('Tu anuncio ha sido guardado y está pendiente de aprobación.', 'Anuncio Creado', 'check_circle');
                 window.currentPendingAdId = null;
+                if (typeof switchView === 'function') switchView('view-alta');
             } else {
                 showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle');
+                if (typeof switchView === 'function') switchView('view-alta');
             }
             if (typeof renderMyListings === 'function') renderMyListings();
         });
@@ -6596,6 +6598,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     
                                     showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle');
                                     window.currentPendingAdId = null;
+                                    if (typeof switchView === 'function') switchView('view-alta');
                                     if (typeof renderMyListings === 'function') renderMyListings();
                                 }, 2000);
                             });
