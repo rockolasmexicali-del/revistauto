@@ -844,17 +844,55 @@ document.addEventListener('DOMContentLoaded', () => {
         const formCustomMake = document.getElementById('form-custom-make');
         const formCustomModel = document.getElementById('form-custom-model');
 
-        // Populating makes
-        catalogData.makes.forEach(make => {
-            formMake.innerHTML += `<option value="${make}">${make}</option>`;
-        });
-        formMake.innerHTML += `<option value="Otros">Otros...</option>`;
+        function populateMakesForType(selectedType) {
+            formMake.innerHTML = '<option value="" disabled selected>Selecciona una marca</option>';
+            
+            const motoOnlyMakes = ['Italika', 'Vento', 'Bajaj', 'Harley-Davidson', 'KTM', 'Polaris', 'Can-Am', 'CFMoto', 'Veloci', 'Hero', 'TVS', 'Indian Motorcycle', 'Aprilia', 'Kymco', 'Royal Enfield', 'Triumph', 'Ducati'];
+            const marineMakes = ['Sea-Doo', 'Yamaha', 'Honda', 'Suzuki', 'Kawasaki'];
+            const truckMakes = ['Kenworth', 'Freightliner', 'International', 'Peterbilt', 'Hino', 'Isuzu', 'Mack', 'Scania', 'Volvo', 'Foton', 'JAC', 'Ram', 'Chevrolet', 'Ford', 'GMC', 'Mercedes-Benz', 'Volkswagen'];
+            
+            let filteredMakes = catalogData.makes;
+            
+            if (selectedType === 'Motocicleta' || selectedType === 'Cuatrimoto / ATV') {
+                filteredMakes = catalogData.makes.filter(m => motoOnlyMakes.includes(m) || ['Honda', 'Yamaha', 'Suzuki', 'BMW', 'Sea-Doo', 'Kawasaki'].includes(m));
+            } else if (selectedType === 'Barco') {
+                filteredMakes = catalogData.makes.filter(m => marineMakes.includes(m));
+            } else if (selectedType === 'Camión') {
+                filteredMakes = catalogData.makes.filter(m => truckMakes.includes(m));
+            } else if (['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo'].includes(selectedType)) {
+                filteredMakes = catalogData.makes.filter(m => !motoOnlyMakes.includes(m));
+            }
+            
+            filteredMakes.forEach(make => {
+                formMake.innerHTML += `<option value="${make}">${make}</option>`;
+            });
+            formMake.innerHTML += `<option value="Otros">Otros...</option>`;
+            
+            // Reset model
+            formModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
+            if (formCustomMake) {
+                formCustomMake.style.display = 'none';
+                formCustomMake.required = false;
+                formCustomMake.value = '';
+            }
+            if (formCustomModel) {
+                formCustomModel.style.display = 'none';
+                formCustomModel.required = false;
+                formCustomModel.value = '';
+            }
+            
+            if (window.customMakeSelect) window.customMakeSelect.update();
+            if (window.customModelSelect) window.customModelSelect.update();
+        }
 
         // Populating types
         catalogData.types.forEach(type => {
             formType.innerHTML += `<option value="${type}">${type}</option>`;
         });
         formType.innerHTML += `<option value="Otros">Otros...</option>`;
+
+        // Populating initial makes based on type
+        populateMakesForType(formType.value);
 
         // Populating colors
         const formColor = document.getElementById('form-color');
@@ -884,7 +922,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const formCustomType = document.getElementById('form-custom-type');
         formType.addEventListener('change', (e) => {
-            if (e.target.value === 'Otros') {
+            const selectedType = e.target.value;
+            if (selectedType === 'Otros') {
                 if(formCustomType) {
                     formCustomType.style.display = 'block';
                     formCustomType.required = true;
@@ -896,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     formCustomType.value = '';
                 }
             }
+            populateMakesForType(selectedType);
         });
 
         // Dynamic models based on make (for form)
@@ -924,6 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 formModel.innerHTML += `<option value="Otros">Otros...</option>`;
             }
+            if (window.customModelSelect) window.customModelSelect.update();
         });
 
         formModel.addEventListener('change', (e) => {

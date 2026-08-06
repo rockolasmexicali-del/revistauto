@@ -243,6 +243,13 @@
                             <div class="form-step" data-step="2" style="display: none;">
                                 <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. El Vehículo</h4>
                             <div class="form-group">
+                                <label>Tipo de Vehículo</label>
+                                <select id="form-type" required>
+                                    <option value="" disabled selected>Selecciona un tipo</option>
+                                </select>
+                                <input type="text" id="form-custom-type" placeholder="Escribe el tipo (ej. Motocicleta)..." style="display: none; margin-top: 8px;">
+                            </div>
+                            <div class="form-group">
                                 <label>Marca</label>
                                 <select id="form-make" required>
                                     <option value="" disabled selected>Selecciona una marca</option>
@@ -259,13 +266,6 @@
                             <div class="form-group">
                                 <label>Versión / Edición <span style="font-weight:normal; color:var(--text-muted); font-size:0.8rem;">(Opcional)</span></label>
                                 <input type="text" id="form-trim" placeholder="Ej. Lariat, GLI, XLE, Platinum..." maxlength="40">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo de Vehículo</label>
-                                <select id="form-type" required>
-                                    <option value="" disabled selected>Selecciona un tipo</option>
-                                </select>
-                                <input type="text" id="form-custom-type" placeholder="Escribe el tipo (ej. Motocicleta)..." style="display: none; margin-top: 8px;">
                             </div>
                             <div class="form-group">
                                 <label>Color</label>
