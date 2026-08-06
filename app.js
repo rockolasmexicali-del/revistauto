@@ -2949,7 +2949,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${paymentBtnHTML}
                             <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
                                 <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
-                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', () => { db.deleteAd(${ad.id}); if(typeof renderMyListings === 'function') renderMyListings(); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
+                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', async () => { await db.deleteAd(${ad.id}); if(typeof renderMyListings === 'function') renderMyListings(); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                             </div>
                         </div>
                     </div>
@@ -6835,7 +6835,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>
                         <div style="display:flex; gap:6px;">
                             <button class="primary-btn" onclick="window.openAdminEditAdModal(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
-                            <button class="danger-btn" onclick="window.appConfirm('\u00bfEliminar esta publicidad?', () => { db.deleteAd(${ad.id}); setTimeout(() => renderAdminAdsTable(), 300); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
+                            <button class="danger-btn" onclick="window.appConfirm('\u00bfEliminar esta publicidad?', async () => { await db.deleteAd(${ad.id}); renderAdminAdsTable(); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
                         </div>
                     </td>
                 </tr>
