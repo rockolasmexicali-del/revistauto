@@ -6548,12 +6548,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.currentPendingAdId = savedAd.id;
                         window.currentPendingListingId = null;
                         
+                        const publishModal = document.getElementById('publish-options-modal');
+                        const priceText = document.getElementById('publish-price-text');
+                        const btnPayNow = document.getElementById('btn-option-pay-now');
+                        const icon = document.getElementById('publish-later-icon');
+                        const title = document.getElementById('publish-later-title');
+                        const desc = document.getElementById('publish-later-desc');
+                        
                         if (publishModal) {
-                            const btnPayNow = document.getElementById('btn-option-pay-now');
-                            const icon = document.getElementById('publish-later-icon');
-                            const title = document.getElementById('publish-later-title');
-                            const desc = document.getElementById('publish-later-desc');
-                            
                             if (Number(globalAdMonthlyPrice) === 0) {
                                 document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
                                 document.getElementById('publish-modal-desc').textContent = 'Tu anuncio publicitario entrará a un breve proceso de revisión por nuestro equipo para ser autorizado durante un mes. ¿Deseas publicarlo ahora?';
