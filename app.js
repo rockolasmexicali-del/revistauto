@@ -1398,17 +1398,23 @@ document.addEventListener('DOMContentLoaded', () => {
             : `window.openAdDetails('${ad.id}')`;
 
         return `
-            <div class="card ad-card" style="cursor: pointer; border: 1.5px solid var(--primary-color); border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: 0; height: 100%; min-height: 100%; z-index: 10;" onclick="${clickAction}">
-                <div style="position: relative; flex: 1; overflow: hidden; min-height: 0;">
-                    <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; background: #000; opacity: 0.95; display: block; position: absolute; top: 0; left: 0;">
-                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); padding: 18px 8px 8px; text-align: center;">
-                        <span style="color: white; font-weight: 600; font-size: 0.8rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
-                            <span style="font-size: 0.9rem; margin-right: 3px;">👆</span> Toca para ver detalles
-                        </span>
+            <div class="card ad-card" style="cursor: pointer; border: 1.5px solid var(--primary-color); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10;" onclick="${clickAction}">
+                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.70rem; font-weight: 700; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; z-index: 2; flex-shrink: 0;">
+                    Patrocinador
+                </div>
+                <div class="card-img-wrapper" style="border-radius: 0;">
+                    <div class="card-img-carousel" style="overflow-x: hidden;">
+                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="background: #000; opacity: 0.95;">
                     </div>
                 </div>
-                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.08em;">
-                    Patrocinador
+                <div class="card-content" style="flex-grow: 1;">
+                    <h4 class="card-title" style="color: var(--primary-color); font-weight: 700;">${ad.title || 'Anuncio Especial'}</h4>
+                    <p class="card-price" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 4px; line-height: 1.3; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${ad.description || 'Descubre lo que este negocio tiene para ti.'}
+                    </p>
+                    <div class="card-meta" style="margin-top: 8px;">
+                        <span><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle; margin-right:2px; margin-top:-2px;">location_on</span>${ad.city || 'Varios'}</span>
+                    </div>
                 </div>
             </div>
         `;
