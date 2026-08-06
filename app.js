@@ -496,6 +496,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Core Functions ---
 
+    window.switchView = function(viewId) {
+        // Close any open modals
+        document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+        
+        // If detalle is open, close it first
+        const viewDetalle = document.getElementById('view-detalle');
+        if (viewDetalle && viewDetalle.classList.contains('active')) {
+            if (window.closeListingDetails) window.closeListingDetails();
+        }
+
+        // Update active nav
+        navItems.forEach(nav => {
+            if (nav.getAttribute('data-target') === viewId) {
+                nav.classList.add('active');
+            } else {
+                nav.classList.remove('active');
+            }
+        });
+
+        // Update active view
+        views.forEach(view => {
+            if (view.id === viewId) {
+                view.classList.add('active');
+            } else {
+                view.classList.remove('active');
+            }
+        });
+
+        // Trigger specific logic per view
+        if (viewId === 'view-inicio') renderFeed();
+        if (viewId === 'view-biblioteca') renderSavedListings();
+        if (viewId === 'view-alta') renderMyListings();
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     function initNavigation() {
         navItems.forEach(item => {
             item.addEventListener('click', () => {
