@@ -1240,8 +1240,11 @@ class Database {
     getRandomAds(count, city = null) {
         let activeAds = this.getAllAds().filter(ad => this.isAdActive(ad));
         if (city) {
-            const cityAds = activeAds.filter(ad => ad.city === city);
-            if (cityAds.length > 0) activeAds = cityAds; 
+            const cities = Array.isArray(city) ? city : [city];
+            const validCities = cities.filter(c => c && c !== 'Todas');
+            if (validCities.length > 0) {
+                activeAds = activeAds.filter(ad => ad.city && validCities.includes(ad.city));
+            }
         }
         return activeAds.sort(() => 0.5 - Math.random()).slice(0, count);
     }

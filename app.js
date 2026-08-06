@@ -1303,15 +1303,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createAdCardHTML(ad, prevId = null, nextId = null) {
         if (!ad) {
-            // Fallback ad if no ads are available
+            // Fallback ad if no ads are available for this city
             return `
             <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: -14px; min-height: calc(100% + 14px); z-index: 10;" onclick="document.getElementById('btn-advertise').click()">
-                <div class="card-img-wrapper" style="background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-top: none;">
-                    <span class="material-symbols-rounded" style="font-size: 48px; color: var(--primary-color); opacity: 0.8;">storefront</span>
+                <div class="card-img-wrapper" style="background: rgba(245, 158, 11, 0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none; padding: 20px 10px;">
+                    <span class="material-symbols-rounded" style="font-size: 44px; color: var(--primary-color); opacity: 0.9; margin-bottom: 6px;">storefront</span>
+                    <strong style="color: var(--primary-color); font-size: 1.05rem; text-align: center; line-height: 1.2;">Anúnciate Aquí</strong>
                 </div>
-                <div class="card-content" style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 12px 10px;">
+                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 10px; text-align: center;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Tu negocio en esta zona</span>
                     <div style="width: 100%; background: transparent; color: var(--primary-color); text-align: center; font-weight: 600; font-size: 0.85rem;">
-                        <span style="font-size: 1rem; margin-right: 4px;">👆</span> Toca para ver detalles
+                        <span style="font-size: 0.9rem; margin-right: 4px;">👆</span> Toca para publicar
                     </div>
                 </div>
                 <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.08em;">
@@ -1876,7 +1878,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let adPool = [];
             if (db.adsEnabled) {
-                adPool = await db.getRandomAds(20) || [];
+                const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
+                adPool = await db.getRandomAds(20, activeCities) || [];
             }
             
             let finalHTML = '';
@@ -1914,7 +1917,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let adPool = [];
             if (db.adsEnabled) {
-                adPool = await db.getRandomAds(20) || [];
+                const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
+                adPool = await db.getRandomAds(20, activeCities) || [];
             }
 
             order.forEach(type => {
@@ -2512,7 +2516,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const freq = db.adFrequencyScroll || 10;
                 
                 if (db.adsEnabled && (window.detailSwipesCount % freq === 0)) {
-                    const adPool = db.getRandomAds(1) || [];
+                    const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
+                    const adPool = db.getRandomAds(1, activeCities) || [];
                     if (adPool.length > 0) {
                         const ad = adPool[0];
                         window.detailSwipesCount = 0;
