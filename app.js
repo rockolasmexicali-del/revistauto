@@ -6036,7 +6036,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const renderPaymentBrick = async (bricksBuilder) => {
                 const settings = {
                     initialization: {
-                        amount: Number(globalMonthlyPrice) || 350
+                        amount: (globalMonthlyPrice !== undefined && globalMonthlyPrice !== null && !isNaN(Number(globalMonthlyPrice))) ? Number(globalMonthlyPrice) : 350
                     },
                     customization: {
                         visual: {
@@ -6548,26 +6548,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.currentPendingAdId = savedAd.id;
                         window.currentPendingListingId = null;
                         
-                        const publishModal = document.getElementById('publish-options-modal');
-                        const priceText = document.getElementById('publish-price-text');
-                        if (priceText) {
-                            if (Number(globalAdMonthlyPrice) === 0) {
-                                priceText.textContent = 'Gratis';
-                            } else {
-                                priceText.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
-                            }
-                        }
-                        
                         if (publishModal) {
-                            document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
-                            document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
-                            document.getElementById('btn-option-pay-now').style.display = 'flex';
+                            const btnPayNow = document.getElementById('btn-option-pay-now');
                             const icon = document.getElementById('publish-later-icon');
-                            if (icon) icon.textContent = 'support_agent';
                             const title = document.getElementById('publish-later-title');
-                            if (title) title.textContent = 'Pago Asistido / Revisión';
                             const desc = document.getElementById('publish-later-desc');
-                            if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
+                            
+                            if (Number(globalAdMonthlyPrice) === 0) {
+                                document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
+                                document.getElementById('publish-modal-desc').textContent = 'Tu anuncio publicitario entrará a un breve proceso de revisión por nuestro equipo para ser autorizado durante un mes. ¿Deseas publicarlo ahora?';
+                                if (btnPayNow) btnPayNow.style.display = 'none';
+                                if (icon) icon.textContent = 'check_circle';
+                                if (title) title.textContent = 'Subir Anuncio';
+                                if (desc) desc.textContent = 'Haz clic aquí para enviar tu anuncio a revisión y publicarlo sin costo.';
+                            } else if (globalMpEnabled) {
+                                document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
+                                document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
+                                if (priceText) priceText.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                                if (btnPayNow) btnPayNow.style.display = 'flex';
+                                if (icon) icon.textContent = 'support_agent';
+                                if (title) title.textContent = 'Pago Asistido / Revisión';
+                                if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
+                            } else {
+                                document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
+                                document.getElementById('publish-modal-desc').textContent = 'Sube tu anuncio a continuación.';
+                                if (btnPayNow) btnPayNow.style.display = 'none';
+                                if (icon) icon.textContent = 'support_agent';
+                                if (title) title.textContent = 'Enviar a Revisión';
+                                if (desc) desc.textContent = 'Sube tu anuncio y nos pondremos en contacto contigo para completar la activación.';
+                            }
                             
                             publishModal.classList.add('active');
                         }
@@ -6643,7 +6652,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const renderPaymentBrick = async (bricksBuilder) => {
                 const settings = {
-                    initialization: { amount: Number(globalAdMonthlyPrice) || 500 },
+                    initialization: { 
+                        amount: (globalAdMonthlyPrice !== undefined && globalAdMonthlyPrice !== null && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500 
+                    },
                     customization: {
                         visual: { style: { theme: 'default' } },
                         paymentMethods: { creditCard: "all", debitCard: "all" }
