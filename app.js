@@ -847,21 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function populateMakesForType(selectedType) {
             formMake.innerHTML = '<option value="" disabled selected>Selecciona una marca</option>';
             
-            const motoOnlyMakes = ['Italika', 'Vento', 'Bajaj', 'Harley-Davidson', 'KTM', 'Polaris', 'Can-Am', 'CFMoto', 'Veloci', 'Hero', 'TVS', 'Indian Motorcycle', 'Aprilia', 'Kymco', 'Royal Enfield', 'Triumph', 'Ducati'];
-            const marineMakes = ['Sea-Doo', 'Yamaha', 'Honda', 'Suzuki', 'Kawasaki'];
-            const truckMakes = ['Kenworth', 'Freightliner', 'International', 'Peterbilt', 'Hino', 'Isuzu', 'Mack', 'Scania', 'Volvo', 'Foton', 'JAC', 'Ram', 'Chevrolet', 'Ford', 'GMC', 'Mercedes-Benz', 'Volkswagen'];
-            
-            let filteredMakes = catalogData.makes;
-            
-            if (selectedType === 'Motocicleta' || selectedType === 'Cuatrimoto / ATV') {
-                filteredMakes = catalogData.makes.filter(m => motoOnlyMakes.includes(m) || ['Honda', 'Yamaha', 'Suzuki', 'BMW', 'Sea-Doo', 'Kawasaki'].includes(m));
-            } else if (selectedType === 'Barco') {
-                filteredMakes = catalogData.makes.filter(m => marineMakes.includes(m));
-            } else if (selectedType === 'Camión') {
-                filteredMakes = catalogData.makes.filter(m => truckMakes.includes(m));
-            } else if (['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo'].includes(selectedType)) {
-                filteredMakes = catalogData.makes.filter(m => !motoOnlyMakes.includes(m));
-            }
+            const filteredMakes = db.getMakesForType(selectedType);
             
             filteredMakes.forEach(make => {
                 formMake.innerHTML += `<option value="${make}">${make}</option>`;

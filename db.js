@@ -847,8 +847,39 @@ class Database {
         return true;
     }
 
-    getPendingRenewals() {
-        return this.getAllListings().filter(l => l.status === 'autorizado' && !this.isListingActive(l));
+    getMakesForType(type) {
+        if (!type || type === 'Otros' || type === 'Todas') {
+            return (catalogData && catalogData.makes) ? catalogData.makes : defaultCatalogData.makes;
+        }
+
+        const typeMap = (catalogData && catalogData.modelsByTypeAndMake) 
+            ? catalogData.modelsByTypeAndMake[type] 
+            : (defaultCatalogData.modelsByTypeAndMake ? defaultCatalogData.modelsByTypeAndMake[type] : null);
+
+        if (typeMap) {
+            const availableMakes = Object.keys(typeMap).filter(make => typeMap[make] && typeMap[make].length > 0);
+            if (availableMakes.length > 0) {
+                return availableMakes;
+            }
+        }
+
+        const motoOnlyMakes = ['Italika', 'Vento', 'Bajaj', 'Harley-Davidson', 'KTM', 'Polaris', 'Can-Am', 'CFMoto', 'Veloci', 'Hero', 'TVS', 'Indian Motorcycle', 'Aprilia', 'Kymco', 'Royal Enfield', 'Triumph', 'Ducati'];
+        const marineMakes = ['Sea-Doo', 'Yamaha', 'Honda', 'Suzuki', 'Kawasaki'];
+        const truckMakes = ['Kenworth', 'Freightliner', 'International', 'Peterbilt', 'Hino', 'Isuzu', 'Mack', 'Scania', 'Volvo', 'Foton', 'JAC', 'Ram', 'Chevrolet', 'Ford', 'GMC', 'Mercedes-Benz', 'Volkswagen'];
+        
+        const allMakes = (catalogData && catalogData.makes) ? catalogData.makes : defaultCatalogData.makes;
+        
+        if (type === 'Motocicleta' || type === 'Cuatrimoto / ATV') {
+            return allMakes.filter(m => motoOnlyMakes.includes(m) || ['Honda', 'Yamaha', 'Suzuki', 'BMW', 'Sea-Doo', 'Kawasaki'].includes(m));
+        } else if (type === 'Barco') {
+            return allMakes.filter(m => marineMakes.includes(m));
+        } else if (type === 'Camión') {
+            return allMakes.filter(m => truckMakes.includes(m));
+        } else if (['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo'].includes(type)) {
+            return allMakes.filter(m => !motoOnlyMakes.includes(m));
+        }
+        
+        return allMakes;
     }
 
     getModelsForTypeAndMake(type, make) {
