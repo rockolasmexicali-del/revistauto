@@ -1305,7 +1305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ad) {
             // Fallback ad if no ads are available for this city
             return `
-            <div class="card ad-card" style="cursor: pointer; border: 1.5px solid #f59e0b; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: -14px; min-height: calc(100% + 14px); z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);" onclick="document.getElementById('btn-advertise').click()">
+            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: 0; height: 100%; min-height: 100%; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="document.getElementById('btn-advertise').click()">
                 <div class="card-img-wrapper" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none; padding: 22px 10px 14px;">
                     <span class="material-symbols-rounded" style="font-size: 50px; color: #f59e0b; filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5)); margin-bottom: 6px;">storefront</span>
                     <strong style="color: #fbbf24; font-size: 1.1rem; text-align: center; line-height: 1.2; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Anúnciate Aquí</strong>
@@ -1330,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : `window.openAdDetails('${ad.id}')`;
 
         return `
-            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: -14px; min-height: calc(100% + 14px); z-index: 10;" onclick="${clickAction}">
+            <div class="card ad-card" style="cursor: pointer; border: 1.5px solid var(--primary-color); border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: 0; height: 100%; min-height: 100%; z-index: 10;" onclick="${clickAction}">
                 <div style="position: relative; flex: 1; overflow: hidden; min-height: 0;">
                     <img src="${firstImage}" alt="${ad.title}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; background: #000; opacity: 0.95; display: block; position: absolute; top: 0; left: 0;">
                     <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); padding: 18px 8px 8px; text-align: center;">
