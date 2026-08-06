@@ -4579,7 +4579,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.remove('active');
             
-            db.logActivity('Renovación de vehículo', `Publicación #${id} renovada por 30 días.`);
+            const listing = db.getAllListings().find(l => String(l.id) === String(id));
+            const city = listing ? listing.city : 'N/A';
+            db.logActivity('Renovación de vehículo', `Publicación #${id}`, city);
 
             forceInstantAdminRefresh();
             showAlert('Publicación renovada por 30 días más.', 'Renovación Exitosa', 'autorenew');
@@ -4776,7 +4778,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.remove('active');
 
-            db.logActivity('Aprobación de vehículo', `Publicación #${id} aprobada.`);
+            const listing = db.getAllListings().find(l => String(l.id) === String(id));
+            const city = listing ? listing.city : 'N/A';
+            db.logActivity('Aprobación de vehículo', `Publicación #${id}`, city);
 
             forceInstantAdminRefresh();
             showAlert('La publicación ha sido aprobada exitosamente.', 'Publicación Aprobada', 'check_circle');
@@ -4797,7 +4801,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('reject-confirm-modal');
         if (modal) modal.classList.remove('active');
 
-        db.logActivity('Baja de vehículo', `Publicación #${id} eliminada.`);
+        const deletedListing = db.getAllListings().find(l => String(l.id) === String(id));
+        const city = deletedListing ? deletedListing.city : 'N/A';
+        db.logActivity('Baja de vehículo', `Publicación #${id}`, city);
 
         forceInstantAdminRefresh();
         showAlert('La publicación ha sido eliminada del sistema.', 'Publicación Eliminada', 'info');
@@ -4880,7 +4886,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 try {
                     await db.saveListing(updatedListing);
-                    db.logActivity('Edición de vehículo', `Publicación #${adminEditTargetId} editada.`);
+                    const listing = db.getAllListings().find(l => String(l.id) === String(adminEditTargetId));
+                    const city = listing ? listing.city : 'N/A';
+                    db.logActivity('Edición de vehículo', `Publicación #${adminEditTargetId}`, city);
                     if (updatedListing._pendingSync) {
                         showAlert('Guardado en tu dispositivo. Se subirá a la nube automáticamente cuando vuelva la conexión.', 'Guardado Offline', 'warning');
                     } else {
@@ -5833,9 +5841,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tr>
                     <td>${dateStr} <br><small style="color:var(--text-muted)">${timeStr}</small></td>
                     <td><strong>${log.user_username}</strong></td>
-                    <td><span style="font-size:0.8rem; background:var(--surface-light); padding:2px 6px; border-radius:4px;">${log.user_role}</span></td>
                     <td>${log.action}</td>
-                    <td><small style="color:var(--text-muted)">${log.details || ''}</small></td>
+                    <td>${log.city || '-'}</td>
+                    <td>${log.reference || '-'}</td>
                 </tr>
                 `;
             }).join('');
@@ -5911,7 +5919,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id) Object.assign(payload, { id }); // Add ID if updating
             const data = await db.saveAdminUser(payload);
             if (data.success) {
-                db.logActivity(id ? 'Edición de Usuario' : 'Creación de Usuario', `Usuario ${username} (${role}) ${id ? 'actualizado' : 'creado'}.`);
+                db.logActivity(id ? 'Edición de Usuario' : 'Creación de Usuario', `Usuario ${username} (${role})`, 'Global');
                 adminUserModal.classList.remove('active');
                 renderUsersAdmin();
                 showAlert('Usuario guardado con éxito', 'Éxito', 'check_circle');
@@ -5942,7 +5950,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await db.deleteAdminUser(id);
                 if (data.success) {
-                    db.logActivity('Eliminación de Usuario', `Usuario #${id} eliminado.`);
+                    db.logActivity('Eliminación de Usuario', `Usuario #${id}`, 'Global');
                     renderUsersAdmin();
                     showAlert('Usuario eliminado', 'Éxito', 'check_circle');
                 } else {

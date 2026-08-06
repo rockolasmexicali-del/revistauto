@@ -1336,7 +1336,7 @@ class Database {
     // AUDIT LOG (BITÁCORA DE ACTIVIDAD)
     // ============================================
 
-    async logActivity(action, details) {
+    async logActivity(action, reference, city = 'N/A') {
         const currentUser = window.currentAdminUser;
         if (!currentUser) return null;
 
@@ -1346,7 +1346,8 @@ class Database {
             user_username: currentUser.username || 'Desconocido',
             user_role: currentUser.role || 'Desconocido',
             action: action,
-            details: details
+            reference: reference,
+            city: city
         };
 
         // Guardar localmente
@@ -1386,7 +1387,8 @@ class Database {
                         user_username: log.user_username || log.user,
                         user_role: log.user_role || log.role,
                         action: log.action,
-                        details: log.details
+                        reference: log.reference || log.details || 'N/A',
+                        city: log.city || 'N/A'
                     }));
                     localStorage.setItem('revista_activity_logs', JSON.stringify(normalized));
                     return { success: true, logs: normalized };
