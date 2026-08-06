@@ -1303,9 +1303,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createAdCardHTML(ad, prevId = null, nextId = null) {
         if (!ad) {
+            const clickAction = (prevId && nextId) 
+                ? `window.openAdFromCatalog('demo-anunciate-aqui', '${prevId}', '${nextId}')`
+                : `window.openAdDetails('demo-anunciate-aqui')`;
+
             // Fallback ad if no ads are available for this city
             return `
-            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: 0; height: 100%; min-height: 100%; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="document.getElementById('btn-advertise').click()">
+            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: 0; height: 100%; min-height: 100%; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="${clickAction}">
                 <div class="card-img-wrapper" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none; padding: 22px 10px 14px;">
                     <span class="material-symbols-rounded" style="font-size: 50px; color: #f59e0b; filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5)); margin-bottom: 6px;">storefront</span>
                     <strong style="color: #fbbf24; font-size: 1.1rem; text-align: center; line-height: 1.2; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Anúnciate Aquí</strong>
@@ -1313,7 +1317,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 10px; text-align: center; background: rgba(245, 158, 11, 0.02);">
                     <span style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Tu negocio en esta zona</span>
                     <div style="width: 100%; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 6px 10px; text-align: center; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                        <span>👆</span> Toca para publicar
+                        <span>👆</span> Toca para ver detalles
                     </div>
                 </div>
                 <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 5px 0; font-size: 0.75rem; font-weight: 800; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.1em; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
@@ -1347,12 +1351,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openAdDetails = async function(adId) {
-        
-        let ad = db.getAllAds().find(a => String(a.id) === String(adId));
-        if (!ad) {
-            ad = await db.incrementAdViews(adId);
+        let ad;
+        if (String(adId) === 'demo-anunciate-aqui') {
+            const activeCityName = (selectedCities && selectedCities.length > 0) ? selectedCities.join(', ') : 'Tu Ciudad';
+            ad = {
+                id: 'demo-anunciate-aqui',
+                title: '¡Tu Negocio en RevistAuto!',
+                city: activeCityName,
+                description: '¡Posiciona tu negocio frente a miles de compradores activos en tu zona!\n\nAnuncia tu taller mecánico, llantera, refaccionaria, lote de autos, servicios de grúa o negocio local en RevistAuto.\n\nTu anuncio incluye:\n• Presencia destacada entre la búsqueda de vehículos en tu ciudad.\n• Carrusel promocional de hasta 7 fotografías.\n• Botón de llamada directa, WhatsApp y enlaces a tus redes sociales.\n• Dirección física y horarios de atención al cliente.\n\n👇 Toca en el botón amarillo de abajo para dar de alta tu anuncio hoy mismo.',
+                address: 'Dirección física de tu negocio (Ej. Av. Principal #123)',
+                scheduleMF: '8:00 AM - 6:00 PM',
+                scheduleSat: '9:00 AM - 3:00 PM',
+                scheduleSun: 'Cerrado',
+                phone: '6860000000',
+                whatsapp: '6860000000',
+                images: [
+                    'https://images.unsplash.com/photo-1556742049-0a67daf4005a?auto=format&fit=crop&w=1000&q=80',
+                    'https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=1000&q=80'
+                ],
+                social_links: [
+                    { title: 'Facebook', url: 'https://facebook.com' },
+                    { title: 'Instagram', url: 'https://instagram.com' }
+                ],
+                isDemoAd: true
+            };
         } else {
-            db.incrementAdViews(adId); // fire and forget para evitar parpadeo
+            ad = db.getAllAds().find(a => String(a.id) === String(adId));
+            if (!ad) {
+                ad = await db.incrementAdViews(adId);
+            } else {
+                db.incrementAdViews(adId); // fire and forget para evitar parpadeo
+            }
         }
         if (!ad) return;
 
@@ -1531,8 +1560,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnContact = document.getElementById('btn-ad-contactar');
         btnContact.style.display = 'none';
 
-        if (ad.whatsapp || ad.phone) {
+        if (ad.isDemoAd) {
             btnContact.style.display = 'flex';
+            btnContact.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+            btnContact.style.color = '#ffffff';
+            btnContact.style.fontWeight = '800';
+            btnContact.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.4)';
+            btnContact.innerHTML = '<span class="material-symbols-rounded" style="font-size: 22px;">campaign</span> ¡Quiero Anunciar Mi Negocio Aquí!';
+            btnContact.onclick = () => {
+                const modal = document.getElementById('ad-fullscreen-modal');
+                if (modal) modal.classList.remove('active');
+                document.getElementById('btn-advertise').click();
+            };
+        } else if (ad.whatsapp || ad.phone) {
+            btnContact.style.display = 'flex';
+            btnContact.style.background = '';
+            btnContact.style.color = '';
+            btnContact.style.fontWeight = '';
+            btnContact.style.boxShadow = '';
+            btnContact.innerHTML = '<span class="material-symbols-rounded">chat</span> Contactar';
             btnContact.onclick = () => {
                 const btnCall = document.getElementById('btn-contact-call');
                 const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
@@ -2518,38 +2564,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (db.adsEnabled && (window.detailSwipesCount % freq === 0)) {
                     const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
                     const adPool = db.getRandomAds(1, activeCities) || [];
-                    if (adPool.length > 0) {
-                        const ad = adPool[0];
-                        window.detailSwipesCount = 0;
-                        window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
-                        window.pendingPrevListingIdAfterAd = sameCategoryListings[currentIndex].id;
+                    const adIdToShow = (adPool.length > 0) ? adPool[0].id : 'demo-anunciate-aqui';
 
-                        // Misma animación que auto→auto: salida del auto, entrada del anuncio
-                        const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
-                        const animInClass  = direction === 1 ? 'slide-in-right' : 'slide-in-left';
-                        detalleContent.classList.add(animOutClass);
+                    window.detailSwipesCount = 0;
+                    window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
+                    window.pendingPrevListingIdAfterAd = sameCategoryListings[currentIndex].id;
 
-                        setTimeout(() => {
-                            // NO quitamos animOutClass aquí — el auto queda fuera de pantalla
-                            // sin parpadear mientras el modal del anuncio carga
-                            const adModal = document.getElementById('ad-fullscreen-modal');
-                            const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
-                            
-                            // Preparar animación ANTES de que el modal sea visible
+                    // Misma animación que auto→auto: salida del auto, entrada del anuncio
+                    const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
+                    const animInClass  = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+                    detalleContent.classList.add(animOutClass);
+
+                    setTimeout(() => {
+                        // NO quitamos animOutClass aquí — el auto queda fuera de pantalla
+                        // sin parpadear mientras el modal del anuncio carga
+                        const adModal = document.getElementById('ad-fullscreen-modal');
+                        const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
+                        
+                        // Preparar animación ANTES de que el modal sea visible
+                        if (contentDiv) {
+                            contentDiv.classList.add(animInClass);
+                        }
+
+                        window.openAdDetails(adIdToShow).then(() => {
+                            // Ahora el modal ya cubre la pantalla: reset del auto sin que se vea
+                            detalleContent.classList.remove(animOutClass);
                             if (contentDiv) {
-                                contentDiv.classList.add(animInClass);
+                                setTimeout(() => contentDiv.classList.remove(animInClass), 260);
                             }
-
-                            window.openAdDetails(ad.id).then(() => {
-                                // Ahora el modal ya cubre la pantalla: reset del auto sin que se vea
-                                detalleContent.classList.remove(animOutClass);
-                                if (contentDiv) {
-                                    setTimeout(() => contentDiv.classList.remove(animInClass), 260);
-                                }
-                            });
-                        }, 200);
-                        return;
-                    }
+                        });
+                    }, 200);
+                    return;
                 }
 
                 const nextId = sameCategoryListings[nextIndex].id;
