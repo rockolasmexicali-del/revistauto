@@ -30,10 +30,20 @@
 
 /* Prevenir salto de diseño (FOUT) cuando cargan los íconos */
 .material-symbols-rounded {
-    overflow: hidden;
-    max-width: 1.2em;
-    white-space: nowrap;
+    font-family: 'Material Symbols Rounded', sans-serif;
+    font-weight: normal;
+    font-style: normal;
     display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
     vertical-align: middle;
 }
 
