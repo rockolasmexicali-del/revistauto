@@ -761,6 +761,7 @@ class Database {
             listings[index].soldAt = new Date().toISOString();
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
             this.saveListing(listings[index]);
+            this.recordSaleHistory(listings[index]);
         }
     }
 
@@ -1225,6 +1226,87 @@ class Database {
             }
         }
         return [];
+    }
+
+    async recordSaleHistory(listing) {
+        if (!listing) return;
+        const soldAt = listing.soldAt || listing.sold_at || new Date().toISOString();
+        const saleRecord = {
+            listing_id: listing.id,
+            title: listing.title || `${listing.make || ''} ${listing.model || ''}`,
+            make: listing.make || '',
+            model: listing.model || '',
+            year: listing.year || null,
+            price: listing.price || null,
+            city: listing.city || '',
+            state: listing.state || '',
+            seller_name: listing.sellerName || listing.seller_name || '',
+            sold_at: soldAt,
+            created_at: new Date().toISOString()
+        };
+
+        // Guardar localmente
+        const localHistory = JSON.parse(localStorage.getItem('revista_autos_sales_history') || '[]');
+        const alreadyExists = localHistory.some(s => String(s.listing_id) === String(listing.id));
+        if (!alreadyExists) {
+            localHistory.push(saleRecord);
+            localStorage.setItem('revista_autos_sales_history', JSON.stringify(localHistory));
+        }
+
+        // Guardar en Supabase
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data: existing } = await supabaseClient
+                    .from('sales_history')
+                    .select('id')
+                    .eq('listing_id', listing.id)
+                    .maybeSingle();
+
+                if (!existing) {
+                    const { error } = await supabaseClient
+                        .from('sales_history')
+                        .insert([saleRecord]);
+                    if (error) {
+                        console.warn("Error guardando sales_history en Supabase:", error.message);
+                    }
+                }
+            } catch (err) {
+                console.warn("Error de red guardando sales_history:", err);
+            }
+        }
+    }
+
+    async fetchSalesHistory() {
+        let serverSales = [];
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('sales_history')
+                    .select('*')
+                    .order('sold_at', { ascending: false });
+
+                if (!error && Array.isArray(data)) {
+                    serverSales = data;
+                }
+            } catch (err) {
+                console.warn("Error de red obteniendo sales_history:", err);
+            }
+        }
+
+        const localSales = JSON.parse(localStorage.getItem('revista_autos_sales_history') || '[]');
+        const salesMap = new Map();
+
+        serverSales.forEach(s => salesMap.set(String(s.listing_id || s.id), s));
+        localSales.forEach(s => {
+            const key = String(s.listing_id || s.id);
+            if (!salesMap.has(key)) {
+                salesMap.set(key, s);
+            }
+        });
+
+        const combined = Array.from(salesMap.values());
+        localStorage.setItem('revista_autos_sales_history', JSON.stringify(combined));
+        return combined;
     }
     // ==========================================
     // SECCIÓN DE ANUNCIOS Y PUBLICIDAD (FASE 1)

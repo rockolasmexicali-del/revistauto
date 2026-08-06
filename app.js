@@ -3828,24 +3828,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateAdminStats() {
         const allListings = db.getAllListings();
         const active = allListings.filter(l => l.status === 'autorizado');
-        const soldCount = allListings.filter(l => l.status === 'vendido').length;
         const pendingCount = allListings.filter(l => l.status === 'pendiente autorizacion').length;
         
         const statViews = document.getElementById('stat-views');
         if (statViews) {
-            // Cargar datos reales asincrónicamente (sin fallback que cause parpadeo)
             db.fetchTrafficStats().then(data => {
                 window.trafficStatsCache = data;
                 const activeViewsBtn = document.querySelector('.quick-view-btn.active');
                 if (activeViewsBtn && typeof window.updateQuickViews === 'function') {
-                    const period = activeViewsBtn.getAttribute('onclick').match(/'(.*?)'/)[1];
+                    const onclickAttr = activeViewsBtn.getAttribute('onclick') || '';
+                    const match = onclickAttr.match(/'(.*?)'/);
+                    const period = match ? match[1] : 'todo';
                     window.updateQuickViews(period, activeViewsBtn);
                 } else if (typeof window.updateQuickViews === 'function') {
-                    // Default to total
                     window.updateQuickViews('todo', document.querySelector('.quick-view-btn[onclick*="todo"]'));
                 }
                 
-                // Actualizar la gráfica también
                 if (typeof window.renderTrafficChart === 'function') {
                     window.renderTrafficChart();
                 }
@@ -3855,14 +3853,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const statActive = document.getElementById('stat-active');
         if (statActive) statActive.textContent = active.length;
         
-        const activeSalesBtn = document.querySelector('.quick-sale-btn.active');
-        if (activeSalesBtn && typeof window.updateQuickSales === 'function') {
-            const period = activeSalesBtn.getAttribute('onclick').match(/'(.*?)'/)[1];
-            window.updateQuickSales(period, activeSalesBtn);
-        } else {
-            const statSold = document.getElementById('stat-sold');
-            if (statSold) statSold.textContent = soldCount;
-        }
+        // Cargar historial de ventas asincrónicamente
+        db.fetchSalesHistory().then(sales => {
+            window.salesHistoryCache = sales;
+            const activeSalesBtn = document.querySelector('.quick-sale-btn.active');
+            if (activeSalesBtn && typeof window.updateQuickSales === 'function') {
+                const onclickAttr = activeSalesBtn.getAttribute('onclick') || '';
+                const match = onclickAttr.match(/'(.*?)'/);
+                const period = match ? match[1] : 'todo';
+                window.updateQuickSales(period, activeSalesBtn);
+            } else if (typeof window.updateQuickSales === 'function') {
+                window.updateQuickSales('todo', document.querySelector('.quick-sale-btn[onclick*="todo"]'));
+            }
+        });
 
         const sidebarBadge = document.getElementById('sidebar-pending-badge');
         if (sidebarBadge) {
@@ -3888,53 +3891,75 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.updateQuickSales = function(period, btnElement) {
-        // Update active button styling
-        const container = btnElement.parentElement;
-        const buttons = container.querySelectorAll('.quick-sale-btn');
-        buttons.forEach(btn => {
-            btn.classList.remove('active');
-            btn.style.background = 'var(--surface-light)';
-            btn.style.color = 'var(--text-muted)';
-            btn.style.borderColor = 'var(--border-color)';
-        });
-        
-        btnElement.classList.add('active');
-        btnElement.style.background = 'var(--primary-color)';
-        btnElement.style.color = 'white';
-        btnElement.style.borderColor = 'var(--primary-color)';
+        if (btnElement) {
+            const container = btnElement.parentElement;
+            const buttons = container.querySelectorAll('.quick-sale-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = 'var(--surface-light)';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.borderColor = 'var(--border-color)';
+            });
+            
+            btnElement.classList.add('active');
+            btnElement.style.background = 'var(--primary-color)';
+            btnElement.style.color = 'white';
+            btnElement.style.borderColor = 'var(--primary-color)';
+        }
 
+        const sales = window.salesHistoryCache || [];
         const allListings = db.getAllListings();
         const soldListings = allListings.filter(l => l.status === 'vendido');
         
+        // Unificar histórico de ventas con autos actualmente marcados como vendidos
+        const salesMap = new Map();
+        sales.forEach(s => salesMap.set(String(s.listing_id || s.id), s));
+        soldListings.forEach(l => {
+            const key = String(l.id);
+            if (!salesMap.has(key)) {
+                salesMap.set(key, {
+                    listing_id: l.id,
+                    sold_at: l.soldAt || l.sold_at || l.publishedAt || l.published_at || new Date().toISOString()
+                });
+            }
+        });
+        const combinedSales = Array.from(salesMap.values());
+
         let filteredCount = 0;
         const now = new Date();
-        const dayOfWeek = now.getDay();
-        const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
+        const todayStr = now.toDateString();
         
         if (period === 'todo') {
-            filteredCount = soldListings.length;
+            filteredCount = combinedSales.length;
         } else {
-            soldListings.forEach(l => {
-                // Try to determine the sale date, fallback to published date or ID timestamp
-                const dateStr = l.soldAt || l.sold_at || l.publishedAt || l.published_at || (l.id && String(l.id).length >= 13 ? new Date(parseInt(l.id)).toISOString() : null);
+            combinedSales.forEach(s => {
+                const dateStr = s.sold_at || s.soldAt || s.created_at;
                 if (!dateStr) return;
                 
                 const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
                 
                 if (period === 'dia') {
-                    if (itemDate.toDateString() === now.toDateString()) {
-                        filteredCount++;
-                    }
-                } else if (period === 'semana') {
-                    if (itemDate >= startOfWeek && itemDate <= endOfWeek) {
+                    if (itemDate.toDateString() === todayStr) {
                         filteredCount++;
                     }
                 } else if (period === 'mes') {
                     if (itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()) {
+                        filteredCount++;
+                    }
+                } else if (period === 'ano' || period === 'año') {
+                    if (itemDate.getFullYear() === now.getFullYear()) {
+                        filteredCount++;
+                    }
+                } else if (period === 'semana') {
+                    const dayOfWeek = now.getDay();
+                    const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    endOfWeek.setHours(23, 59, 59, 999);
+
+                    if (itemDate >= startOfWeek && itemDate <= endOfWeek) {
                         filteredCount++;
                     }
                 }
@@ -3964,15 +3989,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let filteredViews = 0;
-        
+        const visitsData = window.trafficStatsCache || [];
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
         if (period === 'todo') {
+            // Sumar todo daily_visits histórico
+            const totalDailyVisits = visitsData.reduce((sum, row) => sum + (row.visits || 0), 0);
             const allListings = db.getAllListings();
-            filteredViews = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
-        } else {
-            const visitsData = window.trafficStatsCache || [];
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const totalListingsViews = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
             
+            // Usar el mayor entre ambos para no restar vistas acumuladas históricas
+            filteredViews = Math.max(totalDailyVisits, totalListingsViews);
+        } else {
             const dayOfWeek = now.getDay();
             const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
@@ -3987,7 +4016,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         filteredViews += row.visits || 0;
                     }
                 } else if (period === 'semana') {
-                    if (rowDate >= startOfWeek && rowDateStr <= todayStr) { // Up to today
+                    if (rowDate >= startOfWeek && rowDateStr <= todayStr) {
                         filteredViews += row.visits || 0;
                     }
                 } else if (period === 'mes') {
