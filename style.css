@@ -2029,8 +2029,8 @@ input:checked + .slider:before {
    GLOBAL NAVIGATION BUTTONS (Next / Prev on Fullscreen Modals)
    ========================================================================== */
 .global-nav-btn {
-    position: absolute;
-    top: 50%;
+    position: fixed;
+    top: 50vh;
     transform: translateY(-50%);
     background: rgba(255, 255, 255, 0.1);
     color: white;
@@ -2053,11 +2053,11 @@ input:checked + .slider:before {
 }
 
 .global-nav-btn.prev {
-    left: -80px;
+    left: max(20px, calc(50vw - 625px - 75px));
 }
 
 .global-nav-btn.next {
-    right: -80px;
+    right: max(20px, calc(50vw - 625px - 75px));
 }
 
 .global-nav-btn .material-symbols-rounded {
