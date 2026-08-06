@@ -45,6 +45,12 @@
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'liga';
     vertical-align: middle;
+    transition: opacity 0.15s ease;
+}
+
+html:not(.icons-loaded) .material-symbols-rounded {
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 body {
