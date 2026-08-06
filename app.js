@@ -2591,7 +2591,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (db.adsEnabled && (window.detailSwipesCount % freq === 0)) {
                     const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
                     const adPool = db.getRandomAds(1, activeCities) || [];
-                    if (adPool.length > 0) {
+                    if (adPool.length > 0 && adPool[0] !== null) {
                         const ad = adPool[0];
                         window.detailSwipesCount = 0;
                         window.pendingNextListingIdAfterAd = sameCategoryListings[nextIndex].id;
