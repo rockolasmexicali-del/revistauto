@@ -1398,8 +1398,8 @@ document.addEventListener('DOMContentLoaded', () => {
             : `window.openAdDetails('${ad.id}')`;
 
         return `
-            <div class="card ad-card" style="cursor: pointer; border: 1.5px solid var(--primary-color); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10;" onclick="${clickAction}">
-                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.70rem; font-weight: 700; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; z-index: 2; flex-shrink: 0;">
+            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="${clickAction}">
+                <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 5px 0; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; z-index: 2; flex-shrink: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
                     Patrocinador
                 </div>
                 <div class="card-img-wrapper" style="border-radius: 0; flex-grow: 1; height: 100%;">
