@@ -401,7 +401,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (inputAdPrice) inputAdPrice.value = globalAdMonthlyPrice;
 
                 const adPaymentNote = document.getElementById('ad-payment-note-price');
-                if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                if (adPaymentNote) {
+                    if (Number(globalAdMonthlyPrice) === 0) {
+                        adPaymentNote.textContent = 'Gratis';
+                    } else {
+                        adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                    }
+                }
                 
                 const publishPriceText = document.getElementById('publish-price-text');
                 if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
@@ -5525,10 +5531,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const adPaymentNote = document.getElementById('ad-payment-note-price');
-                if (adPaymentNote) adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                if (adPaymentNote) {
+                    if (Number(globalAdMonthlyPrice) === 0) {
+                        adPaymentNote.textContent = 'Gratis';
+                    } else {
+                        adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                    }
+                }
                 
                 const publishPriceText = document.getElementById('publish-price-text');
-                if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
+                if (publishPriceText) {
+                    if (Number(globalMonthlyPrice) === 0) {
+                        publishPriceText.textContent = 'Gratis';
+                    } else {
+                        publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
+                    }
+                }
                 
                 showAlert('Configuración guardada correctamente.', 'Éxito', 'check_circle');
                 if (typeof renderFeed === 'function') renderFeed();
