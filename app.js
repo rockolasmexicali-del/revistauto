@@ -156,7 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const customAlertTitle = document.getElementById('custom-alert-title');
     let customAlertTimeout;
     
-    window.showAlert = function(message, title = 'Notificación', icon = 'info') {
+    let onCustomAlertClose = null;
+
+    window.showAlert = function(message, title = 'Notificación', icon = 'info', onClose = null) {
+        onCustomAlertClose = onClose;
         customAlertMessage.textContent = message;
         customAlertTitle.textContent = title;
         document.getElementById('custom-alert-icon').innerHTML = `<span class="material-symbols-rounded">${icon}</span>`;
@@ -174,6 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if(customAlertTimeout) clearTimeout(customAlertTimeout);
         customAlertTimeout = setTimeout(() => {
             customAlertModal.classList.remove('active');
+            if (typeof onCustomAlertClose === 'function') {
+                const cb = onCustomAlertClose;
+                onCustomAlertClose = null;
+                cb();
+            }
         }, 9000); // Se cierra en 9 segundos
     };
     let isExiting = false;
@@ -183,6 +191,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCustomAlertOk.addEventListener('click', () => {
             customAlertModal.classList.remove('active');
             if(customAlertTimeout) clearTimeout(customAlertTimeout);
+            if (typeof onCustomAlertClose === 'function') {
+                const cb = onCustomAlertClose;
+                onCustomAlertClose = null;
+                cb();
+            }
         });
         
         // Permitir cerrar la alerta presionando Enter
@@ -6570,14 +6583,17 @@ document.addEventListener('DOMContentLoaded', () => {
         clonedLater.addEventListener('click', () => {
             document.getElementById('publish-options-modal').classList.remove('active');
             if (window.currentPendingAdId) {
-                showAlert('Tu anuncio ha sido guardado y está pendiente de aprobación.', 'Anuncio Creado', 'check_circle');
                 window.currentPendingAdId = null;
-                if (typeof switchView === 'function') switchView('view-alta');
+                showAlert('Tu anuncio ha sido guardado y está pendiente de aprobación.', 'Anuncio Creado', 'check_circle', () => {
+                    if (typeof switchView === 'function') switchView('view-alta');
+                    if (typeof renderMyListings === 'function') renderMyListings();
+                });
             } else {
-                showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle');
-                if (typeof switchView === 'function') switchView('view-alta');
+                showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle', () => {
+                    if (typeof switchView === 'function') switchView('view-alta');
+                    if (typeof renderMyListings === 'function') renderMyListings();
+                });
             }
-            if (typeof renderMyListings === 'function') renderMyListings();
         });
     }
     
@@ -6632,10 +6648,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                         await db.saveAd(ads[adIdx]);
                                     }
                                     
-                                    showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle');
                                     window.currentPendingAdId = null;
-                                    if (typeof switchView === 'function') switchView('view-alta');
-                                    if (typeof renderMyListings === 'function') renderMyListings();
+                                    showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle', () => {
+                                        if (typeof switchView === 'function') switchView('view-alta');
+                                        if (typeof renderMyListings === 'function') renderMyListings();
+                                    });
                                 }, 2000);
                             });
                         },
