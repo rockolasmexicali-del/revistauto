@@ -936,11 +936,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             populateMakesForType(selectedType);
+            if (formMake.value && formMake.value !== '') {
+                formMake.dispatchEvent(new Event('change'));
+            }
         });
 
-        // Dynamic models based on make (for form)
+        // Dynamic models based on make and type (for form)
         formMake.addEventListener('change', (e) => {
             const make = e.target.value;
+            const selectedType = formType ? formType.value : null;
             formModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
             
             if (make === 'Otros') {
@@ -955,8 +959,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 formCustomMake.required = false;
                 formCustomMake.value = '';
 
-                if (catalogData.modelsByMake[make]) {
-                    catalogData.modelsByMake[make].forEach(model => {
+                const models = db.getModelsForTypeAndMake(selectedType, make);
+
+                if (models && models.length > 0) {
+                    models.forEach(model => {
                         formModel.innerHTML += `<option value="${model}">${model}</option>`;
                     });
                 } else {
