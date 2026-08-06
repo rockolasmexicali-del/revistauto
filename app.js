@@ -1305,18 +1305,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ad) {
             // Fallback ad if no ads are available for this city
             return `
-            <div class="card ad-card" style="cursor: pointer; border: 1px solid var(--primary-color); display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: -14px; min-height: calc(100% + 14px); z-index: 10;" onclick="document.getElementById('btn-advertise').click()">
-                <div class="card-img-wrapper" style="background: rgba(245, 158, 11, 0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none; padding: 20px 10px;">
-                    <span class="material-symbols-rounded" style="font-size: 44px; color: var(--primary-color); opacity: 0.9; margin-bottom: 6px;">storefront</span>
-                    <strong style="color: var(--primary-color); font-size: 1.05rem; text-align: center; line-height: 1.2;">Anúnciate Aquí</strong>
+            <div class="card ad-card" style="cursor: pointer; border: 1.5px solid #f59e0b; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: -14px; min-height: calc(100% + 14px); z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);" onclick="document.getElementById('btn-advertise').click()">
+                <div class="card-img-wrapper" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none; padding: 22px 10px 14px;">
+                    <span class="material-symbols-rounded" style="font-size: 50px; color: #f59e0b; filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5)); margin-bottom: 6px;">storefront</span>
+                    <strong style="color: #fbbf24; font-size: 1.1rem; text-align: center; line-height: 1.2; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Anúnciate Aquí</strong>
                 </div>
-                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 10px; text-align: center;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Tu negocio en esta zona</span>
-                    <div style="width: 100%; background: transparent; color: var(--primary-color); text-align: center; font-weight: 600; font-size: 0.85rem;">
-                        <span style="font-size: 0.9rem; margin-right: 4px;">👆</span> Toca para publicar
+                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 10px; text-align: center; background: rgba(245, 158, 11, 0.02);">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Tu negocio en esta zona</span>
+                    <div style="width: 100%; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 6px 10px; text-align: center; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <span>👆</span> Toca para publicar
                     </div>
                 </div>
-                <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 700; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.08em;">
+                <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 5px 0; font-size: 0.75rem; font-weight: 800; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.1em; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
                     Patrocinador
                 </div>
             </div>
