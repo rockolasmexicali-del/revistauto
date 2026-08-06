@@ -6546,8 +6546,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
 
                         window.currentPendingAdId = savedAd.id;
+                        window.currentPendingListingId = null;
+                        
                         const publishModal = document.getElementById('publish-options-modal');
-                        if (publishModal) publishModal.classList.add('active');
+                        const priceText = document.getElementById('publish-price-text');
+                        if (priceText) {
+                            if (Number(globalAdMonthlyPrice) === 0) {
+                                priceText.textContent = 'Gratis';
+                            } else {
+                                priceText.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                            }
+                        }
+                        
+                        if (publishModal) {
+                            document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
+                            document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
+                            document.getElementById('btn-option-pay-now').style.display = 'flex';
+                            const icon = document.getElementById('publish-later-icon');
+                            if (icon) icon.textContent = 'support_agent';
+                            const title = document.getElementById('publish-later-title');
+                            if (title) title.textContent = 'Pago Asistido / Revisión';
+                            const desc = document.getElementById('publish-later-desc');
+                            if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
+                            
+                            publishModal.classList.add('active');
+                        }
                     }, 300);
                 }
             } catch (err) {
