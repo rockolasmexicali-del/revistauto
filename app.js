@@ -1402,18 +1402,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="background-color: var(--primary-color); color: white; text-align: center; padding: 4px 0; font-size: 0.70rem; font-weight: 700; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; z-index: 2; flex-shrink: 0;">
                     Patrocinador
                 </div>
-                <div class="card-img-wrapper" style="border-radius: 0;">
-                    <div class="card-img-carousel" style="overflow-x: hidden;">
-                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="background: #000; opacity: 0.95;">
-                    </div>
-                </div>
-                <div class="card-content" style="flex-grow: 1;">
-                    <h4 class="card-title" style="color: var(--primary-color); font-weight: 700;">${ad.title || 'Anuncio Especial'}</h4>
-                    <p class="card-price" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 4px; line-height: 1.3; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                        ${ad.description || 'Descubre lo que este negocio tiene para ti.'}
-                    </p>
-                    <div class="card-meta" style="margin-top: 8px;">
-                        <span><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle; margin-right:2px; margin-top:-2px;">location_on</span>${ad.city || 'Varios'}</span>
+                <div class="card-img-wrapper" style="border-radius: 0; flex-grow: 1; height: 100%;">
+                    <div class="card-img-carousel" style="overflow-x: hidden; height: 100%;">
+                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="background: #000; opacity: 0.95; height: 100%; object-fit: cover;">
                     </div>
                 </div>
             </div>
