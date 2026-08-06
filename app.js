@@ -1402,9 +1402,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 5px 0; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; z-index: 2; flex-shrink: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
                     Patrocinador
                 </div>
-                <div class="card-img-wrapper" style="border-radius: 0; flex-grow: 1; height: 100%;">
-                    <div class="card-img-carousel" style="overflow-x: hidden; height: 100%;">
-                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="background: #000; opacity: 0.95; height: 100%; object-fit: cover;">
+                <div class="card-img-wrapper" style="border-radius: 0; flex-grow: 1; height: 100%; background: transparent;">
+                    <div class="card-img-carousel" style="overflow-x: hidden; height: 100%; display: flex; align-items: center; justify-content: center;">
+                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; background: transparent;">
                     </div>
                 </div>
             </div>
