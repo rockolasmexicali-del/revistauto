@@ -597,6 +597,32 @@ class Database {
         };
     }
 
+    async fetchCategoryStats(cities = []) {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+            return [];
+        }
+        try {
+            let query = supabaseClient
+                .from('listings')
+                .select('type, views')
+                .eq('status', 'autorizado');
+                
+            if (cities && cities.length > 0) {
+                query = query.in('city', cities);
+            }
+            
+            const { data, error } = await query;
+            if (error) {
+                console.warn('Error fetching category stats:', error);
+                return [];
+            }
+            return data || [];
+        } catch (e) {
+            console.warn('Network error fetching category stats:', e);
+            return [];
+        }
+    }
+
     // --- ADS MANAGEMENT ---
     getAllAds() {
         const ads = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');

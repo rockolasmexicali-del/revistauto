@@ -1282,27 +1282,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function getSortedCategoriesByPopularity() {
-        // Combinar locales con los del feed activo para tener mejor muestreo
-        const localListings = db.getAllListings().filter(l => db.isListingActive(l));
-        const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
-        let listings = [...localListings];
-        feedListings.forEach(fl => {
-            if (!listings.some(l => String(l.id) === String(fl.id))) {
-                listings.push(fl);
-            }
-        });
-        
-        // Filtrar por ciudad para que la popularidad sea hiper-local
-        if (selectedCities.length > 0) {
-            listings = listings.filter(l => selectedCities.includes(l.city));
+    window.cachedCategoryStats = null;
+    
+    window.refreshCategoryRanking = async function(cities) {
+        if (typeof db.fetchCategoryStats === 'function') {
+            window.cachedCategoryStats = await db.fetchCategoryStats(cities);
         }
+    };
 
+    function getSortedCategoriesByPopularity() {
         const viewCounts = {};
-        listings.forEach(l => {
-            if (!viewCounts[l.type]) viewCounts[l.type] = 0;
-            viewCounts[l.type] += (l.views || 0);
-        });
+        
+        if (window.cachedCategoryStats && window.cachedCategoryStats.length > 0) {
+            // Usar datos reales y completos del servidor
+            window.cachedCategoryStats.forEach(item => {
+                if (!viewCounts[item.type]) viewCounts[item.type] = 0;
+                viewCounts[item.type] += (item.views || 0);
+            });
+        } else {
+            // Fallback al muestreo local si el caché aún no está listo
+            const localListings = db.getAllListings().filter(l => db.isListingActive(l));
+            const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+            let listings = [...localListings];
+            feedListings.forEach(fl => {
+                if (!listings.some(l => String(l.id) === String(fl.id))) {
+                    listings.push(fl);
+                }
+            });
+            
+            if (selectedCities.length > 0) {
+                listings = listings.filter(l => selectedCities.includes(l.city));
+            }
+            
+            listings.forEach(l => {
+                if (!viewCounts[l.type]) viewCounts[l.type] = 0;
+                viewCounts[l.type] += (l.views || 0);
+            });
+        }
 
         const sortedTypes = catalogData && catalogData.types ? [...catalogData.types] : [];
         sortedTypes.sort((a, b) => {
@@ -2047,7 +2063,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-
+        // Refrescar ranking desde el servidor antes de renderizar
+        if (typeof window.refreshCategoryRanking === 'function') {
+            await window.refreshCategoryRanking(selectedCities);
+        }
+        
         populateHomeCategories();
 
         // Reset pagination state
