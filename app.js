@@ -7202,7 +7202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             searchInput.addEventListener('input', () => window.renderAdminAdsTable());
         }
 
-        let ads = db.getAllAds();
+        let ads = db.getAllAds().filter(a => a.payment_status !== 'pendiente');
 
         // --- FILTRO EMPLEADO LIMITADO: solo ve anuncios de su región ---
         const currentRole = window.currentAdminUser ? window.currentAdminUser.role : null;
@@ -7360,7 +7360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
         if (!list) return;
 
-        let pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente' || !a.is_active);
+        let pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente');
 
         if (badge) badge.textContent = pendingAds.length;
         if (sidebarBadge) {
