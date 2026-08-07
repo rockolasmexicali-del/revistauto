@@ -2644,8 +2644,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Usar la cola de 3 niveles construida desde la búsqueda avanzada
                     sameCategoryListings = window.searchCascadeList;
                 } else {
-                    // Comportamiento normal: navegar por la misma categoría
+                    // Comportamiento normal: navegar por la misma categoría respetando la ciudad actual
                     sameCategoryListings = db.getAllListings().filter(l => db.isListingActive(l) && l.type === listing.type);
+                    if (typeof selectedCities !== 'undefined' && selectedCities.length > 0) {
+                        sameCategoryListings = sameCategoryListings.filter(l => selectedCities.includes(l.city));
+                    }
                 }
                 if (sameCategoryListings.length <= 1) return;
                 
