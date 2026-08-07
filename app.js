@@ -1283,7 +1283,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getSortedCategoriesByPopularity() {
-        let listings = db.getAllListings().filter(l => db.isListingActive(l));
+        // Combinar locales con los del feed activo para tener mejor muestreo
+        const localListings = db.getAllListings().filter(l => db.isListingActive(l));
+        const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+        let listings = [...localListings];
+        feedListings.forEach(fl => {
+            if (!listings.some(l => String(l.id) === String(fl.id))) {
+                listings.push(fl);
+            }
+        });
         
         // Filtrar por ciudad para que la popularidad sea hiper-local
         if (selectedCities.length > 0) {
@@ -1947,25 +1955,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Nivel 3: misma categoría/tipo, no en nivel 1 ni 2
     function buildSearchSwipeQueue(startingId, ctx) {
         if (!ctx || !ctx.level1) return null;
-        const allActive = db.getAllListings().filter(l => db.isListingActive(l));
-        const startingListing = allActive.find(l => l.id === startingId);
+        
+        // Unir datos disponibles localmente para hacer la cascada
+        const localListings = db.getAllListings().filter(l => db.isListingActive(l));
+        const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+        const level1 = ctx.level1;
+        
+        const allActiveMap = new Map();
+        [...localListings, ...feedListings, ...level1].forEach(l => {
+            allActiveMap.set(String(l.id), l);
+        });
+        const allActive = Array.from(allActiveMap.values());
+        
+        const startingListing = allActive.find(l => String(l.id) === String(startingId));
         if (!startingListing) return null;
 
-        const level1 = ctx.level1;
-        const level1Ids = new Set(level1.map(l => l.id));
+        const level1Ids = new Set(level1.map(l => String(l.id)));
 
         // Nivel 2: mismo modelo, no está en el nivel 1
         const level2 = allActive.filter(l =>
-            !level1Ids.has(l.id) &&
+            !level1Ids.has(String(l.id)) &&
             l.model && startingListing.model &&
             l.model.toLowerCase() === startingListing.model.toLowerCase()
         );
 
         // Nivel 3: misma categoría/tipo, no está en nivel 1 ni nivel 2
-        const level2Ids = new Set(level2.map(l => l.id));
+        const level2Ids = new Set(level2.map(l => String(l.id)));
         const level3 = allActive.filter(l =>
-            !level1Ids.has(l.id) &&
-            !level2Ids.has(l.id) &&
+            !level1Ids.has(String(l.id)) &&
+            !level2Ids.has(String(l.id)) &&
             l.type === startingListing.type
         );
 
