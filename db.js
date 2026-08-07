@@ -242,11 +242,11 @@ const defaultCatalogData = {
             'Scania': ['Serie R', 'Serie S', 'Serie G', 'Serie P', 'Serie L'],
             'Volvo': ['VNL', 'VNR', 'FH', 'FM'],
             'Mercedes-Benz': ['Actros', 'Atego', 'Axor', 'Sprinter'],
-            'Foton': ['Auman', 'Aumark', 'Tunland', 'View CS2', 'Gratour', 'Toano'],
+            'Foton': ['Auman', 'Aumark', 'View CS2', 'Gratour', 'Toano'],
             'JAC': ['Sunray', 'X200'],
-            'Ford': ['Transit', 'F-350', 'F-450', 'F-550'],
+            'Ford': ['Transit'],
             'Chevrolet': ['Express'],
-            'Ram': ['ProMaster', 'ProMaster Rapid', '4000', '4500', '5500'],
+            'Ram': ['ProMaster', 'ProMaster Rapid'],
             'Peugeot': ['Manager', 'Expert', 'Partner'],
             'Renault': ['Master', 'Kangoo']
         }
