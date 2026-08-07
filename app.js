@@ -2525,8 +2525,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Saved / Library ---
     function renderSavedListings() {
-        const all = db.getAllListings();
-        const saved = all.filter(l => savedListingsIds.includes(l.id) && l.status === 'autorizado');
+        const allLocal = db.getAllListings();
+        const allFeed = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+        
+        // Combinar ambas fuentes evitando duplicados
+        const allMap = new Map();
+        [...allLocal, ...allFeed].forEach(l => {
+            allMap.set(String(l.id), l);
+        });
+        const all = Array.from(allMap.values());
+        
+        const saved = all.filter(l => savedListingsIds.includes(Number(l.id)) && l.status === 'autorizado');
         
         if (saved.length === 0) {
             savedListingsContainer.innerHTML = `
