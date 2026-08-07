@@ -1454,13 +1454,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="${clickAction}">
-                <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 5px 0; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; z-index: 2; flex-shrink: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
-                    Patrocinador
-                </div>
-                <div class="card-img-wrapper" style="border-radius: 0; flex-grow: 1; height: 100%; background: transparent;">
-                    <div class="card-img-carousel" style="overflow-x: hidden; height: 100%; display: flex; align-items: center; justify-content: center;">
-                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="width: 100%; height: 100%; object-fit: contain; background: transparent;">
+                <div class="card-img-wrapper">
+                    <div class="card-img-carousel" style="overflow-x: hidden; width: 100%; height: 100%;">
+                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
+                </div>
+                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 12px; background: rgba(245, 158, 11, 0.05);">
+                    <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; border-radius: 4px; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">
+                        Patrocinador
+                    </div>
+                    <h4 class="card-title" style="text-align: center; margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.title || 'Toca para ver detalles'}</h4>
                 </div>
             </div>
         `;
