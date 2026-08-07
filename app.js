@@ -23,6 +23,15 @@ window.appConfirm = function(message, onConfirm, title = '¿Estás seguro?') {
     modal.classList.add('active');
 };
 
+window.buildWhatsAppUrl = function(phone, title) {
+    if (!phone) return '#';
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+        cleanPhone = '521' + cleanPhone;
+    }
+    const message = encodeURIComponent(`Hola, vi tu anuncio de "${title}" en RevistAuto y me interesa.`);
+    return `https://wa.me/${cleanPhone}?text=${message}`;
+};
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
