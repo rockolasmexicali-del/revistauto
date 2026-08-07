@@ -1434,9 +1434,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <strong style="color: #fbbf24; font-size: 1.1rem; text-align: center; line-height: 1.2; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Anúnciate Aquí</strong>
                 </div>
                 <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 12px; background: rgba(245, 158, 11, 0.05);">
-                    <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; border-radius: 4px; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">
-                        Patrocinador
-                    </div>
                     <div style="width: 100%; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 6px 4px; text-align: center; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
                         <span>👆</span> Toca para publicar
                     </div>
@@ -1453,10 +1450,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="${clickAction}">
-                <div style="position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.3); flex-shrink: 0;">
                     Patrocinador
                 </div>
-                <div style="flex-grow: 1; width: 100%; height: 100%; display: flex;">
+                <div style="flex-grow: 1; width: 100%; min-height: 0; display: flex;">
                     <img src="${firstImage}" alt="Anuncio" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
             </div>
