@@ -3173,7 +3173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${paymentBtnHTML}
                             <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
                                 <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
-                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', async () => { await db.deleteAd(${ad.id}); if(typeof renderMyListings === 'function') renderMyListings(); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
+                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', async () => { await db.deleteAd(${ad.id}); const container = document.getElementById('my-listings-container'); if(container) delete container.dataset.lastState; if(typeof renderMyListings === 'function') renderMyListings(); showAlert('Anuncio eliminado correctamente.', 'Eliminado', 'check_circle'); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                             </div>
                         </div>
                     </div>
@@ -4604,7 +4604,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await db.deleteAd(adId);
             showAlert('Anuncio eliminado', 'Eliminado', 'info');
-            if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
+            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
             if (typeof renderMyListings === 'function') renderMyListings();
         } catch(e) {
             showAlert('Error al eliminar anuncio', 'Error', 'error');
@@ -7245,7 +7245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>
                         <div style="display:flex; gap:6px;">
                             <button class="primary-btn" onclick="window.openAdminEditAdModal(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
-                            <button class="danger-btn" onclick="window.appConfirm('\u00bfEliminar esta publicidad?', async () => { await db.deleteAd(${ad.id}); renderAdminAdsTable(); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
+                            <button class="danger-btn" onclick="window.appConfirm('\u00bfEliminar esta publicidad?', async () => { await db.deleteAd(${ad.id}); const tbody = document.getElementById('ads-table-body'); if(tbody) delete tbody.dataset.lastState; renderAdminAdsTable(); showAlert('Publicidad eliminada.', 'Eliminada', 'check_circle'); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
                         </div>
                     </td>
                 </tr>
@@ -7533,8 +7533,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteAdAdmin = async function(id) {
         window.appConfirm('¿Rechazar y eliminar permanentemente este anuncio?', async () => {
             await db.deleteAd(id);
-            showAlert('Anuncio rechazado.', 'Eliminado', 'info');
-            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+            showAlert('Anuncio rechazado y eliminado.', 'Eliminado', 'info');
+            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
         });
     };
 
