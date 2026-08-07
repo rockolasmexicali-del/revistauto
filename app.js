@@ -1990,11 +1990,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return [...level1, ...level2, ...level3];
     }
 
-    let currentFeedPage = 1;
-    let isLoadingFeed = false;
-    let hasMoreFeedItems = true;
-    let activeFeedListings = [];
-    const PAGE_SIZE = 20;
+    var currentFeedPage = 1;
+    var isLoadingFeed = false;
+    var hasMoreFeedItems = true;
+    var activeFeedListings = [];
+    var PAGE_SIZE = 20;
 
     async function fetchNextFeedBlock() {
         if (isLoadingFeed || !hasMoreFeedItems) return;
