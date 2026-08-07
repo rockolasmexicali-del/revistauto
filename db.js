@@ -1,4 +1,4 @@
-const APP_VERSION = "1.1.3"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.1.4"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -416,25 +416,20 @@ class Database {
             try {
                 await this.syncAdsWithServer();
                 
-                let queryStr = `publisher_id.eq.${this.uuid}`; // Mis anuncios
+                let query = supabaseClient.from('listings').select('*').order('created_at', { ascending: false });
                 
-                // Para incluir favoritos (Guardados)
-                const savedIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
-                if (savedIds.length > 0) {
-                    queryStr += `,id.in.(${savedIds.join(',')})`;
-                }
+                const isAdmin = localStorage.getItem('admin_token') !== null;
                 
-                // Si es admin, también traemos los pendientes para el panel
-                const isAdmin = localStorage.getItem('revista_admin') === 'true';
-                if (isAdmin) {
-                    queryStr += `,status.eq.pendiente`;
+                if (!isAdmin) {
+                    let queryStr = `publisher_id.eq.${this.uuid}`; // Mis anuncios
+                    const savedIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
+                    if (savedIds.length > 0) {
+                        queryStr += `,id.in.(${savedIds.join(',')})`;
+                    }
+                    query = query.or(queryStr);
                 }
 
-                const { data, error } = await supabaseClient
-                    .from('listings')
-                    .select('*')
-                    .or(queryStr)
-                    .order('created_at', { ascending: false });
+                const { data, error } = await query;
 
                 if (!error && Array.isArray(data)) {
                     this.isServerConnected = true;
