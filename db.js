@@ -1371,6 +1371,68 @@ class Database {
     }
 
     // --- Analytics Reales ---
+    async recordTraffic(source) {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Generar ID único de sesión temporal si no existe
+                if (!sessionStorage.getItem('revista_visitor_id')) {
+                    sessionStorage.setItem('revista_visitor_id', 'v_' + Math.random().toString(36).substring(2));
+                }
+                const isNewVisitor = !sessionStorage.getItem('revista_visitor_counted_' + today);
+                
+                // Get current stats for today
+                let { data: stats } = await supabaseClient
+                    .from('traffic_stats')
+                    .select('*')
+                    .eq('date', today)
+                    .maybeSingle();
+
+                if (!stats) {
+                    stats = { date: today, page_views: 0, unique_visitors: 0, app_opens: 0, web_visits: 0 };
+                    await supabaseClient.from('traffic_stats').insert([stats]);
+                }
+
+                // Prepare update payload
+                const payload = { page_views: (stats.page_views || 0) + 1 };
+                
+                if (isNewVisitor) {
+                    payload.unique_visitors = (stats.unique_visitors || 0) + 1;
+                    sessionStorage.setItem('revista_visitor_counted_' + today, 'true');
+                    
+                    if (source === 'pwa' || window.matchMedia('(display-mode: standalone)').matches) {
+                        payload.app_opens = (stats.app_opens || 0) + 1;
+                    } else {
+                        payload.web_visits = (stats.web_visits || 0) + 1;
+                    }
+                }
+
+                await supabaseClient.from('traffic_stats').update(payload).eq('date', today);
+            } catch (err) {
+                console.warn('Error recording traffic:', err);
+            }
+        }
+    }
+
+    async fetchTrafficStats() {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('traffic_stats')
+                    .select('*')
+                    .order('date', { ascending: false });
+
+                if (!error && data) {
+                    return data;
+                }
+            } catch (err) {
+                console.warn('Error fetching traffic stats:', err);
+            }
+        }
+        return [];
+    }
+
     async incrementViews(id) {
         // Evitar múltiples conteos por sesión para el mismo anuncio
         let viewedThisSession = [];
