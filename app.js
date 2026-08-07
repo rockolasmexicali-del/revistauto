@@ -2081,6 +2081,29 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             feedContainer.classList.remove('listings-grid');
             window.netflixRowData = {}; // Initialize for lazy loading horizontal rows
+            
+            // Pre-crear las filas en el DOM en el orden EXACTO de popularidad
+            // Inicialmente estarán ocultas (display: none)
+            const popularCategories = getSortedCategoriesByPopularity();
+            let emptyRowsHTML = '';
+            popularCategories.forEach(type => {
+                if (type !== 'Todos') {
+                    emptyRowsHTML += `
+                    <div class="netflix-row" data-category="${type}" style="display: none;">
+                        <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer;">
+                            ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
+                        </h3>
+                        <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
+                            <span class="material-symbols-rounded">chevron_left</span>
+                        </button>
+                        <button class="row-nav-btn next" onclick="scrollNetflixRow(event, this, 1)">
+                            <span class="material-symbols-rounded">chevron_right</span>
+                        </button>
+                        <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)"></div>
+                    </div>`;
+                }
+            });
+            feedContainer.innerHTML = emptyRowsHTML;
         }
 
         await fetchNextFeedBlock();
@@ -2127,11 +2150,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const freq = db.adFrequencyScroll || 10;
 
-            for (const type in grouped) {
+            const sortedTypes = getSortedCategoriesByPopularity();
+            
+            for (const type of sortedTypes) {
+                if (!grouped[type] || grouped[type].length === 0) continue;
+
                 let existingRow = feedContainer.querySelector(`.netflix-row[data-category="${type}"]`);
                 
-                // Contar cuántos autos de este tipo ya se han renderizado basándonos en activeFeedListings
-                // Restamos la cantidad de newItems de este grupo, porque newItems ya se agregó a activeFeedListings en fetchNextFeedBlock
                 const typeListings = activeFeedListings.filter(l => l.type === type);
                 const existingCountForType = typeListings.length - grouped[type].length;
                 
@@ -2141,7 +2166,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const item = grouped[type][i];
                     rowCardsHTML += createListingCardHTML(item, true);
                     
-                    // Insertar anuncio si corresponde a la frecuencia configurada
                     if (db.adsEnabled && (existingCountForType + i + 1) % freq === 0) {
                         const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
                         rowCardsHTML += createAdCardHTML(ad, item.id, item.id);
@@ -2151,26 +2175,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (existingRow) {
                     const scroller = existingRow.querySelector('.netflix-row-scroll');
                     if (scroller) scroller.insertAdjacentHTML('beforeend', rowCardsHTML);
-                } else {
-                    const html = `
-                    <div class="netflix-row" data-category="${type}">
-                        <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer;">
-                            ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
-                        </h3>
-                        <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
-                            <span class="material-symbols-rounded">chevron_left</span>
-                        </button>
-                        <button class="row-nav-btn next" onclick="scrollNetflixRow(event, this, 1)">
-                            <span class="material-symbols-rounded">chevron_right</span>
-                        </button>
-                        <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)">
-                            ${rowCardsHTML}
-                        </div>
-                    </div>`;
-                    feedContainer.insertAdjacentHTML('beforeend', html);
+                    existingRow.style.display = 'block'; // Mostrar la fila si estaba oculta
                 }
             }
-
             // Initialize nav buttons visibility after DOM update
             setTimeout(() => {
                 feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
