@@ -846,9 +846,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyDetectedLocation(cachedLocation.state, cachedLocation.city, false);
             } catch (e) { }
         }
-        
-        // 2. Validación en segundo plano (GPS)
-        setTimeout(() => detectUserLocation(false), 300);
+        } else {
+            // No hay ubicación en caché -> Mostramos Pantalla de Bienvenida GPS
+            const gpsModal = document.getElementById('gps-welcome-modal');
+            const btnActivateGps = document.getElementById('btn-activate-gps');
+            if (gpsModal && btnActivateGps) {
+                gpsModal.classList.add('active');
+                
+                // Conectar el botón azul
+                btnActivateGps.addEventListener('click', () => {
+                    gpsModal.classList.remove('active'); // Ocultar rápido para mejor UX
+                    detectUserLocation(true); // El true asegura que se marque como clic manual
+                });
+            } else {
+                // Fallback de seguridad por si el modal no existe
+                setTimeout(() => detectUserLocation(false), 300);
+            }
+        }
 
         const formCustomMake = document.getElementById('form-custom-make');
         const formCustomModel = document.getElementById('form-custom-model');
