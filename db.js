@@ -1013,7 +1013,46 @@ class Database {
         return shuffled.slice(0, count);
     }
     
-    search(criteria) {
+    async search(criteria) {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            let query = supabaseClient.from('listings').select('*').eq('status', 'autorizado');
+            
+            if (criteria.query) {
+                const q = criteria.query.toLowerCase();
+                query = query.or(`title.ilike.%${q}%,make.ilike.%${q}%,model.ilike.%${q}%,type.ilike.%${q}%`);
+            }
+            if (criteria.cities && criteria.cities.length > 0) {
+                query = query.in('city', criteria.cities);
+            }
+            if (criteria.year) {
+                query = query.eq('year', criteria.year);
+            }
+            if (criteria.minYear) {
+                query = query.gte('year', criteria.minYear);
+            }
+            if (criteria.maxYear) {
+                query = query.lte('year', criteria.maxYear);
+            }
+            if (criteria.transmission && criteria.transmission !== 'Todas') {
+                query = query.eq('transmission', criteria.transmission);
+            }
+            if (criteria.legal && criteria.legal !== 'Todas') {
+                query = query.eq('legal', criteria.legal);
+            }
+            if (criteria.color && criteria.color !== 'Todos') {
+                query = query.eq('color', criteria.color);
+            }
+            
+            // Limit search results to avoid massive payloads
+            query = query.limit(50);
+            
+            const { data, error } = await query;
+            if (!error && data) {
+                return data;
+            }
+        }
+        
+        // Fallback offline (sólo buscará en favoritos y mis anuncios)
         let results = this.getAllListings().filter(l => this.isListingActive(l));
         
         if (criteria.query) {

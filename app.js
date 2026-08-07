@@ -2401,7 +2401,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    btnSearch.addEventListener('click', () => {
+    btnSearch.addEventListener('click', async () => {
         const queryText = searchInput.value.trim();
         
         if (!queryText) {
@@ -2432,13 +2432,23 @@ document.addEventListener('DOMContentLoaded', () => {
             color: filterColor ? filterColor.value : 'Todos'
         };
 
-        const results = db.search(criteria);
+        // Mostrar spinner
+        searchResults.innerHTML = '<div class="spinner" style="color: var(--primary-color); margin: 2rem auto; text-align: center;">Buscando vehículos...</div>';
+        const originalBtnHTML = btnSearch.innerHTML;
+        btnSearch.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">refresh</span>';
+        btnSearch.disabled = true;
+
+        const results = await db.search(criteria);
+        
+        btnSearch.innerHTML = originalBtnHTML;
+        btnSearch.disabled = false;
         
         if (results.length === 0) {
             // Mostrar modal temporal
             showAlert('Por el momento no contamos con vehículos que coincidan con tu búsqueda. ¡Intenta ajustando los filtros o seleccionando otra ciudad!', 'Sin inventario disponible', 'info');
             setTimeout(() => {
-                document.getElementById('custom-alert-modal').classList.remove('active');
+                const alertModal = document.getElementById('custom-alert-modal');
+                if(alertModal) alertModal.classList.remove('active');
             }, 3000); // Se cierra solo en 3 segundos
             
             // Y limpiar el HTML para que no queden cosas raras
@@ -2479,10 +2489,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Detalles ---
-    window.openListingDetails = function(id) {
+    window.openListingDetails = async function(id) {
+        let listing = null;
+        const strId = String(id);
+        
+        // 1. Buscar en Caché Local (Favoritos o Mis Anuncios)
         const allListings = db.getAllListings();
-        const listing = allListings.find(l => l.id === id);
-        if(!listing) return;
+        listing = allListings.find(l => String(l.id) === strId);
+        
+        // 2. Buscar en Feed Activo (Paginado)
+        if (!listing && typeof activeFeedListings !== 'undefined') {
+            listing = activeFeedListings.find(l => String(l.id) === strId);
+        }
+        
+        // 3. Buscar en contexto de búsqueda (si venimos de una búsqueda reciente)
+        if (!listing && window.currentSearchContext && window.currentSearchContext.level1) {
+            listing = window.currentSearchContext.level1.find(l => String(l.id) === strId);
+        }
+        
+        // 4. Si aún no está, intentar buscar en Supabase directamente (fuente de la verdad)
+        if (!listing && typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('listings')
+                    .select('*')
+                    .eq('id', strId)
+                    .maybeSingle();
+                
+                if (data && !error) {
+                    listing = {
+                        ...data,
+                        notes: Array.isArray(data.notes) ? data.notes : (typeof data.notes === 'string' ? JSON.parse(data.notes || '[]') : []),
+                        payments: Array.isArray(data.payments) ? data.payments : (typeof data.payments === 'string' ? JSON.parse(data.payments || '[]') : []),
+                        isMyListing: data.publisher_id === window.db.uuid || data.publisherId === window.db.uuid
+                    };
+                }
+            } catch (err) {
+                console.error("Error fetching individual listing:", err);
+            }
+        }
+
+        if(!listing) {
+            console.error("Listing no encontrado en local ni en servidor:", id);
+            return;
+        }
 
         // Incrementar vistas usando la nueva función analítica en segundo plano
         db.incrementViews(id).then(() => {
