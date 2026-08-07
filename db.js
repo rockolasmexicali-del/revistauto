@@ -318,6 +318,17 @@ defaultCatalogData.makes.forEach(make => {
     }
 });
 
+// Sincronizar tipos y mapeo de modelos por tipo
+if (!catalogData.types) {
+    catalogData.types = [...defaultCatalogData.types];
+} else {
+    defaultCatalogData.types.forEach(t => {
+        if (!catalogData.types.includes(t)) catalogData.types.push(t);
+    });
+}
+catalogData.modelsByTypeAndMake = defaultCatalogData.modelsByTypeAndMake;
+localStorage.setItem('revista_autos_catalog', JSON.stringify(catalogData));
+
 const initialListings = [];
 
 class Database {
