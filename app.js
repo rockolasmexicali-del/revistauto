@@ -2125,17 +2125,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!grouped[l.type]) grouped[l.type] = [];
                 grouped[l.type].push(l);
             });
-
             const freq = db.adFrequencyScroll || 10;
 
             for (const type in grouped) {
                 let existingRow = feedContainer.querySelector(`.netflix-row[data-category="${type}"]`);
+                
+                // Contar cuántos autos de este tipo ya se han renderizado basándonos en activeFeedListings
+                // Restamos la cantidad de newItems de este grupo, porque newItems ya se agregó a activeFeedListings en fetchNextFeedBlock
+                const typeListings = activeFeedListings.filter(l => l.type === type);
+                const existingCountForType = typeListings.length - grouped[type].length;
+                
                 let rowCardsHTML = '';
                 
                 for (let i = 0; i < grouped[type].length; i++) {
                     const item = grouped[type][i];
                     rowCardsHTML += createListingCardHTML(item, true);
-                    if (Math.random() > 0.8 && db.adsEnabled) { // Insert ads randomly in horizontal rows
+                    
+                    // Insertar anuncio si corresponde a la frecuencia configurada
+                    if (db.adsEnabled && (existingCountForType + i + 1) % freq === 0) {
                         const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
                         rowCardsHTML += createAdCardHTML(ad, item.id, item.id);
                     }
