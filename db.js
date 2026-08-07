@@ -505,9 +505,14 @@ class Database {
                         };
                     });
 
-                    localStorage.setItem(this.listingsKey, JSON.stringify(normalized));
-                    if (typeof window.onServerDataSynced === 'function') {
-                        window.onServerDataSynced();
+                    const newListingsStr = JSON.stringify(normalized);
+                    const oldListingsStr = localStorage.getItem(this.listingsKey);
+                    
+                    if (newListingsStr !== oldListingsStr) {
+                        localStorage.setItem(this.listingsKey, newListingsStr);
+                        if (typeof window.onServerDataSynced === 'function') {
+                            window.onServerDataSynced();
+                        }
                     }
                 } else {
                     console.error('Error fetching listings from Supabase:', error);
@@ -1668,9 +1673,14 @@ class Database {
                         };
                     });
 
-                    localStorage.setItem('revista_autos_ads', JSON.stringify(normalizedAds));
-                    if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
-                    if (typeof window.onServerDataSynced === 'function') window.onServerDataSynced();
+                    const newAdsStr = JSON.stringify(normalizedAds);
+                    const oldAdsStr = localStorage.getItem('revista_autos_ads');
+                    
+                    if (newAdsStr !== oldAdsStr) {
+                        localStorage.setItem('revista_autos_ads', newAdsStr);
+                        if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
+                        if (typeof window.onServerDataSynced === 'function') window.onServerDataSynced();
+                    }
                 }
             } catch (err) {
                 console.error('Error fetching ads from Supabase:', err);
