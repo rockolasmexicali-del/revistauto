@@ -1,3 +1,5 @@
+const APP_VERSION = "1.0.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+
 const defaultCatalogData = {
     makes: [
         'Acura', 'Alfa Romeo', 'Aprilia', 'Aston Martin', 'Audi', 'BAIC', 'Bajaj', 'Bentley', 
@@ -302,6 +304,15 @@ const defaultCatalogData = {
         'Zacatecas': ['Zacatecas', 'Guadalupe', 'Fresnillo']
     }
 };
+
+// Sistema de Control de Versiones / Cache Invalidation
+const currentLocalVersion = localStorage.getItem('revista_app_version');
+if (currentLocalVersion !== APP_VERSION) {
+    console.log(`Versión actualizada de ${currentLocalVersion} a ${APP_VERSION}. Purgando caché obsoleta...`);
+    localStorage.removeItem('revista_autos_catalog');
+    // Actualizamos la versión local
+    localStorage.setItem('revista_app_version', APP_VERSION);
+}
 
 let catalogData = JSON.parse(localStorage.getItem('revista_autos_catalog')) || defaultCatalogData;
 if (!catalogData.colors) catalogData.colors = defaultCatalogData.colors;
