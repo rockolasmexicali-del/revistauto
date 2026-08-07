@@ -1,4 +1,4 @@
-const APP_VERSION = "1.1.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.1.2"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [

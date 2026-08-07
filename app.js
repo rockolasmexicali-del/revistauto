@@ -586,6 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Trigger specific logic per view
                 if (targetViewId === 'view-inicio') renderFeed();
+                if (targetViewId === 'view-busqueda') { if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome(); }
                 if (targetViewId === 'view-biblioteca') renderSavedListings();
                 if (targetViewId === 'view-alta') renderMyListings();
             });
@@ -704,6 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // Al cambiar de estado, resetear el botón de ciudades
             if (window.updateCitiesBtn) window.updateCitiesBtn();
+            if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
             renderFeed();
         });
 
@@ -739,15 +741,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (window.customUserFilterStateSelect) window.customUserFilterStateSelect.update();
                 if (window.updateCitiesBtn) window.updateCitiesBtn();
+                if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
                 
-                filterState.value = matchedState;
-                filterState.dispatchEvent(new Event('change'));
-                if (matchedCity) {
-                    filterCity.value = matchedCity;
-                }
-                if (window.customFilterStateSelect) window.customFilterStateSelect.update();
-                if (window.customFilterCitySelect) window.customFilterCitySelect.update();
-
                 renderFeed();
                 
                 // Guardar en caché local
@@ -1263,9 +1258,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: state, city: selectedCities[0] }));
             }
             
+            if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
             renderFeed();
         });
     }
+
+    function syncSearchLocationWithHome() {
+        if (!filterState || !filterCity || !userStateSelect) return;
+        const homeState = userStateSelect.value || 'Todos';
+        
+        filterState.value = homeState;
+        
+        filterCity.innerHTML = '';
+        if (homeState === 'Todos') {
+            filterCity.innerHTML = '<option value="Todas" selected>Todas las ciudades</option>';
+        } else {
+            const stateCities = (window.activeLocations && window.activeLocations.citiesByState[homeState]) 
+                || (catalogData && catalogData.citiesByState[homeState]) 
+                || [];
+            
+            if (selectedCities.length > 1 && homeState === userStateSelect.value) {
+                filterCity.innerHTML = `<option value="Todas" selected>${selectedCities.length} ciudades</option>`;
+            } else {
+                filterCity.innerHTML = '<option value="Todas">Todas las ciudades</option>';
+            }
+            
+            stateCities.forEach(city => {
+                const isSel = (selectedCities.length === 1 && selectedCities[0] === city);
+                filterCity.innerHTML += `<option value="${city}" ${isSel ? 'selected' : ''}>${city}</option>`;
+            });
+        }
+
+        if (selectedCities.length === 1 && homeState === userStateSelect.value) {
+            filterCity.value = selectedCities[0];
+        } else {
+            filterCity.value = 'Todas';
+        }
+
+        if (window.customFilterStateSelect) window.customFilterStateSelect.update();
+        if (window.customFilterCitySelect) window.customFilterCitySelect.update();
+    }
+    window.syncSearchLocationWithHome = syncSearchLocationWithHome;
 
     function updateStateSelectLabel(state) {
         if (state === 'Todos') return;
@@ -2427,16 +2460,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(window.customFilterColorSelect) window.customFilterColorSelect.update();
             }
 
-            // Resetear ubicación al GPS original
-            filterState.value = userStateSelect.value;
-            filterState.dispatchEvent(new Event('change'));
-            if (selectedCities.length === 1) {
-                filterCity.value = selectedCities[0];
-            } else {
-                filterCity.value = 'Todas';
-            }
-            if (window.customFilterStateSelect) window.customFilterStateSelect.update();
-            if (window.customFilterCitySelect) window.customFilterCitySelect.update();
+            // Resetear ubicación con la de INICIO (Unidireccional)
+            if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
 
             setTimeout(() => {
                 searchFiltersContainer.style.height = 'auto';
@@ -2468,7 +2493,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stateVal === 'Todos') {
             searchCities = []; // No city filter
         } else if (cityVal === 'Todas') {
-            searchCities = catalogData.citiesByState[stateVal] || [];
+            if (stateVal === userStateSelect.value && selectedCities && selectedCities.length > 0) {
+                searchCities = [...selectedCities];
+            } else {
+                searchCities = (window.activeLocations && window.activeLocations.citiesByState[stateVal]) 
+                    || (catalogData && catalogData.citiesByState[stateVal]) 
+                    || [];
+            }
         } else {
             searchCities = [cityVal];
         }
