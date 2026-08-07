@@ -1577,24 +1577,32 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Añadir soporte para deslizar (swipe)
             let touchStartX = 0;
+            let touchStartY = 0;
             let touchEndX = 0;
+            let touchEndY = 0;
             
             carousel.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
             
             carousel.addEventListener('touchend', e => {
                 touchEndX = e.changedTouches[0].screenX;
-                const swipeDist = touchStartX - touchEndX;
+                touchEndY = e.changedTouches[0].screenY;
+                const swipeDistX = touchStartX - touchEndX;
+                const diffX = Math.abs(swipeDistX);
+                const diffY = Math.abs(touchStartY - touchEndY);
                 
-                // Si la distancia es mayor a 40px, lo consideramos un swipe intencional
-                if (swipeDist > 40) {
-                    if (ad.images && ad.images.length > 1) {
-                        if (typeof scrollAdCarousel === 'function') scrollAdCarousel(1);
-                    }
-                } else if (swipeDist < -40) {
-                    if (ad.images && ad.images.length > 1) {
-                        if (typeof scrollAdCarousel === 'function') scrollAdCarousel(-1);
+                // Solo avanzar fotos si el movimiento es predominantemente HORIZONTAL
+                if (diffX > 40 && diffX > diffY) {
+                    if (swipeDistX > 40) {
+                        if (ad.images && ad.images.length > 1) {
+                            if (typeof scrollAdCarousel === 'function') scrollAdCarousel(1);
+                        }
+                    } else if (swipeDistX < -40) {
+                        if (ad.images && ad.images.length > 1) {
+                            if (typeof scrollAdCarousel === 'function') scrollAdCarousel(-1);
+                        }
                     }
                 }
             }, { passive: true });
@@ -1782,26 +1790,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (infoDiv && !infoDiv.dataset.swipeInitialized) {
             infoDiv.dataset.swipeInitialized = 'true';
             let startX = 0;
+            let startY = 0;
             let endX = 0;
+            let endY = 0;
 
             infoDiv.addEventListener('touchstart', (e) => {
                 startX = e.changedTouches[0].screenX;
+                startY = e.changedTouches[0].screenY;
             }, {passive: true});
 
             infoDiv.addEventListener('touchend', (e) => {
                 endX = e.changedTouches[0].screenX;
+                endY = e.changedTouches[0].screenY;
+                const diffX = Math.abs(endX - startX);
+                const diffY = Math.abs(endY - startY);
                 const threshold = 50;
                 
-                // Si la distancia es mayor al threshold, es un swipe y navegamos
-                if (Math.abs(endX - startX) > threshold) {
+                // Solo navegamos si es un gesto predominantemente HORIZONTAL (ignorar scroll vertical)
+                if (diffX > threshold && diffX > diffY) {
                     if (endX < startX - threshold) {
                         if(window.navigateAdGlobal) window.navigateAdGlobal(1);
                     } else if (endX > startX + threshold) {
                         if(window.navigateAdGlobal) window.navigateAdGlobal(-1);
                     }
                 }
-                // Si no superó el threshold (fue solo un toque), 
-                // permitimos que el navegador dispare el click normal del botón
             }, {passive: true});
         }
 
@@ -2599,19 +2611,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const infoDiv = detalleContent.querySelector('.detalle-info');
         if (infoDiv) {
             let startX = 0;
+            let startY = 0;
             let endX = 0;
+            let endY = 0;
 
             infoDiv.addEventListener('touchstart', (e) => {
                 startX = e.changedTouches[0].screenX;
+                startY = e.changedTouches[0].screenY;
             }, {passive: true});
 
             infoDiv.addEventListener('touchend', (e) => {
                 endX = e.changedTouches[0].screenX;
+                endY = e.changedTouches[0].screenY;
                 
+                const diffX = Math.abs(endX - startX);
+                const diffY = Math.abs(endY - startY);
                 const threshold = 50; // mínimo movimiento en píxeles
                 
-                // Si la distancia es mayor al threshold, es un swipe y navegamos
-                if (Math.abs(endX - startX) > threshold) {
+                // Solo navegamos si es un gesto predominantemente HORIZONTAL (ignorar scroll vertical)
+                if (diffX > threshold && diffX > diffY) {
                     if (endX < startX - threshold) {
                         // Swipe Izquierda -> Siguiente
                         navigateListing(1);
@@ -2620,8 +2638,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         navigateListing(-1);
                     }
                 }
-                // Si no superó el threshold (fue solo un toque), 
-                // permitimos que el navegador dispare el click normal del botón
             }, {passive: true});
 
             const navigateListing = (direction) => {
