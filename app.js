@@ -694,11 +694,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const state = e.target.value;
             if (state === 'Todos') {
                 selectedCities = [];
+                localStorage.removeItem('revista_last_location');
             } else {
                 selectedCities = [...(window.activeLocations.citiesByState[state] || [])];
                 // Reset text just in case it had a city appended
                 const option = Array.from(userStateSelect.options).find(opt => opt.value === state);
                 if(option) option.textContent = state;
+                localStorage.setItem('revista_last_location', JSON.stringify({ state: state, city: selectedCities[0] || '' }));
             }
             // Al cambiar de estado, resetear el botón de ciudades
             if (window.updateCitiesBtn) window.updateCitiesBtn();
@@ -762,16 +764,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function forceAllStatesAndRender() {
-            const userStateSelect = document.getElementById('user-state-select');
-            const filterState = document.getElementById('filter-state');
-            if (userStateSelect) userStateSelect.value = 'Todos';
-            if (filterState) {
-                filterState.value = 'Todos';
-                filterState.dispatchEvent(new Event('change'));
-            }
-            if (window.customUserFilterStateSelect) window.customUserFilterStateSelect.update();
-            if (window.customFilterStateSelect) window.customFilterStateSelect.update();
-            renderFeed();
+            // Requisito: Siempre debe haber una ciudad. Si falla todo, asignamos ciudad por defecto
+            applyDetectedLocation('Baja California', 'Mexicali', false);
         }
 
         function detectUserLocation(isManualClick = false) {
@@ -1220,6 +1214,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         window.updateCitiesBtn = updateCitiesBtn;
+        
+        // Forzar actualización inicial por si la ubicación se cargó de caché antes de montar esta función
+        updateCitiesBtn();
 
         btnUserCities.addEventListener('click', () => {
             const state = userStateSelect.value;
@@ -1260,6 +1257,12 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedCities = Array.from(checkboxes).map(cb => cb.value);
             citiesModal.classList.remove('active');
             updateCitiesBtn();
+            
+            const state = userStateSelect.value;
+            if (state !== 'Todos' && selectedCities.length > 0) {
+                localStorage.setItem('revista_last_location', JSON.stringify({ state: state, city: selectedCities[0] }));
+            }
+            
             renderFeed();
         });
     }
@@ -1453,8 +1456,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.3); flex-shrink: 0;">
                     Patrocinador
                 </div>
-                <div style="flex-grow: 1; width: 100%; min-height: 0; display: flex;">
-                    <img src="${firstImage}" alt="Anuncio" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="flex-grow: 1; width: 100%; position: relative;">
+                    <img src="${firstImage}" alt="Anuncio" loading="lazy" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
                 </div>
             </div>
         `;
