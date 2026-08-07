@@ -1428,19 +1428,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ad) {
             // Fallback ad if no ads are available for this city
             return `
-            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-top: 0; height: 100%; min-height: 100%; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="document.getElementById('btn-advertise').click()">
-                <div class="card-img-wrapper" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none; padding: 22px 10px 14px;">
+            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="document.getElementById('btn-advertise').click()">
+                <div class="card-img-wrapper" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none;">
                     <span class="material-symbols-rounded" style="font-size: 50px; color: #f59e0b; filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5)); margin-bottom: 6px;">storefront</span>
                     <strong style="color: #fbbf24; font-size: 1.1rem; text-align: center; line-height: 1.2; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Anúnciate Aquí</strong>
                 </div>
-                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 10px; text-align: center; background: rgba(245, 158, 11, 0.02);">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Tu negocio en esta zona</span>
-                    <div style="width: 100%; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 6px 10px; text-align: center; font-weight: 700; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 12px; background: rgba(245, 158, 11, 0.05);">
+                    <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; border-radius: 4px; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">
+                        Patrocinador
+                    </div>
+                    <div style="width: 100%; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 6px 4px; text-align: center; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px;">
                         <span>👆</span> Toca para publicar
                     </div>
-                </div>
-                <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 5px 0; font-size: 0.75rem; font-weight: 800; width: 100%; z-index: 2; text-transform: uppercase; letter-spacing: 0.1em; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
-                    Patrocinador
                 </div>
             </div>
             `;
@@ -1454,16 +1453,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="${clickAction}">
-                <div class="card-img-wrapper">
-                    <div class="card-img-carousel" style="overflow-x: hidden; width: 100%; height: 100%;">
-                        <img src="${firstImage}" alt="${ad.title || 'Anuncio'}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
+                <div style="position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                    Patrocinador
                 </div>
-                <div class="card-content" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; padding: 12px; background: rgba(245, 158, 11, 0.05);">
-                    <div style="background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; text-align: center; padding: 4px 0; border-radius: 4px; font-size: 0.75rem; font-weight: 800; width: 100%; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">
-                        Patrocinador
-                    </div>
-                    <h4 class="card-title" style="text-align: center; margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.title || 'Toca para ver detalles'}</h4>
+                <div style="flex-grow: 1; width: 100%; height: 100%; display: flex;">
+                    <img src="${firstImage}" alt="Anuncio" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
             </div>
         `;
