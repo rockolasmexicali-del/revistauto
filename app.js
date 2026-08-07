@@ -2493,13 +2493,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stateVal === 'Todos') {
             searchCities = []; // No city filter
         } else if (cityVal === 'Todas') {
-            if (stateVal === userStateSelect.value && selectedCities && selectedCities.length > 0) {
-                searchCities = [...selectedCities];
-            } else {
-                searchCities = (window.activeLocations && window.activeLocations.citiesByState[stateVal]) 
-                    || (catalogData && catalogData.citiesByState[stateVal]) 
-                    || [];
-            }
+            searchCities = (window.activeLocations && window.activeLocations.citiesByState[stateVal]) 
+                || (catalogData && catalogData.citiesByState[stateVal]) 
+                || [];
         } else {
             searchCities = [cityVal];
         }
