@@ -3052,7 +3052,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (listing.status === 'pendiente autorizacion') {
                 const payInfo = getListingPaymentInfo(listing);
                 priceTextHTML = `<p style="font-size: 0.75rem; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; color: var(--danger-color); margin-top: 6px; font-weight: 500; letter-spacing: 0.3px; opacity: 0.9;">${payInfo.textDesc}</p>`;
-                if (globalMpEnabled && listing.paymentStatus === 'pending') {
+                if (globalMpEnabled && listing.paymentStatus === 'pending' && payInfo.calculatedPrice > 0) {
                     paymentBtnHTML = `<button class="primary-btn" onclick="window.openedFromDashboard=true; openMercadoPagoBrick(${listing.id}, false)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
                 }
             } else if (listing.status === 'autorizado' || listing.status === 'activo') {
