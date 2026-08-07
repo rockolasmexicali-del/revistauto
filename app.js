@@ -2968,8 +2968,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.contactSeller = function(listingId) {
-        const allListings = db.getAllListings();
-        const listing = allListings.find(l => String(l.id) === String(listingId));
+        const strId = String(listingId);
+        let listing = db.getAllListings().find(l => String(l.id) === strId);
+        
+        if (!listing && typeof activeFeedListings !== 'undefined') {
+            listing = activeFeedListings.find(l => String(l.id) === strId);
+        }
+        if (!listing && window.currentSearchContext && window.currentSearchContext.level1) {
+            listing = window.currentSearchContext.level1.find(l => String(l.id) === strId);
+        }
+
         if (listing) {
             let phone = listing.whatsapp || listing.phone || "5512345678";
             if (phone) {
