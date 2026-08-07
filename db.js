@@ -1,4 +1,4 @@
-const APP_VERSION = "1.0.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.1.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -415,9 +415,25 @@ class Database {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 await this.syncAdsWithServer();
+                
+                let queryStr = `publisher_id.eq.${this.uuid}`; // Mis anuncios
+                
+                // Para incluir favoritos (Guardados)
+                const savedIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
+                if (savedIds.length > 0) {
+                    queryStr += `,id.in.(${savedIds.join(',')})`;
+                }
+                
+                // Si es admin, también traemos los pendientes para el panel
+                const isAdmin = localStorage.getItem('revista_admin') === 'true';
+                if (isAdmin) {
+                    queryStr += `,status.eq.pendiente`;
+                }
+
                 const { data, error } = await supabaseClient
                     .from('listings')
                     .select('*')
+                    .or(queryStr)
                     .order('created_at', { ascending: false });
 
                 if (!error && Array.isArray(data)) {
@@ -532,6 +548,53 @@ class Database {
             payments: Array.isArray(l.payments) ? l.payments : (typeof l.payments === 'string' ? JSON.parse(l.payments || '[]') : []),
             isMyListing: l.publisherId === this.uuid || l.publisher_id === this.uuid
         }));
+    }
+
+    async fetchFeedPaginated({ page = 1, pageSize = 20, state = null, cities = [], filters = {} } = {}) {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+            return { data: [], total: 0, hasMore: false };
+        }
+
+        const from = (page - 1) * pageSize;
+        const to = page * pageSize - 1;
+
+        let query = supabaseClient
+            .from('listings')
+            .select('*', { count: 'exact' })
+            .eq('status', 'autorizado')
+            .order('created_at', { ascending: false })
+            .range(from, to);
+
+        if (cities && cities.length > 0) {
+            query = query.in('city', cities);
+        } else if (state && state !== 'Todos') {
+            query = query.eq('state', state);
+        }
+
+        if (filters.category && filters.category !== 'Todos') {
+            query = query.eq('type', filters.category);
+        }
+        if (filters.searchQuery) {
+            query = query.or(`title.ilike.%${filters.searchQuery}%,make.ilike.%${filters.searchQuery}%,model.ilike.%${filters.searchQuery}%`);
+        }
+
+        const { data, error, count } = await query;
+
+        if (error) {
+            console.error('Error fetching paginated listings:', error);
+            return { data: [], total: 0, hasMore: false };
+        }
+
+        const normalizedData = (data || []).map(item => ({
+            ...item,
+            isMyListing: item.publisher_id === this.uuid || item.publisherId === this.uuid
+        }));
+
+        return {
+            data: normalizedData,
+            total: count || 0,
+            hasMore: to < (count - 1)
+        };
     }
 
     // --- ADS MANAGEMENT ---

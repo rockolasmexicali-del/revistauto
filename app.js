@@ -1972,6 +1972,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return [...level1, ...level2, ...level3];
     }
 
+    let currentFeedPage = 1;
+    let isLoadingFeed = false;
+    let hasMoreFeedItems = true;
+    let activeFeedListings = [];
+    const PAGE_SIZE = 20;
+
+    async function fetchNextFeedBlock() {
+        if (isLoadingFeed || !hasMoreFeedItems) return;
+        isLoadingFeed = true;
+        
+        // Mostrar spinner de carga si existe el centinela
+        const sentinel = document.getElementById('feed-infinite-scroll-sentinel');
+        if (sentinel) sentinel.style.display = 'block';
+
+        const state = userStateSelect.value;
+        const res = await db.fetchFeedPaginated({
+            page: currentFeedPage,
+            pageSize: PAGE_SIZE,
+            state: state,
+            cities: selectedCities,
+            filters: { category: currentFeedCategory }
+        });
+
+        if (res.data.length > 0) {
+            // Eliminar duplicados por id
+            const newItems = res.data.filter(newItem => !activeFeedListings.some(existing => existing.id === newItem.id));
+            activeFeedListings = [...activeFeedListings, ...newItems];
+            
+            // Añadir al DOM
+            appendFeedListingsToDOM(newItems);
+            
+            currentFeedPage++;
+        }
+        
+        hasMoreFeedItems = res.hasMore;
+        isLoadingFeed = false;
+        
+        if (sentinel) {
+            sentinel.style.display = hasMoreFeedItems ? 'block' : 'none';
+        }
+    }
+
     async function renderFeed() {
         if (window.isWaitingForInitialGps) {
             const feedContainer = document.getElementById('feed-container');
@@ -1988,22 +2030,47 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Actualizar el menú de botones superiores (chips) basado en la ciudad actual
         populateHomeCategories();
 
-        // get a bunch of listings, filter by type if needed
-        let listings = db.getAllListings().filter(l => db.isListingActive(l));
+        // Reset pagination state
+        currentFeedPage = 1;
+        activeFeedListings = [];
+        hasMoreFeedItems = true;
+        feedContainer.innerHTML = '';
         
-        if (selectedCities.length > 0) listings = listings.filter(l => selectedCities.includes(l.city));
-        
+        // Add sentinel
+        let sentinel = document.getElementById('feed-infinite-scroll-sentinel');
+        if (!sentinel) {
+            sentinel = document.createElement('div');
+            sentinel.id = 'feed-infinite-scroll-sentinel';
+            sentinel.style.padding = '20px';
+            sentinel.style.textAlign = 'center';
+            sentinel.style.width = '100%';
+            sentinel.innerHTML = '<div class="spinner" style="color: var(--primary-color);">Cargando vehículos...</div>';
+            feedContainer.after(sentinel);
+            
+            const observer = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    fetchNextFeedBlock();
+                }
+            }, { rootMargin: '300px' });
+            observer.observe(sentinel);
+        }
+
+        // Setup container layout based on category
         if (currentFeedCategory !== 'Todos') {
             feedContainer.classList.add('listings-grid');
-            listings = listings.filter(l => l.type === currentFeedCategory);
-            
-            // Orden aleatorio fijo por sesión (mezcla autos nuevos y viejos de forma estable)
-            listings.sort((a, b) => window.getSessionRandomValue(a.id) - window.getSessionRandomValue(b.id));
-            
-            if (listings.length === 0) {
+        } else {
+            feedContainer.classList.remove('listings-grid');
+            window.netflixRowData = {}; // Initialize for lazy loading horizontal rows
+        }
+
+        await fetchNextFeedBlock();
+    }
+
+    async function appendFeedListingsToDOM(newItems) {
+        if (!newItems || newItems.length === 0) {
+            if (activeFeedListings.length === 0) {
                 feedContainer.classList.remove('listings-grid');
                 feedContainer.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; width: 100%;">
@@ -2011,80 +2078,56 @@ document.addEventListener('DOMContentLoaded', () => {
                             No se encontraron<br>vehículos en esta<br>zona.
                         </h2>
                     </div>`;
-                return;
             }
-            
-            let adPool = [];
-            if (db.adsEnabled) {
-                const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
-                adPool = await db.getRandomAds(20, activeCities) || [];
-            }
-            
-            let finalHTML = '';
+            return;
+        }
+
+        let adPool = [];
+        if (db.adsEnabled) {
+            const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
+            adPool = await db.getRandomAds(5, activeCities) || [];
+        }
+
+        if (currentFeedCategory !== 'Todos') {
+            // Append to Grid
             const freq = db.adFrequencyScroll || 10;
-            
-            for (let i = 0; i < listings.length; i++) {
-                finalHTML += createListingCardHTML(listings[i], true);
-                // Insert ad after every `freq` items
-                if ((i + 1) % freq === 0 && db.adsEnabled) {
+            let finalHTML = '';
+            for (let i = 0; i < newItems.length; i++) {
+                finalHTML += createListingCardHTML(newItems[i], true);
+                if ((activeFeedListings.length - newItems.length + i + 1) % freq === 0 && db.adsEnabled) {
                     const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
-                    const prevId = listings[i].id;
-                    const nextId = (i + 1 < listings.length) ? listings[i + 1].id : listings[0].id;
-                    finalHTML += createAdCardHTML(ad, prevId, nextId);
+                    finalHTML += createAdCardHTML(ad, newItems[i].id, newItems[i].id);
                 }
             }
-            
-            feedContainer.innerHTML = finalHTML;
+            feedContainer.insertAdjacentHTML('beforeend', finalHTML);
         } else {
-            feedContainer.classList.remove('listings-grid');
-            
-            // Group by category
+            // Append to Netflix Rows
             const grouped = {};
-            listings.forEach(l => {
+            newItems.forEach(l => {
                 if (!grouped[l.type]) grouped[l.type] = [];
                 grouped[l.type].push(l);
             });
-            
-            let html = '';
-            
-            // Inicializar el almacenamiento para lazy loading
-            window.netflixRowData = {};
-            
-            // Use smart order based on popularity
-            const order = getSortedCategoriesByPopularity();
-            
-            let adPool = [];
-            if (db.adsEnabled) {
-                const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
-                adPool = await db.getRandomAds(20, activeCities) || [];
-            }
 
-            order.forEach(type => {
-                if (grouped[type] && grouped[type].length > 0) {
-                    let rowListings = grouped[type];
-                    // Orden aleatorio fijo por sesión
-                    rowListings.sort((a, b) => window.getSessionRandomValue(a.id) - window.getSessionRandomValue(b.id));
-                    
-                    window.netflixRowData[type] = {
-                        allListings: rowListings,
-                        renderedCount: 15
-                    };
-                    
-                    const initialListings = rowListings.slice(0, 15);
-                    const freq = db.adFrequencyScroll || 10;
-                    
-                    let rowCardsHTML = '';
-                    for (let i = 0; i < initialListings.length; i++) {
-                        rowCardsHTML += createListingCardHTML(initialListings[i], true);
-                        if ((i + 1) % freq === 0 && db.adsEnabled) {
-                            const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
-                            const prevId = initialListings[i].id;
-                            const nextId = (i + 1 < initialListings.length) ? initialListings[i + 1].id : initialListings[0].id;
-                            rowCardsHTML += createAdCardHTML(ad, prevId, nextId);
-                        }
+            const freq = db.adFrequencyScroll || 10;
+
+            for (const type in grouped) {
+                let existingRow = feedContainer.querySelector(`.netflix-row[data-category="${type}"]`);
+                let rowCardsHTML = '';
+                
+                for (let i = 0; i < grouped[type].length; i++) {
+                    const item = grouped[type][i];
+                    rowCardsHTML += createListingCardHTML(item, true);
+                    if (Math.random() > 0.8 && db.adsEnabled) { // Insert ads randomly in horizontal rows
+                        const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
+                        rowCardsHTML += createAdCardHTML(ad, item.id, item.id);
                     }
+                }
 
-                    html += `
+                if (existingRow) {
+                    const scroller = existingRow.querySelector('.netflix-row-scroll');
+                    if (scroller) scroller.insertAdjacentHTML('beforeend', rowCardsHTML);
+                } else {
+                    const html = `
                     <div class="netflix-row" data-category="${type}">
                         <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer;">
                             ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
@@ -2098,31 +2141,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)">
                             ${rowCardsHTML}
                         </div>
-                    </div>
-                    `;
-                }
-            });
-            
-            if (html === '') {
-                feedContainer.innerHTML = `
-                    <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; width: 100%;">
-                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.8rem; font-weight: 600; line-height: 1.4; opacity: 0.6;">
-                            No se encontraron<br>vehículos en esta<br>zona.
-                        </h2>
                     </div>`;
-            } else {
-                feedContainer.innerHTML = html;
-                
-                // Initialize nav buttons visibility after DOM update
-                setTimeout(() => {
-                    feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
-                        if(window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
-                        if(window.initAutoScroll) window.initAutoScroll(scrollContainer);
-                    });
-                }, 50);
+                    feedContainer.insertAdjacentHTML('beforeend', html);
+                }
             }
+
+            // Initialize nav buttons visibility after DOM update
+            setTimeout(() => {
+                feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
+                    if(window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
+                    if(window.initAutoScroll) window.initAutoScroll(scrollContainer);
+                });
+            }, 50);
         }
     }
+
 
     window.toggleSave = function(id, btnElement) {
         try {

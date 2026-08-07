@@ -227,3 +227,11 @@ CREATE POLICY "Permitir actualizacion de historial de ventas" ON public.sales_hi
 CREATE POLICY "Permitir eliminacion de historial de ventas" ON public.sales_history FOR DELETE USING (true);
 
 
+-- ====================================================
+-- INDICES OPTIMIZADOS PARA PAGINACIÓN Y CARGA DINÁMICA
+-- ====================================================
+CREATE INDEX IF NOT EXISTS idx_listings_city_status_created 
+ON public.listings (city, status, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_listings_state_status_created 
+ON public.listings (state, status, created_at DESC);
