@@ -110,7 +110,7 @@ const defaultCatalogData = {
         'Volvo': ['S60', 'S90', 'V60', 'XC40', 'XC60', 'XC90', 'C40', 'VNL', 'VNR', 'FH', 'FM', 'EX30'],
         'Yamaha': ['R6', 'MT-07', 'Fz-S', 'YZF-R1', 'Tenere 700', 'NMAX', 'R3', 'YFZ450R', 'Grizzly 700', 'Raptor 700', 'YXZ1000R', 'Crypton 110', 'YBR125', 'MT-09', 'MT-03', 'XMAX']
     },
-    types: ['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
+    types: ['Sedán', 'Pickup', 'Camioneta', 'Van / Furgoneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
     colors: ['Blanco', 'Negro', 'Plata', 'Gris', 'Rojo', 'Azul', 'Guindo/Tinto', 'Beige', 'Amarillo', 'Verde', 'Otro'],
     states: ['Baja California', 'Sonora', 'Jalisco', 'Nuevo León', 'Puebla', 'Guanajuato', 'Querétaro', 'Yucatán', 'Quintana Roo', 'Ciudad de México'],
     citiesByState: {

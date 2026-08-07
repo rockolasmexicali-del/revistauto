@@ -1520,10 +1520,12 @@
     "types": [
       "Sedán",
       "Pickup",
-      "SUV",
+      "Camioneta",
+      "Van / Furgoneta",
       "Hatchback",
       "Deportivo",
       "Motocicleta",
+      "Cuatrimoto / ATV",
       "Barco",
       "Camión"
     ],
