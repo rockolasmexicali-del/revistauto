@@ -2721,21 +2721,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }, {passive: true});
 
             const navigateListing = (direction) => {
-                // Modo cascada de búsqueda (3 niveles) o navegación normal por categoría
-                let sameCategoryListings;
+                let sameCategoryListings = [];
                 if (window.searchCascadeList && window.searchCascadeList.length > 0) {
                     // Usar la cola de 3 niveles construida desde la búsqueda avanzada
                     sameCategoryListings = window.searchCascadeList;
                 } else {
-                    // Comportamiento normal: navegar por la misma categoría respetando la ciudad actual
-                    sameCategoryListings = db.getAllListings().filter(l => db.isListingActive(l) && l.type === listing.type);
+                    // Combinar autos locales (favoritos/mis anuncios) con el feed activo (paginado)
+                    const localListings = db.getAllListings().filter(l => db.isListingActive(l));
+                    const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+                    
+                    // Unir evitando duplicados por ID
+                    const allAvailable = [...localListings];
+                    feedListings.forEach(fl => {
+                        if (!allAvailable.some(al => String(al.id) === String(fl.id))) {
+                            allAvailable.push(fl);
+                        }
+                    });
+                    
+                    sameCategoryListings = allAvailable.filter(l => l.type === listing.type);
                     if (typeof selectedCities !== 'undefined' && selectedCities.length > 0) {
                         sameCategoryListings = sameCategoryListings.filter(l => selectedCities.includes(l.city));
                     }
                 }
+                
                 if (sameCategoryListings.length <= 1) return;
                 
-                const currentIndex = sameCategoryListings.findIndex(l => l.id === listing.id);
+                const currentIndex = sameCategoryListings.findIndex(l => String(l.id) === String(listing.id));
                 if (currentIndex === -1) return;
                 
                 let nextIndex = currentIndex + direction;
