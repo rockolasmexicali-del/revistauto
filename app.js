@@ -845,7 +845,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.isWaitingForInitialGps = false;
                 applyDetectedLocation(cachedLocation.state, cachedLocation.city, false);
             } catch (e) { }
-        }
         } else {
             // No hay ubicación en caché -> Mostramos Pantalla de Bienvenida GPS
             const gpsModal = document.getElementById('gps-welcome-modal');
