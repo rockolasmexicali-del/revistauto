@@ -4840,8 +4840,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.remove('active');
 
-            const listing = db.getAllListings().find(l => String(l.id) === String(id));
-            const city = listing ? listing.city : 'N/A';
+            const approvedListing = db.getAllListings().find(l => String(l.id) === String(id));
+            const city = approvedListing ? approvedListing.city : 'N/A';
             db.logActivity('Aprobación de vehículo', `Publicación #${id}`, city);
 
             forceInstantAdminRefresh();
