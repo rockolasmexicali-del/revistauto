@@ -94,7 +94,7 @@ input, textarea, [contenteditable="true"] {
     padding: 20px 24px;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 100;
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
