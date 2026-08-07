@@ -989,6 +989,14 @@ class Database {
         }
     }
 
+    getPendingCount() {
+        return this.getAllListings().filter(l => l.status === 'pendiente autorizacion' || l.status === 'pendiente').length;
+    }
+
+    getPendingRenewals() {
+        return this.getAllListings().filter(l => l.status === 'autorizado' && !this.isListingActive(l));
+    }
+
     // --- Sugerencias de Catálogo ---
     getSuggestions() {
         return JSON.parse(localStorage.getItem(this.suggestionsKey) || '[]');
