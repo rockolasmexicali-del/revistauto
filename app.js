@@ -3043,6 +3043,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(scale === 1) {
                         imgElement.style.zIndex = '';
                         imgElement.style.position = '';
+                        imgElement.style.transform = '';
+                        imgElement.style.transition = '';
                     }
                 }, 300);
             }

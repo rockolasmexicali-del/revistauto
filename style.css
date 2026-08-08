@@ -2168,3 +2168,35 @@ input:checked + .slider:before {
     100% { opacity: 0; transform: scale(1.5); }
 }
 
+/* ==========================================================================
+   EFECTO KEN BURNS PARA IMÁGENES PUBLICITARIAS (SOLO FULLSCREEN)
+   ========================================================================== */
+#ad-fullscreen-modal #ad-image-carousel {
+    overflow: hidden !important;
+}
+
+#ad-fullscreen-modal #ad-image-carousel img.ad-carousel-img {
+    animation: adKenBurns 8s ease-in-out infinite alternate;
+    transform-origin: center center;
+    will-change: transform;
+    transition: transform 0.3s ease-out;
+}
+
+/* Pausar animación durante toque o interacción manual */
+#ad-fullscreen-modal #ad-image-carousel img.ad-carousel-img:active {
+    animation-play-state: paused !important;
+}
+
+@keyframes adKenBurns {
+    0% {
+        transform: scale(1) translate(0%, 0%);
+    }
+    50% {
+        transform: scale(1.05) translate(-1%, -0.8%);
+    }
+    100% {
+        transform: scale(1.08) translate(1%, 0.8%);
+    }
+}
+
+
