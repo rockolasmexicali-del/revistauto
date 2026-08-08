@@ -3021,14 +3021,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
+    function showFavoriteToast() {
+        const existing = document.getElementById('favorite-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'favorite-toast';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '80px'; // Un poco más arriba para que no lo tape el navbar en móvil
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%) translateY(100px)';
+        toast.style.backgroundColor = 'rgba(16, 185, 129, 0.95)'; // Verde esmeralda moderno
+        toast.style.backdropFilter = 'blur(10px)';
+        toast.style.color = 'white';
+        toast.style.padding = '14px 28px';
+        toast.style.borderRadius = '50px';
+        toast.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.4)';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '10px';
+        toast.style.zIndex = '999999';
+        toast.style.fontFamily = "'Inter', sans-serif";
+        toast.style.fontWeight = '600';
+        toast.style.fontSize = '15px';
+        toast.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Animación de rebote suave
+        toast.style.opacity = '0';
+        
+        toast.innerHTML = `
+            <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' 1; font-size: 22px;">favorite</span>
+            Añadido a tus favoritos
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Trigger enter animation
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+                toast.style.opacity = '1';
+            });
+        });
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateX(-50%) translateY(20px) scale(0.9)';
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.parentNode) toast.remove();
+            }, 500);
+        }, 2500);
+    }
 
     window.toggleSaveDetalle = function(id, btnElement) {
         window.toggleSave(id, btnElement);
         const isSaved = savedListingsIds.includes(id);
+        
+        // Forzar estilos sobre el botón para garantizar que se pinte
         btnElement.style.color = isSaved ? '#EF4444' : 'white';
+        btnElement.style.borderColor = isSaved ? '#EF4444' : 'rgba(255, 255, 255, 0.3)';
+        
         const icon = btnElement.querySelector('.material-symbols-rounded');
         if(icon) {
-            icon.style.fontVariationSettings = `'FILL' ${isSaved ? '1' : '0'}`;
+            if (isSaved) {
+                icon.innerHTML = 'favorite'; // Asegura que se use el icono relleno
+                icon.style.fontVariationSettings = "'FILL' 1";
+                icon.style.color = '#EF4444'; // Forzar color en el ícono
+                showFavoriteToast();
+            } else {
+                icon.innerHTML = 'favorite_border';
+                icon.style.fontVariationSettings = "'FILL' 0";
+                icon.style.color = 'white';
+            }
         }
     };
 
