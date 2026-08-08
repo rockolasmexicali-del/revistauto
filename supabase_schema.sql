@@ -71,10 +71,12 @@ CREATE TABLE IF NOT EXISTS public.settings (
     mpAccessToken TEXT,
     ads_enabled BOOLEAN DEFAULT true,
     ad_frequency_scroll INT DEFAULT 10,
+    ad_fallback_limit INT DEFAULT 21,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS adMonthlyPrice NUMERIC(12,2) DEFAULT 500;
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS ad_fallback_limit INT DEFAULT 21;
 
 -- 4.2 Tabla de Ubicaciones Activas (Locations)
 CREATE TABLE IF NOT EXISTS public.locations (

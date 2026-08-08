@@ -471,7 +471,7 @@ class BackendDatabase {
                 listings: initialListings,
                 catalog: defaultCatalogData,
                 suggestions: [],
-                settings: { monthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '' }
+                settings: { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21 }
             };
             fs.writeFileSync(dbFilePath, JSON.stringify(initialData, null, 2), 'utf-8');
         }
@@ -494,11 +494,11 @@ class BackendDatabase {
         try {
             const content = fs.readFileSync(dbFilePath, 'utf-8');
             const data = JSON.parse(content);
-            if (!data.settings) data.settings = { monthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '' };
+            if (!data.settings) data.settings = { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21 };
             return data;
         } catch (e) {
             console.error('Error leyendo base de datos:', e);
-            return { listings: [], catalog: defaultCatalogData, suggestions: [], settings: { monthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '' } };
+            return { listings: [], catalog: defaultCatalogData, suggestions: [], settings: { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21 } };
         }
     }
 
@@ -591,7 +591,7 @@ class BackendDatabase {
     }
 
     getSettings() {
-        return this.readDB().settings || { monthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '' };
+        return this.readDB().settings || { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21 };
     }
 
     updateSettings(newSettings) {

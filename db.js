@@ -1,4 +1,4 @@
-const APP_VERSION = "1.1.8"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.1.9"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1342,7 +1342,7 @@ class Database {
 
     // --- Nuevos métodos para Supabase (Settings, Auth, Locations) ---
     async getSettings() {
-        const defaultSettings = { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10 };
+        const defaultSettings = { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21 };
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const { data, error } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
             if (data) {
@@ -1353,10 +1353,12 @@ class Database {
                     mpPublicKey: data.mppublickey !== undefined ? data.mppublickey : (data.mpPublicKey || ''),
                     mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || ''),
                     ads_enabled: data.ads_enabled !== undefined ? data.ads_enabled : true,
-                    ad_frequency_scroll: data.ad_frequency_scroll !== undefined ? Number(data.ad_frequency_scroll) : 10
+                    ad_frequency_scroll: data.ad_frequency_scroll !== undefined ? Number(data.ad_frequency_scroll) : 10,
+                    ad_fallback_limit: data.ad_fallback_limit !== undefined ? Number(data.ad_fallback_limit) : (data.adfallbacklimit !== undefined ? Number(data.adfallbacklimit) : 21)
                 };
                 this.adsEnabled = s.ads_enabled;
                 this.adFrequencyScroll = s.ad_frequency_scroll;
+                this.adFallbackLimit = s.ad_fallback_limit;
                 return { success: true, settings: s };
             }
             if (error) console.error('Error fetching settings:', error);
@@ -1365,6 +1367,7 @@ class Database {
         const parsedLocal = local ? JSON.parse(local) : defaultSettings;
         this.adsEnabled = parsedLocal.ads_enabled !== undefined ? parsedLocal.ads_enabled : true;
         this.adFrequencyScroll = parsedLocal.ad_frequency_scroll !== undefined ? Number(parsedLocal.ad_frequency_scroll) : 10;
+        this.adFallbackLimit = parsedLocal.ad_fallback_limit !== undefined ? Number(parsedLocal.ad_fallback_limit) : 21;
         return { success: true, settings: parsedLocal };
     }
 
@@ -1372,6 +1375,7 @@ class Database {
         localStorage.setItem('revista_settings', JSON.stringify(settings));
         if (settings.ads_enabled !== undefined) this.adsEnabled = settings.ads_enabled;
         if (settings.ad_frequency_scroll !== undefined) this.adFrequencyScroll = Number(settings.ad_frequency_scroll);
+        if (settings.ad_fallback_limit !== undefined) this.adFallbackLimit = Number(settings.ad_fallback_limit);
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 // Postgres guarda columnas sin comillas en minúsculas. Mapeamos de camelCase a minúsculas
@@ -1383,7 +1387,8 @@ class Database {
                     mppublickey: settings.mpPublicKey,
                     mpaccesstoken: settings.mpAccessToken,
                     ads_enabled: settings.ads_enabled,
-                    ad_frequency_scroll: settings.ad_frequency_scroll
+                    ad_frequency_scroll: settings.ad_frequency_scroll,
+                    ad_fallback_limit: settings.ad_fallback_limit
                 };
                 const { error } = await supabaseClient.from('settings').upsert([payload]);
                 if (error) {
