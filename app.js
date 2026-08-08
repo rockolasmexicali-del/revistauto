@@ -7048,7 +7048,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let b64 = imagesToProcess[i];
                     if (b64 && b64.startsWith('data:image')) {
                         const blob = await (await fetch(b64)).blob();
-                        const file = new File([blob], `ad_img_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                        const file = new File([blob], `ad_img_${Date.now()}.webp`, { type: 'image/webp' });
                         const url = await db.uploadImageToSupabase(file);
                         if (url) uploadedImages.push(url);
                     } else if (b64) {
