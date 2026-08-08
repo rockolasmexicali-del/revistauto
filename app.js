@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardViews = document.querySelectorAll('.dashboard-view');
 
     function updateAdminVersionDisplay() {
-        const ver = typeof APP_VERSION !== 'undefined' ? `v${APP_VERSION}` : 'v1.1.9';
+        const ver = typeof APP_VERSION !== 'undefined' ? `v${APP_VERSION}` : 'v1.2.0';
         const badge = document.getElementById('admin-app-version-badge');
         if (badge) badge.textContent = ver;
         document.querySelectorAll('.admin-app-version-text').forEach(el => el.textContent = ver);
