@@ -2315,9 +2315,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if(biblio && biblio.classList.contains('active')) {
                 try { renderSavedListings(); } catch(e) {}
             }
+            // Sync nav icon
+            if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
+            
         } catch(err) {
             console.error('Error toggling save (card):', err);
         }
+    };
+
+    window.updateNavFavoriteIcon = function() {
+        const hasFavorites = savedListingsIds.length > 0;
+        const favNavBtns = document.querySelectorAll('.nav-item[data-target="view-biblioteca"] .material-symbols-rounded');
+        
+        favNavBtns.forEach(icon => {
+            if (hasFavorites) {
+                icon.style.color = '#EF4444';
+                icon.style.fontVariationSettings = "'FILL' 1";
+            } else {
+                icon.style.color = ''; // vuelve al color CSS normal (heredado)
+                icon.style.fontVariationSettings = "'FILL' 0";
+            }
+        });
     };
 
     // --- History / Back Button Trap ---
@@ -7844,5 +7862,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stopAutoScroll();
         }, { passive: true });
     };
+
+    if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
 
 });
