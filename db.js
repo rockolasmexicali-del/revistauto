@@ -1,4 +1,4 @@
-const APP_VERSION = "1.3.2"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.3.3"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1247,7 +1247,7 @@ class Database {
         localStorage.setItem(this.suggestionsKey, JSON.stringify(suggestions));
     }
 
-    addListingNote(id, noteText) {
+    addListingNote(id, noteText, skipSave = false) {
         if (!noteText || !noteText.trim()) return null;
         const listings = this.getAllListings();
         const index = listings.findIndex(l => String(l.id) === String(id));
@@ -1266,13 +1266,13 @@ class Database {
             };
             listings[index].notes.unshift(newNote);
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
-            this.saveListing(listings[index]);
+            if (!skipSave) this.saveListing(listings[index]);
             return newNote;
         }
         return null;
     }
 
-    addPayment(listingId, amount, receiptImage, type = 'Aprobación', method = 'manual') {
+    addPayment(listingId, amount, receiptImage, type = 'Aprobación', method = 'manual', skipSave = false) {
         // --- Compatibilidad con el sistema anterior: guardar dentro del listing ---
         const listings = this.getAllListings();
         const index = listings.findIndex(l => String(l.id) === String(listingId));
@@ -1298,8 +1298,8 @@ class Database {
             if (!listings[index].payments) listings[index].payments = [];
             listings[index].payments.push(newPayment);
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
-            this.saveListing(listings[index]);
-            this.addListingNote(listingId, `Pago registrado: $${amount} MXN (${type}) [${method === 'mercadopago' ? 'Tarjeta MP' : 'Manual'}]`);
+            if (!skipSave) this.saveListing(listings[index]);
+            this.addListingNote(listingId, `Pago registrado: $${amount} MXN (${type}) [${method === 'mercadopago' ? 'Tarjeta MP' : 'Manual'}]`, skipSave);
         }
 
         // --- STORAGE INDEPENDIENTE: los pagos sobreviven al borrar publicaciones ---

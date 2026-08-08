@@ -4992,7 +4992,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingRenewActionTargetId = null;
     let pendingRenewActionMonthStr = null;
 
-    window.renewListingAdmin = function(id, isConfirmed = false) {
+    window.renewListingAdmin = async function(id, isConfirmed = false) {
         if (!isConfirmed) {
             pendingRenewActionTargetId = id;
             pendingRenewActionMonthStr = ''; // ya no se usa, pero se mantiene por compatibilidad con los modales
@@ -5000,7 +5000,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (listing) {
                 const payInfo = getListingPaymentInfo(listing, true);
                 const amountInput = document.getElementById('renew-payment-amount');
+                const amountDisplay = document.getElementById('renew-payment-amount-display');
                 if (amountInput) amountInput.value = payInfo.calculatedPrice.toFixed(2);
+                if (amountDisplay) amountDisplay.textContent = `$${payInfo.calculatedPrice.toFixed(2)} MXN`;
             }
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.add('active');
@@ -5016,8 +5018,7 @@ document.addEventListener('DOMContentLoaded', () => {
             listings[idx].expiresAt = baseDate.toISOString();
             listings[idx].status = 'autorizado';
             
-            db.saveListing(listings[idx]);
-            db.saveListing(listings[idx]);
+            await db.saveListing(listings[idx]);
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.remove('active');
             
@@ -5178,7 +5179,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (listing) {
                 const payInfo = getListingPaymentInfo(listing, false);
                 const amountInput = document.getElementById('approve-payment-amount');
+                const amountDisplay = document.getElementById('approve-payment-amount-display');
                 if (amountInput) amountInput.value = payInfo.calculatedPrice.toFixed(2);
+                if (amountDisplay) amountDisplay.textContent = `$${payInfo.calculatedPrice.toFixed(2)} MXN`;
             }
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.add('active');
@@ -5513,11 +5516,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetId = pendingActionTargetId;
                 
                 const amountInput = document.getElementById('approve-payment-amount');
-                if (!amountInput.value) {
-                    showAlert('Debes ingresar el monto cobrado.', 'Falta el monto', 'warning');
-                    return;
-                }
-                const amount = parseFloat(amountInput.value);
+                const amount = amountInput && amountInput.value ? parseFloat(amountInput.value) : 0;
                 
                 let receiptUrl = null;
                 const fileInput = document.getElementById('approve-payment-receipt');
@@ -5534,7 +5533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch(e) { console.error('Error subiendo comprobante', e); }
                 }
                 
-                db.addPayment(targetId, amount, receiptUrl, 'Aprobación');
+                db.addPayment(targetId, amount, receiptUrl, 'Aprobación', 'manual', true);
                 
                 amountInput.value = '';
                 if(fileInput) fileInput.value = '';
@@ -5580,11 +5579,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetId = pendingRenewActionTargetId;
                 
                 const amountInput = document.getElementById('renew-payment-amount');
-                if (!amountInput.value) {
-                    showAlert('Debes ingresar el monto cobrado.', 'Falta el monto', 'warning');
-                    return;
-                }
-                const amount = parseFloat(amountInput.value);
+                const amount = amountInput && amountInput.value ? parseFloat(amountInput.value) : 0;
                 
                 let receiptUrl = null;
                 const fileInput = document.getElementById('renew-payment-receipt');
@@ -5601,7 +5596,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch(e) { console.error('Error subiendo comprobante', e); }
                 }
                 
-                db.addPayment(targetId, amount, receiptUrl, 'Renovación');
+                db.addPayment(targetId, amount, receiptUrl, 'Renovación', 'manual', true);
                 
                 amountInput.value = '';
                 if(fileInput) fileInput.value = '';
