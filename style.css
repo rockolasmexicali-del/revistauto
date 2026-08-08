@@ -2210,8 +2210,8 @@ input:checked + .slider:before {
     pointer-events: none;
     z-index: 6;
     overflow: hidden;
-    /* Resplandor cálido en la base */
-    background: radial-gradient(ellipse at bottom, rgba(245, 158, 11, 0.4) 0%, rgba(220, 38, 38, 0) 70%);
+    /* Resplandor cálido radiante en la base */
+    background: radial-gradient(ellipse at bottom, rgba(249, 115, 22, 0.6) 0%, rgba(220, 38, 38, 0.3) 50%, rgba(0, 0, 0, 0) 80%);
     animation: flamePulse 2s infinite alternate ease-in-out;
 }
 
@@ -2222,23 +2222,24 @@ input:checked + .slider:before {
     left: -10%;
     height: 100%;
     transform-origin: bottom center;
+    filter: drop-shadow(0 -3px 8px rgba(249, 115, 22, 0.75));
 }
 
 .flame-layer-1 {
-    fill: #b91c1c; /* Rojo oscuro/bordo */
-    opacity: 0.8;
+    fill: #dc2626 !important; /* Rojo fuego vibrante */
+    opacity: 0.95;
     animation: flameWiggle 4s infinite alternate ease-in-out;
 }
 
 .flame-layer-2 {
-    fill: #ea580c; /* Naranja fuego */
-    opacity: 0.9;
+    fill: #f97316 !important; /* Naranja fuego intenso */
+    opacity: 0.95;
     animation: flameWiggle 3s infinite alternate-reverse ease-in-out;
 }
 
 .flame-layer-3 {
-    fill: #fcd34d; /* Amarillo brillante */
-    opacity: 0.9;
+    fill: #fbbf24 !important; /* Amarillo brillante cálido */
+    opacity: 1;
     animation: flameWiggleFast 2s infinite alternate ease-in-out;
 }
 

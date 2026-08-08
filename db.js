@@ -1,4 +1,4 @@
-const APP_VERSION = "1.2.4"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.2.6"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -516,7 +516,25 @@ class Database {
                         };
                     });
 
-                    const newListingsStr = JSON.stringify(normalized);
+                    let finalListings = [];
+                    if (isAdmin) {
+                        finalListings = normalized;
+                    } else {
+                        const normalizedMap = new Map();
+                        normalized.forEach(item => normalizedMap.set(String(item.id), item));
+
+                        finalListings = localListings.map(item => {
+                            if (normalizedMap.has(String(item.id))) {
+                                const updated = normalizedMap.get(String(item.id));
+                                normalizedMap.delete(String(item.id));
+                                return updated;
+                            }
+                            return item;
+                        });
+                        normalizedMap.forEach(item => finalListings.push(item));
+                    }
+
+                    const newListingsStr = JSON.stringify(finalListings);
                     const oldListingsStr = localStorage.getItem(this.listingsKey);
                     
                     if (newListingsStr !== oldListingsStr) {
