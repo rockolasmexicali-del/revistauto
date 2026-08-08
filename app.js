@@ -2089,9 +2089,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h2 style="color: var(--text-muted); text-align: center; font-size: 1.2rem; font-weight: 500;">
                             No hay vehículos disponibles en esta categoría por el momento.
                         </h2>
-                        <button onclick="window.filterByCategory('Todos')" class="btn-primary" style="margin-top: 10px; padding: 10px 24px; border-radius: 30px;">
-                            Ver todos los vehículos
-                        </button>
                     </div>
                 `;
             } else if (feedContainer && currentFeedCategory === 'Todos') {
