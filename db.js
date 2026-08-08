@@ -1,4 +1,4 @@
-const APP_VERSION = "1.2.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.2.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1393,13 +1393,13 @@ class Database {
                     ad_fallback_limit: settings.ad_fallback_limit
                 };
                 let { error } = await supabaseClient.from('settings').upsert([payload]);
-                if (error && error.message && error.message.includes('ad_fallback_limit')) {
+                if (error) {
+                    console.warn('Advertencia al guardar settings en Supabase (posible columna faltante):', error.message);
                     delete payload.ad_fallback_limit;
                     const res = await supabaseClient.from('settings').upsert([payload]);
-                    error = res.error;
-                }
-                if (error) {
-                    return { success: false, error: error.message };
+                    if (res.error) {
+                        console.warn('Reintento de settings en Supabase:', res.error.message);
+                    }
                 }
             } catch (err) {
                 // Si el proyecto de Supabase está pausado o eliminado, lanza error de red
