@@ -1,4 +1,4 @@
-const APP_VERSION = "1.1.6"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.1.7"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -355,6 +355,7 @@ class Database {
         this.initUUID();
         this.initializeDB();
         this.syncWithServer();
+        this.syncAdsWithServer();
         this.initRealtime();
     }
 
@@ -387,8 +388,8 @@ class Database {
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'ads' }, async payload => {
                         console.log('⚡ Realtime update (ads):', payload);
                         await this.syncAdsWithServer();
-                        if (typeof window.onServerDataSynced === 'function') {
-                            window.onServerDataSynced();
+                        if (typeof window.onAdsSynced === 'function') {
+                            window.onAdsSynced();
                         }
                     })
                     .subscribe((status) => {
@@ -414,7 +415,6 @@ class Database {
     async syncWithServer() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                await this.syncAdsWithServer();
                 
                 let query = supabaseClient.from('listings').select('*').order('created_at', { ascending: false });
                 
@@ -1802,7 +1802,6 @@ class Database {
                     if (newAdsStr !== oldAdsStr) {
                         localStorage.setItem('revista_autos_ads', newAdsStr);
                         if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
-                        if (typeof window.onServerDataSynced === 'function') window.onServerDataSynced();
                     }
                 }
             } catch (err) {

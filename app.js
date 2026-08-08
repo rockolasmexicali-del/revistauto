@@ -517,8 +517,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
+    };
+
+    window.onAdsSynced = function() {
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+        // Opcional: si queremos que los anuncios se refresquen en el feed
+        const viewInicio = document.getElementById('view-inicio');
+        if (viewInicio && !viewInicio.classList.contains('active')) {
+            renderFeed();
+        }
     };
 
 
