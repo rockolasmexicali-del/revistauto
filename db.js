@@ -1,4 +1,4 @@
-const APP_VERSION = "1.1.7"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.1.8"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -550,35 +550,58 @@ class Database {
             return { data: [], total: 0, hasMore: false };
         }
 
+        const filtersHash = JSON.stringify({ state, cities, filters });
+
+        // Inicializar el arreglo barajado de IDs si es la página 1, o si los filtros cambiaron
+        if (page === 1 || this.currentFeedFiltersHash !== filtersHash || !this.shuffledFeedIds) {
+            let query = supabaseClient.from('listings').select('id', { count: 'exact' }).eq('status', 'autorizado').limit(5000);
+
+            if (cities && cities.length > 0) {
+                query = query.in('city', cities);
+            } else if (state && state !== 'Todos') {
+                query = query.eq('state', state);
+            }
+
+            if (filters.category && filters.category !== 'Todos') {
+                query = query.eq('type', filters.category);
+            }
+            if (filters.searchQuery) {
+                query = query.or(`title.ilike.%${filters.searchQuery}%,make.ilike.%${filters.searchQuery}%,model.ilike.%${filters.searchQuery}%`);
+            }
+
+            const { data, error, count } = await query;
+            
+            if (error) {
+                console.error('Error fetching ids for shuffle:', error);
+                return { data: [], total: 0, hasMore: false };
+            }
+
+            // Guardar IDs y barajarlos aleatoriamente (sólo se manejan números, por lo que es ultra ligero)
+            this.shuffledFeedIds = (data || []).map(d => d.id).sort(() => Math.random() - 0.5);
+            this.currentFeedFiltersHash = filtersHash;
+            this.shuffledFeedTotalCount = count || this.shuffledFeedIds.length;
+        }
+
         const from = (page - 1) * pageSize;
-        const to = page * pageSize - 1;
+        const to = page * pageSize; // exclusive para el slice
+        const idsToFetch = this.shuffledFeedIds.slice(from, to);
 
-        let query = supabaseClient
-            .from('listings')
-            .select('*', { count: 'exact' })
-            .eq('status', 'autorizado')
-            .order('created_at', { ascending: false })
-            .range(from, to);
-
-        if (cities && cities.length > 0) {
-            query = query.in('city', cities);
-        } else if (state && state !== 'Todos') {
-            query = query.eq('state', state);
+        if (idsToFetch.length === 0) {
+            return { data: [], total: this.shuffledFeedTotalCount, hasMore: false };
         }
 
-        if (filters.category && filters.category !== 'Todos') {
-            query = query.eq('type', filters.category);
-        }
-        if (filters.searchQuery) {
-            query = query.or(`title.ilike.%${filters.searchQuery}%,make.ilike.%${filters.searchQuery}%,model.ilike.%${filters.searchQuery}%`);
-        }
-
-        const { data, error, count } = await query;
+        // Descargar exactamente los datos de los IDs barajados de esta página
+        const { data, error } = await supabaseClient.from('listings').select('*').in('id', idsToFetch);
 
         if (error) {
             console.error('Error fetching paginated listings:', error);
-            return { data: [], total: 0, hasMore: false };
+            return { data: [], total: this.shuffledFeedTotalCount, hasMore: false };
         }
+
+        // Supabase no garantiza el orden al usar .in(), así que reordenamos los resultados según nuestro arreglo barajado
+        const idToIndex = {};
+        idsToFetch.forEach((id, index) => idToIndex[id] = index);
+        data.sort((a, b) => idToIndex[a.id] - idToIndex[b.id]);
 
         const normalizedData = (data || []).map(item => ({
             ...item,
@@ -587,8 +610,8 @@ class Database {
 
         return {
             data: normalizedData,
-            total: count || 0,
-            hasMore: to < (count - 1)
+            total: this.shuffledFeedTotalCount,
+            hasMore: to < this.shuffledFeedIds.length
         };
     }
 
