@@ -6070,24 +6070,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Admin Polling (Real-time updates) ---
+    // --- Admin Real-time & Fallback Updates ---
+    window.onListingsSynced = function() {
+        if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
+            if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+            if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+            if (typeof updateAdminStats === 'function') updateAdminStats();
+            const finanzasView = document.getElementById('tab-finanzas');
+            if (finanzasView && finanzasView.classList.contains('active')) {
+                if (typeof updateBillingList === 'function') updateBillingList();
+            }
+        }
+    };
+
+    // Polling suave de respaldo (60 segundos en vez de 5 segundos) para no agotar el ancho de banda
     setInterval(() => {
         if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
             if (typeof db !== 'undefined' && db.syncWithServer) {
                 db.syncWithServer().then(() => {
-                    // Refrescar vistas activas
-                    if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
-                    if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
-                    if (typeof updateAdminStats === 'function') updateAdminStats();
-                    // Historial de cobros solo si Finanzas está visible
-                    const finanzasView = document.getElementById('tab-finanzas');
-                    if (finanzasView && finanzasView.classList.contains('active')) {
-                        if (typeof updateBillingList === 'function') updateBillingList();
-                    }
+                    if (typeof window.onListingsSynced === 'function') window.onListingsSynced();
                 }).catch(err => console.error('Error in admin polling:', err));
             }
         }
-    }, 5000); // Poll every 5 seconds for real-time feel
+    }, 60000); // 60 segundos
 
     // ==========================================
     // SISTEMA DE USUARIOS Y AUTENTICACIÓN

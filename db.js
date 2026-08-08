@@ -1,4 +1,4 @@
-const APP_VERSION = "1.3.4"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.3.5"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -375,7 +375,9 @@ class Database {
                     .channel('public:listings')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'listings' }, payload => {
                         console.log('⚡ Realtime update (listings):', payload);
-                        this.syncWithServer();
+                        this.syncWithServer().then(() => {
+                            if (typeof window.onListingsSynced === 'function') window.onListingsSynced();
+                        });
                     })
                     .subscribe((status) => {
                         if (status === 'SUBSCRIBED') {
