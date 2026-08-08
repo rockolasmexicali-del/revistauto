@@ -1560,26 +1560,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <!-- Animación de Fuego -->
                 <div class="ad-card-flames-container">
-                    <svg viewBox="0 0 100 20" preserveAspectRatio="none">
-                        <path class="flame-layer-1" fill="#dc2626" d="M0,40 L0,20 Q5,10 10,25 Q15,5 20,20 Q25,15 30,30 Q40,5 45,25 Q55,0 60,30 Q70,10 75,25 Q85,5 90,20 Q95,15 100,25 L100,40 Z">
-                            <animate attributeName="d" dur="1.2s" repeatCount="indefinite" values="
-                                M0,40 L0,20 Q5,10 10,25 Q15,5 20,20 Q25,15 30,30 Q40,5 45,25 Q55,0 60,30 Q70,10 75,25 Q85,5 90,20 Q95,15 100,25 L100,40 Z;
-                                M0,40 L0,15 Q5,25 15,15 Q20,5 25,25 Q35,10 40,20 Q45,0 55,25 Q65,15 70,30 Q80,5 85,25 Q95,10 100,20 L100,40 Z;
-                                M0,40 L0,20 Q5,10 10,25 Q15,5 20,20 Q25,15 30,30 Q40,5 45,25 Q55,0 60,30 Q70,10 75,25 Q85,5 90,20 Q95,15 100,25 L100,40 Z" />
-                        </path>
-                        <path class="flame-layer-2" fill="#f97316" d="M0,40 L5,25 Q15,15 20,35 Q25,15 35,30 Q45,10 50,30 Q60,15 65,35 Q75,10 80,25 Q90,15 100,30 L100,40 Z">
-                            <animate attributeName="d" dur="0.9s" repeatCount="indefinite" values="
-                                M0,40 L5,25 Q15,15 20,35 Q25,15 35,30 Q45,10 50,30 Q60,15 65,35 Q75,10 80,25 Q90,15 100,30 L100,40 Z;
-                                M0,40 L10,30 Q20,10 25,25 Q35,15 40,35 Q50,15 55,25 Q65,10 70,30 Q85,15 90,30 Q95,20 100,25 L100,40 Z;
-                                M0,40 L5,25 Q15,15 20,35 Q25,15 35,30 Q45,10 50,30 Q60,15 65,35 Q75,10 80,25 Q90,15 100,30 L100,40 Z" />
-                        </path>
-                        <path class="flame-layer-3" fill="#fbbf24" d="M10,40 Q20,25 30,40 Q40,20 50,40 Q60,25 70,40 Q80,20 90,40 L100,40 L0,40 Z">
-                            <animate attributeName="d" dur="0.7s" repeatCount="indefinite" values="
-                                M10,40 Q20,25 30,40 Q40,20 50,40 Q60,25 70,40 Q80,20 90,40 L100,40 L0,40 Z;
-                                M15,40 Q25,20 35,40 Q45,25 55,40 Q65,20 75,40 Q85,25 95,40 L100,40 L0,40 Z;
-                                M10,40 Q20,25 30,40 Q40,20 50,40 Q60,25 70,40 Q80,20 90,40 L100,40 L0,40 Z" />
-                        </path>
-                    </svg>
+                    <img src="https://i.gifer.com/WJ2S.gif" alt="fuego" style="position: absolute; bottom: 0; left: -10%; width: 120%; height: 120%; object-fit: cover; filter: brightness(1.2) contrast(1.1); pointer-events: none;">
                     <div class="ad-card-spark"></div>
                     <div class="ad-card-spark"></div>
                     <div class="ad-card-spark"></div>
