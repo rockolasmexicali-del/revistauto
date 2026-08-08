@@ -6070,7 +6070,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Admin Real-time & Fallback Updates ---
+    // --- Admin Real-time Updates ---
     window.onListingsSynced = function() {
         if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
             if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
@@ -6082,17 +6082,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-
-    // Polling suave de respaldo (60 segundos en vez de 5 segundos) para no agotar el ancho de banda
-    setInterval(() => {
-        if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
-            if (typeof db !== 'undefined' && db.syncWithServer) {
-                db.syncWithServer().then(() => {
-                    if (typeof window.onListingsSynced === 'function') window.onListingsSynced();
-                }).catch(err => console.error('Error in admin polling:', err));
-            }
-        }
-    }, 60000); // 60 segundos
 
     // ==========================================
     // SISTEMA DE USUARIOS Y AUTENTICACIÓN
