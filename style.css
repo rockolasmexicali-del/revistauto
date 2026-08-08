@@ -2222,7 +2222,7 @@ input:checked + .slider:before {
     left: -10%;
     height: 100%;
     transform-origin: bottom center;
-    filter: drop-shadow(0 -3px 8px rgba(249, 115, 22, 0.75));
+    /* Eliminamos drop-shadow porque en algunos navegadores proyecta una caja oscura/gris */
 }
 
 .flame-layer-1 {
