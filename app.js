@@ -4776,6 +4776,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     ad.end_date = end.toISOString();
                     
                     await db.saveAd(ad);
+
+                    const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                    db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
+                    db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
+
                     showAlert('Anuncio publicitario aprobado exitosamente', 'Aprobado', 'check_circle');
                     if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
                     if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
@@ -7313,6 +7318,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                         ads[adIdx].end_date = end.toISOString();
                                         
                                         await db.saveAd(ads[adIdx]);
+
+                                        const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                                        db.addAdPayment(ads[adIdx].id, amount, null, 'Publicidad', 'mercadopago');
+                                        db.logActivity('Pago de publicidad (MP)', `Publicidad #${ads[adIdx].id} (${ads[adIdx].title || 'Sin título'})`, ads[adIdx].city || ads[adIdx].target_city || 'Global');
                                     }
                                     
                                     window.currentPendingAdId = null;
@@ -7718,6 +7727,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 ad.end_date = end.toISOString();
                 
                 await db.saveAd(ad);
+                
+                const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
+                db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
                 
                 showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
                 if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();

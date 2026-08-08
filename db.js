@@ -1,4 +1,4 @@
-const APP_VERSION = "1.3.3"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.3.4"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1303,6 +1303,45 @@ class Database {
         }
 
         // --- STORAGE INDEPENDIENTE: los pagos sobreviven al borrar publicaciones ---
+        const logKey = 'revista_payments_log';
+        const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+        log.unshift(newPayment);
+        localStorage.setItem(logKey, JSON.stringify(log));
+
+        return newPayment;
+    }
+
+    addAdPayment(adId, amount, receiptImage, type = 'Publicidad', method = 'manual', skipSave = false) {
+        const ads = this.getAllAds();
+        const index = ads.findIndex(a => String(a.id) === String(adId));
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+        
+        const adTitle = index !== -1 ? (ads[index].title || `Publicidad #${adId}`) : `Publicidad #${adId}`;
+        const adCity = index !== -1 ? (ads[index].city || ads[index].target_city || ads[index].state || 'Global') : 'Global';
+
+        const newPayment = {
+            id: Date.now(),
+            date: `${dateStr}, ${timeStr}`,
+            dateISO: now.toISOString(),
+            amount: Number(amount) || 0,
+            receiptImage: receiptImage || null,
+            type: type,
+            method: method, // 'mercadopago' | 'manual'
+            listingId: `AD-${adId}`,
+            listingTitle: `[Publicidad] ${adTitle}`,
+            listingCity: adCity
+        };
+
+        if (index !== -1) {
+            if (!ads[index].payments) ads[index].payments = [];
+            ads[index].payments.push(newPayment);
+            localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
+            if (!skipSave) this.saveAd(ads[index]);
+            this.addAdNote(adId, `Pago registrado: $${amount} MXN (${type}) [${method === 'mercadopago' ? 'Tarjeta MP' : 'Manual'}]`);
+        }
+
         const logKey = 'revista_payments_log';
         const log = JSON.parse(localStorage.getItem(logKey) || '[]');
         log.unshift(newPayment);
