@@ -3098,6 +3098,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.toggleSaveDetalle = function(id, btnElement) {
+        id = Number(id); // Convertir a número para la comparación
         window.toggleSave(id, btnElement);
         const isSaved = savedListingsIds.includes(id);
         
