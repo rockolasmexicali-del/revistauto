@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     canvas.height = img.height * scaleSize;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    resolve(canvas.toDataURL('image/webp', 0.75));
                 };
                 img.onerror = (err) => reject(err);
             };
@@ -3918,11 +3918,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                                 canvas.toBlob((blob) => {
                                     if (blob) {
-                                        resolve(new File([blob], file && file.name ? file.name : 'foto.jpg', { type: 'image/jpeg' }));
+                                        const finalName = file && file.name ? file.name.replace(/\.[^/.]+$/, ".webp") : 'foto.webp';
+                                        resolve(new File([blob], finalName, { type: 'image/webp' }));
                                     } else {
                                         resolve(file); // Fallback
                                     }
-                                }, 'image/jpeg', 0.7);
+                                }, 'image/webp', 0.75);
                             };
                             img.onerror = () => resolve(file); // Fallback
                             img.src = imageFiles[i].url;
@@ -6913,7 +6914,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 canvas.height = img.height * scaleSize;
                                 const ctx = canvas.getContext('2d');
                                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                resolve(canvas.toDataURL('image/jpeg', 0.8));
+                                resolve(canvas.toDataURL('image/webp', 0.8));
                             };
                             img.onerror = () => reject(new Error("Error cargando imagen"));
                             img.src = e.target.result;
