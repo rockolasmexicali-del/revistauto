@@ -5665,22 +5665,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const toISO = to.toISOString().split('T')[0];
 
         let payments = [];
-        try {
-            const token = localStorage.getItem('revista_admin_token');
-            const res = await fetch(`${db.apiBaseUrl}/payments?from=${fromISO}&to=${toISO}`, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {}
-            });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success) payments = data.payments;
-            }
-        } catch(e) {
-            // Fallback: usar pagos locales
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             payments = db.getAllPayments().filter(p => {
-                if (!p.dateISO) return false;
+                if (!p.dateISO) return period === 'today' ? false : true;
                 const d = new Date(p.dateISO);
                 return d >= from && d <= to;
             });
+        } else {
+            try {
+                const token = localStorage.getItem('revista_admin_token');
+                const res = await fetch(`${db.apiBaseUrl}/payments?from=${fromISO}&to=${toISO}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) payments = data.payments;
+                }
+            } catch(e) {
+                payments = db.getAllPayments().filter(p => {
+                    if (!p.dateISO) return false;
+                    const d = new Date(p.dateISO);
+                    return d >= from && d <= to;
+                });
+            }
         }
 
         // Si no hay pagos del servidor, usar locales como fallback
