@@ -2079,6 +2079,31 @@ document.addEventListener('DOMContentLoaded', () => {
             appendFeedListingsToDOM(newItems);
             
             currentFeedPage++;
+        } else if (currentFeedPage === 1) {
+            // No hay elementos en la primera página
+            const feedContainer = document.getElementById('feed-container');
+            if (feedContainer && currentFeedCategory !== 'Todos') {
+                feedContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; width: 100%; grid-column: 1 / -1; gap: 16px;">
+                        <span class="material-symbols-rounded" style="font-size: 64px; color: var(--text-muted); opacity: 0.5;">directions_car</span>
+                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.2rem; font-weight: 500;">
+                            No hay vehículos disponibles en esta categoría por el momento.
+                        </h2>
+                        <button onclick="window.filterByCategory('Todos')" class="btn-primary" style="margin-top: 10px; padding: 10px 24px; border-radius: 30px;">
+                            Ver todos los vehículos
+                        </button>
+                    </div>
+                `;
+            } else if (feedContainer && currentFeedCategory === 'Todos') {
+                feedContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; width: 100%; gap: 16px;">
+                        <span class="material-symbols-rounded" style="font-size: 64px; color: var(--text-muted); opacity: 0.5;">search_off</span>
+                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.2rem; font-weight: 500;">
+                            No hay vehículos publicados en tu zona todavía.
+                        </h2>
+                    </div>
+                `;
+            }
         }
         
         hasMoreFeedItems = res.hasMore;
