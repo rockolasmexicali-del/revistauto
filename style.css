@@ -2210,8 +2210,8 @@ input:checked + .slider:before {
     pointer-events: none;
     z-index: 6;
     overflow: hidden;
-    /* Resplandor cálido radiante en la base */
-    background: radial-gradient(ellipse at bottom, rgba(249, 115, 22, 0.6) 0%, rgba(220, 38, 38, 0.3) 50%, rgba(0, 0, 0, 0) 80%);
+    /* Fondo transparente para que se vea la publicidad */
+    background: transparent;
     animation: flamePulse 2s infinite alternate ease-in-out;
 }
 
