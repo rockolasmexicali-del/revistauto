@@ -455,7 +455,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Hide fallback limit setting for non-admins
                 if (adFallbackLimitContainer) {
-                    if (window.currentAdminUser && window.currentAdminUser.role === 'admin') {
+                    const currentUser = window.currentAdminUser || JSON.parse(localStorage.getItem('admin_user') || 'null');
+                    if (currentUser && currentUser.role === 'admin') {
                         adFallbackLimitContainer.style.display = 'flex';
                     } else {
                         adFallbackLimitContainer.style.display = 'none';
@@ -6169,6 +6170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tabFinanzas = document.getElementById('sidebar-tab-finanzas');
         const tabUsuarios = document.getElementById('sidebar-tab-usuarios');
         const tabBitacora = document.getElementById('sidebar-tab-bitacora');
+        const adFallbackLimitContainer = document.getElementById('admin-ad-fallback-limit-container');
 
         if (role === 'empleado_limitado') {
             // Solo puede ver: Aprobaciones, Renovaciones, Publicidad, Dar de Alta, Cerrar Sesión
@@ -6178,6 +6180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabFinanzas)   tabFinanzas.style.display = 'none';
             if (tabUsuarios)   tabUsuarios.style.display = 'none';
             if (tabBitacora)   tabBitacora.style.display = 'none'; // OCULTO PARA LIMITADO
+            if (adFallbackLimitContainer) adFallbackLimitContainer.style.display = 'none';
             // Asegurar que los tabs permitidos son visibles
             if (tabAprobaciones) tabAprobaciones.style.display = '';
             if (tabRenovaciones) tabRenovaciones.style.display = '';
@@ -6193,6 +6196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabUsuarios) tabUsuarios.style.display = 'none';
             if (tabGeneral)  tabGeneral.style.display = 'none';
             if (tabBitacora) tabBitacora.style.display = 'flex';
+            if (adFallbackLimitContainer) adFallbackLimitContainer.style.display = 'none';
             // Abrir inventario por defecto
             const invTab = document.querySelector('.dashboard-tab[data-tab="tab-inventario"]');
             if (invTab) invTab.click();
@@ -6207,6 +6211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabFinanzas)   tabFinanzas.style.display = 'flex';
             if (tabUsuarios)   tabUsuarios.style.display = 'flex';
             if (tabBitacora)   tabBitacora.style.display = 'flex';
+            if (adFallbackLimitContainer) adFallbackLimitContainer.style.display = 'flex';
             // Mostrar configuración global de anuncios para admin completo
             const adConfigSection = document.querySelector('#tab-publicidad .config-section');
             if (adConfigSection) adConfigSection.style.display = '';
