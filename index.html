@@ -468,7 +468,10 @@
     <div id="admin-dashboard-modal" class="modal dashboard-modal">
         <div class="dashboard-content">
             <div class="dashboard-header">
-                <h2>Panel de Administración</h2>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <h2>Panel de Administración</h2>
+                    <span id="admin-app-version-badge" class="admin-version-badge" style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); padding: 2px 8px; border-radius: 12px; font-weight: 600; letter-spacing: 0.5px; display: inline-flex; align-items: center;">v1.1.8</span>
+                </div>
                 <button id="btn-close-dashboard" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
             </div>
             <div class="dashboard-layout">
@@ -513,6 +516,9 @@
                     <button id="btn-admin-logout" class="secondary-btn" style="margin-top: 8px; padding: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.2); color: white; background: transparent;">
                         <span class="material-symbols-rounded" style="font-size: 18px;">logout</span> Cerrar Sesión
                     </button>
+                    <div style="margin-top: 12px; text-align: center; font-size: 0.75rem; color: var(--text-muted); opacity: 0.7; padding: 4px 0;">
+                        Versión <span class="admin-app-version-text">v1.1.8</span>
+                    </div>
                 </aside>
                 <main class="dashboard-main">
                     <!-- Tab: Vista General -->
@@ -1753,6 +1759,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js?v=4"></script>
     <script src="db.js?v=21"></script>
-    <script src="app.js?v=63"></script>
+    <script src="app.js?v=64"></script>
 </body>
 </html>

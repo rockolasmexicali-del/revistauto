@@ -148,6 +148,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardTabs = document.querySelectorAll('.dashboard-tab');
     const dashboardViews = document.querySelectorAll('.dashboard-view');
 
+    function updateAdminVersionDisplay() {
+        const ver = typeof APP_VERSION !== 'undefined' ? `v${APP_VERSION}` : 'v1.1.8';
+        const badge = document.getElementById('admin-app-version-badge');
+        if (badge) badge.textContent = ver;
+        document.querySelectorAll('.admin-app-version-text').forEach(el => el.textContent = ver);
+    }
+    window.updateAdminVersionDisplay = updateAdminVersionDisplay;
+    updateAdminVersionDisplay();
+
     // Detalles
     const viewDetalle = document.getElementById('view-detalle');
     const detalleContent = document.getElementById('detalle-content');
@@ -6094,6 +6103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Interceptar la apertura del panel de admin
     // Como el botón oculto abre adminDashboardModal, vamos a crear una función global para abrirlo
     window.openAdminPanel = function() {
+        updateAdminVersionDisplay();
         if (window.adminToken && window.currentAdminUser) {
             // Ya logueado
             setupAdminPermissions();
