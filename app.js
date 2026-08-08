@@ -1380,28 +1380,61 @@ document.addEventListener('DOMContentLoaded', () => {
         return sortedTypes;
     }
 
-    function populateHomeCategories() {
-        // Limpiar categorías previas por si se vuelve a llamar
-        const existingChips = homeCategories.querySelectorAll('.category-chip:not([data-type="Todos"])');
-        existingChips.forEach(chip => chip.remove());
+    function centerCategoryChip(chip, smooth = true) {
+        if (!chip || !homeCategories) return;
+        const containerWidth = homeCategories.clientWidth;
+        const chipLeft = chip.offsetLeft;
+        const chipWidth = chip.offsetWidth;
+        const targetScroll = chipLeft - (containerWidth / 2) + (chipWidth / 2);
+        const maxScroll = homeCategories.scrollWidth - containerWidth;
+        const clampedScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+        
+        homeCategories.scrollTo({
+            left: clampedScroll,
+            behavior: smooth ? 'smooth' : 'auto'
+        });
+    }
 
+    function populateHomeCategories() {
+        if (!homeCategories) return;
         const smartCategories = getSortedCategoriesByPopularity();
-        smartCategories.forEach(type => {
+        const expectedTypes = ['Todos', ...smartCategories];
+
+        const existingChips = Array.from(homeCategories.querySelectorAll('.category-chip'));
+        const existingTypes = existingChips.map(c => c.getAttribute('data-type'));
+
+        // Si las categorías en el DOM ya coinciden, solo actualizamos el estado activo sin destruir el DOM
+        const isSameStructure = existingTypes.length === expectedTypes.length &&
+            existingTypes.every((t, idx) => t === expectedTypes[idx]);
+
+        if (isSameStructure) {
+            existingChips.forEach(chip => {
+                const type = chip.getAttribute('data-type');
+                if (type === currentFeedCategory) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+            return;
+        }
+
+        // Reconstruir el DOM solo si la estructura cambió, preservando la posición del scroll
+        const currentScroll = homeCategories.scrollLeft;
+        homeCategories.innerHTML = '';
+
+        expectedTypes.forEach(type => {
             const btn = document.createElement('button');
             btn.className = 'category-chip';
-            btn.setAttribute('data-type', type);
-            btn.textContent = type;
             if (type === currentFeedCategory) {
                 btn.classList.add('active');
             }
+            btn.setAttribute('data-type', type);
+            btn.textContent = type;
             homeCategories.appendChild(btn);
         });
-        
-        const todosBtn = homeCategories.querySelector('.category-chip[data-type="Todos"]');
-        if (todosBtn) {
-            if (currentFeedCategory === 'Todos') todosBtn.classList.add('active');
-            else todosBtn.classList.remove('active');
-        }
+
+        homeCategories.scrollLeft = currentScroll;
     }
 
         window.advanceCategoryRow = function(categoryType) {
@@ -1427,31 +1460,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!btn) return;
 
             const type = btn.getAttribute('data-type');
-
-            // Guardar posición actual del scroll ANTES de renderFeed
-            // porque populateHomeCategories() resetea scrollLeft a 0
-            const savedScroll = homeCategories.scrollLeft;
-
-            // Actualizar el feed con la categoría seleccionada (cuadrícula o vista completa)
             currentFeedCategory = type;
+
+            // Actualizar la clase activa al instante
+            homeCategories.querySelectorAll('.category-chip').forEach(chip => {
+                if (chip.getAttribute('data-type') === type) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+
+            // Centrar el chip seleccionado suavemente
+            centerCategoryChip(btn, true);
+
+            // Actualizar el feed
             renderFeed();
-
-            // Re-buscar el botón en el DOM fresco (populateHomeCategories recrea los chips)
-            const freshBtn = homeCategories.querySelector(`.category-chip[data-type="${type}"]`);
-            if (freshBtn) {
-                // Restaurar la posición anterior al instante para que el scroll
-                // suave arranque desde ahí y no desde 0 (evita el salto a "Todos")
-                homeCategories.scrollLeft = savedScroll;
-
-                const containerRect = homeCategories.getBoundingClientRect();
-                const btnRect = freshBtn.getBoundingClientRect();
-                const targetScroll = homeCategories.scrollLeft
-                    + btnRect.left
-                    - containerRect.left
-                    - (containerRect.width / 2)
-                    + (btnRect.width / 2);
-                homeCategories.scrollTo({ left: targetScroll, behavior: 'smooth' });
-            }
         });
 
     function createListingCardHTML(listing, hideHeart = false) {
