@@ -1560,7 +1560,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <!-- Animación de Fuego -->
                 <div class="ad-card-flames-container">
-                    <img src="https://i.gifer.com/WJ2S.gif" alt="fuego" style="position: absolute; bottom: 0; left: -10%; width: 120%; height: 120%; object-fit: cover; filter: brightness(1.2) contrast(1.1); pointer-events: none;">
+                    <svg viewBox="0 0 100 20" preserveAspectRatio="none">
+                        <path class="flame-layer-1" fill="#dc2626" d="M0,20 Q10,5 20,20 T40,20 T60,20 T80,20 T100,20 L100,20 L0,20 Z">
+                            <animate attributeName="d" dur="4s" repeatCount="indefinite" values="
+                                M0,20 Q10,5 20,20 T40,15 T60,20 T80,10 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q15,10 25,20 T50,5 T75,20 T95,15 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q5,15 15,20 T35,10 T65,20 T85,5 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q10,5 20,20 T40,15 T60,20 T80,10 T100,20 L100,20 L0,20 Z" />
+                        </path>
+                        <path class="flame-layer-2" fill="#f97316" d="M0,20 Q15,10 30,20 T60,20 T90,20 T100,20 L100,20 L0,20 Z">
+                            <animate attributeName="d" dur="3s" repeatCount="indefinite" values="
+                                M0,20 Q15,10 30,20 T60,5 T90,20 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q10,5 20,20 T45,15 T70,20 T100,10 L100,20 L0,20 Z;
+                                M0,20 Q20,15 35,20 T65,10 T85,20 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q15,10 30,20 T60,5 T90,20 T100,20 L100,20 L0,20 Z" />
+                        </path>
+                        <path class="flame-layer-3" fill="#fbbf24" d="M0,20 Q20,15 40,20 T80,20 T100,20 L100,20 L0,20 Z">
+                            <animate attributeName="d" dur="2s" repeatCount="indefinite" values="
+                                M0,20 Q20,15 40,20 T80,10 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q15,5 30,20 T70,15 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q25,10 50,20 T90,5 T100,20 L100,20 L0,20 Z;
+                                M0,20 Q20,15 40,20 T80,10 T100,20 L100,20 L0,20 Z" />
+                        </path>
+                    </svg>
                     <div class="ad-card-spark"></div>
                     <div class="ad-card-spark"></div>
                     <div class="ad-card-spark"></div>

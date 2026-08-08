@@ -2210,8 +2210,8 @@ input:checked + .slider:before {
     pointer-events: none;
     z-index: 6;
     overflow: hidden;
-    /* Fondo transparente para que se vea la publicidad */
-    background: transparent;
+    /* Resplandor cálido en la base */
+    background: radial-gradient(ellipse at bottom, rgba(245, 158, 11, 0.4) 0%, rgba(220, 38, 38, 0) 70%);
     animation: flamePulse 2s infinite alternate ease-in-out;
 }
 
