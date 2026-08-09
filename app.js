@@ -2706,6 +2706,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data && !error) {
                     listing = {
                         ...data,
+                        reactions: typeof data.reactions === 'string' ? (function(){ try { return JSON.parse(data.reactions); } catch(e) { return data.reactions; } })() : (data.reactions || { like: 0, love: 0, fire: 0, angry: 0 }),
                         notes: Array.isArray(data.notes) ? data.notes : (typeof data.notes === 'string' ? JSON.parse(data.notes || '[]') : []),
                         payments: Array.isArray(data.payments) ? data.payments : (typeof data.payments === 'string' ? JSON.parse(data.payments || '[]') : []),
                         isMyListing: data.publisher_id === window.db.uuid || data.publisherId === window.db.uuid
@@ -8055,9 +8056,13 @@ window.shareListing = function (event, id, title) {
 window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title) {
     let userReactions = {};
     try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
-    const userReact = userReactions[id];
+    const userReact = userReactions[String(id)];
 
-    const reactions = reactionsObj || { like: 0, love: 0, fire: 0, angry: 0 };
+    let reactions = reactionsObj;
+    if (typeof reactions === 'string') {
+        try { reactions = JSON.parse(reactions); } catch (e) { reactions = null; }
+    }
+    reactions = reactions || { like: 0, love: 0, fire: 0, angry: 0 };
 
     return `
         <div class="social-toolbar-fullscreen">
