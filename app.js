@@ -7452,7 +7452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${statusBadge}</td>
                     <td>
                         <div style="display:flex; gap:6px;">
-                            <button class="primary-btn" onclick="window.openAdminEditAdModal(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
+                            <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light); color:var(--text-main);">Editar</button>
                             <button class="danger-btn" onclick="window.appConfirm('\u00bfEliminar esta publicidad?', async () => { await db.deleteAd(${ad.id}); const tbody = document.getElementById('ads-table-body'); if(tbody) delete tbody.dataset.lastState; renderAdminAdsTable(); showAlert('Publicidad eliminada.', 'Eliminada', 'check_circle'); })" style="padding:4px 8px; font-size:0.8rem;">Eliminar</button>
                         </div>
                     </td>
@@ -7642,7 +7642,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <!-- Especificaciones / Datos del Anuncio -->
                     <div style="background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem;">
-                        <button class="primary-btn" onclick="event.stopPropagation(); window.openAdminEditAdModal(${ad.id})" style="width: 100%; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
+                        <button class="primary-btn" onclick="event.stopPropagation(); window.openEditAd(${ad.id})" style="width: 100%; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-main);">
                             <span class="material-symbols-rounded" style="font-size: 16px;">edit</span> Editar Datos de la Publicidad
                         </button>
                         
