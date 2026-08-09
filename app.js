@@ -2796,7 +2796,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${navArrows}
                 ${images.length > 1 ? `<div class="image-counter" style="position: absolute; bottom: 8px; right: 8px;">1 / ${images.length}</div>` : ''}
                 
-                ${window.generateSocialToolbarHTML ? window.generateSocialToolbarHTML(listing.id, listing.reactions, listing.views, listing.title) : ''}
+                ${window.generateSocialToolbarHTML ? window.generateSocialToolbarHTML(listing.id, listing.reactions, listing.views, listing.title, listing.price, listing.city) : ''}
                 
                 <button id="detalle-heart-btn-${id}" class="detalle-floating-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); window.toggleSaveDetalle('${id}', this)" style="right: 16px; color: ${isSaved ? '#EF4444' : 'white'}; z-index: 100; transition: color 0.3s ease;">
                     <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">${isSaved ? 'favorite' : 'favorite_border'}</span>
@@ -8082,23 +8082,46 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
     localStorage.setItem('user_reactions', JSON.stringify(userReactions));
 };
 
-window.shareListing = function (event, id, title) {
+window.shareListing = function (event, id, title, price, city) {
     event.stopPropagation();
     const url = window.location.origin + window.location.pathname + '?id=' + id;
+    
+    let formattedPrice = '';
+    if (price !== undefined && price !== null && price !== '' && price !== 0) {
+        const numPrice = Number(price);
+        formattedPrice = !isNaN(numPrice) ? `$${numPrice.toLocaleString('es-MX')} MXN` : `$${price} MXN`;
+    }
+
+    let shareText = `🚗 Te comparto el auto "${title}"`;
+    if (formattedPrice) {
+        shareText += ` en 💰 ${formattedPrice}`;
+    }
+    if (city && city.trim() !== '') {
+        shareText += `. Está en 📍 "${city} a la venta".`;
+    } else {
+        shareText += `. En venta en RevistAuto.`;
+    }
+
+    const fullShareString = `${shareText}\n${url}`;
+
     if (navigator.share) {
         navigator.share({
             title: title,
-            text: '¡Mira este auto en Revistauto!',
+            text: shareText,
             url: url
         }).catch(console.error);
     } else {
-        navigator.clipboard.writeText(url).then(() => {
-            window.showAlert('Enlace copiado al portapapeles', 'Compartir', 'content_copy');
+        navigator.clipboard.writeText(fullShareString).then(() => {
+            window.showAlert('Mensaje y enlace copiado al portapapeles', 'Compartir', 'content_copy');
+        }).catch(() => {
+            navigator.clipboard.writeText(url).then(() => {
+                window.showAlert('Enlace copiado al portapapeles', 'Compartir', 'content_copy');
+            });
         });
     }
 };
 
-window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title) {
+window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title, price, city) {
     let userReactions = {};
     try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
     const userReact = userReactions[String(id)];
@@ -8108,6 +8131,9 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
         try { reactions = JSON.parse(reactions); } catch (e) { reactions = null; }
     }
     reactions = reactions || { like: 0, love: 0, fire: 0, angry: 0 };
+
+    const safeTitle = (title || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    const safeCity = (city || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
     return `
         <div class="social-toolbar-fullscreen">
@@ -8124,7 +8150,7 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
                 <div class="social-count">${(reactions.fire || 0).toLocaleString('en-US')}</div>
             </div>
             <div class="social-btn-container">
-                <div class="social-btn" onclick="window.shareListing(event, '${id}', '${title.replace(/'/g, "\\'")}')">
+                <div class="social-btn" onclick="window.shareListing(event, '${id}', '${safeTitle}', ${price || 0}, '${safeCity}')">
                     <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
                 </div>
             </div>
