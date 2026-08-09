@@ -1,4 +1,4 @@
-const APP_VERSION = "1.4.8"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.4.9"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1736,7 +1736,10 @@ class Database {
         const listings = this.getAllListings();
         const listing = listings.find(l => String(l.id) === String(id));
         if (listing) {
-            if (!listing.reactions) {
+            if (typeof listing.reactions === 'string') {
+                try { listing.reactions = JSON.parse(listing.reactions); } catch (e) { listing.reactions = null; }
+            }
+            if (!listing.reactions || typeof listing.reactions !== 'object') {
                 listing.reactions = { like: 0, love: 0, fire: 0, angry: 0 };
             }
             listing.reactions[reactionType] = Math.max(0, (listing.reactions[reactionType] || 0) + incrementVal);
