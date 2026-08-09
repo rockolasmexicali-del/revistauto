@@ -1,29 +1,29 @@
-window.appConfirm = function(message, onConfirm, title = '¿Estás seguro?') {
+window.appConfirm = function (message, onConfirm, title = '¿Estás seguro?') {
     const modal = document.getElementById('custom-confirm-modal');
     if (!modal) {
         if (confirm(message)) onConfirm();
         return;
     }
-    
+
     document.getElementById('confirm-modal-title').textContent = title;
     document.getElementById('confirm-modal-message').textContent = message;
-    
+
     const btnCancel = document.getElementById('btn-confirm-cancel');
     const btnAccept = document.getElementById('btn-confirm-accept');
-    
+
     btnCancel.onclick = () => {
         modal.classList.remove('active');
     };
-    
+
     btnAccept.onclick = () => {
         modal.classList.remove('active');
         onConfirm();
     };
-    
+
     modal.classList.add('active');
 };
 
-window.buildWhatsAppUrl = function(phone, title) {
+window.buildWhatsAppUrl = function (phone, title) {
     if (!phone) return '#';
     let cleanPhone = String(phone).replace(/\D/g, '');
     if (cleanPhone.length === 10) {
@@ -35,7 +35,7 @@ window.buildWhatsAppUrl = function(phone, title) {
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
-    window.getSessionRandomValue = function(id) {
+    window.getSessionRandomValue = function (id) {
         // Genera un número pseudo-aleatorio consistente basado en el ID y la semilla de la sesión
         let hash = 0;
         const str = String(id) + '_' + window.sessionSeed;
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navigation
     const navItems = document.querySelectorAll('.nav-item');
     const views = document.querySelectorAll('.view');
-    
+
     // Feed
     // Inicialización completada.
     const feedContainer = document.getElementById('feed-container');
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userStateSelect = document.getElementById('user-state');
     const btnUserCities = document.getElementById('btn-user-cities');
     const btnLocateMe = document.getElementById('btn-locate-me');
-    
+
     // Cities Modal
     const citiesModal = document.getElementById('cities-modal');
     const btnCloseCitiesModal = document.getElementById('btn-close-cities-modal');
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Search
     const searchResults = document.getElementById('search-results');
     const btnSearch = document.getElementById('btn-search');
-    
+
     // Saved
     const savedListingsContainer = document.getElementById('saved-listings-container');
 
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseAdModal.addEventListener('click', () => {
             // Guardar ID siguiente si es que existe antes de que se limpie
             const nextId = window.pendingNextListingIdAfterAd;
-            
+
             if (history.state && history.state.page === 'ad-modal') {
                 // Si venimos del historial normal, usar history.back()
                 // Esto disparará popstate, que a su vez cerrará el modal limpiamente.
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.scrollTo(0, savedScrollPosition);
                 });
             }
-            
+
             if (nextId) {
                 setTimeout(() => {
                     window.openListingDetails(nextId);
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     // Form Selects
     const formType = document.getElementById('form-type');
     const formMake = document.getElementById('form-make');
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formLegal = document.getElementById('form-legal');
     let whatsappModified = false;
     let selectedImageFiles = [];
-    
+
     // Filter Selects
     const filterState = document.getElementById('filter-state');
     const filterCity = document.getElementById('filter-city');
@@ -173,10 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const customAlertMessage = document.getElementById('custom-alert-message');
     const customAlertTitle = document.getElementById('custom-alert-title');
     let customAlertTimeout;
-    
+
     let onCustomAlertClose = null;
 
-    window.showAlert = function(message, title = 'Notificación', icon = 'info', onClose = null) {
+    window.showAlert = function (message, title = 'Notificación', icon = 'info', onClose = null) {
         onCustomAlertClose = onClose;
         customAlertMessage.textContent = message;
         customAlertTitle.textContent = title;
@@ -188,11 +188,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('custom-alert-icon').style.color = 'var(--primary-color)';
             document.getElementById('custom-alert-modal').querySelector('.modal-content').style.borderColor = 'var(--primary-color)';
         }
-        
+
         customAlertModal.classList.add('active');
-        
+
         // Auto-cierre
-        if(customAlertTimeout) clearTimeout(customAlertTimeout);
+        if (customAlertTimeout) clearTimeout(customAlertTimeout);
         customAlertTimeout = setTimeout(() => {
             customAlertModal.classList.remove('active');
             if (typeof onCustomAlertClose === 'function') {
@@ -208,14 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCustomAlertOk) {
         btnCustomAlertOk.addEventListener('click', () => {
             customAlertModal.classList.remove('active');
-            if(customAlertTimeout) clearTimeout(customAlertTimeout);
+            if (customAlertTimeout) clearTimeout(customAlertTimeout);
             if (typeof onCustomAlertClose === 'function') {
                 const cb = onCustomAlertClose;
                 onCustomAlertClose = null;
                 cb();
             }
         });
-        
+
         // Permitir cerrar la alerta presionando Enter
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && customAlertModal.classList.contains('active')) {
@@ -229,26 +229,26 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor(selectElement) {
             this.select = selectElement;
             this.options = [];
-            
+
             // Ocultar select original
             this.select.style.display = 'none';
-            
+
             // Crear contenedor
             this.wrapper = document.createElement('div');
             this.wrapper.className = 'custom-select-wrapper';
             this.select.parentNode.insertBefore(this.wrapper, this.select);
             this.wrapper.appendChild(this.select);
-            
+
             // Crear trigger
             this.trigger = document.createElement('div');
             this.trigger.className = 'custom-select-trigger';
             this.wrapper.appendChild(this.trigger);
-            
+
             // Crear dropdown
             this.dropdown = document.createElement('div');
             this.dropdown.className = 'custom-select-dropdown';
             this.wrapper.appendChild(this.dropdown);
-            
+
             // Eventos principales
             this.trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -263,15 +263,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.trigger.classList.add('open');
                 }
             });
-            
+
             this.update();
-            
+
             // Actualizar visualmente si el select cambia programáticamente
             this.select.addEventListener('change', () => {
                 const selectedOpt = this.select.options[this.select.selectedIndex];
                 if (selectedOpt) {
                     this.trigger.innerHTML = `<span>${selectedOpt.text}</span><span class="material-symbols-rounded">expand_more</span>`;
-                    
+
                     // Actualizar estado selected en el dropdown
                     Array.from(this.dropdown.children).forEach(child => {
                         if (child.dataset.value === this.select.value) {
@@ -283,18 +283,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
+
         update() {
             this.dropdown.innerHTML = '';
             const selectedOpt = this.select.options[this.select.selectedIndex];
             this.trigger.innerHTML = `<span>${selectedOpt ? selectedOpt.text : 'Selecciona una opción'}</span><span class="material-symbols-rounded">expand_more</span>`;
-            
+
             Array.from(this.select.options).forEach(option => {
                 const optDiv = document.createElement('div');
                 optDiv.className = 'custom-select-option';
                 optDiv.textContent = option.text;
                 optDiv.dataset.value = option.value;
-                
+
                 if (option.disabled) {
                     optDiv.classList.add('disabled');
                 } else {
@@ -304,20 +304,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.trigger.innerHTML = `<span>${option.text}</span><span class="material-symbols-rounded">expand_more</span>`;
                         this.dropdown.classList.remove('open');
                         this.trigger.classList.remove('open');
-                        
+
                         // Disparar change para el resto del sistema
                         this.select.dispatchEvent(new Event('change'));
-                        
+
                         // Actualizar selección visual
                         Array.from(this.dropdown.children).forEach(c => c.classList.remove('selected'));
                         optDiv.classList.add('selected');
                     });
                 }
-                
+
                 if (this.select.value === option.value && !option.disabled) {
                     optDiv.classList.add('selected');
                 }
-                
+
                 this.dropdown.appendChild(optDiv);
             });
         }
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Global utility to compress image to base64
-    window.compressImage = function(file, maxWidth = 800) {
+    window.compressImage = function (file, maxWidth = 800) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialization ---
     initNavigation();
     initHistoryState();
-    
+
     let globalMonthlyPrice = 500;
     let globalAdMonthlyPrice = 500;
     let globalMpEnabled = false;
@@ -393,12 +393,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalMonthlyPrice = data.settings.monthlyPrice;
                 globalMpEnabled = data.settings.mercadoPagoEnabled;
                 globalMpPublicKey = data.settings.mpPublicKey;
-                
+
                 const costDisclaimer = document.getElementById('monthly-cost-disclaimer');
                 if (costDisclaimer) {
                     costDisclaimer.innerHTML = '';
                 }
-                
+
                 const vehiclePriceNote = document.getElementById('vehicle-dynamic-price');
                 if (vehiclePriceNote) {
                     if (Number(globalMonthlyPrice) === 0) {
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (inputPrice) inputPrice.value = globalMonthlyPrice;
 
                 globalAdMonthlyPrice = data.settings.adMonthlyPrice !== undefined ? data.settings.adMonthlyPrice : 500;
-                
+
                 const inputAdPrice = document.getElementById('admin-ad-monthly-price');
                 if (inputAdPrice) inputAdPrice.value = globalAdMonthlyPrice;
 
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
                     }
                 }
-                
+
                 const publishPriceText = document.getElementById('publish-price-text');
                 if (publishPriceText) publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
 
@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (mpPubKey) mpPubKey.value = globalMpPublicKey || '';
                 if (mpAccToken) mpAccToken.value = data.settings.mpAccessToken || '';
-                
+
                 const adToggle = document.getElementById('admin-ad-toggle');
                 const adFreq = document.getElementById('admin-ad-frequency');
                 const adFallbackLimitContainer = document.getElementById('admin-ad-fallback-limit-container');
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (adToggle) adToggle.checked = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
                 if (adFreq) adFreq.value = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
                 if (adFallbackLimit) adFallbackLimit.value = data.settings.ad_fallback_limit !== undefined ? data.settings.ad_fallback_limit : 21;
-                
+
                 // Hide fallback limit setting for non-admins
                 if (adFallbackLimitContainer) {
                     const currentUser = window.currentAdminUser || JSON.parse(localStorage.getItem('admin_user') || 'null');
@@ -462,13 +462,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         adFallbackLimitContainer.style.display = 'none';
                     }
                 }
-                
+
                 if (window.db) {
                     window.db.adsEnabled = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
                     window.db.adFrequencyScroll = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
                     window.db.adFallbackLimit = data.settings.ad_fallback_limit !== undefined ? data.settings.ad_fallback_limit : 21;
                 }
-                
+
                 const btnAdvertise = document.getElementById('btn-advertise');
                 const btnAdvertiseMobile = document.getElementById('btn-advertise-mobile');
                 const adsActive = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnAdvertiseMobile) {
                     btnAdvertiseMobile.style.display = adsActive ? 'flex' : 'none';
                 }
-                
+
                 if (typeof renderMyListings === 'function') {
                     // Force refresh just in case the tab is open
                     const myListingsContainer = document.getElementById('my-listings-container');
@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { console.error('Error loading settings', e); }
     }
 
-    window.getListingPaymentInfo = function(listing, isRenewalTab = false) {
+    window.getListingPaymentInfo = function (listing, isRenewalTab = false) {
         // Rolling billing: siempre se cobra 1 mes completo al precio configurado.
         // La fecha de vencimiento es exactamente 1 mes después del pago (ej: 27/julio → 27/agosto).
         // No hay prorrateo por días del mes.
@@ -526,27 +526,27 @@ document.addEventListener('DOMContentLoaded', () => {
             loadSettings(),
             populateSelects()
         ]);
-        
+
         // Re-render UI after settings and selects update
         populateHomeCategories();
         renderFeed();
     })();
 
     // Hook up database sync event to refresh the UI automatically
-    window.onServerDataSynced = function() {
+    window.onServerDataSynced = function () {
         const viewInicio = document.getElementById('view-inicio');
         // Evitamos barajear los autos si el usuario está viendo la pantalla de inicio
         if (viewInicio && !viewInicio.classList.contains('active')) {
             renderFeed();
         }
-        
+
         if (typeof renderMyListings === 'function') renderMyListings();
         if (typeof updateAdminStats === 'function') updateAdminStats();
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
     };
 
-    window.onAdsSynced = function() {
+    window.onAdsSynced = function () {
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
         // Opcional: si queremos que los anuncios se refresquen en el feed
@@ -559,10 +559,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Core Functions ---
 
-    window.switchView = function(viewId) {
+    window.switchView = function (viewId) {
         // Close any open modals
         document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
-        
+
         // If detalle is open, close it first
         const viewDetalle = document.getElementById('view-detalle');
         if (viewDetalle && viewDetalle.classList.contains('active')) {
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewId === 'view-inicio') renderFeed();
         if (viewId === 'view-biblioteca') renderSavedListings();
         if (viewId === 'view-alta') renderMyListings();
-        
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.addEventListener('click', () => {
                 // Close any open modals
                 document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
-                
+
                 // If detalle is open, close it first
                 if (viewDetalle.classList.contains('active')) {
                     if (window.closeListingDetails) window.closeListingDetails();
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetViewId = item.getAttribute('data-target');
                 views.forEach(view => {
                     view.classList.remove('active');
-                    if(view.id === targetViewId) {
+                    if (view.id === targetViewId) {
                         view.classList.add('active');
                     }
                 });
@@ -626,22 +626,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (targetViewId === 'view-alta') renderMyListings();
             });
         });
-        
+
         if (btnAdminAddListing) {
             btnAdminAddListing.addEventListener('click', () => {
                 if (adminDashboardModal) adminDashboardModal.classList.remove('active');
-                
+
                 navItems.forEach(nav => nav.classList.remove('active'));
                 const altaNav = Array.from(navItems).find(n => n.getAttribute('data-target') === 'view-alta');
                 if (altaNav) altaNav.classList.add('active');
-                
+
                 views.forEach(view => {
                     view.classList.remove('active');
-                    if(view.id === 'view-alta') {
+                    if (view.id === 'view-alta') {
                         view.classList.add('active');
                     }
                 });
-                
+
                 renderMyListings();
             });
         }
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function populateSelects() {
         // ... (resto intacto) ...
-        
+
         // Asignar el evento para abrir el Panel de Admin
         const userProfileBtn = document.querySelector('.user-profile');
         if (userProfileBtn) {
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
+
         // Populating states (para el Form de Dar de Alta, todo México)
         catalogData.states.forEach(state => {
             formState.innerHTML += `<option value="${state}">${state}</option>`;
@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formCity.innerHTML = '<option value="" disabled selected>No hay ciudades</option>';
             }
         });
-        if(formState.value && formState.value !== "") formState.dispatchEvent(new Event('change'));
+        if (formState.value && formState.value !== "") formState.dispatchEvent(new Event('change'));
 
         // ==========================================
         // Populating states (para el Form de Publicidad, solo donde hay autos)
@@ -722,7 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clientAdCity.innerHTML = '<option value="" disabled selected>No hay ciudades</option>';
                 }
             });
-            if(clientAdState.value && clientAdState.value !== "") clientAdState.dispatchEvent(new Event('change'));
+            if (clientAdState.value && clientAdState.value !== "") clientAdState.dispatchEvent(new Event('change'));
         }
 
         // Feed State changes -> updates selectedCities to all cities in that state
@@ -735,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedCities = [...(window.activeLocations.citiesByState[state] || [])];
                 // Reset text just in case it had a city appended
                 const option = Array.from(userStateSelect.options).find(opt => opt.value === state);
-                if(option) option.textContent = state;
+                if (option) option.textContent = state;
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: state, city: selectedCities[0] || '' }));
             }
             // Al cambiar de estado, resetear el botón de ciudades
@@ -756,12 +756,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const stateCities = window.activeLocations.citiesByState[matchedState] || catalogData.citiesByState[matchedState] || [];
-                const matchedCity = stateCities.find(c => 
-                    c.toLowerCase() === cityName.toLowerCase() || 
+                const matchedCity = stateCities.find(c =>
+                    c.toLowerCase() === cityName.toLowerCase() ||
                     cityName.toLowerCase().includes(c.toLowerCase()) ||
                     c.toLowerCase().includes(cityName.toLowerCase())
                 );
-                
+
                 if (matchedCity) {
                     selectedCities = [matchedCity];
                 } else {
@@ -773,13 +773,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (option) {
                     option.textContent = matchedState;
                 }
-                
+
                 if (window.customUserFilterStateSelect) window.customUserFilterStateSelect.update();
                 if (window.updateCitiesBtn) window.updateCitiesBtn();
                 if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
-                
+
                 renderFeed();
-                
+
                 // Guardar en caché local
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: stateName, city: cityName }));
             } else if (isManualClick) {
@@ -824,11 +824,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lon = position.coords.longitude;
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                     const data = await res.json();
-                    
+
                     if (data && data.address) {
                         const stateName = data.address.state || '';
                         const cityName = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || '';
-                        
+
                         window.isWaitingForInitialGps = false;
                         applyDetectedLocation(stateName, cityName, isManualClick);
                     } else {
@@ -849,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, () => {
                 if (isManualClick) showAlert('Permiso de ubicación denegado o no disponible.', 'Ubicación', 'warning');
                 if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
-                
+
                 if (window.isWaitingForInitialGps) {
                     window.isWaitingForInitialGps = false;
                     forceAllStatesAndRender();
@@ -860,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnLocateMe) {
             btnLocateMe.addEventListener('click', () => detectUserLocation(true));
         }
-        
+
         // 1. Carga inmediata desde caché
         const cachedLocationStr = localStorage.getItem('revista_last_location');
         if (cachedLocationStr) {
@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnActivateGps = document.getElementById('btn-activate-gps');
             if (gpsModal && btnActivateGps) {
                 gpsModal.classList.add('active');
-                
+
                 // Conectar el botón azul
                 btnActivateGps.addEventListener('click', () => {
                     gpsModal.classList.remove('active'); // Ocultar rápido para mejor UX
@@ -892,14 +892,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function populateMakesForType(selectedType) {
             formMake.innerHTML = '<option value="" disabled selected>Selecciona una marca</option>';
-            
+
             const filteredMakes = db.getMakesForType(selectedType);
-            
+
             filteredMakes.forEach(make => {
                 formMake.innerHTML += `<option value="${make}">${make}</option>`;
             });
             formMake.innerHTML += `<option value="Otros">Otros...</option>`;
-            
+
             // Reset model
             formModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
             if (formCustomMake) {
@@ -912,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formCustomModel.required = false;
                 formCustomModel.value = '';
             }
-            
+
             if (window.customMakeSelect) window.customMakeSelect.update();
             if (window.customModelSelect) window.customModelSelect.update();
         }
@@ -928,14 +928,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Populating colors
         const formColor = document.getElementById('form-color');
-        if(formColor) {
+        if (formColor) {
             catalogData.colors.forEach(color => {
                 formColor.innerHTML += `<option value="${color}">${color}</option>`;
             });
         }
 
         const filterColor = document.getElementById('filter-color');
-        if(filterColor) {
+        if (filterColor) {
             catalogData.colors.forEach(color => {
                 filterColor.innerHTML += `<option value="${color}">${color}</option>`;
             });
@@ -951,17 +951,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-        
+
         const formCustomType = document.getElementById('form-custom-type');
         formType.addEventListener('change', (e) => {
             const selectedType = e.target.value;
             if (selectedType === 'Otros') {
-                if(formCustomType) {
+                if (formCustomType) {
                     formCustomType.style.display = 'block';
                     formCustomType.required = true;
                 }
             } else {
-                if(formCustomType) {
+                if (formCustomType) {
                     formCustomType.style.display = 'none';
                     formCustomType.required = false;
                     formCustomType.value = '';
@@ -978,11 +978,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const make = e.target.value;
             const selectedType = formType ? formType.value : null;
             formModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
-            
+
             if (make === 'Otros') {
                 formCustomMake.style.display = 'block';
                 formCustomMake.required = true;
-                
+
                 formModel.innerHTML += `<option value="Otros">Otros...</option>`;
                 formModel.value = 'Otros'; // Force 'Otros' model
                 formModel.dispatchEvent(new Event('change'));
@@ -1015,9 +1015,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 formCustomModel.value = '';
             }
         });
-        
+
         // Trigger change to set initial models if make is pre-selected (but not placeholder)
-        if(formMake.value && formMake.value !== "") formMake.dispatchEvent(new Event('change'));
+        if (formMake.value && formMake.value !== "") formMake.dispatchEvent(new Event('change'));
 
         // === INICIALIZACIÓN DE CUSTOM SELECTS ===
         window.customStateSelect = new CustomSelectWrapper(formState);
@@ -1033,17 +1033,17 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customFilterCitySelect = new CustomSelectWrapper(filterCity);
         window.customFilterTransmissionSelect = new CustomSelectWrapper(filterTransmission);
         window.customFilterLegalSelect = new CustomSelectWrapper(filterLegal);
-        
+
         const formColorEl = document.getElementById('form-color');
-        if(formColorEl) window.customColorSelect = new CustomSelectWrapper(formColorEl);
-        
+        if (formColorEl) window.customColorSelect = new CustomSelectWrapper(formColorEl);
+
         const filterColorEl = document.getElementById('filter-color');
-        if(filterColorEl) window.customFilterColorSelect = new CustomSelectWrapper(filterColorEl);
+        if (filterColorEl) window.customFilterColorSelect = new CustomSelectWrapper(filterColorEl);
 
         // Actualizar visualmente al cambiar los selects dinámicos
-        formState.addEventListener('change', () => { if(window.customCitySelect) window.customCitySelect.update(); });
-        formMake.addEventListener('change', () => { if(window.customModelSelect) window.customModelSelect.update(); });
-        filterState.addEventListener('change', () => { if(window.customFilterCitySelect) window.customFilterCitySelect.update(); });
+        formState.addEventListener('change', () => { if (window.customCitySelect) window.customCitySelect.update(); });
+        formMake.addEventListener('change', () => { if (window.customModelSelect) window.customModelSelect.update(); });
+        filterState.addEventListener('change', () => { if (window.customFilterCitySelect) window.customFilterCitySelect.update(); });
 
         // Phone to WhatsApp auto-fill logic
         formPhone.addEventListener('input', (e) => {
@@ -1056,12 +1056,12 @@ document.addEventListener('DOMContentLoaded', () => {
             whatsappModified = true;
         });
 
-        window.renderImagePreviews = function() {
+        window.renderImagePreviews = function () {
             const container = document.getElementById('image-preview-container');
             const textElement = document.getElementById('file-chosen-text');
-            if(!container) return;
+            if (!container) return;
             container.innerHTML = '';
-            
+
             if (selectedImageFiles.length === 0) {
                 if (textElement) {
                     textElement.textContent = 'Sin archivos seleccionados';
@@ -1069,20 +1069,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-            
+
             if (textElement) {
                 textElement.textContent = `${selectedImageFiles.length} foto(s) lista(s)`;
                 textElement.style.color = 'var(--text-main)';
             }
-            
+
             selectedImageFiles.forEach((itemObj, index) => {
                 const item = document.createElement('div');
                 item.className = 'image-preview-item';
-                
+
                 const img = document.createElement('img');
                 img.src = itemObj.url;
                 img.style.border = index === 0 ? '2px solid #f59e0b' : 'none';
-                
+
                 if (index === 0) {
                     const badge = document.createElement('div');
                     badge.textContent = 'PORTADA';
@@ -1106,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     badge.style.display = 'none'; // Keep it hidden but keep it in DOM for Sortable
                     item.appendChild(badge);
                 }
-                
+
                 const btnRemove = document.createElement('button');
                 btnRemove.type = 'button';
                 btnRemove.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">close</span>';
@@ -1125,14 +1125,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnRemove.style.cursor = 'pointer';
                 btnRemove.style.zIndex = '3';
                 btnRemove.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                
+
                 btnRemove.onclick = (ev) => {
                     ev.preventDefault();
                     const idxToRemove = Array.from(container.children).indexOf(item);
                     if (idxToRemove > -1) {
                         selectedImageFiles.splice(idxToRemove, 1);
                         renderImagePreviews();
-                        
+
                         if (textElement) {
                             if (selectedImageFiles.length === 0) {
                                 textElement.textContent = 'Sin archivos seleccionados';
@@ -1143,12 +1143,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 };
-                
+
                 item.appendChild(img);
                 item.appendChild(btnRemove);
                 container.appendChild(item);
             });
-            if(typeof updateWizardUI === 'function') updateWizardUI();
+            if (typeof updateWizardUI === 'function') updateWizardUI();
         };
 
         // Init SortableJS
@@ -1157,19 +1157,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
-                onEnd: function(evt) {
+                onEnd: function (evt) {
                     if (evt.oldIndex === evt.newIndex) return;
                     const movedItem = selectedImageFiles.splice(evt.oldIndex, 1)[0];
                     selectedImageFiles.splice(evt.newIndex, 0, movedItem);
-                    
-                    if(typeof renderImagePreviews === 'function') {
+
+                    if (typeof renderImagePreviews === 'function') {
                         renderImagePreviews();
                     }
                 }
             });
         }
 
-        document.getElementById('form-image').addEventListener('change', function() {
+        document.getElementById('form-image').addEventListener('change', function () {
             if (this.files && this.files.length > 0) {
                 let newFiles = Array.from(this.files).map(f => ({ file: f, url: URL.createObjectURL(f) }));
                 const slotsLeft = 7 - selectedImageFiles.length;
@@ -1193,18 +1193,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnMorePhotosNo = document.getElementById('btn-more-photos-no');
 
         if (formImageCamera) {
-            formImageCamera.addEventListener('change', function() {
+            formImageCamera.addEventListener('change', function () {
                 if (this.files && this.files.length > 0) {
                     if (selectedImageFiles.length >= 7) {
                         showAlert('Has alcanzado el límite máximo de 7 fotos.', 'Límite alcanzado', 'warning');
                         this.value = '';
                         return;
                     }
-                    
+
                     const newFiles = Array.from(this.files).map(f => ({ file: f, url: URL.createObjectURL(f) }));
                     selectedImageFiles.push(newFiles[0]); // Normalmente la cámara toma 1 sola foto
                     renderImagePreviews();
-                    
+
                     if (selectedImageFiles.length >= 7) {
                         showAlert('Has llegado al límite de 7 fotos. Esta es la última foto.', 'Límite alcanzado', 'info');
                     } else {
@@ -1244,7 +1244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         window.updateCitiesBtn = updateCitiesBtn;
-        
+
         // Forzar actualización inicial por si la ubicación se cargó de caché antes de montar esta función
         updateCitiesBtn();
 
@@ -1254,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showAlert('Por favor selecciona un Estado primero para ver sus ciudades.', 'Filtro Incompleto', 'warning');
                 return;
             }
-            
+
             const stateCities = window.activeLocations.citiesByState[state] || [];
             // Generar opción "Todas" + checkboxes de ciudades
             citiesCheckboxesContainer.innerHTML = `
@@ -1276,23 +1276,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     cb.checked = cbTodas.checked;
                 });
             });
-            
+
             citiesModal.classList.add('active');
         });
 
         if (btnCloseCitiesModal) btnCloseCitiesModal.addEventListener('click', () => citiesModal.classList.remove('active'));
-        
+
         if (btnApplyCities) btnApplyCities.addEventListener('click', () => {
             const checkboxes = citiesCheckboxesContainer.querySelectorAll('input[type="checkbox"]:not(#cb-todas-ciudades):checked');
             selectedCities = Array.from(checkboxes).map(cb => cb.value);
             citiesModal.classList.remove('active');
             updateCitiesBtn();
-            
+
             const state = userStateSelect.value;
             if (state !== 'Todos' && selectedCities.length > 0) {
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: state, city: selectedCities[0] }));
             }
-            
+
             if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
             renderFeed();
         });
@@ -1301,23 +1301,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function syncSearchLocationWithHome() {
         if (!filterState || !filterCity || !userStateSelect) return;
         const homeState = userStateSelect.value || 'Todos';
-        
+
         filterState.value = homeState;
-        
+
         filterCity.innerHTML = '';
         if (homeState === 'Todos') {
             filterCity.innerHTML = '<option value="Todas" selected>Todas las ciudades</option>';
         } else {
-            const stateCities = (window.activeLocations && window.activeLocations.citiesByState[homeState]) 
-                || (catalogData && catalogData.citiesByState[homeState]) 
+            const stateCities = (window.activeLocations && window.activeLocations.citiesByState[homeState])
+                || (catalogData && catalogData.citiesByState[homeState])
                 || [];
-            
+
             if (selectedCities.length > 1 && homeState === userStateSelect.value) {
                 filterCity.innerHTML = `<option value="Todas" selected>${selectedCities.length} ciudades</option>`;
             } else {
                 filterCity.innerHTML = '<option value="Todas">Todas las ciudades</option>';
             }
-            
+
             stateCities.forEach(city => {
                 const isSel = (selectedCities.length === 1 && selectedCities[0] === city);
                 filterCity.innerHTML += `<option value="${city}" ${isSel ? 'selected' : ''}>${city}</option>`;
@@ -1351,8 +1351,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.cachedCategoryStats = null;
-    
-    window.refreshCategoryRanking = async function(cities) {
+
+    window.refreshCategoryRanking = async function (cities) {
         if (typeof db.fetchCategoryStats === 'function') {
             window.cachedCategoryStats = await db.fetchCategoryStats(cities);
         }
@@ -1360,7 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getSortedCategoriesByPopularity() {
         const viewCounts = {};
-        
+
         if (window.cachedCategoryStats && window.cachedCategoryStats.length > 0) {
             // Usar datos reales y completos del servidor
             window.cachedCategoryStats.forEach(item => {
@@ -1377,11 +1377,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     listings.push(fl);
                 }
             });
-            
+
             if (selectedCities.length > 0) {
                 listings = listings.filter(l => selectedCities.includes(l.city));
             }
-            
+
             listings.forEach(l => {
                 if (!viewCounts[l.type]) viewCounts[l.type] = 0;
                 viewCounts[l.type] += (l.views || 0);
@@ -1405,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetScroll = chipLeft - (containerWidth / 2) + (chipWidth / 2);
         const maxScroll = homeCategories.scrollWidth - containerWidth;
         const clampedScroll = Math.max(0, Math.min(targetScroll, maxScroll));
-        
+
         homeCategories.scrollTo({
             left: clampedScroll,
             behavior: smooth ? 'smooth' : 'auto'
@@ -1454,57 +1454,57 @@ document.addEventListener('DOMContentLoaded', () => {
         homeCategories.scrollLeft = currentScroll;
     }
 
-        window.advanceCategoryRow = function(categoryType) {
-            const row = document.querySelector(`.netflix-row[data-category="${categoryType}"]`);
-            if (row) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                const scrollContainer = row.querySelector('.netflix-row-scroll');
-                if (scrollContainer) {
-                    const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-                    if (scrollContainer.scrollLeft >= maxScroll - 20) {
-                        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-                    } else {
-                        const scrollAmount = Math.max(scrollContainer.clientWidth * 0.75, 160);
-                        scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-                    }
+    window.advanceCategoryRow = function (categoryType) {
+        const row = document.querySelector(`.netflix-row[data-category="${categoryType}"]`);
+        if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const scrollContainer = row.querySelector('.netflix-row-scroll');
+            if (scrollContainer) {
+                const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                if (scrollContainer.scrollLeft >= maxScroll - 20) {
+                    scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    const scrollAmount = Math.max(scrollContainer.clientWidth * 0.75, 160);
+                    scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 }
             }
-        };
+        }
+    };
 
-        // Event delegation para hacer que funcione tanto en los nuevos botones como en el 'Todos' original
-        homeCategories.addEventListener('click', (e) => {
-            const btn = e.target.closest('.category-chip');
-            if (!btn) return;
+    // Event delegation para hacer que funcione tanto en los nuevos botones como en el 'Todos' original
+    homeCategories.addEventListener('click', (e) => {
+        const btn = e.target.closest('.category-chip');
+        if (!btn) return;
 
-            const type = btn.getAttribute('data-type');
-            currentFeedCategory = type;
+        const type = btn.getAttribute('data-type');
+        currentFeedCategory = type;
 
-            // Actualizar la clase activa al instante
-            homeCategories.querySelectorAll('.category-chip').forEach(chip => {
-                if (chip.getAttribute('data-type') === type) {
-                    chip.classList.add('active');
-                } else {
-                    chip.classList.remove('active');
-                }
-            });
-
-            // Centrar el chip seleccionado suavemente
-            centerCategoryChip(btn, true);
-
-            // Actualizar el feed
-            renderFeed();
+        // Actualizar la clase activa al instante
+        homeCategories.querySelectorAll('.category-chip').forEach(chip => {
+            if (chip.getAttribute('data-type') === type) {
+                chip.classList.add('active');
+            } else {
+                chip.classList.remove('active');
+            }
         });
+
+        // Centrar el chip seleccionado suavemente
+        centerCategoryChip(btn, true);
+
+        // Actualizar el feed
+        renderFeed();
+    });
 
     function createListingCardHTML(listing, hideHeart = false) {
         const isSaved = savedListingsIds.includes(listing.id);
         const savedClass = isSaved ? 'saved' : '';
         const savedIcon = isSaved ? 'favorite' : 'favorite_border';
-        
+
         const images = listing.images || (listing.image ? [listing.image] : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']);
         // Solo tomar la primera foto para la tarjeta de previsualización (evitar scroll doble)
         const firstImage = images[0] || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
         const imageElements = `<img src="${firstImage}" alt="Auto" loading="lazy">`;
-        
+
         let navArrows = '';
 
         return `
@@ -1533,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    window.openAdFromCatalog = function(adId, prevListingId, nextListingId) {
+    window.openAdFromCatalog = function (adId, prevListingId, nextListingId) {
         if (prevListingId && prevListingId !== 'null' && prevListingId !== 'undefined') {
             window.pendingPrevListingIdAfterAd = parseInt(prevListingId, 10) || prevListingId;
         }
@@ -1562,8 +1562,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const firstImage = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-        
-        const clickAction = (prevId && nextId) 
+
+        const clickAction = (prevId && nextId)
             ? `window.openAdFromCatalog('${ad.id}', '${prevId}', '${nextId}')`
             : `window.openAdDetails('${ad.id}')`;
 
@@ -1579,8 +1579,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    window.openAdDetails = async function(adId) {
-        
+    window.openAdDetails = async function (adId) {
+
         let ad = db.getAllAds().find(a => String(a.id) === String(adId));
         if (!ad) {
             ad = await db.incrementAdViews(adId);
@@ -1604,7 +1604,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const adModal = document.getElementById('ad-fullscreen-modal');
                 const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
-                const animInClass  = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+                const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
 
                 // 1. Anuncio hace slide-out
                 const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
@@ -1637,19 +1637,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!arr || arr.length <= 1) return;
             const currentIndex = arr.findIndex(a => String(a.id) === String(window.currentAdObj.id));
             if (currentIndex === -1) return;
-            
+
             let nextIndex = currentIndex + direction;
             if (nextIndex >= arr.length) nextIndex = 0;
             if (nextIndex < 0) nextIndex = arr.length - 1;
-            
+
             const nextId = arr[nextIndex].id;
             const modal = document.getElementById('ad-fullscreen-modal');
             const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
             const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
-            
+
             const contentDiv = modal.querySelector('.modal-content') || modal.querySelector('.detalle-wrapper');
             if (contentDiv) contentDiv.classList.add(animOutClass);
-            
+
             setTimeout(() => {
                 if (contentDiv) contentDiv.classList.remove(animOutClass);
                 window.openAdDetails(nextId);
@@ -1674,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             carousel.innerHTML = ad.images.map((img, i) => `
                 <img src="${img}" style="display: ${i === 0 ? 'block' : 'none'}; width: 100%;" class="ad-carousel-img" data-index="${i}">
             `).join('');
-            
+
             if (ad.images.length > 1) {
                 // Add arrows
                 carousel.innerHTML += `
@@ -1683,29 +1683,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="image-counter" style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:0.8rem; z-index:5;">1 / ${ad.images.length}</div>
                 `;
             }
-            
+
             // Habilitar pinch zoom en estas imágenes
             const imgs = carousel.querySelectorAll('img');
             imgs.forEach(img => window.enablePinchZoom(img));
-            
+
             // Añadir soporte para deslizar (swipe)
             let touchStartX = 0;
             let touchStartY = 0;
             let touchEndX = 0;
             let touchEndY = 0;
-            
+
             carousel.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
-            
+
             carousel.addEventListener('touchend', e => {
                 touchEndX = e.changedTouches[0].screenX;
                 touchEndY = e.changedTouches[0].screenY;
                 const swipeDistX = touchStartX - touchEndX;
                 const diffX = Math.abs(swipeDistX);
                 const diffY = Math.abs(touchStartY - touchEndY);
-                
+
                 // Solo avanzar fotos si el movimiento es predominantemente HORIZONTAL
                 if (diffX > 40 && diffX > diffY) {
                     if (swipeDistX > 40) {
@@ -1745,25 +1745,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const schedContainer = document.getElementById('ad-detail-schedule-container');
         if (ad.scheduleMF || ad.scheduleSat || ad.scheduleSun) {
             schedContainer.style.display = 'block';
-            
+
             const mfRow = document.getElementById('ad-schedule-mf-row');
             if (ad.scheduleMF) {
                 mfRow.style.display = 'flex';
                 document.getElementById('ad-detail-schedule-mf').textContent = ad.scheduleMF;
             } else { mfRow.style.display = 'none'; }
-            
+
             const satRow = document.getElementById('ad-schedule-sat-row');
             if (ad.scheduleSat) {
                 satRow.style.display = 'flex';
                 document.getElementById('ad-detail-schedule-sat').textContent = ad.scheduleSat;
             } else { satRow.style.display = 'none'; }
-            
+
             const sunRow = document.getElementById('ad-schedule-sun-row');
             if (ad.scheduleSun) {
                 sunRow.style.display = 'flex';
                 document.getElementById('ad-detail-schedule-sun').textContent = ad.scheduleSun;
             } else { sunRow.style.display = 'none'; }
-            
+
         } else {
             schedContainer.style.display = 'none';
         }
@@ -1782,15 +1782,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btnContact.onclick = () => {
                 const btnCall = document.getElementById('btn-contact-call');
                 const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
-                
+
                 btnCall.style.display = ad.phone ? 'flex' : 'none';
                 btnWhatsApp.style.display = ad.whatsapp ? 'flex' : 'none';
 
                 if (ad.phone) {
                     let cleanPhoneCall = String(ad.phone).replace(/[^0-9]/g, '');
                     if (cleanPhoneCall.length > 10) cleanPhoneCall = cleanPhoneCall.slice(-10);
-                    const formattedPhone = cleanPhoneCall.length === 10 ? `(${cleanPhoneCall.substring(0,3)})${cleanPhoneCall.substring(3,6)}-${cleanPhoneCall.substring(6)}` : cleanPhoneCall;
-                    
+                    const formattedPhone = cleanPhoneCall.length === 10 ? `(${cleanPhoneCall.substring(0, 3)})${cleanPhoneCall.substring(3, 6)}-${cleanPhoneCall.substring(6)}` : cleanPhoneCall;
+
                     if (window.innerWidth >= 768) {
                         btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
                         btnCall.onclick = null;
@@ -1805,7 +1805,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
                     }
                 }
-                
+
                 if (ad.whatsapp) {
                     const cleanPhoneWa = String(ad.whatsapp).replace(/[^0-9]/g, '');
                     const message = encodeURIComponent(`Hola, vi su anuncio "${ad.title}" en RevistAuto.`);
@@ -1815,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('contact-modal').classList.remove('active');
                     };
                 }
-                
+
                 document.getElementById('contact-modal').classList.add('active');
             };
         }
@@ -1835,42 +1835,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     let icon = 'link';
                     let title = (typeof link === 'object' && link.title) ? link.title : 'Visitar';
-                    
+
                     let bgColor = 'rgba(255,255,255,0.05)';
                     let textColor = 'var(--text-main)';
                     let border = '1px solid var(--border-color)';
 
-                    if (url.includes('facebook.com') || url.includes('fb.me')) { 
-                        icon = 'thumb_up'; 
-                        if(title==='Visitar') title='Facebook'; 
+                    if (url.includes('facebook.com') || url.includes('fb.me')) {
+                        icon = 'thumb_up';
+                        if (title === 'Visitar') title = 'Facebook';
                         bgColor = '#1877f2'; // Facebook blue
                         textColor = '#ffffff';
                         border = 'none';
                     }
-                    else if (url.includes('instagram.com') || url.includes('instagr.am')) { 
-                        icon = 'photo_camera'; 
-                        if(title==='Visitar') title='Instagram'; 
+                    else if (url.includes('instagram.com') || url.includes('instagr.am')) {
+                        icon = 'photo_camera';
+                        if (title === 'Visitar') title = 'Instagram';
                         bgColor = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)'; // Instagram gradient
                         textColor = '#ffffff';
                         border = 'none';
                     }
-                    else if (url.includes('tiktok.com')) { 
-                        icon = 'music_note'; 
-                        if(title==='Visitar') title='TikTok'; 
+                    else if (url.includes('tiktok.com')) {
+                        icon = 'music_note';
+                        if (title === 'Visitar') title = 'TikTok';
                         bgColor = '#000000'; // TikTok black
                         textColor = '#ffffff';
                         border = '1px solid #ffffff33';
                     }
                     else if (url.includes('x.com') || url.includes('twitter.com')) {
                         icon = 'close';
-                        if(title==='Visitar') title='X (Twitter)';
+                        if (title === 'Visitar') title = 'X (Twitter)';
                         bgColor = '#000000';
                         textColor = '#ffffff';
                         border = '1px solid #ffffff33';
                     }
                     else if (url.includes('youtube.com') || url.includes('youtu.be')) {
                         icon = 'play_arrow';
-                        if(title==='Visitar') title='YouTube';
+                        if (title === 'Visitar') title = 'YouTube';
                         bgColor = '#FF0000';
                         textColor = '#ffffff';
                         border = 'none';
@@ -1881,7 +1881,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             try {
                                 const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
                                 title = urlObj.hostname.replace(/^www\./, '');
-                            } catch(e) {
+                            } catch (e) {
                                 title = 'Sitio Web';
                             }
                         }
@@ -1910,7 +1910,7 @@ document.addEventListener('DOMContentLoaded', () => {
             infoDiv.addEventListener('touchstart', (e) => {
                 startX = e.changedTouches[0].screenX;
                 startY = e.changedTouches[0].screenY;
-            }, {passive: true});
+            }, { passive: true });
 
             infoDiv.addEventListener('touchend', (e) => {
                 endX = e.changedTouches[0].screenX;
@@ -1918,16 +1918,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diffX = Math.abs(endX - startX);
                 const diffY = Math.abs(endY - startY);
                 const threshold = 50;
-                
+
                 // Solo navegamos si es un gesto predominantemente HORIZONTAL (ignorar scroll vertical)
                 if (diffX > threshold && diffX > diffY) {
                     if (endX < startX - threshold) {
-                        if(window.navigateAdGlobal) window.navigateAdGlobal(1);
+                        if (window.navigateAdGlobal) window.navigateAdGlobal(1);
                     } else if (endX > startX + threshold) {
-                        if(window.navigateAdGlobal) window.navigateAdGlobal(-1);
+                        if (window.navigateAdGlobal) window.navigateAdGlobal(-1);
                     }
                 }
-            }, {passive: true});
+            }, { passive: true });
         }
 
         history.pushState({ page: 'ad-modal' }, '');
@@ -1936,25 +1936,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const carouselAd = document.getElementById('ad-image-carousel');
         if (carouselAd && ad.images && ad.images.length > 1) {
-            carouselAd.addEventListener('touchstart', window.stopFullscreenAutoplay, {passive: true});
+            carouselAd.addEventListener('touchstart', window.stopFullscreenAutoplay, { passive: true });
             carouselAd.addEventListener('mousedown', window.stopFullscreenAutoplay);
             window.startFullscreenAutoplay(true, ad.images.length);
         }
     };
 
-    window.scrollAdCarousel = function(direction) {
+    window.scrollAdCarousel = function (direction) {
         const carousel = document.getElementById('ad-image-carousel');
         const images = carousel.querySelectorAll('.ad-carousel-img');
         if (images.length <= 1) return;
 
         images[window.currentAdImageIndex].style.display = 'none';
-        
+
         let nextIndex = window.currentAdImageIndex + direction;
         if (nextIndex < 0 || nextIndex >= images.length) {
             images[window.currentAdImageIndex].style.display = 'block';
             return;
         }
-        
+
         window.currentAdImageIndex = nextIndex;
         images[window.currentAdImageIndex].style.display = 'block';
 
@@ -1964,19 +1964,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.updateCounter = function(element) {
+    window.updateCounter = function (element) {
         const wrapper = element.parentElement;
         const counter = wrapper.querySelector('.image-counter');
         const prevBtn = wrapper.querySelector('.carousel-nav-btn.prev');
         const nextBtn = wrapper.querySelector('.carousel-nav-btn.next');
-        
+
         const index = Math.round(element.scrollLeft / element.clientWidth) + 1;
         const total = element.children.length;
-        
+
         if (counter) {
             counter.textContent = `${index} / ${total}`;
         }
-        
+
         if (prevBtn) {
             prevBtn.style.display = index === 1 ? 'none' : 'flex';
         }
@@ -1985,7 +1985,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.scrollCarousel = function(e, btn, direction) {
+    window.scrollCarousel = function (e, btn, direction) {
         e.stopPropagation();
         const wrapper = btn.parentElement;
         const carousel = wrapper.querySelector('.detalle-img-carousel') || wrapper.querySelector('.card-img-carousel');
@@ -1995,7 +1995,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.scrollNetflixRow = function(e, btn, direction) {
+    window.scrollNetflixRow = function (e, btn, direction) {
         e.stopPropagation();
         const row = btn.parentElement;
         const scrollContainer = row.querySelector('.netflix-row-scroll');
@@ -2005,11 +2005,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.updateNetflixNav = function(scrollContainer) {
+    window.updateNetflixNav = function (scrollContainer) {
         const row = scrollContainer.parentElement;
         const prevBtn = row.querySelector('.row-nav-btn.prev');
         const nextBtn = row.querySelector('.row-nav-btn.next');
-        
+
         // Lazy loading dinámico por fila
         const category = row.getAttribute('data-category');
         if (category && window.netflixRowData && window.netflixRowData[category]) {
@@ -2018,7 +2018,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const scrollPercentage = (scrollContainer.scrollLeft + scrollContainer.clientWidth) / scrollContainer.scrollWidth;
             if (scrollPercentage > 0.75 && rowData.renderedCount < rowData.allListings.length) {
                 const nextBatch = rowData.allListings.slice(rowData.renderedCount, rowData.renderedCount + 15);
-                
+
                 const freq = window.db.adFrequencyScroll || 10;
                 let newCardsHTML = '';
                 for (let i = 0; i < nextBatch.length; i++) {
@@ -2030,15 +2030,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         // It will render the fallback "Anunciate" ad since we don't have adPool locally without await
                         // To improve this, we would need to pass adPool to window, or just let it render fallback.
                         // For now we'll render fallback to encourage more advertisers!
-                        newCardsHTML += createAdCardHTML(null); 
+                        newCardsHTML += createAdCardHTML(null);
                     }
                 }
-                
+
                 scrollContainer.insertAdjacentHTML('beforeend', newCardsHTML);
                 rowData.renderedCount += 15;
             }
         }
-        
+
         if (prevBtn) {
             if (scrollContainer.scrollLeft <= 10) {
                 prevBtn.classList.add('hidden');
@@ -2046,7 +2046,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 prevBtn.classList.remove('hidden');
             }
         }
-        
+
         if (nextBtn) {
             if (scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 10) {
                 nextBtn.classList.add('hidden');
@@ -2063,18 +2063,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Nivel 3: misma categoría/tipo, no en nivel 1 ni 2
     function buildSearchSwipeQueue(startingId, ctx) {
         if (!ctx || !ctx.level1) return null;
-        
+
         // Unir datos disponibles localmente para hacer la cascada
         const localListings = db.getAllListings().filter(l => db.isListingActive(l));
         const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
         const level1 = ctx.level1;
-        
+
         const allActiveMap = new Map();
         [...localListings, ...feedListings, ...level1].forEach(l => {
             allActiveMap.set(String(l.id), l);
         });
         const allActive = Array.from(allActiveMap.values());
-        
+
         const startingListing = allActive.find(l => String(l.id) === String(startingId));
         if (!startingListing) return null;
 
@@ -2107,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchNextFeedBlock() {
         if (isLoadingFeed || !hasMoreFeedItems) return;
         isLoadingFeed = true;
-        
+
         // Mostrar spinner de carga si existe el centinela
         const sentinel = document.getElementById('feed-infinite-scroll-sentinel');
         if (sentinel) sentinel.style.display = 'block';
@@ -2125,10 +2125,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Eliminar duplicados por id
             const newItems = res.data.filter(newItem => !activeFeedListings.some(existing => existing.id === newItem.id));
             activeFeedListings = [...activeFeedListings, ...newItems];
-            
+
             // Añadir al DOM
             appendFeedListingsToDOM(newItems);
-            
+
             currentFeedPage++;
         } else if (currentFeedPage === 1) {
             // No hay elementos en la primera página
@@ -2153,10 +2153,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
         }
-        
+
         hasMoreFeedItems = res.hasMore;
         isLoadingFeed = false;
-        
+
         if (sentinel) {
             sentinel.style.display = hasMoreFeedItems ? 'block' : 'none';
         }
@@ -2181,7 +2181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.refreshCategoryRanking === 'function') {
             await window.refreshCategoryRanking(selectedCities);
         }
-        
+
         populateHomeCategories();
 
         // Reset pagination state
@@ -2189,7 +2189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeFeedListings = [];
         hasMoreFeedItems = true;
         feedContainer.innerHTML = '';
-        
+
         // Add sentinel
         let sentinel = document.getElementById('feed-infinite-scroll-sentinel');
         if (!sentinel) {
@@ -2200,7 +2200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sentinel.style.width = '100%';
             sentinel.innerHTML = '<div class="spinner" style="color: var(--primary-color);">Cargando vehículos...</div>';
             feedContainer.after(sentinel);
-            
+
             const observer = new IntersectionObserver(entries => {
                 if (entries[0].isIntersecting) {
                     fetchNextFeedBlock();
@@ -2215,7 +2215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             feedContainer.classList.remove('listings-grid');
             window.netflixRowData = {}; // Initialize for lazy loading horizontal rows
-            
+
             // Pre-crear las filas en el DOM en el orden EXACTO de popularidad
             // Inicialmente estarán ocultas (display: none)
             const popularCategories = getSortedCategoriesByPopularity();
@@ -2285,21 +2285,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const freq = db.adFrequencyScroll || 10;
 
             const sortedTypes = getSortedCategoriesByPopularity();
-            
+
             for (const type of sortedTypes) {
                 if (!grouped[type] || grouped[type].length === 0) continue;
 
                 let existingRow = feedContainer.querySelector(`.netflix-row[data-category="${type}"]`);
-                
+
                 const typeListings = activeFeedListings.filter(l => l.type === type);
                 const existingCountForType = typeListings.length - grouped[type].length;
-                
+
                 let rowCardsHTML = '';
-                
+
                 for (let i = 0; i < grouped[type].length; i++) {
                     const item = grouped[type][i];
                     rowCardsHTML += createListingCardHTML(item, true);
-                    
+
                     if (db.adsEnabled && (existingCountForType + i + 1) % freq === 0) {
                         const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
                         rowCardsHTML += createAdCardHTML(ad, item.id, item.id);
@@ -2315,21 +2315,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize nav buttons visibility after DOM update
             setTimeout(() => {
                 feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
-                    if(window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
-                    if(window.initAutoScroll) window.initAutoScroll(scrollContainer);
+                    if (window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
+                    if (window.initAutoScroll) window.initAutoScroll(scrollContainer);
                 });
             }, 50);
         }
     }
 
 
-    window.toggleSave = function(id, btnElement) {
+    window.toggleSave = function (id, btnElement) {
         try {
             id = Number(id);
             const index = savedListingsIds.indexOf(id);
             const btn = btnElement.tagName === 'BUTTON' ? btnElement : btnElement.closest('button');
             const span = btn ? btn.querySelector('span') : null;
-            
+
             if (index > -1) {
                 // Dislike
                 savedListingsIds.splice(index, 1);
@@ -2348,7 +2348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
-            
+
             // Sync with feed cards visually without re-rendering everything
             const feedBtn = document.querySelector(`.card-save-btn[onclick*="toggleSave(${id}"]`);
             if (feedBtn) {
@@ -2360,24 +2360,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     feedBtn.innerHTML = `<span class="material-symbols-rounded" style="font-variation-settings: 'FILL' 1; animation: heartPulse 0.3s ease-in-out; color: #EF4444;">favorite</span>`;
                 }
             }
-            
+
             // Re-render library if it's the active view
             const biblio = document.getElementById('view-biblioteca');
-            if(biblio && biblio.classList.contains('active')) {
-                try { renderSavedListings(); } catch(e) {}
+            if (biblio && biblio.classList.contains('active')) {
+                try { renderSavedListings(); } catch (e) { }
             }
             // Sync nav icon
             if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
-            
-        } catch(err) {
+
+        } catch (err) {
             console.error('Error toggling save (card):', err);
         }
     };
 
-    window.updateNavFavoriteIcon = function() {
+    window.updateNavFavoriteIcon = function () {
         const hasFavorites = savedListingsIds.length > 0;
         const favNavBtns = document.querySelectorAll('.nav-item[data-target="view-biblioteca"] .material-symbols-rounded');
-        
+
         favNavBtns.forEach(icon => {
             if (hasFavorites) {
                 icon.style.color = '#EF4444';
@@ -2407,12 +2407,12 @@ document.addEventListener('DOMContentLoaded', () => {
             adModal.style.display = '';
             window.pendingNextListingIdAfterAd = null;
             window.pendingPrevListingIdAfterAd = null;
-            
+
             // Restaurar scroll position
             requestAnimationFrame(() => {
                 window.scrollTo(0, savedScrollPosition);
             });
-            
+
             history.pushState({ page: 'root' }, '');
             return;
         }
@@ -2436,7 +2436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             history.pushState({ page: 'root' }, '');
             return;
         }
-        
+
         // 3. Generic active modals check (e.g. contact-modal, client-ad-modal)
         const activeModal = document.querySelector('.modal.active');
         if (activeModal && activeModal.id !== 'exit-modal') {
@@ -2488,7 +2488,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Garantizar pila de historial tras primer toque en móviles
     function ensureHistoryStack() {
         if (!history.state || history.state.page !== 'root') {
-            try { history.pushState({ page: 'root' }, ''); } catch(e) {}
+            try { history.pushState({ page: 'root' }, ''); } catch (e) { }
         }
     }
     document.addEventListener('touchstart', ensureHistoryStack, { passive: true });
@@ -2499,8 +2499,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Backspace' || e.key === 'Escape') {
             const activeEl = document.activeElement;
             const isInput = activeEl && (
-                activeEl.tagName === 'INPUT' || 
-                activeEl.tagName === 'TEXTAREA' || 
+                activeEl.tagName === 'INPUT' ||
+                activeEl.tagName === 'TEXTAREA' ||
                 activeEl.isContentEditable
             );
             if (!isInput) {
@@ -2515,7 +2515,7 @@ document.addEventListener('DOMContentLoaded', () => {
             exitModal.classList.remove('active');
             exitModal.style.display = '';
             if (!history.state || history.state.page !== 'root') {
-                try { history.pushState({ page: 'root' }, ''); } catch(e) {}
+                try { history.pushState({ page: 'root' }, ''); } catch (e) { }
             }
         });
     }
@@ -2525,7 +2525,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isExiting = true;
             exitModal.classList.remove('active');
             exitModal.style.display = '';
-            history.back(); 
+            history.back();
         });
     }
 
@@ -2534,11 +2534,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchFiltersContainer = document.getElementById('search-filters-container');
 
     searchInput.addEventListener('focus', () => {
-        if(searchFiltersContainer.style.height === '0px') {
+        if (searchFiltersContainer.style.height === '0px') {
             searchFiltersContainer.style.height = searchFiltersContainer.scrollHeight + 'px';
             searchFiltersContainer.style.opacity = '1';
             searchFiltersContainer.style.pointerEvents = 'auto';
-            
+
             // Limpiar resultados anteriores y palabra de búsqueda
             searchResults.innerHTML = '';
             searchInput.value = '';
@@ -2554,9 +2554,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.customFilterLegalSelect) window.customFilterLegalSelect.update();
 
             const filterColorEl = document.getElementById('filter-color');
-            if(filterColorEl) {
+            if (filterColorEl) {
                 filterColorEl.value = 'Todos';
-                if(window.customFilterColorSelect) window.customFilterColorSelect.update();
+                if (window.customFilterColorSelect) window.customFilterColorSelect.update();
             }
 
             // Resetear ubicación con la de INICIO (Unidireccional)
@@ -2579,7 +2579,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnSearch.addEventListener('click', async () => {
         const queryText = searchInput.value.trim();
-        
+
         if (!queryText) {
             showAlert('Por favor, escribe la Marca o Modelo que buscas (Ej. Nissan, Civic) antes de buscar.', 'Búsqueda Vacía', 'warning');
             return;
@@ -2587,13 +2587,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const stateVal = filterState.value;
         const cityVal = filterCity.value;
-        
+
         let searchCities = [];
         if (stateVal === 'Todos') {
             searchCities = []; // No city filter
         } else if (cityVal === 'Todas') {
-            searchCities = (window.activeLocations && window.activeLocations.citiesByState[stateVal]) 
-                || (catalogData && catalogData.citiesByState[stateVal]) 
+            searchCities = (window.activeLocations && window.activeLocations.citiesByState[stateVal])
+                || (catalogData && catalogData.citiesByState[stateVal])
                 || [];
         } else {
             searchCities = [cityVal];
@@ -2617,18 +2617,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSearch.disabled = true;
 
         const results = await db.search(criteria);
-        
+
         btnSearch.innerHTML = originalBtnHTML;
         btnSearch.disabled = false;
-        
+
         if (results.length === 0) {
             // Mostrar modal temporal
             showAlert('Por el momento no contamos con vehículos que coincidan con tu búsqueda. ¡Intenta ajustando los filtros o seleccionando otra ciudad!', 'Sin inventario disponible', 'info');
             setTimeout(() => {
                 const alertModal = document.getElementById('custom-alert-modal');
-                if(alertModal) alertModal.classList.remove('active');
+                if (alertModal) alertModal.classList.remove('active');
             }, 3000); // Se cierra solo en 3 segundos
-            
+
             // Y limpiar el HTML para que no queden cosas raras
             searchResults.innerHTML = '';
             return;
@@ -2653,16 +2653,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSavedListings() {
         const allLocal = db.getAllListings();
         const allFeed = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
-        
+
         // Combinar ambas fuentes evitando duplicados
         const allMap = new Map();
         [...allLocal, ...allFeed].forEach(l => {
             allMap.set(String(l.id), l);
         });
         const all = Array.from(allMap.values());
-        
+
         const saved = all.filter(l => savedListingsIds.includes(Number(l.id)) && l.status === 'autorizado');
-        
+
         if (saved.length === 0) {
             savedListingsContainer.innerHTML = `
                 <div class="empty-state" style="grid-column: 1 / -1;">
@@ -2676,24 +2676,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Detalles ---
-    window.openListingDetails = async function(id) {
+    window.openListingDetails = async function (id) {
         let listing = null;
         const strId = String(id);
-        
+
         // 1. Buscar en Caché Local (Favoritos o Mis Anuncios)
         const allListings = db.getAllListings();
         listing = allListings.find(l => String(l.id) === strId);
-        
+
         // 2. Buscar en Feed Activo (Paginado)
         if (!listing && typeof activeFeedListings !== 'undefined') {
             listing = activeFeedListings.find(l => String(l.id) === strId);
         }
-        
+
         // 3. Buscar en contexto de búsqueda (si venimos de una búsqueda reciente)
         if (!listing && window.currentSearchContext && window.currentSearchContext.level1) {
             listing = window.currentSearchContext.level1.find(l => String(l.id) === strId);
         }
-        
+
         // 4. Si aún no está, intentar buscar en Supabase directamente (fuente de la verdad)
         if (!listing && typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
@@ -2702,7 +2702,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .select('*')
                     .eq('id', strId)
                     .maybeSingle();
-                
+
                 if (data && !error) {
                     listing = {
                         ...data,
@@ -2716,7 +2716,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if(!listing) {
+        if (!listing) {
             console.error("Listing no encontrado en local ni en servidor:", id);
             return;
         }
@@ -2728,9 +2728,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Encontrar vista activa actual
         const activeView = Array.from(views).find(v => v.classList.contains('active') && v.id !== 'view-detalle');
-        if(activeView) {
+        if (activeView) {
             previousViewId = activeView.id;
-            
+
             const isAlreadyInDetalle = viewDetalle.classList.contains('active');
             if (!isAlreadyInDetalle) {
                 // Guardamos el scroll de la ventana antes de mostrar la vista de detalle
@@ -2853,9 +2853,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mostrar Vista (Como Modal/Overlay para no perder el scroll del fondo)
         views.forEach(v => {
-            if(v.id !== previousViewId) v.classList.remove('active');
+            if (v.id !== previousViewId) v.classList.remove('active');
         });
-        
+
         viewDetalle.style.position = 'fixed';
         viewDetalle.style.top = '0';
         viewDetalle.style.left = '0';
@@ -2864,13 +2864,13 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetalle.style.zIndex = '900';
         viewDetalle.style.overflowY = 'auto';
         viewDetalle.style.backgroundColor = 'var(--bg-color)';
-        
+
         viewDetalle.classList.add('active');
         history.pushState({ page: 'listing-details' }, '');
 
         const carousel = detalleContent.querySelector('.detalle-img-carousel');
         if (carousel && images.length > 1) {
-            carousel.addEventListener('touchstart', window.stopFullscreenAutoplay, {passive: true});
+            carousel.addEventListener('touchstart', window.stopFullscreenAutoplay, { passive: true });
             carousel.addEventListener('mousedown', window.stopFullscreenAutoplay);
             window.startFullscreenAutoplay(false, images.length);
         }
@@ -2886,16 +2886,16 @@ document.addEventListener('DOMContentLoaded', () => {
             infoDiv.addEventListener('touchstart', (e) => {
                 startX = e.changedTouches[0].screenX;
                 startY = e.changedTouches[0].screenY;
-            }, {passive: true});
+            }, { passive: true });
 
             infoDiv.addEventListener('touchend', (e) => {
                 endX = e.changedTouches[0].screenX;
                 endY = e.changedTouches[0].screenY;
-                
+
                 const diffX = Math.abs(endX - startX);
                 const diffY = Math.abs(endY - startY);
                 const threshold = 50; // mínimo movimiento en píxeles
-                
+
                 // Solo navegamos si es un gesto predominantemente HORIZONTAL (ignorar scroll vertical)
                 if (diffX > threshold && diffX > diffY) {
                     if (endX < startX - threshold) {
@@ -2906,7 +2906,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         navigateListing(-1);
                     }
                 }
-            }, {passive: true});
+            }, { passive: true });
 
             const navigateListing = (direction) => {
                 let sameCategoryListings = [];
@@ -2917,7 +2917,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Combinar autos locales (favoritos/mis anuncios) con el feed activo (paginado)
                     const localListings = db.getAllListings().filter(l => db.isListingActive(l));
                     const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
-                    
+
                     // Unir evitando duplicados por ID
                     const allAvailable = [...localListings];
                     feedListings.forEach(fl => {
@@ -2925,26 +2925,26 @@ document.addEventListener('DOMContentLoaded', () => {
                             allAvailable.push(fl);
                         }
                     });
-                    
+
                     sameCategoryListings = allAvailable.filter(l => l.type === listing.type);
                     if (typeof selectedCities !== 'undefined' && selectedCities.length > 0) {
                         sameCategoryListings = sameCategoryListings.filter(l => selectedCities.includes(l.city));
                     }
                 }
-                
+
                 if (sameCategoryListings.length <= 1) return;
-                
+
                 const currentIndex = sameCategoryListings.findIndex(l => String(l.id) === String(listing.id));
                 if (currentIndex === -1) return;
-                
+
                 let nextIndex = currentIndex + direction;
                 if (nextIndex >= sameCategoryListings.length) nextIndex = 0; // Vuelve al principio
                 if (nextIndex < 0) nextIndex = sameCategoryListings.length - 1; // Va al final
-                
+
                 // Inserción de publicidad según la frecuencia configurada al deslizar entre vehículos
                 window.detailSwipesCount = (window.detailSwipesCount || 0) + 1;
                 const freq = db.adFrequencyScroll || 10;
-                
+
                 if (db.adsEnabled && (window.detailSwipesCount % freq === 0)) {
                     window.detailSwipesCount = 0; // Reiniciar contador siempre al alcanzar la frecuencia
                     const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
@@ -2956,7 +2956,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Misma animación que auto→auto: salida del auto, entrada del anuncio
                         const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
-                        const animInClass  = direction === 1 ? 'slide-in-right' : 'slide-in-left';
+                        const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
                         detalleContent.classList.add(animOutClass);
 
                         setTimeout(() => {
@@ -2964,7 +2964,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // sin parpadear mientras el modal del anuncio carga
                             const adModal = document.getElementById('ad-fullscreen-modal');
                             const contentDiv = adModal && (adModal.querySelector('.modal-content') || adModal.querySelector('.detalle-wrapper'));
-                            
+
                             // Preparar animación ANTES de que el modal sea visible
                             if (contentDiv) {
                                 contentDiv.classList.add(animInClass);
@@ -2985,13 +2985,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const nextId = sameCategoryListings[nextIndex].id;
                 const animOutClass = direction === 1 ? 'slide-out-left' : 'slide-out-right';
                 const animInClass = direction === 1 ? 'slide-in-right' : 'slide-in-left';
-                
+
                 detalleContent.classList.add(animOutClass);
-                
+
                 setTimeout(() => {
                     detalleContent.classList.remove(animOutClass);
                     window.openListingDetails(nextId);
-                    
+
                     const newDetalleContent = document.getElementById('detalle-content');
                     if (newDetalleContent) {
                         newDetalleContent.classList.add(animInClass);
@@ -3005,17 +3005,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.closeListingDetails = function() {
+    window.closeListingDetails = function () {
         if (window.stopFullscreenAutoplay) window.stopFullscreenAutoplay();
         const viewDetalle = document.getElementById('view-detalle');
         if (viewDetalle) viewDetalle.classList.remove('active');
-        
+
         // No necesitamos volver a agregar .active al prev porque nunca se le quitó
-        if(previousViewId === 'view-biblioteca') renderSavedListings();
-        
+        if (previousViewId === 'view-biblioteca') renderSavedListings();
+
         // Sincronizar el estado del historial si tenía abierto el detalle
         if (history.state && history.state.page === 'listing-details') {
-            try { history.replaceState({ page: 'root' }, ''); } catch(e) {}
+            try { history.replaceState({ page: 'root' }, ''); } catch (e) { }
         }
 
         // Restaurar el scroll (por seguridad, aunque el fondo nunca se ocultó)
@@ -3024,10 +3024,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.enablePinchZoom = function(imgElement) {
+    window.enablePinchZoom = function (imgElement) {
         let scale = 1;
         let initialDistance = 0;
-        
+
         imgElement.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 initialDistance = Math.hypot(
@@ -3035,11 +3035,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.touches[0].pageY - e.touches[1].pageY
                 );
             }
-        }, {passive: false});
+        }, { passive: false });
 
         imgElement.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
-                e.preventDefault(); 
+                e.preventDefault();
                 const currentDistance = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY
@@ -3050,7 +3050,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 imgElement.style.zIndex = '100';
                 imgElement.style.position = 'relative';
             }
-        }, {passive: false});
+        }, { passive: false });
 
         imgElement.addEventListener('touchend', (e) => {
             if (e.touches.length < 2 && scale !== 1) {
@@ -3058,7 +3058,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 imgElement.style.transform = `scale(${scale})`;
                 imgElement.style.transition = 'transform 0.3s ease';
                 setTimeout(() => {
-                    if(scale === 1) {
+                    if (scale === 1) {
                         imgElement.style.zIndex = '';
                         imgElement.style.position = '';
                         imgElement.style.transform = '';
@@ -3069,10 +3069,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.contactSeller = function(listingId) {
+    window.contactSeller = function (listingId) {
         const strId = String(listingId);
         let listing = db.getAllListings().find(l => String(l.id) === strId);
-        
+
         if (!listing && typeof activeFeedListings !== 'undefined') {
             listing = activeFeedListings.find(l => String(l.id) === strId);
         }
@@ -3085,12 +3085,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (phone) {
                 let cleanPhone = String(phone).replace(/[^0-9]/g, '');
                 if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
-                const formattedPhone = cleanPhone.length === 10 ? `(${cleanPhone.substring(0,3)})${cleanPhone.substring(3,6)}-${cleanPhone.substring(6)}` : cleanPhone;
+                const formattedPhone = cleanPhone.length === 10 ? `(${cleanPhone.substring(0, 3)})${cleanPhone.substring(3, 6)}-${cleanPhone.substring(6)}` : cleanPhone;
                 const message = encodeURIComponent(`Hola, vi tu anuncio "${listing.title}" en RevistAuto. Me interesa y quisiera más información.`);
-                
+
                 const btnCall = document.getElementById('btn-contact-call');
                 const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
-                
+
                 if (window.innerWidth >= 768) {
                     btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
                     btnCall.onclick = null;
@@ -3103,12 +3103,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('contact-modal').classList.remove('active');
                     };
                 }
-                
+
                 btnWhatsApp.onclick = () => {
                     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
                     document.getElementById('contact-modal').classList.remove('active');
                 };
-                
+
                 document.getElementById('contact-modal').classList.add('active');
             } else {
                 showAlert('El vendedor de este vehículo no ha registrado un número de contacto.', 'Sin Contacto', 'info');
@@ -3140,14 +3140,14 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.style.fontSize = '15px';
         toast.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Animación de rebote suave
         toast.style.opacity = '0';
-        
+
         toast.innerHTML = `
             <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' 1; font-size: 22px;">favorite</span>
             Añadido a tus favoritos
         `;
-        
+
         document.body.appendChild(toast);
-        
+
         // Trigger enter animation
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -3155,7 +3155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 toast.style.opacity = '1';
             });
         });
-        
+
         // Remove after 3 seconds
         setTimeout(() => {
             toast.style.transform = 'translateX(-50%) translateY(20px) scale(0.9)';
@@ -3166,17 +3166,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2500);
     }
 
-    window.toggleSaveDetalle = function(id, btnElement) {
+    window.toggleSaveDetalle = function (id, btnElement) {
         id = Number(id); // Convertir a número para la comparación
         window.toggleSave(id, btnElement);
         const isSaved = savedListingsIds.includes(id);
-        
+
         // Forzar estilos sobre el botón para garantizar que se pinte
         btnElement.style.color = isSaved ? '#EF4444' : 'white';
         btnElement.style.borderColor = isSaved ? '#EF4444' : 'rgba(255, 255, 255, 0.3)';
-        
+
         const icon = btnElement.querySelector('.material-symbols-rounded');
-        if(icon) {
+        if (icon) {
             if (isSaved) {
                 icon.innerHTML = 'favorite'; // Asegura que se use el icono relleno
                 icon.style.fontVariationSettings = "'FILL' 1";
@@ -3194,15 +3194,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderMyListings() {
         const myListings = db.getMyListings();
         const myAds = db.getMyAds ? db.getMyAds() : [];
-        
+
         const statusPriority = {
             'pendiente autorizacion': 1,
             'autorizado': 2,
             'vendido': 3
         };
-        
+
         myListings.sort((a, b) => (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99));
-        
+
         let vehiclesHTML = '';
         let adsHTML = '';
 
@@ -3210,78 +3210,78 @@ document.addEventListener('DOMContentLoaded', () => {
             vehiclesHTML = '<p style="color:var(--text-muted); text-align:center;">No has publicado ningún vehículo.</p>';
         } else {
             vehiclesHTML = myListings.map(listing => {
-            const images = listing.images || (listing.image ? [listing.image] : []);
-            const imgHTML = images.length > 0 ? images.map(img => `<img src="${img}" alt="Auto" class="my-listing-img" style="flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;">`).join('') : '';
-            
-            let displayStatus = listing.status.toUpperCase();
-            let statusColorClass = `status-${listing.status.replace(' ', '-')}`;
-            let priceTextHTML = '';
-            
-            let paymentBtnHTML = '';
+                const images = listing.images || (listing.image ? [listing.image] : []);
+                const imgHTML = images.length > 0 ? images.map(img => `<img src="${img}" alt="Auto" class="my-listing-img" style="flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;">`).join('') : '';
 
-            if (listing.status === 'pendiente autorizacion') {
-                const payInfo = getListingPaymentInfo(listing);
-                priceTextHTML = `<p style="font-size: 0.75rem; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; color: var(--danger-color); margin-top: 6px; font-weight: 500; letter-spacing: 0.3px; opacity: 0.9;">${payInfo.textDesc}</p>`;
-                if (globalMpEnabled && listing.paymentStatus === 'pending' && payInfo.calculatedPrice > 0) {
-                    paymentBtnHTML = `<button class="primary-btn" onclick="window.openedFromDashboard=true; openMercadoPagoBrick(${listing.id}, false)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
-                }
-            } else if (listing.status === 'autorizado' || listing.status === 'activo') {
-                const now = new Date();
-                
-                // Usamos expiresAt si existe, si no caemos en la lógica anterior (lastRenewedMonth)
-                if (listing.expiresAt) {
-                    const expDate = new Date(listing.expiresAt);
-                    if (now > expDate) {
-                        displayStatus = 'CADUCADO';
-                        statusColorClass = 'status-caducado';
-                        if (globalMpEnabled) {
-                            paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, true)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
-                        }
-                    } else {
-                        // Avisar 5 dias antes
-                        const diffTime = Math.abs(expDate - now);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                        if (diffDays <= 5) {
-                            displayStatus = 'RENOVAR PRONTO';
-                            statusColorClass = 'status-renovar';
+                let displayStatus = listing.status.toUpperCase();
+                let statusColorClass = `status-${listing.status.replace(' ', '-')}`;
+                let priceTextHTML = '';
+
+                let paymentBtnHTML = '';
+
+                if (listing.status === 'pendiente autorizacion') {
+                    const payInfo = getListingPaymentInfo(listing);
+                    priceTextHTML = `<p style="font-size: 0.75rem; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; color: var(--danger-color); margin-top: 6px; font-weight: 500; letter-spacing: 0.3px; opacity: 0.9;">${payInfo.textDesc}</p>`;
+                    if (globalMpEnabled && listing.paymentStatus === 'pending' && payInfo.calculatedPrice > 0) {
+                        paymentBtnHTML = `<button class="primary-btn" onclick="window.openedFromDashboard=true; openMercadoPagoBrick(${listing.id}, false)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">credit_card</span> Pagar Ahora</button>`;
+                    }
+                } else if (listing.status === 'autorizado' || listing.status === 'activo') {
+                    const now = new Date();
+
+                    // Usamos expiresAt si existe, si no caemos en la lógica anterior (lastRenewedMonth)
+                    if (listing.expiresAt) {
+                        const expDate = new Date(listing.expiresAt);
+                        if (now > expDate) {
+                            displayStatus = 'CADUCADO';
+                            statusColorClass = 'status-caducado';
                             if (globalMpEnabled) {
                                 paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, true)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
                             }
                         } else {
-                            displayStatus = 'ACTIVO';
-                            statusColorClass = 'status-autorizado';
-                        }
-                    }
-                } else {
-                    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                    if (listing.lastRenewedMonth) {
-                        if (listing.lastRenewedMonth < currentMonthStr) {
-                            displayStatus = 'CADUCADO';
-                            statusColorClass = 'status-caducado'; 
-                            if (globalMpEnabled) paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, true)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
-                        } else if (listing.lastRenewedMonth === currentMonthStr) {
-                            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                            if (now.getDate() >= daysInMonth - 5) {
+                            // Avisar 5 dias antes
+                            const diffTime = Math.abs(expDate - now);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            if (diffDays <= 5) {
                                 displayStatus = 'RENOVAR PRONTO';
-                                statusColorClass = 'status-renovar'; 
+                                statusColorClass = 'status-renovar';
+                                if (globalMpEnabled) {
+                                    paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, true)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
+                                }
+                            } else {
+                                displayStatus = 'ACTIVO';
+                                statusColorClass = 'status-autorizado';
+                            }
+                        }
+                    } else {
+                        const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                        if (listing.lastRenewedMonth) {
+                            if (listing.lastRenewedMonth < currentMonthStr) {
+                                displayStatus = 'CADUCADO';
+                                statusColorClass = 'status-caducado';
                                 if (globalMpEnabled) paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, true)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
+                            } else if (listing.lastRenewedMonth === currentMonthStr) {
+                                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                                if (now.getDate() >= daysInMonth - 5) {
+                                    displayStatus = 'RENOVAR PRONTO';
+                                    statusColorClass = 'status-renovar';
+                                    if (globalMpEnabled) paymentBtnHTML = `<button class="primary-btn" onclick="openMercadoPagoBrick(${listing.id}, true)" style="background:var(--primary-color); padding: 8px 16px; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-rounded" style="font-size:18px;">autorenew</span> Renovar con Tarjeta</button>`;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            // Mostrar fecha de vencimiento solo si está activo (no caducado y no pendiente)
-            let publishedDateHTML = '';
-            if (listing.expiresAt && displayStatus !== 'CADUCADO' && listing.status !== 'pendiente autorizacion') {
-                const expDate = new Date(listing.expiresAt);
-                const expDateStr = expDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-                publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Vence el ${expDateStr}</p>`;
-            }
+                // Mostrar fecha de vencimiento solo si está activo (no caducado y no pendiente)
+                let publishedDateHTML = '';
+                if (listing.expiresAt && displayStatus !== 'CADUCADO' && listing.status !== 'pendiente autorizacion') {
+                    const expDate = new Date(listing.expiresAt);
+                    const expDateStr = expDate.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+                    publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Vence el ${expDateStr}</p>`;
+                }
 
-            const refNum = listing.ref_number || (String(listing.id).length >= 5 ? String(listing.id).slice(-5) : listing.id);
+                const refNum = listing.ref_number || (String(listing.id).length >= 5 ? String(listing.id).slice(-5) : listing.id);
 
-            return `
+                return `
             <div class="my-listing-card" style="cursor: pointer;" onclick="if(!event.target.closest('button')) openListingDetails(${listing.id})">
                 <div class="card-img-carousel" style="width:100px; height:100px; flex-shrink:0; background:#000;">
                     ${imgHTML}
@@ -3314,11 +3314,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             adsHTML = myAds.map(ad => {
                 const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-                
+
                 let displayStatus = 'PENDIENTE PAGO';
                 let statusColorClass = 'status-pendiente';
                 let paymentBtnHTML = '';
-                
+
                 if (ad.payment_status === 'pendiente') {
                     displayStatus = 'PENDIENTE PAGO';
                     statusColorClass = 'status-pendiente';
@@ -3347,7 +3347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         statusColorClass = 'status-autorizado';
                     }
                 }
-                
+
                 let publishedDateHTML = '';
                 if (ad.end_date && displayStatus !== 'CADUCADO' && displayStatus !== 'PENDIENTE PAGO') {
                     const expDate = new Date(ad.end_date);
@@ -3403,7 +3403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const stateKey = JSON.stringify(myListings) + '_' + JSON.stringify(myAds);
         if (myListingsContainer.dataset.lastState === stateKey) return;
         myListingsContainer.dataset.lastState = stateKey;
-        
+
         myListingsContainer.innerHTML = combinedHTML;
     }
 
@@ -3412,7 +3412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSoldYes = document.getElementById('btn-sold-yes');
     const btnSoldNo = document.getElementById('btn-sold-no');
 
-    window.confirmMarkAsSold = function(id) {
+    window.confirmMarkAsSold = function (id) {
         listingToSoldId = id;
         if (soldModal) soldModal.classList.add('active');
     };
@@ -3441,7 +3441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDeleteYes = document.getElementById('btn-delete-yes');
     const btnDeleteNo = document.getElementById('btn-delete-no');
 
-    window.deleteListing = function(id) {
+    window.deleteListing = function (id) {
         listingToDeleteId = id;
         if (deleteModal) deleteModal.classList.add('active');
     };
@@ -3506,7 +3506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnSubmit = document.getElementById('btn-wizard-submit');
 
         if (btnBack) btnBack.style.display = currentWizardStep > 1 ? 'block' : 'none';
-        
+
         if (currentWizardStep === totalWizardSteps) {
             if (btnNext) btnNext.style.display = 'none';
             if (btnSubmit) btnSubmit.style.display = selectedImageFiles.length > 0 ? 'block' : 'none';
@@ -3519,10 +3519,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkStepValidity() {
         const currentStepEl = newListingForm.querySelector(`.form-step[data-step="${currentWizardStep}"]`);
         if (!currentStepEl) return true;
-        
+
         // Limpiar errores visuales previos
         currentStepEl.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-        
+
         const inputs = currentStepEl.querySelectorAll('input[required], select[required]');
         let isValid = true;
         let missingFields = [];
@@ -3530,10 +3530,10 @@ document.addEventListener('DOMContentLoaded', () => {
         inputs.forEach(input => {
             // Ignorar inputs ocultos que no aplican a la validación en este caso
             if (input.style.display === 'none' && input.tagName.toLowerCase() !== 'select') return;
-            
+
             if (!input.checkValidity()) {
                 isValid = false;
-                
+
                 // Highlight input o custom select trigger
                 if (input.tagName.toLowerCase() === 'select') {
                     if (input.parentNode && input.parentNode.classList.contains('custom-select-wrapper')) {
@@ -3586,18 +3586,18 @@ document.addEventListener('DOMContentLoaded', () => {
         editingListingId = null;
         currentWizardStep = 1;
         newListingForm.reset();
-        if(window.customMakeSelect) window.customMakeSelect.update();
-        if(window.customModelSelect) window.customModelSelect.update();
-        if(window.customTypeSelect) window.customTypeSelect.update();
-        if(window.customStateSelect) window.customStateSelect.update();
-        if(window.customCitySelect) window.customCitySelect.update();
-        if(window.customTransmissionSelect) window.customTransmissionSelect.update();
-        if(window.customAcSelect) window.customAcSelect.update();
-        if(window.customLegalSelect) window.customLegalSelect.update();
-        if(window.customColorSelect) window.customColorSelect.update();
+        if (window.customMakeSelect) window.customMakeSelect.update();
+        if (window.customModelSelect) window.customModelSelect.update();
+        if (window.customTypeSelect) window.customTypeSelect.update();
+        if (window.customStateSelect) window.customStateSelect.update();
+        if (window.customCitySelect) window.customCitySelect.update();
+        if (window.customTransmissionSelect) window.customTransmissionSelect.update();
+        if (window.customAcSelect) window.customAcSelect.update();
+        if (window.customLegalSelect) window.customLegalSelect.update();
+        if (window.customColorSelect) window.customColorSelect.update();
         whatsappModified = false;
         selectedImageFiles = [];
-        if(typeof renderImagePreviews === 'function') renderImagePreviews();
+        if (typeof renderImagePreviews === 'function') renderImagePreviews();
         newListingModal.querySelector('h3').textContent = 'Dar de Alta Vehículo';
         updateWizardUI();
         newListingModal.classList.add('active');
@@ -3606,12 +3606,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userStateSelect.value && userStateSelect.value !== 'Todos') {
             formState.value = userStateSelect.value;
             formState.dispatchEvent(new Event('change'));
-            if(window.customStateSelect) window.customStateSelect.update();
-            
+            if (window.customStateSelect) window.customStateSelect.update();
+
             if (selectedCities && selectedCities.length > 0 && selectedCities[0] !== 'Todas') {
                 setTimeout(() => {
                     formCity.value = selectedCities[0];
-                    if(window.customCitySelect) window.customCitySelect.update();
+                    if (window.customCitySelect) window.customCitySelect.update();
                 }, 50);
             }
         }
@@ -3644,42 +3644,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.openEditAd = function(id) {
+    window.openEditAd = function (id) {
         const ad = db.getAllAds().find(a => String(a.id) === String(id));
-        if(!ad) return;
-        
+        if (!ad) return;
+
         window.editingAdId = id;
-        
+
         document.getElementById('client-ad-title').value = ad.title || '';
         document.getElementById('client-ad-description').value = ad.description || '';
         document.getElementById('client-ad-address').value = ad.address || '';
         document.getElementById('client-ad-schedule-mf').value = ad.scheduleMF || '';
         document.getElementById('client-ad-schedule-sat').value = ad.scheduleSat || '';
         document.getElementById('client-ad-schedule-sun').value = ad.scheduleSun || '';
-        
+
         const counter = document.getElementById('desc-char-counter');
         if (counter) counter.textContent = `${(ad.description || '').length}/220`;
-        
+
         const stateSelect = document.getElementById('client-ad-state');
         stateSelect.value = ad.state || '';
         stateSelect.dispatchEvent(new Event('change'));
         if (ad.city) document.getElementById('client-ad-city').value = ad.city;
-        
+
         document.getElementById('client-ad-phone').value = ad.phone || '';
         document.getElementById('client-ad-whatsapp').value = ad.whatsapp || '';
-        
+
         document.getElementById('client-ad-link-fb').value = (ad.social_links && ad.social_links.length > 0) ? ad.social_links[0] : '';
         document.getElementById('client-ad-link-ig').value = (ad.social_links && ad.social_links.length > 1) ? ad.social_links[1] : '';
         document.getElementById('client-ad-link-tk').value = (ad.social_links && ad.social_links.length > 2) ? ad.social_links[2] : '';
-        
+
         window.clientAdImages = ad.images ? [...ad.images] : [];
         if (typeof window.renderClientAdImagePreviews === 'function') {
             window.renderClientAdImagePreviews();
         }
-        
+
         const btnSubmit = document.getElementById('btn-submit-client-ad');
         if (btnSubmit) btnSubmit.textContent = 'Guardar Cambios';
-        
+
         const clientAdModal = document.getElementById('client-ad-modal');
         if (clientAdModal) {
             clientAdModal.classList.add('active');
@@ -3690,7 +3690,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Editar desde el panel admin (busca en todos los listings)
-    window.openEditListingAdmin = function(id) {
+    window.openEditListingAdmin = function (id) {
         const listing = db.getAllListings().find(l => String(l.id) === String(id));
         if (!listing) { showAlert('No se encontró la publicación.', 'Error', 'error'); return; }
         window._editFromAdmin = true;
@@ -3705,9 +3705,9 @@ document.addEventListener('DOMContentLoaded', () => {
         _openEditListingWithData(listing);
     };
 
-    window.openEditListing = function(id) {
+    window.openEditListing = function (id) {
         const listing = db.getMyListings().find(l => String(l.id) === String(id));
-        if(!listing) return;
+        if (!listing) return;
         window._editFromAdmin = false;
         _openEditListingWithData(listing);
     };
@@ -3715,18 +3715,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function _openEditListingWithData(listing) {
         const id = listing.id;
         editingListingId = id;
-        
+
         let fType = document.getElementById('form-type');
         fType.value = listing.type;
         if (!fType.value) { fType.value = 'Otros'; document.getElementById('form-custom-type').value = listing.type; }
         document.getElementById('form-type').dispatchEvent(new Event('change'));
-        if(window.customTypeSelect) window.customTypeSelect.update();
-        
+        if (window.customTypeSelect) window.customTypeSelect.update();
+
         let fMake = document.getElementById('form-make');
         fMake.value = listing.make;
         if (!fMake.value) { fMake.value = 'Otros'; document.getElementById('form-custom-make').value = listing.make; }
-        if(window.customMakeSelect) window.customMakeSelect.update();
-        
+        if (window.customMakeSelect) window.customMakeSelect.update();
+
         const event = new Event('change');
         fMake.dispatchEvent(event);
         setTimeout(() => {
@@ -3734,7 +3734,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fModel.value = listing.model;
             if (!fModel.value) { fModel.value = 'Otros'; document.getElementById('form-custom-model').value = listing.model; }
             fModel.dispatchEvent(new Event('change'));
-            if(window.customModelSelect) window.customModelSelect.update();
+            if (window.customModelSelect) window.customModelSelect.update();
         }, 50);
 
         document.getElementById('form-year').value = listing.year;
@@ -3743,9 +3743,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             document.getElementById('form-price').value = '';
         }
-        
+
         document.getElementById('form-color').value = listing.color || '';
-        if(window.customColorSelect) window.customColorSelect.update();
+        if (window.customColorSelect) window.customColorSelect.update();
 
         const formTrim = document.getElementById('form-trim');
         if (formTrim) formTrim.value = listing.trim || '';
@@ -3753,13 +3753,13 @@ document.addEventListener('DOMContentLoaded', () => {
         formPhone.value = listing.phone || '';
         let wa = listing.whatsapp || '';
         let waV = wa.replace(/[^0-9]/g, '');
-        if(waV.startsWith('52') && waV.length > 10) waV = waV.substring(2);
+        if (waV.startsWith('52') && waV.length > 10) waV = waV.substring(2);
         formWhatsApp.value = waV ? '+52 ' + waV : '';
         formEngine.value = listing.engine || '';
         formTransmission.value = listing.transmission || '';
-        if(window.customTransmissionSelect) window.customTransmissionSelect.update();
+        if (window.customTransmissionSelect) window.customTransmissionSelect.update();
         formAc.value = listing.ac || '';
-        if(window.customAcSelect) window.customAcSelect.update();
+        if (window.customAcSelect) window.customAcSelect.update();
         let milVal = listing.mileage || '';
         let milUnit = 'km';
         if (milVal.endsWith(' km')) {
@@ -3772,9 +3772,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formMileage.value = rawMil ? Number(rawMil).toLocaleString('en-US') : '';
         if (document.getElementById('form-mileage-unit')) document.getElementById('form-mileage-unit').value = milUnit;
         formLegal.value = listing.legal || '';
-        if(window.customLegalSelect) window.customLegalSelect.update();
+        if (window.customLegalSelect) window.customLegalSelect.update();
         whatsappModified = true;
-        
+
         let stateFound = '';
         if (catalogData && catalogData.citiesByState) {
             for (const [state, cities] of Object.entries(catalogData.citiesByState)) {
@@ -3785,25 +3785,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         document.getElementById('form-state').value = stateFound;
-        if(window.customStateSelect) window.customStateSelect.update();
-        
+        if (window.customStateSelect) window.customStateSelect.update();
+
         const stateEvent = new Event('change');
         document.getElementById('form-state').dispatchEvent(stateEvent);
         setTimeout(() => {
             document.getElementById('form-city').value = listing.city;
-            if(window.customCitySelect) window.customCitySelect.update();
+            if (window.customCitySelect) window.customCitySelect.update();
         }, 50);
 
         newListingModal.querySelector('h3').textContent = 'Editar Vehículo';
-        
+
         selectedImageFiles = [];
         const existingImages = listing.images || (listing.image ? [listing.image] : []);
         existingImages.forEach(imgUrl => {
             selectedImageFiles.push({ file: null, url: imgUrl });
         });
 
-        if(typeof renderImagePreviews === 'function') renderImagePreviews();
-        
+        if (typeof renderImagePreviews === 'function') renderImagePreviews();
+
         const fileText = document.getElementById('file-chosen-text');
         if (fileText) {
             if (selectedImageFiles.length > 0) {
@@ -3814,7 +3814,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileText.style.color = 'var(--text-muted)';
             }
         }
-        
+
         if (listing.status === 'activo' || listing.status === 'autorizado' || listing.status === 'vendido') {
             currentWizardStep = 2;
         } else {
@@ -3827,15 +3827,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('btn-wizard-submit');
     submitBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        
+
         if (selectedImageFiles.length === 0 && !editingListingId) {
             showAlert('Por favor, selecciona al menos una foto del vehículo.', 'Faltan Fotos', 'warning');
             return;
         }
-        
+
         const make = formMake.value === 'Otros' ? document.getElementById('form-custom-make').value.trim() : formMake.value;
         let model = formModel.value === 'Otros' ? document.getElementById('form-custom-model').value.trim() : formModel.value;
-        if(!model || model === '') model = 'Modelo Desconocido';
+        if (!model || model === '') model = 'Modelo Desconocido';
         const year = document.getElementById('form-year').value;
         const trimVal = document.getElementById('form-trim') ? document.getElementById('form-trim').value.trim() : '';
         const title = `${make} ${model} ${trimVal ? trimVal + ' ' : ''}${year}`;
@@ -3845,12 +3845,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const mileageUnit = document.getElementById('form-mileage-unit') ? document.getElementById('form-mileage-unit').value : '';
         const mileage = formMileage.value + (mileageUnit ? ' ' + mileageUnit : '');
         const legal = formLegal.value;
-        
+
         const submitBtn = document.getElementById('btn-wizard-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Subiendo...';
-            
+
             let progressContainer = document.getElementById('upload-progress-container');
             if (!progressContainer) {
                 progressContainer = document.createElement('div');
@@ -3862,7 +3862,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 progressContainer.style.marginBottom = '12px';
                 progressContainer.style.overflow = 'hidden';
                 progressContainer.style.position = 'relative';
-                
+
                 const progressBg = document.createElement('div');
                 progressBg.id = 'upload-progress-bg';
                 progressBg.style.position = 'absolute';
@@ -3872,7 +3872,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 progressBg.style.width = '0%';
                 progressBg.style.background = 'var(--primary-color)';
                 progressBg.style.transition = 'width 0.3s ease';
-                
+
                 const progressText = document.createElement('div');
                 progressText.id = 'upload-progress-text';
                 progressText.style.position = 'absolute';
@@ -3888,7 +3888,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 progressContainer.appendChild(progressBg);
                 progressContainer.appendChild(progressText);
-                
+
                 submitBtn.parentNode.insertBefore(progressContainer, submitBtn);
             }
             progressContainer.style.display = 'block';
@@ -3898,7 +3898,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let uploadedImageUrls = [];
         const imageFiles = selectedImageFiles;
-        
+
         if (imageFiles.length > 0) {
             try {
                 for (let i = 0; i < imageFiles.length; i++) {
@@ -3909,11 +3909,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (progressText) progressText.textContent = currentPercent + '%';
 
                     const file = imageFiles[i].file;
-                    
+
                     if (!file) {
                         // Imagen existente, usar URL directamente sin re-subir
                         uploadedImageUrls.push(imageFiles[i].url);
-                        
+
                         const afterPercent = Math.round(((i + 1) / imageFiles.length) * 100);
                         const progressBg2 = document.getElementById('upload-progress-bg');
                         const progressText2 = document.getElementById('upload-progress-text');
@@ -3946,12 +3946,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             img.onerror = () => resolve(file); // Fallback
                             img.src = imageFiles[i].url;
                         });
-                        
+
                         // Subir archivo comprimido a Supabase Storage
                         const publicUrl = await db.uploadImageToSupabase(compressedFile);
                         if (publicUrl) {
                             uploadedImageUrls.push(publicUrl);
-                            
+
                             const afterPercent = Math.round(((i + 1) / imageFiles.length) * 100);
                             const progressBg2 = document.getElementById('upload-progress-bg');
                             const progressText2 = document.getElementById('upload-progress-text');
@@ -3972,7 +3972,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
-        
+
         const typeVal = formType.value === 'Otros' ? document.getElementById('form-custom-type').value.trim() : formType.value;
         const colorVal = document.getElementById('form-color').value;
         const updatedData = {
@@ -3994,7 +3994,7 @@ document.addEventListener('DOMContentLoaded', () => {
             legal: legal,
             trim: document.getElementById('form-trim') ? document.getElementById('form-trim').value.trim() : ''
         };
-        
+
         if (uploadedImageUrls.length > 0) {
             updatedData.images = uploadedImageUrls;
         } else if (!editingListingId) {
@@ -4005,11 +4005,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editingListingId) {
                 const allListings = db.getAllListings();
                 const existingListing = allListings.find(l => String(l.id) === String(editingListingId)) || {};
-                
+
                 // Lógica de bajada de precio (Conservar el máximo original)
                 const newPrice = updatedData.price;
                 const currentPrice = existingListing.price || 0;
-                
+
                 if (newPrice < currentPrice) {
                     if (!existingListing.old_price) {
                         updatedData.old_price = currentPrice;
@@ -4024,38 +4024,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     if (existingListing.old_price !== undefined) {
-                         updatedData.old_price = existingListing.old_price;
+                        updatedData.old_price = existingListing.old_price;
                     }
                 }
-                
+
                 // Mezclar los datos nuevos con los existentes para NO perder estatus, fechas, id, etc.
                 const finalData = { ...existingListing, ...updatedData, id: editingListingId };
-                
+
                 await db.saveListing(finalData);
                 showAlert('¡Vehículo actualizado con éxito!', 'Actualizado', 'check_circle');
                 finishWizardSubmit();
             } else {
                 updatedData.paymentStatus = 'pending';
                 const newListing = await db.saveListing(updatedData);
-                
+
                 finishWizardSubmit(); // Call instantly so it renders in the background
-                
+
                 if (Number(globalMonthlyPrice) === 0) {
                     // Flujo Gratuito: Ocultar Mercado Pago y mostrar modal de revisión
                     const optionsModal = document.getElementById('publish-options-modal');
                     if (optionsModal) {
                         document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
                         document.getElementById('publish-modal-desc').textContent = 'Tu vehículo entrará a un breve proceso de revisión por nuestro equipo. En pocos minutos será autorizado y estará visible en la plataforma durante un mes. ¿Deseas publicarlo ahora?';
-                        
+
                         document.getElementById('btn-option-pay-now').style.display = 'none';
-                        
+
                         const icon = document.getElementById('publish-later-icon');
                         if (icon) icon.textContent = 'check_circle';
                         const title = document.getElementById('publish-later-title');
                         if (title) title.textContent = 'Subir Anuncio';
                         const desc = document.getElementById('publish-later-desc');
                         if (desc) desc.textContent = 'Haz clic aquí para enviar tu anuncio a revisión y publicarlo sin costo.';
-                        
+
                         optionsModal.classList.add('active');
                     }
                     window.currentPendingListingId = newListing.id;
@@ -4065,7 +4065,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const optionsModal = document.getElementById('publish-options-modal');
                     const priceText = document.getElementById('publish-price-text');
                     if (priceText) priceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
-                    
+
                     if (optionsModal) {
                         document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
                         document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
@@ -4076,26 +4076,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (title) title.textContent = 'Pago Asistido / Revisión';
                         const desc = document.getElementById('publish-later-desc');
                         if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
-                        
+
                         optionsModal.classList.add('active');
                     }
-                    
+
                     // Guardar ref al carro que acabamos de crear
                     window.currentPendingListingId = newListing.id;
-                    
+
                     // Ocultamos el form
                     newListingModal.classList.remove('active');
                 } else {
                     showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación. En breve te contactaremos por llamada o WhatsApp para confirmar tu anuncio.', 'Publicado', 'check_circle');
                 }
             }
-        } catch(e) {
+        } catch (e) {
             console.error(e);
             showAlert(e.message || 'Error al guardar. Por favor intenta de nuevo.', 'Error al Publicar', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Publicar Vehículo';
         }
-        
+
         function finishWizardSubmit() {
             const wasAdminEdit = window._editFromAdmin === true;
             window._editFromAdmin = false;
@@ -4125,7 +4125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderMyListings();
                 if (typeof forceInstantAdminRefresh === 'function') {
                     forceInstantAdminRefresh();
-                } else if(typeof loadAdminData === 'function') {
+                } else if (typeof loadAdminData === 'function') {
                     loadAdminData();
                 }
             }
@@ -4156,9 +4156,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (appTitleElement) {
         appTitleElement.addEventListener('click', () => {
             titleClickCount++;
-            
+
             if (titleClickTimer) clearTimeout(titleClickTimer);
-            
+
             if (titleClickCount >= 5) {
                 titleClickCount = 0;
                 if (typeof window.openAdminPanel === 'function') {
@@ -4178,7 +4178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     btnCloseDashboard.addEventListener('click', () => {
         adminDashboardModal.classList.remove('active');
         history.pushState({ page: 'root' }, '');
@@ -4188,11 +4188,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => {
             dashboardTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            
+
             const targetId = tab.getAttribute('data-tab');
             dashboardViews.forEach(v => {
                 v.classList.remove('active');
-                if(v.id === targetId) v.classList.add('active');
+                if (v.id === targetId) v.classList.add('active');
             });
 
             // Cargar corte de caja y historial al abrir Finanzas
@@ -4219,7 +4219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const allListings = db.getAllListings();
         const active = allListings.filter(l => l.status === 'autorizado');
         const pendingCount = allListings.filter(l => l.status === 'pendiente autorizacion').length;
-        
+
         const statViews = document.getElementById('stat-views');
         if (statViews) {
             db.fetchTrafficStats().then(data => {
@@ -4233,16 +4233,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (typeof window.updateQuickViews === 'function') {
                     window.updateQuickViews('todo', document.querySelector('.quick-view-btn[onclick*="todo"]'));
                 }
-                
+
                 if (typeof window.renderTrafficChart === 'function') {
                     window.renderTrafficChart();
                 }
             });
         }
-        
+
         const statActive = document.getElementById('stat-active');
         if (statActive) statActive.textContent = active.length;
-        
+
         // Cargar historial de ventas asincrónicamente
         db.fetchSalesHistory().then(sales => {
             window.salesHistoryCache = sales;
@@ -4262,7 +4262,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarBadge.textContent = pendingCount;
             sidebarBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
         }
-        
+
         // Renovations badge
         const renewalsBadge = document.getElementById('sidebar-renewals-badge');
         if (renewalsBadge) {
@@ -4280,7 +4280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.updateQuickSales = function(period, btnElement) {
+    window.updateQuickSales = function (period, btnElement) {
         if (btnElement) {
             const container = btnElement.parentElement;
             const buttons = container.querySelectorAll('.quick-sale-btn');
@@ -4290,7 +4290,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.style.color = 'var(--text-muted)';
                 btn.style.borderColor = 'var(--border-color)';
             });
-            
+
             btnElement.classList.add('active');
             btnElement.style.background = 'var(--primary-color)';
             btnElement.style.color = 'white';
@@ -4300,7 +4300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sales = window.salesHistoryCache || [];
         const allListings = db.getAllListings();
         const soldListings = allListings.filter(l => l.status === 'vendido');
-        
+
         // Unificar histórico de ventas con autos actualmente marcados como vendidos
         const salesMap = new Map();
         sales.forEach(s => salesMap.set(String(s.listing_id || s.id), s));
@@ -4318,17 +4318,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let filteredCount = 0;
         const now = new Date();
         const todayStr = now.toDateString();
-        
+
         if (period === 'todo') {
             filteredCount = combinedSales.length;
         } else {
             combinedSales.forEach(s => {
                 const dateStr = s.sold_at || s.soldAt || s.created_at;
                 if (!dateStr) return;
-                
+
                 const itemDate = new Date(dateStr);
                 if (isNaN(itemDate.getTime())) return;
-                
+
                 if (period === 'dia') {
                     if (itemDate.toDateString() === todayStr) {
                         filteredCount++;
@@ -4355,13 +4355,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
+
         const statSold = document.getElementById('stat-sold');
         if (statSold) statSold.textContent = filteredCount;
     };
 
 
-    window.updateQuickViews = function(period, btnElement) {
+    window.updateQuickViews = function (period, btnElement) {
         if (btnElement) {
             const container = btnElement.parentElement;
             const buttons = container.querySelectorAll('.quick-view-btn');
@@ -4371,7 +4371,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.style.color = 'var(--text-muted)';
                 btn.style.borderColor = 'var(--border-color)';
             });
-            
+
             btnElement.classList.add('active');
             btnElement.style.background = 'var(--primary-color)';
             btnElement.style.color = 'white';
@@ -4388,14 +4388,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalDailyVisits = visitsData.reduce((sum, row) => sum + (row.visits || 0), 0);
             const allListings = db.getAllListings();
             const totalListingsViews = allListings.reduce((sum, l) => sum + (l.views || 0), 0);
-            
+
             // Usar el mayor entre ambos para no restar vistas acumuladas históricas
             filteredViews = Math.max(totalDailyVisits, totalListingsViews);
         } else {
             const dayOfWeek = now.getDay();
             const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
-            
+
             visitsData.forEach(row => {
                 const rowDateStr = row.date; // YYYY-MM-DD
                 const parts = rowDateStr.split('-');
@@ -4416,7 +4416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
+
         const statViews = document.getElementById('stat-views');
         if (statViews) statViews.textContent = filteredViews;
     };
@@ -4426,7 +4426,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chartContainer = document.getElementById('traffic-chart');
         const periodSelect = document.getElementById('traffic-period-select');
         if (!chartContainer) return;
-        
+
         if (periodSelect && !periodSelect.dataset.listener) {
             periodSelect.dataset.listener = 'true';
             periodSelect.addEventListener('change', renderTrafficChart);
@@ -4441,11 +4441,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (period === '7d') {
             labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
             data = [0, 0, 0, 0, 0, 0, 0];
-            
+
             const dayOfWeek = now.getDay();
             const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
             const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
-            
+
             visitsData.forEach(row => {
                 const parts = row.date.split('-');
                 const rowDate = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -4460,7 +4460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (period === 'month') {
             labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             data = new Array(12).fill(0);
-            
+
             visitsData.forEach(row => {
                 const parts = row.date.split('-');
                 if (parseInt(parts[0]) === now.getFullYear()) {
@@ -4472,7 +4472,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentYear = now.getFullYear();
             labels = [String(currentYear - 3), String(currentYear - 2), String(currentYear - 1), String(currentYear)];
             data = [0, 0, 0, 0];
-            
+
             visitsData.forEach(row => {
                 const parts = row.date.split('-');
                 const rowYear = parseInt(parts[0]);
@@ -4482,9 +4482,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
+
         const max = Math.max(...data, 1); // Evitar división por cero
-        
+
         chartContainer.innerHTML = data.map((val, i) => {
             const height = (val / max) * 100;
             return `
@@ -4513,7 +4513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 opt.textContent = state;
                 stateFilter.appendChild(opt);
             });
-            
+
             // Listeners
             stateFilter.addEventListener('change', () => {
                 const selectedState = stateFilter.value;
@@ -4563,7 +4563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (badge) badge.textContent = activeListings.length;
-        
+
         const stateKey = JSON.stringify(activeListings);
         if (tbody.dataset.lastState === stateKey) return;
         tbody.dataset.lastState = stateKey;
@@ -4605,7 +4605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const badge = document.getElementById('pending-count-badge');
         const sidebarBadge = document.getElementById('sidebar-pending-badge');
         const searchInput = document.getElementById('pending-search-input');
-        
+
         if (!list) return;
 
         let pending = db.getAllListings().filter(l => l.status === 'pendiente autorizacion');
@@ -4627,7 +4627,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         if (query) {
-            pending = pending.filter(l => 
+            pending = pending.filter(l =>
                 (l.title && l.title.toLowerCase().includes(query)) ||
                 (l.make && l.make.toLowerCase().includes(query)) ||
                 (l.model && l.model.toLowerCase().includes(query)) ||
@@ -4635,13 +4635,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 (l.phone && l.phone.includes(query))
             );
         }
-        
+
         const stateKey = JSON.stringify(pending) + '_' + query;
         if (list.dataset.lastState === stateKey) return;
         list.dataset.lastState = stateKey;
 
         if (pending.length === 0) {
-            list.innerHTML = query 
+            list.innerHTML = query
                 ? '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No se encontraron resultados para la búsqueda.</p>'
                 : '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay publicaciones pendientes de aprobación.</p>';
             return;
@@ -4662,7 +4662,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const notes = listing.notes || [];
             const notesCount = notes.length;
-            const notesBadgeHTML = notesCount > 0 
+            const notesBadgeHTML = notesCount > 0
                 ? `<span class="pending-notes-badge has-notes" id="notes-badge-${listing.id}"><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM</span>`
                 : `<span class="pending-notes-badge" id="notes-badge-${listing.id}">Sin notas</span>`;
 
@@ -4776,11 +4776,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    window.updateAdminPendingAds = function() {
+    window.updateAdminPendingAds = function () {
         return window.updateAdminAdsApprovals();
     };
 
-    window.approveAdAdmin = async function(adId) {
+    window.approveAdAdmin = async function (adId) {
         window.appConfirm('¿Aprobar este anuncio publicitario? Quedará activo por 30 días.', async () => {
             try {
                 const ads = db.getAllAds();
@@ -4793,7 +4793,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const end = new Date(now);
                     end.setDate(end.getDate() + 30);
                     ad.end_date = end.toISOString();
-                    
+
                     await db.saveAd(ad);
 
                     const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
@@ -4805,19 +4805,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
                     if (typeof renderMyListings === 'function') renderMyListings();
                 }
-            } catch(e) {
+            } catch (e) {
                 showAlert('Error al aprobar anuncio', 'Error', 'error');
             }
         });
     };
-    
-    window.deleteAdAdmin = async function(adId) {
+
+    window.deleteAdAdmin = async function (adId) {
         try {
             await db.deleteAd(adId);
             showAlert('Anuncio eliminado', 'Eliminado', 'info');
             if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
             if (typeof renderMyListings === 'function') renderMyListings();
-        } catch(e) {
+        } catch (e) {
             showAlert('Error al eliminar anuncio', 'Error', 'error');
         }
     };
@@ -4827,7 +4827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const badge = document.getElementById('renewals-count-badge');
         const sidebarBadge = document.getElementById('sidebar-renewals-badge');
         const searchInput = document.getElementById('renewals-search-input');
-        
+
         if (!list) return;
 
         const now = new Date();
@@ -4851,7 +4851,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         if (query) {
-            pendingRenewals = pendingRenewals.filter(l => 
+            pendingRenewals = pendingRenewals.filter(l =>
                 (l.title && l.title.toLowerCase().includes(query)) ||
                 (l.make && l.make.toLowerCase().includes(query)) ||
                 (l.model && l.model.toLowerCase().includes(query)) ||
@@ -4870,7 +4870,7 @@ document.addEventListener('DOMContentLoaded', () => {
         list.dataset.lastState = stateKey;
 
         if (pendingRenewals.length === 0) {
-            list.innerHTML = query 
+            list.innerHTML = query
                 ? '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No se encontraron resultados para la búsqueda.</p>'
                 : '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay publicaciones próximas a vencer (dentro de los próximos 5 días).</p>';
             return;
@@ -4891,7 +4891,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const notes = listing.notes || [];
             const notesCount = notes.length;
-            const notesBadgeHTML = notesCount > 0 
+            const notesBadgeHTML = notesCount > 0
                 ? `<span class="pending-notes-badge has-notes" id="notes-badge-${listing.id}"><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM</span>`
                 : `<span class="pending-notes-badge" id="notes-badge-${listing.id}">Sin notas</span>`;
 
@@ -4911,7 +4911,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expDate = new Date(listing.expiresAt);
                 const diffTime = expDate - now;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 if (diffDays < 0) {
                     statusTagHTML = `<span style="background:var(--danger-color); color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-left:6px;">¡CADUCADO!</span>`;
                 } else if (diffDays <= 5) {
@@ -5016,7 +5016,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingRenewActionTargetId = null;
     let pendingRenewActionMonthStr = null;
 
-    window.renewListingAdmin = async function(id, isConfirmed = false) {
+    window.renewListingAdmin = async function (id, isConfirmed = false) {
         if (!isConfirmed) {
             pendingRenewActionTargetId = id;
             pendingRenewActionMonthStr = ''; // ya no se usa, pero se mantiene por compatibilidad con los modales
@@ -5041,11 +5041,11 @@ document.addEventListener('DOMContentLoaded', () => {
             baseDate.setDate(baseDate.getDate() + 30);
             listings[idx].expiresAt = baseDate.toISOString();
             listings[idx].status = 'autorizado';
-            
+
             await db.saveListing(listings[idx]);
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.remove('active');
-            
+
             const listing = db.getAllListings().find(l => String(l.id) === String(id));
             const city = listing ? listing.city : 'N/A';
             db.logActivity('Renovación de vehículo', `Publicación #${id}`, city);
@@ -5087,7 +5087,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.expandedAdminCards = window.expandedAdminCards || new Set();
 
-    window.togglePendingDetail = function(id) {
+    window.togglePendingDetail = function (id) {
         const targetIdStr = String(id);
         const isCurrentlyExpanded = window.expandedAdminCards && window.expandedAdminCards.has(targetIdStr);
 
@@ -5114,7 +5114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.savePendingNote = function(id) {
+    window.savePendingNote = function (id) {
         const input = document.getElementById(`note-input-${id}`);
         if (!input || !input.value.trim()) return;
 
@@ -5123,7 +5123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (newNote) {
             input.value = '';
-            
+
             // Actualizar la lista visual de notas de este ítem dinámicamente
             const listEl = document.getElementById(`crm-notes-list-${id}`);
             const noMsgEl = document.getElementById(`no-notes-msg-${id}`);
@@ -5153,10 +5153,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Copy to Clipboard Helper ---
-    window.copyToClipboard = function(text, label = 'Número') {
+    window.copyToClipboard = function (text, label = 'Número') {
         if (!text) return;
         const cleanText = String(text).trim();
-        
+
         const showSuccessAlert = () => {
             showAlert(`Copiado al portapapeles: ${cleanText}`, `¡${label} Copiado!`, 'content_copy');
         };
@@ -5196,7 +5196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Confirmation Modals Logic for Approvals ---
     let pendingActionTargetId = null;
 
-    window.approveListing = async function(id, isConfirmed = false) {
+    window.approveListing = async function (id, isConfirmed = false) {
         if (!isConfirmed) {
             pendingActionTargetId = id;
             const listing = db.getAllListings().find(l => String(l.id) === String(id));
@@ -5214,7 +5214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const listings = db.getAllListings();
         const listing = listings.find(l => String(l.id) === String(id));
-        if(listing) {
+        if (listing) {
             const now = new Date();
             const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             // Rolling billing: expiresAt = hoy + 30 días
@@ -5224,7 +5224,7 @@ document.addEventListener('DOMContentLoaded', () => {
             listing.lastRenewedMonth = currentMonthStr;
             listing.expiresAt = expiresAt.toISOString();
             listing.publishedAt = now.toISOString(); // fecha de publicación visible al usuario
-            
+
             try {
                 // Sincronizar local y con Supabase (esperamos a que termine)
                 await db.saveListing(listing);
@@ -5255,8 +5255,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert('La publicación ha sido aprobada exitosamente.', 'Publicación Aprobada', 'check_circle');
         }
     };
-    
-    window.deleteListingAdmin = async function(id, isConfirmed = false) {
+
+    window.deleteListingAdmin = async function (id, isConfirmed = false) {
         if (!isConfirmed) {
             pendingActionTargetId = id;
             const modal = document.getElementById('reject-confirm-modal');
@@ -5280,11 +5280,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let adminEditTargetId = null;
 
-    window.openAdminEditModal = function(id) {
+    window.openAdminEditModal = function (id) {
         const listing = db.getAllListings().find(l => String(l.id) === String(id));
         if (!listing) return;
         adminEditTargetId = id;
-        
+
         document.getElementById('edit-price').value = listing.price || '';
         document.getElementById('edit-year').value = listing.year || '';
         document.getElementById('edit-mileage').value = listing.mileage || '';
@@ -5302,7 +5302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseAdminEdit = document.getElementById('btn-close-admin-edit');
     const btnCancelAdminEdit = document.getElementById('btn-cancel-admin-edit');
     const btnSaveAdminEdit = document.getElementById('btn-save-admin-edit');
-    
+
     function closeAdminEdit() {
         adminEditTargetId = null;
         const modal = document.getElementById('admin-edit-modal');
@@ -5315,18 +5315,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSaveAdminEdit.onclick = async (e) => {
             e.preventDefault();
             if (adminEditTargetId === null) return;
-            
+
             const rawPriceStr = (document.getElementById('edit-price').value || '').toString().replace(/[^0-9.]/g, '');
             const price = parseFloat(rawPriceStr);
-            
+
             const rawYearStr = (document.getElementById('edit-year').value || '').toString().replace(/[^0-9]/g, '');
             const year = parseInt(rawYearStr, 10);
-            
+
             const make = document.getElementById('edit-make').value.trim();
             const model = document.getElementById('edit-model').value.trim();
             const phone = document.getElementById('edit-phone').value.trim();
             const wa = document.getElementById('edit-whatsapp').value.trim();
-            
+
             if (isNaN(price) || !price || isNaN(year) || !year || !make || !model || !phone) {
                 showAlert('Por favor llena los campos requeridos (Precio, Año, Marca, Modelo, Teléfono).', 'Faltan datos', 'warning');
                 return;
@@ -5334,7 +5334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const listings = db.getAllListings();
             const listingIndex = listings.findIndex(l => String(l.id) === String(adminEditTargetId));
-            
+
             if (listingIndex > -1) {
                 const newTitle = `${make} ${model} ${year}`.toUpperCase();
                 const updatedListing = {
@@ -5352,7 +5352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     whatsapp: wa,
                     seller_whatsapp: wa
                 };
-                
+
                 try {
                     await db.saveListing(updatedListing);
                     const listing = db.getAllListings().find(l => String(l.id) === String(adminEditTargetId));
@@ -5363,7 +5363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         showAlert('Los datos del vehículo han sido actualizados con éxito en la nube.', 'Datos Guardados', 'check_circle');
                     }
-                } catch(err) {
+                } catch (err) {
                     console.error("Error al guardar vehículo en Supabase:", err);
                     const localListings = JSON.parse(localStorage.getItem(db.listingsKey) || '[]');
                     const lIdx = localListings.findIndex(l => String(l.id) === String(adminEditTargetId));
@@ -5375,7 +5375,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 closeAdminEdit();
-                
+
                 // Limpiar dataset.lastState para forzar re-renderizado inmediato
                 const pendingList = document.getElementById('pending-approvals-list');
                 if (pendingList) delete pendingList.dataset.lastState;
@@ -5395,11 +5395,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let adminEditAdTargetId = null;
 
-    window.openAdminEditAdModal = function(id) {
+    window.openAdminEditAdModal = function (id) {
         const ad = db.getAllAds().find(a => String(a.id) === String(id));
         if (!ad) return;
         adminEditAdTargetId = id;
-        
+
         document.getElementById('edit-ad-title').value = ad.title || '';
         document.getElementById('edit-ad-description').value = ad.description || '';
         document.getElementById('edit-ad-state').value = ad.state || '';
@@ -5467,7 +5467,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         showAlert('Los datos de la publicidad han sido actualizados con éxito en la nube.', 'Datos Guardados', 'check_circle');
                     }
-                } catch(err) {
+                } catch (err) {
                     console.error("Error al guardar publicidad en Supabase:", err);
                     const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
                     const adIdx = localAds.findIndex(a => String(a.id) === String(adminEditAdTargetId));
@@ -5493,36 +5493,36 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    window.deleteListingImageAdmin = async function(id, index) {
+    window.deleteListingImageAdmin = async function (id, index) {
         window.appConfirm('¿Seguro que deseas eliminar esta foto de la publicación?', async () => {
             const listings = db.getAllListings();
             const listing = listings.find(l => String(l.id) === String(id));
             if (!listing) return;
-            
+
             const images = listing.images || (listing.image ? [listing.image] : []);
             if (images.length === 0 || index >= images.length) return;
-            
+
             const imgUrl = images[index];
             images.splice(index, 1);
             listing.images = images;
-            
+
             localStorage.setItem(db.listingsKey, JSON.stringify(listings));
-            
+
             try {
                 await fetch(`${db.apiBaseUrl}/listings/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ images: listing.images })
                 });
-                
+
                 if (imgUrl && imgUrl.includes('/uploads/')) {
                     const filename = imgUrl.split('/').pop();
-                    try { await fetch(`${db.apiBaseUrl}/upload/${filename}`, { method: 'DELETE' }); } catch(e) {}
+                    try { await fetch(`${db.apiBaseUrl}/upload/${filename}`, { method: 'DELETE' }); } catch (e) { }
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error('Error eliminando foto', e);
             }
-            
+
             updateAdminApprovals();
             updateAdminRenewals();
             showAlert('Foto eliminada correctamente.', 'Foto Eliminada', 'image');
@@ -5538,10 +5538,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApproveYes.onclick = async () => {
             if (pendingActionTargetId !== null) {
                 const targetId = pendingActionTargetId;
-                
+
                 const amountInput = document.getElementById('approve-payment-amount');
                 const amount = amountInput && amountInput.value ? parseFloat(amountInput.value) : 0;
-                
+
                 let receiptUrl = null;
                 const fileInput = document.getElementById('approve-payment-receipt');
                 if (fileInput.files.length > 0) {
@@ -5554,14 +5554,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (uploadData.success && uploadData.imageUrls && uploadData.imageUrls.length > 0) {
                             receiptUrl = uploadData.imageUrls[0];
                         }
-                    } catch(e) { console.error('Error subiendo comprobante', e); }
+                    } catch (e) { console.error('Error subiendo comprobante', e); }
                 }
-                
+
                 db.addPayment(targetId, amount, receiptUrl, 'Aprobación', 'manual', true);
-                
+
                 amountInput.value = '';
-                if(fileInput) fileInput.value = '';
-                
+                if (fileInput) fileInput.value = '';
+
                 pendingActionTargetId = null;
                 await approveListing(targetId, true);
             }
@@ -5601,10 +5601,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRenewYes.onclick = async () => {
             if (pendingRenewActionTargetId !== null) {
                 const targetId = pendingRenewActionTargetId;
-                
+
                 const amountInput = document.getElementById('renew-payment-amount');
                 const amount = amountInput && amountInput.value ? parseFloat(amountInput.value) : 0;
-                
+
                 let receiptUrl = null;
                 const fileInput = document.getElementById('renew-payment-receipt');
                 if (fileInput.files.length > 0) {
@@ -5617,13 +5617,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (uploadData.success && uploadData.imageUrls && uploadData.imageUrls.length > 0) {
                             receiptUrl = uploadData.imageUrls[0];
                         }
-                    } catch(e) { console.error('Error subiendo comprobante', e); }
+                    } catch (e) { console.error('Error subiendo comprobante', e); }
                 }
-                
+
                 db.addPayment(targetId, amount, receiptUrl, 'Renovación', 'manual', true);
-                
+
                 amountInput.value = '';
-                if(fileInput) fileInput.value = '';
+                if (fileInput) fileInput.value = '';
 
                 pendingRenewActionTargetId = null;
                 pendingRenewActionMonthStr = null;
@@ -5652,21 +5652,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         let from, to;
         if (period === 'today') {
-            from = new Date(now); from.setHours(0,0,0,0);
-            to = new Date(now); to.setHours(23,59,59,999);
+            from = new Date(now); from.setHours(0, 0, 0, 0);
+            to = new Date(now); to.setHours(23, 59, 59, 999);
         } else if (period === 'week') {
             const day = now.getDay();
-            from = new Date(now); from.setDate(now.getDate() - day); from.setHours(0,0,0,0);
-            to = new Date(now); to.setHours(23,59,59,999);
+            from = new Date(now); from.setDate(now.getDate() - day); from.setHours(0, 0, 0, 0);
+            to = new Date(now); to.setHours(23, 59, 59, 999);
         } else if (period === 'month') {
             from = new Date(now.getFullYear(), now.getMonth(), 1);
-            to = new Date(now); to.setHours(23,59,59,999);
+            to = new Date(now); to.setHours(23, 59, 59, 999);
         } else if (period === 'custom' && fromDate && toDate) {
-            from = new Date(fromDate); from.setHours(0,0,0,0);
-            to = new Date(toDate); to.setHours(23,59,59,999);
+            from = new Date(fromDate); from.setHours(0, 0, 0, 0);
+            to = new Date(toDate); to.setHours(23, 59, 59, 999);
         } else {
-            from = new Date(now); from.setHours(0,0,0,0);
-            to = new Date(now); to.setHours(23,59,59,999);
+            from = new Date(now); from.setHours(0, 0, 0, 0);
+            to = new Date(now); to.setHours(23, 59, 59, 999);
         }
         return { from, to };
     }
@@ -5699,7 +5699,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await res.json();
                     if (data.success) payments = data.payments;
                 }
-            } catch(e) {
+            } catch (e) {
                 payments = db.getAllPayments().filter(p => {
                     if (!p.dateISO) return false;
                     const d = new Date(p.dateISO);
@@ -5794,7 +5794,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ws['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 22 }, { wch: 18 }, { wch: 15 }];
         const wb = XLSX.utils.book_new();
         const periodLabel = corteCurrentPeriod === 'today' ? 'Hoy' : corteCurrentPeriod === 'week' ? 'Semana' : corteCurrentPeriod === 'month' ? 'Mes' : 'Rango';
-        const sheetName = `Corte ${periodLabel} ${from.toLocaleDateString('es-MX', { day:'2-digit', month:'short' })}`;
+        const sheetName = `Corte ${periodLabel} ${from.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}`;
         XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
         XLSX.writeFile(wb, `Corte_RevistAuto_${periodLabel}_${from.toISOString().split('T')[0]}.xlsx`);
     }
@@ -5836,9 +5836,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBillingList() {
         const tbody = document.getElementById('billing-table-body');
         if (!tbody) return;
-        
+
         const payments = db.getAllPayments();
-        
+
         const stateKey = JSON.stringify(payments);
         if (tbody.dataset.lastState === stateKey) return;
         tbody.dataset.lastState = stateKey;
@@ -5871,10 +5871,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         tbody.innerHTML = payments.map(payment => {
-            const receiptBtn = payment.receiptImage 
+            const receiptBtn = payment.receiptImage
                 ? `<button class="icon-btn" onclick="window.open('${payment.receiptImage}', '_blank')" title="Ver Comprobante" style="color:var(--primary-color); display: flex; align-items: center; justify-content: center; width: 100%;"><span class="material-symbols-rounded">receipt_long</span></button>`
                 : `<span style="color:var(--text-muted); font-size:0.85rem; display: block; text-align: center;">Efectivo / Sin Ticket</span>`;
-            
+
             return `
             <tr data-payment-id="${payment.id}" class="billing-row">
                 <td style="text-align:center; vertical-align:middle; padding: 8px 4px;">
@@ -5891,7 +5891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         // Registrar handler global de cambio de checkbox (evita duplicar listeners)
-        window._billingCbChanged = function(cb) {
+        window._billingCbChanged = function (cb) {
             const row = cb.closest('tr');
             if (row) {
                 row.style.background = cb.checked ? 'rgba(239,68,68,0.08)' : '';
@@ -5947,7 +5947,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('stat-views').textContent = totalViews;
         document.getElementById('stat-active').textContent = active;
         document.getElementById('stat-sold').textContent = sold;
-        
+
         const allAds = db.getAllAds();
         const activeAdsCount = allAds.filter(ad => db.isAdActive(ad)).length;
         const statActiveAds = document.getElementById('stat-active-ads');
@@ -5972,11 +5972,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logica para Configuración del Costo Mensual Base
     const btnSavePrice = document.getElementById('btn-save-price');
     const btnSaveAdConfig = document.getElementById('btn-save-ad-config');
-    
+
     async function saveAllSettings() {
         const inputMonthlyPrice = document.getElementById('admin-monthly-price');
         const inputAdMonthlyPrice = document.getElementById('admin-ad-monthly-price');
-        
+
         const val = inputMonthlyPrice ? Number(inputMonthlyPrice.value) : 500;
         const adVal = inputAdMonthlyPrice ? Number(inputAdMonthlyPrice.value) : 500;
         const mpEnabled = document.getElementById('admin-mp-enabled') ? document.getElementById('admin-mp-enabled').checked : false;
@@ -5985,9 +5985,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const adsEnabled = document.getElementById('admin-ad-toggle') ? document.getElementById('admin-ad-toggle').checked : true;
         const adFreq = document.getElementById('admin-ad-frequency') ? Number(document.getElementById('admin-ad-frequency').value) : 10;
         const adFallbackLimit = document.getElementById('admin-ad-fallback-limit') ? Number(document.getElementById('admin-ad-fallback-limit').value) : 21;
-        
+
         try {
-            const settingsPayload = { 
+            const settingsPayload = {
                 monthlyPrice: val,
                 adMonthlyPrice: adVal,
                 mercadoPagoEnabled: mpEnabled,
@@ -6003,13 +6003,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 globalAdMonthlyPrice = adVal;
                 globalMpEnabled = mpEnabled;
                 globalMpPublicKey = mpPubKey;
-                
+
                 if (window.db) {
                     window.db.adsEnabled = adsEnabled;
                     window.db.adFrequencyScroll = adFreq;
                     window.db.adFallbackLimit = adFallbackLimit;
                 }
-                
+
                 const adPaymentNote = document.getElementById('ad-payment-note-price');
                 if (adPaymentNote) {
                     if (Number(globalAdMonthlyPrice) === 0) {
@@ -6018,7 +6018,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         adPaymentNote.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
                     }
                 }
-                
+
                 const publishPriceText = document.getElementById('publish-price-text');
                 if (publishPriceText) {
                     if (Number(globalMonthlyPrice) === 0) {
@@ -6027,11 +6027,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         publishPriceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
                     }
                 }
-                
+
                 showAlert('Configuración guardada correctamente.', 'Éxito', 'check_circle');
                 if (typeof renderFeed === 'function') renderFeed();
                 if (document.getElementById('view-alta') && document.getElementById('view-alta').classList.contains('active')) {
-                    if (typeof renderMyListings === 'function') renderMyListings(); 
+                    if (typeof renderMyListings === 'function') renderMyListings();
                 }
             } else {
                 showAlert('Error del servidor: ' + (data.error || 'Desconocido'), 'Error', 'error');
@@ -6053,7 +6053,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnToggleMpCredentials && mpPubKeyInput && mpAccTokenInput) {
         btnToggleMpCredentials.addEventListener('click', () => {
             const isReadonly = mpPubKeyInput.hasAttribute('readonly');
-            
+
             if (isReadonly) {
                 // Desbloquear para edición
                 mpPubKeyInput.removeAttribute('readonly');
@@ -6067,7 +6067,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpPubKeyInput.style.color = 'var(--text-main)';
                 mpAccTokenInput.style.color = 'var(--text-main)';
                 mpAccTokenInput.type = 'text'; // Mostrar token temporalmente
-                
+
                 btnToggleMpCredentials.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">lock_open</span> Guardar y Bloquear';
                 btnToggleMpCredentials.style.background = 'var(--success-color)';
                 btnToggleMpCredentials.style.color = 'white';
@@ -6076,7 +6076,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnSavePrice) {
                     btnSavePrice.click(); // Reutilizamos la lógica de guardado
                 }
-                
+
                 mpPubKeyInput.setAttribute('readonly', 'readonly');
                 mpAccTokenInput.setAttribute('readonly', 'readonly');
                 mpPubKeyInput.style.pointerEvents = 'none';
@@ -6088,7 +6088,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpPubKeyInput.style.color = 'var(--text-muted)';
                 mpAccTokenInput.style.color = 'var(--text-muted)';
                 mpAccTokenInput.type = 'password'; // Ocultar token nuevamente
-                
+
                 btnToggleMpCredentials.innerHTML = '<span class="material-symbols-rounded" style="font-size: 16px;">lock</span> Editar Credenciales';
                 btnToggleMpCredentials.style.background = 'var(--surface-light)';
                 btnToggleMpCredentials.style.color = 'var(--text-main)';
@@ -6097,7 +6097,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Admin Real-time Updates ---
-    window.onListingsSynced = function() {
+    window.onListingsSynced = function () {
         if (adminDashboardModal && adminDashboardModal.classList.contains('active')) {
             if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
             if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
@@ -6129,7 +6129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Interceptar fetch global para inyectar token en rutas /api
     const originalFetch = window.fetch;
-    window.fetch = async function() {
+    window.fetch = async function () {
         let [resource, config] = arguments;
         if (typeof resource === 'string' && resource.startsWith('/api') && !resource.startsWith('/api/login')) {
             if (window.adminToken) {
@@ -6153,7 +6153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Interceptar la apertura del panel de admin
     // Como el botón oculto abre adminDashboardModal, vamos a crear una función global para abrirlo
-    window.openAdminPanel = function() {
+    window.openAdminPanel = function () {
         updateAdminVersionDisplay();
         if (window.adminToken && window.currentAdminUser) {
             // Ya logueado
@@ -6196,7 +6196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.currentAdminUser = data.user;
                     localStorage.setItem('admin_token', data.token);
                     localStorage.setItem('admin_user', JSON.stringify(data.user));
-                    
+
                     adminLoginModal.classList.remove('active');
                     setupAdminPermissions();
                     adminDashboardModal.classList.add('active');
@@ -6210,7 +6210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     loginError.textContent = data.error;
                 }
-            } catch(e) {
+            } catch (e) {
                 loginError.textContent = 'Error de conexión.';
             }
             btnAdminLogin.disabled = false;
@@ -6234,17 +6234,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (role === 'empleado_limitado') {
             // Solo puede ver: Aprobaciones, Renovaciones, Publicidad, Dar de Alta, Cerrar Sesión
-            if (tabGeneral)    tabGeneral.style.display = 'none';
+            if (tabGeneral) tabGeneral.style.display = 'none';
             if (tabInventario) tabInventario.style.display = 'none';
-            if (tabPagos)      tabPagos.style.display = 'none';
-            if (tabFinanzas)   tabFinanzas.style.display = 'none';
-            if (tabUsuarios)   tabUsuarios.style.display = 'none';
-            if (tabBitacora)   tabBitacora.style.display = 'none'; // OCULTO PARA LIMITADO
+            if (tabPagos) tabPagos.style.display = 'none';
+            if (tabFinanzas) tabFinanzas.style.display = 'none';
+            if (tabUsuarios) tabUsuarios.style.display = 'none';
+            if (tabBitacora) tabBitacora.style.display = 'none'; // OCULTO PARA LIMITADO
             if (adFallbackLimitContainer) adFallbackLimitContainer.style.display = 'none';
             // Asegurar que los tabs permitidos son visibles
             if (tabAprobaciones) tabAprobaciones.style.display = '';
             if (tabRenovaciones) tabRenovaciones.style.display = '';
-            if (tabPublicidad)   tabPublicidad.style.display = '';
+            if (tabPublicidad) tabPublicidad.style.display = '';
             // Ocultar configuración global de anuncios
             const adConfigSection = document.querySelector('#tab-publicidad .config-section');
             if (adConfigSection) adConfigSection.style.display = 'none';
@@ -6254,7 +6254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (role === 'empleado') {
             if (tabFinanzas) tabFinanzas.style.display = 'none';
             if (tabUsuarios) tabUsuarios.style.display = 'none';
-            if (tabGeneral)  tabGeneral.style.display = 'none';
+            if (tabGeneral) tabGeneral.style.display = 'none';
             if (tabBitacora) tabBitacora.style.display = 'flex';
             if (adFallbackLimitContainer) adFallbackLimitContainer.style.display = 'none';
             // Abrir inventario por defecto
@@ -6262,15 +6262,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (invTab) invTab.click();
         } else {
             // Admin: mostrar todo
-            if (tabGeneral)    tabGeneral.style.display = '';
+            if (tabGeneral) tabGeneral.style.display = '';
             if (tabInventario) tabInventario.style.display = '';
             if (tabAprobaciones) tabAprobaciones.style.display = '';
             if (tabRenovaciones) tabRenovaciones.style.display = '';
-            if (tabPagos)      tabPagos.style.display = 'flex';
+            if (tabPagos) tabPagos.style.display = 'flex';
             if (tabPublicidad) tabPublicidad.style.display = '';
-            if (tabFinanzas)   tabFinanzas.style.display = 'flex';
-            if (tabUsuarios)   tabUsuarios.style.display = 'flex';
-            if (tabBitacora)   tabBitacora.style.display = 'flex';
+            if (tabFinanzas) tabFinanzas.style.display = 'flex';
+            if (tabUsuarios) tabUsuarios.style.display = 'flex';
+            if (tabBitacora) tabBitacora.style.display = 'flex';
             if (adFallbackLimitContainer) adFallbackLimitContainer.style.display = 'flex';
             // Mostrar configuración global de anuncios para admin completo
             const adConfigSection = document.querySelector('#tab-publicidad .config-section');
@@ -6285,7 +6285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // UTILIDADES PARA WHATSAPP
     // ==========================================
-    window.buildWhatsAppUrl = function(phone, listingTitle) {
+    window.buildWhatsAppUrl = function (phone, listingTitle) {
         if (!phone) return '#';
         let cleanPhone = String(phone).replace(/\D/g, '');
         if (cleanPhone.length === 10) {
@@ -6306,7 +6306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let auditAllLogs = [];
     let auditFiltersLoaded = false;
 
-    window.renderAdminAuditLog = async function() {
+    window.renderAdminAuditLog = async function () {
         const tbody = document.getElementById('audit-log-table-body');
         if (!tbody) return;
 
@@ -6318,7 +6318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!auditFiltersLoaded) {
                 const citySelect = document.getElementById('audit-filter-city');
                 const userSelect = document.getElementById('audit-filter-user');
-                
+
                 const cities = new Set(data.logs.map(l => l.city).filter(c => c && c !== 'N/A' && c !== 'Todas'));
                 const users = new Set(data.logs.map(l => l.user_username).filter(u => u && u !== 'Desconocido'));
 
@@ -6386,9 +6386,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tbody.innerHTML = pageLogs.map(log => {
             const dateObj = new Date(log.timestamp);
-            const dateStr = dateObj.toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'2-digit' });
-            const timeStr = dateObj.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-            
+            const dateStr = dateObj.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: '2-digit' });
+            const timeStr = dateObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
             // Format reference link if it looks like Publicación #...
             let refHtml = log.reference || '-';
             const pubMatch = refHtml.match(/Publicación #(\d+)/i);
@@ -6421,11 +6421,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('audit-filter-city')?.addEventListener('change', applyAuditFilters);
     document.getElementById('audit-filter-user')?.addEventListener('change', applyAuditFilters);
     document.getElementById('audit-filter-date')?.addEventListener('change', applyAuditFilters);
-    
+
     document.getElementById('btn-clear-audit-filters')?.addEventListener('click', () => {
-        if(document.getElementById('audit-filter-city')) document.getElementById('audit-filter-city').value = 'Todas';
-        if(document.getElementById('audit-filter-user')) document.getElementById('audit-filter-user').value = 'Todos';
-        if(document.getElementById('audit-filter-date')) document.getElementById('audit-filter-date').value = '';
+        if (document.getElementById('audit-filter-city')) document.getElementById('audit-filter-city').value = 'Todas';
+        if (document.getElementById('audit-filter-user')) document.getElementById('audit-filter-user').value = 'Todos';
+        if (document.getElementById('audit-filter-date')) document.getElementById('audit-filter-date').value = '';
         applyAuditFilters();
     });
 
@@ -6444,7 +6444,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.exportAuditToExcel = function() {
+    window.exportAuditToExcel = function () {
         if (!auditFilteredLogs || auditFilteredLogs.length === 0) {
             showAlert('No hay registros para exportar.', 'Sin datos', 'info');
             return;
@@ -6476,7 +6476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-export-audit')?.addEventListener('click', window.exportAuditToExcel);
 
-    
+
     document.getElementById('btn-admin-add-user')?.addEventListener('click', () => {
         document.getElementById('admin-user-form').reset();
         document.getElementById('admin-user-id').value = '';
@@ -6491,7 +6491,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderStateCheckboxes(selectedStates = [], selectedCities = []) {
         const container = document.getElementById('admin-user-states-container');
         if (!container) return;
-        
+
         let html = '';
         Object.keys(catalogData.citiesByState).sort().forEach(state => {
             const isStateChecked = selectedStates.includes(state);
@@ -6507,7 +6507,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isCityChecked = selectedCities.includes(city);
                 html += `
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
-                        <input type="checkbox" class="user-city-cb" data-state="${state}" value="${city}" ${isCityChecked || isStateChecked ? 'checked' : ''} ${(isStateChecked)? 'disabled': ''}>
+                        <input type="checkbox" class="user-city-cb" data-state="${state}" value="${city}" ${isCityChecked || isStateChecked ? 'checked' : ''} ${(isStateChecked) ? 'disabled' : ''}>
                         ${city}
                     </label>
                 `;
@@ -6535,7 +6535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = document.getElementById('admin-user-username').value.trim();
         const password = document.getElementById('admin-user-password').value.trim();
         const role = document.getElementById('admin-user-role').value;
-        
+
         const allowedStates = Array.from(document.querySelectorAll('.user-state-cb:checked')).map(cb => cb.value);
         const allowedCities = Array.from(document.querySelectorAll('.user-city-cb:checked')).filter(cb => !cb.disabled).map(cb => cb.value);
 
@@ -6552,26 +6552,26 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showAlert(data.error || 'Error al guardar en Supabase', 'Error', 'error');
             }
-        } catch(err) {
+        } catch (err) {
             showAlert('Error al guardar usuario', 'Error', 'error');
         }
     });
 
-    window.editUser = function(id, username, password, role, states, cities) {
+    window.editUser = function (id, username, password, role, states, cities) {
         document.getElementById('admin-user-id').value = id;
         document.getElementById('admin-user-username').value = username;
         document.getElementById('admin-user-password').value = password || '';
         document.getElementById('admin-user-role').value = role;
         document.getElementById('admin-user-modal-title').textContent = 'Editar Usuario';
-        
+
         const parsedStates = states ? states.split(',') : [];
         const parsedCities = cities ? cities.split(',') : [];
         renderStateCheckboxes(parsedStates, parsedCities);
-        
+
         adminUserModal.classList.add('active');
     };
 
-    window.deleteUser = async function(id) {
+    window.deleteUser = async function (id) {
         window.appConfirm('¿Estás seguro de eliminar este usuario?', async () => {
             try {
                 const data = await db.deleteAdminUser(id);
@@ -6582,7 +6582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showAlert(data.error || 'Error al eliminar', 'Error', 'error');
                 }
-            } catch(e) {
+            } catch (e) {
                 showAlert('Error al eliminar', 'Error', 'error');
             }
         });
@@ -6603,9 +6603,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td><strong>${u.username}</strong></td>
                         <td>${roleLabel(u.role)}</td>
                         <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px;">
-                            ${u.role === 'admin' ? 'Todo' : 
-                                ((u.allowedStates && u.allowedStates.length ? 'Estados: ' + u.allowedStates.join(', ') + '<br>' : '') + 
-                                (u.allowedCities && u.allowedCities.length ? 'Ciudades: ' + u.allowedCities.join(', ') : '')) || 'Ninguna'}
+                            ${u.role === 'admin' ? 'Todo' :
+                        ((u.allowedStates && u.allowedStates.length ? 'Estados: ' + u.allowedStates.join(', ') + '<br>' : '') +
+                            (u.allowedCities && u.allowedCities.length ? 'Ciudades: ' + u.allowedCities.join(', ') : '')) || 'Ninguna'}
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px;">
@@ -6616,13 +6616,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </td>
                         <td style="text-align:right;">
-                            <button class="primary-btn" onclick="editUser('${u.id}', '${u.username}', '${u.password}', '${u.role}', '${(u.allowedStates||[]).join(',')}', '${(u.allowedCities||[]).join(',')}')" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light);">Editar</button>
+                            <button class="primary-btn" onclick="editUser('${u.id}', '${u.username}', '${u.password}', '${u.role}', '${(u.allowedStates || []).join(',')}', '${(u.allowedCities || []).join(',')}')" style="padding:4px 8px; font-size:0.8rem; background:var(--surface-light);">Editar</button>
                             <button class="danger-btn" onclick="deleteUser('${u.id}')" style="padding:4px 8px; font-size:0.8rem;">Borrar</button>
                         </td>
                     </tr>
                 `).join('');
             }
-        } catch(e) {
+        } catch (e) {
             console.error('Error fetching users', e);
         }
     }
@@ -6634,7 +6634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnOptionPayLater = document.getElementById('btn-option-pay-later');
     const modalMp = document.getElementById('mercado-pago-modal');
     const btnCloseMp = document.getElementById('btn-close-mp-modal');
-    
+
     let isRenewalPayment = false;
 
     if (btnClosePublishOptions) btnClosePublishOptions.addEventListener('click', () => {
@@ -6663,16 +6663,16 @@ document.addEventListener('DOMContentLoaded', () => {
         openMercadoPagoBrick(window.currentPendingListingId, false);
     });
 
-    window.openMercadoPagoBrick = function(listingId, isRenewal = false) {
+    window.openMercadoPagoBrick = function (listingId, isRenewal = false) {
         try {
             if (!globalMpPublicKey) {
                 showAlert('El sistema de pagos no está configurado correctamente.', 'Error', 'error');
                 return;
             }
-            
+
             isRenewalPayment = isRenewal;
             modalMp.classList.add('active');
-            
+
             if (window.paymentBrickController) {
                 window.paymentBrickController.unmount();
                 window.paymentBrickController = null;
@@ -6680,7 +6680,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const container = document.getElementById('paymentBrick_container');
             container.innerHTML = ''; // Limpiar render previo por seguridad
-            
+
             // Verificar que MercadoPago esté definido
             if (typeof MercadoPago === 'undefined') {
                 throw new Error("La librería de Mercado Pago no cargó correctamente desde internet. Revisa tu conexión o desactiva tu bloqueador de anuncios (AdBlock).");
@@ -6697,7 +6697,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     customization: {
                         visual: {
                             style: {
-                                theme: 'default' 
+                                theme: 'default'
                             }
                         },
                         paymentMethods: {
@@ -6713,7 +6713,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             return new Promise((resolve, reject) => {
                                 formData.listingId = listingId;
                                 formData.isRenewal = isRenewalPayment;
-                                
+
                                 let promise;
                                 if (typeof supabaseClient !== 'undefined' && supabaseClient) {
                                     promise = supabaseClient.functions.invoke('process_payment', {
@@ -6740,10 +6740,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                         showAlert('No se pudo procesar el pago: ' + errorMsg, 'Error en Pago', 'error');
                                     }
                                 })
-                                .catch((error) => {
-                                    reject();
-                                    showAlert('Error de red al procesar el pago.', 'Error', 'error');
-                                });
+                                    .catch((error) => {
+                                        reject();
+                                        showAlert('Error de red al procesar el pago.', 'Error', 'error');
+                                    });
                             });
                         },
                         onError: (error) => {
@@ -6759,7 +6759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showAlert('Error al cargar la pasarela: ' + err.message, 'Error', 'error');
                 }
             };
-            
+
             // Pequeño delay para asegurar que el DOM del modal se ha renderizado y tiene dimensiones (width/height)
             setTimeout(() => {
                 renderPaymentBrick(bricksBuilder).catch(e => {
@@ -6778,681 +6778,681 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     {
         const btnAdvertise = document.getElementById('btn-advertise');
-    const clientAdModal = document.getElementById('client-ad-modal');
-    const btnCloseClientAd = document.getElementById('btn-close-client-ad');
-    const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
-    
-    // Next step logic
-    window.nextAdStep = function(step) {
-        const currentStepEl = document.querySelector('.ad-step.active-step');
-        if (currentStepEl) {
-            const currentStepNum = parseInt(currentStepEl.id.replace('client-ad-step-', ''));
-            if (step > currentStepNum) {
-                // Moving forward, validate required fields
-                currentStepEl.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-                const inputs = currentStepEl.querySelectorAll('input[required], select[required], textarea[required]');
-                let isValid = true;
-                let missingFields = [];
-                
-                inputs.forEach(input => {
-                    if (!input.checkValidity()) {
-                        isValid = false;
-                        input.classList.add('input-error');
-                        const formGroup = input.closest('.form-group');
-                        if (formGroup) {
-                            const label = formGroup.querySelector('label');
-                            if (label) {
-                                let labelText = label.childNodes[0].nodeValue || label.textContent;
-                                if (label.querySelector('span')) {
-                                    labelText = label.querySelector('span').textContent;
-                                }
-                                labelText = labelText.replace('*', '').trim();
-                                if (!missingFields.includes(labelText)) {
-                                    missingFields.push(labelText);
-                                }
-                            }
-                        }
-                    }
-                });
+        const clientAdModal = document.getElementById('client-ad-modal');
+        const btnCloseClientAd = document.getElementById('btn-close-client-ad');
+        const btnCancelClientAd = document.getElementById('btn-cancel-client-ad');
 
-                if (!isValid) {
-                    showAlert(`Faltan completar: ${missingFields.join(', ')}`, 'Información Incompleta', 'warning');
-                    return; // Stop advancing
-                }
-            }
-        }
+        // Next step logic
+        window.nextAdStep = function (step) {
+            const currentStepEl = document.querySelector('.ad-step.active-step');
+            if (currentStepEl) {
+                const currentStepNum = parseInt(currentStepEl.id.replace('client-ad-step-', ''));
+                if (step > currentStepNum) {
+                    // Moving forward, validate required fields
+                    currentStepEl.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+                    const inputs = currentStepEl.querySelectorAll('input[required], select[required], textarea[required]');
+                    let isValid = true;
+                    let missingFields = [];
 
-        document.querySelectorAll('.ad-step').forEach(el => {
-            el.style.display = 'none';
-            el.classList.remove('active-step');
-        });
-        const target = document.getElementById('client-ad-step-' + step);
-        if (target) {
-            target.style.display = 'block';
-            target.classList.add('active-step');
-        }
-    };
-
-    if (btnAdvertise) {
-        btnAdvertise.addEventListener('click', () => {
-            document.getElementById('client-ad-form-step2').reset();
-            window.clientAdImages = [];
-            window.editingAdId = null;
-            document.getElementById('client-ad-image-preview-container').innerHTML = '';
-            document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
-            document.getElementById('desc-char-counter').textContent = '0/220';
-            
-            // Auto-fill State and City
-            const uState = document.getElementById('user-state').value;
-            let uCity = 'Todas';
-            const activeCityBtn = document.querySelector('#home-categories .category-chip.active'); // Might be used later, but wait...
-            // the city is usually selected via checkboxes or we just put the generic one:
-            if (window.selectedCities && window.selectedCities.length > 0) {
-                uCity = window.selectedCities[0];
-            }
-            
-            const stateEl = document.getElementById('client-ad-state');
-            const cityEl = document.getElementById('client-ad-city');
-            if (stateEl) {
-                stateEl.value = (uState && uState !== 'Todos') ? uState : 'Baja California';
-                stateEl.dispatchEvent(new Event('change'));
-            }
-            if (cityEl) {
-                cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
-            }
-            
-            // Reset Progress Bar
-            document.getElementById('client-ad-progress-container').style.display = 'none';
-            document.getElementById('client-ad-progress-bar').style.width = '0%';
-            document.getElementById('client-ad-progress-text').textContent = '0%';
-            
-            const btnSubmit = document.getElementById('btn-submit-client-ad');
-            if (btnSubmit) {
-                btnSubmit.disabled = false;
-                btnSubmit.textContent = 'Confirmar y Publicar';
-            }
-
-            window.nextAdStep(1);
-            clientAdModal.classList.add('active');
-        });
-    }
-
-    if (btnCloseClientAd) btnCloseClientAd.addEventListener('click', () => clientAdModal.classList.remove('active'));
-
-    // Character counter for description
-    const adDesc = document.getElementById('client-ad-description');
-    if (adDesc) {
-        adDesc.addEventListener('input', (e) => {
-            const count = e.target.value.length;
-            document.getElementById('desc-char-counter').textContent = count + '/220';
-        });
-    }
-
-    // Auto-sync WhatsApp
-    const adPhone = document.getElementById('client-ad-phone');
-    const adWhatsapp = document.getElementById('client-ad-whatsapp');
-    let waManuallyEdited = false;
-    if (adWhatsapp) {
-        adWhatsapp.addEventListener('input', () => { waManuallyEdited = true; });
-    }
-    if (adPhone) {
-        adPhone.addEventListener('input', (e) => {
-            if (!waManuallyEdited && adWhatsapp) {
-                const val = e.target.value.replace(/\D/g, '');
-                adWhatsapp.value = val ? '52' + val : '';
-            }
-        });
-    }
-
-    const clientAdUpload = document.getElementById('client-ad-image-upload');
-    if (clientAdUpload) {
-        clientAdUpload.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-            
-            window.clientAdImages = window.clientAdImages || [];
-            
-            if (window.clientAdImages.length + files.length > 7) {
-                showAlert('Solo puedes subir hasta 7 fotos.', 'Límite de fotos', 'warning');
-                return;
-            }
-
-            const uploadBtnLabel = document.querySelector('label[for="client-ad-image-upload"]');
-            const originalText = uploadBtnLabel.innerHTML;
-            uploadBtnLabel.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">autorenew</span> Procesando...';
-            uploadBtnLabel.style.pointerEvents = 'none';
-
-            for (let file of files) {
-                try {
-                    const dataUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 800;
-                                let scaleSize = 1;
-                                if (img.width > MAX_WIDTH) {
-                                    scaleSize = MAX_WIDTH / img.width;
-                                }
-                                canvas.width = img.width * scaleSize;
-                                canvas.height = img.height * scaleSize;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                resolve(canvas.toDataURL('image/webp', 0.8));
-                            };
-                            img.onerror = () => reject(new Error("Error cargando imagen"));
-                            img.src = e.target.result;
-                        };
-                        reader.onerror = () => reject(new Error("Error leyendo archivo"));
-                        reader.readAsDataURL(file);
-                    });
-                    
-                    window.clientAdImages.push(dataUrl);
-                } catch(err) {
-                    console.error("Error procesando imagen del anuncio", err);
-                }
-            }
-            
-            uploadBtnLabel.innerHTML = originalText;
-            uploadBtnLabel.style.pointerEvents = 'auto';
-            
-            renderClientAdImagePreviews();
-        });
-    }
-
-    window.renderClientAdImagePreviews = function() {
-        const container = document.getElementById('client-ad-image-preview-container');
-        const text = document.getElementById('client-ad-file-chosen-text');
-        container.innerHTML = '';
-        if (!window.clientAdImages || window.clientAdImages.length === 0) {
-            text.textContent = 'Ninguna foto. ¡Recuerda la portada!';
-            return;
-        }
-        
-        text.textContent = `${window.clientAdImages.length} foto(s) seleccionada(s)`;
-        
-        window.clientAdImages.forEach((imgSrc, idx) => {
-            const wrapper = document.createElement('div');
-            wrapper.style.position = 'relative';
-            wrapper.style.display = 'inline-block';
-            
-            const img = document.createElement('img');
-            img.src = imgSrc;
-            img.style.width = '60px';
-            img.style.height = '60px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '6px';
-            img.style.border = idx === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
-            
-            if (idx === 0) {
-                const badge = document.createElement('div');
-                badge.textContent = 'PORTADA';
-                badge.style.position = 'absolute';
-                badge.style.bottom = '0';
-                badge.style.left = '0';
-                badge.style.right = '0';
-                badge.style.background = '#f59e0b';
-                badge.style.color = 'white';
-                badge.style.fontSize = '0.5rem';
-                badge.style.textAlign = 'center';
-                badge.style.fontWeight = 'bold';
-                badge.style.borderRadius = '0 0 6px 6px';
-                wrapper.appendChild(badge);
-            }
-            
-            const delBtn = document.createElement('button');
-            delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
-            delBtn.style.position = 'absolute';
-            delBtn.style.top = '-4px';
-            delBtn.style.right = '-4px';
-            delBtn.style.background = 'rgba(255,0,0,0.8)';
-            delBtn.style.color = 'white';
-            delBtn.style.border = 'none';
-            delBtn.style.borderRadius = '50%';
-            delBtn.style.width = '20px';
-            delBtn.style.height = '20px';
-            delBtn.style.display = 'flex';
-            delBtn.style.alignItems = 'center';
-            delBtn.style.justifyContent = 'center';
-            delBtn.style.cursor = 'pointer';
-            
-            delBtn.onclick = (ev) => {
-                ev.preventDefault();
-                window.clientAdImages.splice(idx, 1);
-                renderClientAdImagePreviews();
-            };
-            
-            wrapper.appendChild(img);
-            wrapper.appendChild(delBtn);
-            container.appendChild(wrapper);
-        });
-    };
-
-    const btnSubmitClientAd = document.getElementById('btn-submit-client-ad');
-    if (btnSubmitClientAd) {
-        btnSubmitClientAd.addEventListener('click', async (e) => {
-            e.preventDefault();
-            
-            const title = document.getElementById('client-ad-title').value.trim();
-            const desc = document.getElementById('client-ad-description').value.trim();
-            const address = document.getElementById('client-ad-address').value.trim();
-            const scheduleMF = document.getElementById('client-ad-schedule-mf').value.trim();
-            const scheduleSat = document.getElementById('client-ad-schedule-sat').value.trim();
-            const scheduleSun = document.getElementById('client-ad-schedule-sun').value.trim();
-            
-            const state = document.getElementById('client-ad-state').value.trim();
-            const city = document.getElementById('client-ad-city').value.trim();
-            const phone = document.getElementById('client-ad-phone').value.trim();
-            const wa = document.getElementById('client-ad-whatsapp').value.trim();
-            
-            if (!title || !desc || !state || !city) {
-                showAlert('Por favor, completa los campos obligatorios (Título, Descripción, Estado y Ciudad).', 'Campos incompletos', 'warning');
-                return;
-            }
-            
-            if (!window.editingAdId && (!window.clientAdImages || window.clientAdImages.length === 0)) {
-                showAlert('Debes subir al menos 1 foto para tu portada.', 'Faltan fotos', 'warning');
-                return;
-            }
-            
-            btnSubmitClientAd.disabled = true;
-            btnSubmitClientAd.textContent = 'Guardando anuncio...';
-            
-            const progressContainer = document.getElementById('client-ad-progress-container');
-            const progressBar = document.getElementById('client-ad-progress-bar');
-            const progressText = document.getElementById('client-ad-progress-text');
-            if (progressContainer) progressContainer.style.display = 'block';
-            
-            try {
-                const uploadedImages = [];
-                const imagesToProcess = window.clientAdImages || [];
-                const totalImgs = imagesToProcess.length;
-                
-                for (let i = 0; i < totalImgs; i++) {
-                    let b64 = imagesToProcess[i];
-                    if (b64 && b64.startsWith('data:image')) {
-                        const blob = await (await fetch(b64)).blob();
-                        const file = new File([blob], `ad_img_${Date.now()}.webp`, { type: 'image/webp' });
-                        const url = await db.uploadImageToSupabase(file);
-                        if (url) uploadedImages.push(url);
-                    } else if (b64) {
-                        uploadedImages.push(b64);
-                    }
-                    
-                    if (progressBar && progressText) {
-                        const pct = Math.round(((i + 1) / Math.max(totalImgs, 1)) * 90);
-                        progressBar.style.width = pct + '%';
-                        progressText.textContent = pct + '%';
-                    }
-                }
-                
-                const socialLinks = [];
-                const fb = document.getElementById('client-ad-link-fb').value.trim();
-                const ig = document.getElementById('client-ad-link-ig').value.trim();
-                const tk = document.getElementById('client-ad-link-tk').value.trim();
-                if (fb) socialLinks.push(fb);
-                if (ig) socialLinks.push(ig);
-                if (tk) socialLinks.push(tk);
-                
-                if (progressBar && progressText) {
-                    progressBar.style.width = '95%';
-                    progressText.textContent = '95%';
-                }
-                
-                if (window.editingAdId) {
-                    const existingAd = db.getAllAds().find(a => String(a.id) === String(window.editingAdId));
-                    const finalImages = uploadedImages.length > 0 ? uploadedImages : (existingAd ? existingAd.images : []);
-
-                    const updatedAd = {
-                        ...(existingAd || {}),
-                        id: window.editingAdId,
-                        title: title,
-                        description: desc,
-                        address: address,
-                        scheduleMF: scheduleMF,
-                        scheduleSat: scheduleSat,
-                        scheduleSun: scheduleSun,
-                        state: state,
-                        city: city,
-                        phone: phone,
-                        whatsapp: wa,
-                        social_links: socialLinks,
-                        images: finalImages,
-                        notes: existingAd ? (existingAd.notes || []) : []
-                    };
-                    
-                    try {
-                        await db.saveAd(updatedAd);
-                        if (updatedAd._pendingSync) {
-                            showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
-                        } else {
-                            showAlert('¡Anuncio actualizado con éxito en la nube!', 'Actualizado en la Nube', 'check_circle');
-                        }
-                    } catch(err) {
-                        console.error("Error guardando ad en Supabase:", err);
-                        const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
-                        const adIdx = localAds.findIndex(a => String(a.id) === String(window.editingAdId));
-                        if (adIdx > -1) {
-                            localAds[adIdx] = { ...localAds[adIdx], ...updatedAd, _pendingSync: true };
-                            localStorage.setItem('revista_autos_ads', JSON.stringify(localAds));
-                        }
-                        showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
-                    }
-
-                    window.editingAdId = null;
-                    
-                    if (progressBar && progressText) {
-                        progressBar.style.width = '100%';
-                        progressText.textContent = '100%';
-                    }
-                    
-                    setTimeout(() => {
-                        const clientAdModal = document.getElementById('client-ad-modal');
-                        if (clientAdModal) clientAdModal.classList.remove('active');
-                        btnSubmitClientAd.disabled = false;
-                        btnSubmitClientAd.textContent = 'Guardar Cambios';
-                        if (progressContainer) progressContainer.style.display = 'none';
-                        
-                        showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
-                        
-                        const pendingAdsList = document.getElementById('pending-ads-list');
-                        if (pendingAdsList) delete pendingAdsList.dataset.lastState;
-                        const adminAdsTable = document.getElementById('admin-ads-table-body');
-                        if (adminAdsTable) delete adminAdsTable.dataset.lastState;
-
-                        if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-                        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
-                        if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
-                        if (typeof renderMyListings === 'function') renderMyListings();
-                    }, 300);
-                } else {
-                    const newAd = {
-                        title: title,
-                        description: desc,
-                        address: address,
-                        scheduleMF: scheduleMF,
-                        scheduleSat: scheduleSat,
-                        scheduleSun: scheduleSun,
-                        state: state,
-                        city: city,
-                        phone: phone,
-                        whatsapp: wa,
-                        social_links: socialLinks,
-                        images: uploadedImages,
-                        payment_status: 'pendiente',
-                        is_active: false
-                    };
-
-                    const savedAd = await db.saveAd(newAd);
-                    
-                    if (progressBar && progressText) {
-                        progressBar.style.width = '100%';
-                        progressText.textContent = '100%';
-                    }
-
-                    setTimeout(() => {
-                        const clientAdModal = document.getElementById('client-ad-modal');
-                        if (clientAdModal) clientAdModal.classList.remove('active');
-                        btnSubmitClientAd.disabled = false;
-                        btnSubmitClientAd.textContent = 'Confirmar Pago';
-                        if (progressContainer) progressContainer.style.display = 'none';
-                        if (typeof renderMyListings === 'function') renderMyListings();
-                        if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-                        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
-
-                        window.currentPendingAdId = savedAd.id;
-                        window.currentPendingListingId = null;
-                        
-                        const publishModal = document.getElementById('publish-options-modal');
-                        const priceText = document.getElementById('publish-price-text');
-                        const btnPayNow = document.getElementById('btn-option-pay-now');
-                        const icon = document.getElementById('publish-later-icon');
-                        const title = document.getElementById('publish-later-title');
-                        const desc = document.getElementById('publish-later-desc');
-                        
-                        if (publishModal) {
-                            if (Number(globalAdMonthlyPrice) === 0) {
-                                document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
-                                document.getElementById('publish-modal-desc').textContent = 'Tu anuncio publicitario entrará a un breve proceso de revisión por nuestro equipo para ser autorizado durante un mes. ¿Deseas publicarlo ahora?';
-                                if (btnPayNow) btnPayNow.style.display = 'none';
-                                if (icon) icon.textContent = 'check_circle';
-                                if (title) title.textContent = 'Subir Anuncio';
-                                if (desc) desc.textContent = 'Haz clic aquí para enviar tu anuncio a revisión y publicarlo sin costo.';
-                            } else if (globalMpEnabled) {
-                                document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
-                                document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
-                                if (priceText) priceText.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
-                                if (btnPayNow) btnPayNow.style.display = 'flex';
-                                if (icon) icon.textContent = 'support_agent';
-                                if (title) title.textContent = 'Pago Asistido / Revisión';
-                                if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
-                            } else {
-                                document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
-                                document.getElementById('publish-modal-desc').textContent = 'Sube tu anuncio a continuación.';
-                                if (btnPayNow) btnPayNow.style.display = 'none';
-                                if (icon) icon.textContent = 'support_agent';
-                                if (title) title.textContent = 'Enviar a Revisión';
-                                if (desc) desc.textContent = 'Sube tu anuncio y nos pondremos en contacto contigo para completar la activación.';
-                            }
-                            
-                            publishModal.classList.add('active');
-                        }
-                    }, 300);
-                }
-            } catch (err) {
-                console.error(err);
-                showAlert('Error al crear el anuncio.', 'Error', 'error');
-                btnSubmitClientAd.disabled = false;
-                btnSubmitClientAd.textContent = 'Confirmar Pago';
-                progressContainer.style.display = 'none';
-            }
-        });
-    }
-
-    // Update btn-option-pay-now and later to handle ads
-    const originalBtnPayNow = document.getElementById('btn-option-pay-now');
-    if (originalBtnPayNow) {
-        const clonedBtn = originalBtnPayNow.cloneNode(true);
-        originalBtnPayNow.parentNode.replaceChild(clonedBtn, originalBtnPayNow);
-        clonedBtn.addEventListener('click', () => {
-            document.getElementById('publish-options-modal').classList.remove('active');
-            window.openedFromDashboard = false;
-            if (window.currentPendingAdId) {
-                openMercadoPagoBrickAd(window.currentPendingAdId);
-            } else {
-                window.openMercadoPagoBrick(window.currentPendingListingId, false);
-            }
-        });
-    }
-
-    const originalBtnPayLater = document.getElementById('btn-option-pay-later');
-    if (originalBtnPayLater) {
-        const clonedLater = originalBtnPayLater.cloneNode(true);
-        originalBtnPayLater.parentNode.replaceChild(clonedLater, originalBtnPayLater);
-        clonedLater.addEventListener('click', () => {
-            document.getElementById('publish-options-modal').classList.remove('active');
-            if (window.currentPendingAdId) {
-                window.currentPendingAdId = null;
-                showAlert('Tu anuncio ha sido guardado y está pendiente de aprobación.', 'Anuncio Creado', 'check_circle', () => {
-                    if (typeof switchView === 'function') switchView('view-alta');
-                    if (typeof renderMyListings === 'function') renderMyListings();
-                });
-            } else {
-                showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle', () => {
-                    if (typeof switchView === 'function') switchView('view-alta');
-                    if (typeof renderMyListings === 'function') renderMyListings();
-                });
-            }
-        });
-    }
-    
-    window.openMercadoPagoBrickAd = function(adId) {
-        try {
-            if (!globalMpPublicKey) {
-                showAlert('El sistema de pagos no está configurado.', 'Error', 'error');
-                return;
-            }
-            
-            const modalMp = document.getElementById('mercado-pago-modal');
-            modalMp.classList.add('active');
-            
-            if (window.paymentBrickController) {
-                window.paymentBrickController.unmount();
-                window.paymentBrickController = null;
-            }
-
-            const container = document.getElementById('paymentBrick_container');
-            container.innerHTML = ''; 
-            
-            const mp = new MercadoPago(globalMpPublicKey, { locale: 'es-MX' });
-            const bricksBuilder = mp.bricks();
-
-            const renderPaymentBrick = async (bricksBuilder) => {
-                const settings = {
-                    initialization: { 
-                        amount: (globalAdMonthlyPrice !== undefined && globalAdMonthlyPrice !== null && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500 
-                    },
-                    customization: {
-                        visual: { style: { theme: 'default' } },
-                        paymentMethods: { creditCard: "all", debitCard: "all" }
-                    },
-                    callbacks: {
-                        onReady: () => { console.log("Ad Brick is ready!"); },
-                        onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            return new Promise((resolve, reject) => {
-                                setTimeout(async () => {
-                                    resolve();
-                                    modalMp.classList.remove('active');
-                                    
-                                    const ads = db.getAllAds();
-                                    const adIdx = ads.findIndex(a => String(a.id) === String(adId));
-                                    if(adIdx > -1) {
-                                        ads[adIdx].is_active = true;
-                                        ads[adIdx].payment_status = 'pagado';
-                                        
-                                        const now = new Date();
-                                        ads[adIdx].start_date = now.toISOString();
-                                        const end = new Date(now);
-                                        end.setDate(end.getDate() + 30);
-                                        ads[adIdx].end_date = end.toISOString();
-                                        
-                                        await db.saveAd(ads[adIdx]);
-
-                                        const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
-                                        db.addAdPayment(ads[adIdx].id, amount, null, 'Publicidad', 'mercadopago');
-                                        db.logActivity('Pago de publicidad (MP)', `Publicidad #${ads[adIdx].id} (${ads[adIdx].title || 'Sin título'})`, ads[adIdx].city || ads[adIdx].target_city || 'Global');
+                    inputs.forEach(input => {
+                        if (!input.checkValidity()) {
+                            isValid = false;
+                            input.classList.add('input-error');
+                            const formGroup = input.closest('.form-group');
+                            if (formGroup) {
+                                const label = formGroup.querySelector('label');
+                                if (label) {
+                                    let labelText = label.childNodes[0].nodeValue || label.textContent;
+                                    if (label.querySelector('span')) {
+                                        labelText = label.querySelector('span').textContent;
                                     }
-                                    
-                                    window.currentPendingAdId = null;
-                                    showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle', () => {
-                                        if (typeof switchView === 'function') switchView('view-alta');
-                                        if (typeof renderMyListings === 'function') renderMyListings();
-                                    });
-                                }, 2000);
-                            });
-                        },
-                        onError: (error) => {
-                            showAlert('Error en el formulario de pago: ' + error.message, 'Error', 'error');
-                        },
-                    },
-                };
-                window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
-            };
-            setTimeout(() => { renderPaymentBrick(bricksBuilder); }, 100);
-        } catch (globalErr) {
-            console.error("Global MP Error:", globalErr);
-        }
-    };
+                                    labelText = labelText.replace('*', '').trim();
+                                    if (!missingFields.includes(labelText)) {
+                                        missingFields.push(labelText);
+                                    }
+                                }
+                            }
+                        }
+                    });
 
-    // --- Admin Pending Ads Rendering ---
-    window.renderAdminAdsTable = async function() {
-        const tbody = document.getElementById('ads-table-body');
-        if (!tbody) return;
-
-        // Renderizar primero desde localStorage (inmediato, sin bloquear)
-        // La sincronizacion con Supabase se hace en segundo plano
-        if (typeof db !== 'undefined' && db.syncAdsWithServer) {
-            db.syncAdsWithServer().then(() => {
-                const tbodyAfterSync = document.getElementById('ads-table-body');
-                if (tbodyAfterSync) {
-                    const adsSync = db.getAllAds();
-                    const stateKeySync = JSON.stringify(adsSync);
-                    if (tbodyAfterSync.dataset.lastState !== stateKeySync) {
-                        delete tbodyAfterSync.dataset.lastState;
-                        window.renderAdminAdsTable();
+                    if (!isValid) {
+                        showAlert(`Faltan completar: ${missingFields.join(', ')}`, 'Información Incompleta', 'warning');
+                        return; // Stop advancing
                     }
                 }
-            }).catch(e => console.warn('Sync ads error (background):', e));
-        }
-
-
-        const searchInput = document.getElementById('ads-search-input');
-        if (searchInput && !searchInput.dataset.hasListener) {
-            searchInput.dataset.hasListener = 'true';
-            searchInput.addEventListener('input', () => window.renderAdminAdsTable());
-        }
-
-        let ads = db.getAllAds().filter(a => a.payment_status !== 'pendiente');
-
-        // --- FILTRO EMPLEADO LIMITADO: solo ve anuncios de su región ---
-        const currentRole = window.currentAdminUser ? window.currentAdminUser.role : null;
-        if (currentRole === 'empleado_limitado' && window.currentAdminUser) {
-            const allowedStates = window.currentAdminUser.allowedStates || [];
-            const allowedCities = window.currentAdminUser.allowedCities || [];
-            if (allowedStates.length > 0 || allowedCities.length > 0) {
-                ads = ads.filter(a => {
-                    const adState = (a.state || '').trim();
-                    const adCity  = (a.city  || '').trim();
-                    // Si el estado completo está permitido
-                    if (allowedStates.includes(adState)) return true;
-                    // Si la ciudad específica está permitida
-                    if (allowedCities.includes(adCity)) return true;
-                    return false;
-                });
-            }
-        }
-        // --- FIN FILTRO EMPLEADO LIMITADO ---
-
-        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        if (query) {
-            ads = ads.filter(a => 
-                (a.title && a.title.toLowerCase().includes(query)) ||
-                (a.phone && a.phone.includes(query)) ||
-                (a.ref_number && String(a.ref_number).includes(query)) ||
-                (String(a.id).includes(query))
-            );
-        }
-        const stateKey = JSON.stringify(ads);
-        if (tbody.dataset.lastState === stateKey) return;
-        tbody.dataset.lastState = stateKey;
-
-        if (!ads || ads.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color:var(--text-muted);">No hay anuncios registrados.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = ads.map(ad => {
-            const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-            const refNum = ad.ref_number || ad.id;
-
-            let statusBadge = '<span class="status-badge status-pendiente">Pendiente</span>';
-            if (ad.is_active) {
-                statusBadge = '<span class="status-badge status-autorizado" style="background: var(--success-color); color: white;">Activo</span>';
-            } else if (ad.payment_status === 'pendiente') {
-                statusBadge = '<span class="status-badge status-pendiente" style="background: #f59e0b; color: white;">Pendiente Pago</span>';
-            } else {
-                statusBadge = '<span class="status-badge status-caducado" style="background: var(--danger-color); color: white;">Inactivo</span>';
             }
 
-            let vigenciaStr = 'Sin definir';
-            if (ad.start_date && ad.end_date) {
-                const start = new Date(ad.start_date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
-                const end = new Date(ad.end_date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                vigenciaStr = `${start} al ${end}`;
+            document.querySelectorAll('.ad-step').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active-step');
+            });
+            const target = document.getElementById('client-ad-step-' + step);
+            if (target) {
+                target.style.display = 'block';
+                target.classList.add('active-step');
+            }
+        };
+
+        if (btnAdvertise) {
+            btnAdvertise.addEventListener('click', () => {
+                document.getElementById('client-ad-form-step2').reset();
+                window.clientAdImages = [];
+                window.editingAdId = null;
+                document.getElementById('client-ad-image-preview-container').innerHTML = '';
+                document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
+                document.getElementById('desc-char-counter').textContent = '0/220';
+
+                // Auto-fill State and City
+                const uState = document.getElementById('user-state').value;
+                let uCity = 'Todas';
+                const activeCityBtn = document.querySelector('#home-categories .category-chip.active'); // Might be used later, but wait...
+                // the city is usually selected via checkboxes or we just put the generic one:
+                if (window.selectedCities && window.selectedCities.length > 0) {
+                    uCity = window.selectedCities[0];
+                }
+
+                const stateEl = document.getElementById('client-ad-state');
+                const cityEl = document.getElementById('client-ad-city');
+                if (stateEl) {
+                    stateEl.value = (uState && uState !== 'Todos') ? uState : 'Baja California';
+                    stateEl.dispatchEvent(new Event('change'));
+                }
+                if (cityEl) {
+                    cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
+                }
+
+                // Reset Progress Bar
+                document.getElementById('client-ad-progress-container').style.display = 'none';
+                document.getElementById('client-ad-progress-bar').style.width = '0%';
+                document.getElementById('client-ad-progress-text').textContent = '0%';
+
+                const btnSubmit = document.getElementById('btn-submit-client-ad');
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Confirmar y Publicar';
+                }
+
+                window.nextAdStep(1);
+                clientAdModal.classList.add('active');
+            });
+        }
+
+        if (btnCloseClientAd) btnCloseClientAd.addEventListener('click', () => clientAdModal.classList.remove('active'));
+
+        // Character counter for description
+        const adDesc = document.getElementById('client-ad-description');
+        if (adDesc) {
+            adDesc.addEventListener('input', (e) => {
+                const count = e.target.value.length;
+                document.getElementById('desc-char-counter').textContent = count + '/220';
+            });
+        }
+
+        // Auto-sync WhatsApp
+        const adPhone = document.getElementById('client-ad-phone');
+        const adWhatsapp = document.getElementById('client-ad-whatsapp');
+        let waManuallyEdited = false;
+        if (adWhatsapp) {
+            adWhatsapp.addEventListener('input', () => { waManuallyEdited = true; });
+        }
+        if (adPhone) {
+            adPhone.addEventListener('input', (e) => {
+                if (!waManuallyEdited && adWhatsapp) {
+                    const val = e.target.value.replace(/\D/g, '');
+                    adWhatsapp.value = val ? '52' + val : '';
+                }
+            });
+        }
+
+        const clientAdUpload = document.getElementById('client-ad-image-upload');
+        if (clientAdUpload) {
+            clientAdUpload.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                if (!files.length) return;
+
+                window.clientAdImages = window.clientAdImages || [];
+
+                if (window.clientAdImages.length + files.length > 7) {
+                    showAlert('Solo puedes subir hasta 7 fotos.', 'Límite de fotos', 'warning');
+                    return;
+                }
+
+                const uploadBtnLabel = document.querySelector('label[for="client-ad-image-upload"]');
+                const originalText = uploadBtnLabel.innerHTML;
+                uploadBtnLabel.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">autorenew</span> Procesando...';
+                uploadBtnLabel.style.pointerEvents = 'none';
+
+                for (let file of files) {
+                    try {
+                        const dataUrl = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                const img = new Image();
+                                img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    const MAX_WIDTH = 800;
+                                    let scaleSize = 1;
+                                    if (img.width > MAX_WIDTH) {
+                                        scaleSize = MAX_WIDTH / img.width;
+                                    }
+                                    canvas.width = img.width * scaleSize;
+                                    canvas.height = img.height * scaleSize;
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                    resolve(canvas.toDataURL('image/webp', 0.8));
+                                };
+                                img.onerror = () => reject(new Error("Error cargando imagen"));
+                                img.src = e.target.result;
+                            };
+                            reader.onerror = () => reject(new Error("Error leyendo archivo"));
+                            reader.readAsDataURL(file);
+                        });
+
+                        window.clientAdImages.push(dataUrl);
+                    } catch (err) {
+                        console.error("Error procesando imagen del anuncio", err);
+                    }
+                }
+
+                uploadBtnLabel.innerHTML = originalText;
+                uploadBtnLabel.style.pointerEvents = 'auto';
+
+                renderClientAdImagePreviews();
+            });
+        }
+
+        window.renderClientAdImagePreviews = function () {
+            const container = document.getElementById('client-ad-image-preview-container');
+            const text = document.getElementById('client-ad-file-chosen-text');
+            container.innerHTML = '';
+            if (!window.clientAdImages || window.clientAdImages.length === 0) {
+                text.textContent = 'Ninguna foto. ¡Recuerda la portada!';
+                return;
             }
 
-            return `
+            text.textContent = `${window.clientAdImages.length} foto(s) seleccionada(s)`;
+
+            window.clientAdImages.forEach((imgSrc, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.display = 'inline-block';
+
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                img.style.width = '60px';
+                img.style.height = '60px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '6px';
+                img.style.border = idx === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
+
+                if (idx === 0) {
+                    const badge = document.createElement('div');
+                    badge.textContent = 'PORTADA';
+                    badge.style.position = 'absolute';
+                    badge.style.bottom = '0';
+                    badge.style.left = '0';
+                    badge.style.right = '0';
+                    badge.style.background = '#f59e0b';
+                    badge.style.color = 'white';
+                    badge.style.fontSize = '0.5rem';
+                    badge.style.textAlign = 'center';
+                    badge.style.fontWeight = 'bold';
+                    badge.style.borderRadius = '0 0 6px 6px';
+                    wrapper.appendChild(badge);
+                }
+
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
+                delBtn.style.position = 'absolute';
+                delBtn.style.top = '-4px';
+                delBtn.style.right = '-4px';
+                delBtn.style.background = 'rgba(255,0,0,0.8)';
+                delBtn.style.color = 'white';
+                delBtn.style.border = 'none';
+                delBtn.style.borderRadius = '50%';
+                delBtn.style.width = '20px';
+                delBtn.style.height = '20px';
+                delBtn.style.display = 'flex';
+                delBtn.style.alignItems = 'center';
+                delBtn.style.justifyContent = 'center';
+                delBtn.style.cursor = 'pointer';
+
+                delBtn.onclick = (ev) => {
+                    ev.preventDefault();
+                    window.clientAdImages.splice(idx, 1);
+                    renderClientAdImagePreviews();
+                };
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(delBtn);
+                container.appendChild(wrapper);
+            });
+        };
+
+        const btnSubmitClientAd = document.getElementById('btn-submit-client-ad');
+        if (btnSubmitClientAd) {
+            btnSubmitClientAd.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                const title = document.getElementById('client-ad-title').value.trim();
+                const desc = document.getElementById('client-ad-description').value.trim();
+                const address = document.getElementById('client-ad-address').value.trim();
+                const scheduleMF = document.getElementById('client-ad-schedule-mf').value.trim();
+                const scheduleSat = document.getElementById('client-ad-schedule-sat').value.trim();
+                const scheduleSun = document.getElementById('client-ad-schedule-sun').value.trim();
+
+                const state = document.getElementById('client-ad-state').value.trim();
+                const city = document.getElementById('client-ad-city').value.trim();
+                const phone = document.getElementById('client-ad-phone').value.trim();
+                const wa = document.getElementById('client-ad-whatsapp').value.trim();
+
+                if (!title || !desc || !state || !city) {
+                    showAlert('Por favor, completa los campos obligatorios (Título, Descripción, Estado y Ciudad).', 'Campos incompletos', 'warning');
+                    return;
+                }
+
+                if (!window.editingAdId && (!window.clientAdImages || window.clientAdImages.length === 0)) {
+                    showAlert('Debes subir al menos 1 foto para tu portada.', 'Faltan fotos', 'warning');
+                    return;
+                }
+
+                btnSubmitClientAd.disabled = true;
+                btnSubmitClientAd.textContent = 'Guardando anuncio...';
+
+                const progressContainer = document.getElementById('client-ad-progress-container');
+                const progressBar = document.getElementById('client-ad-progress-bar');
+                const progressText = document.getElementById('client-ad-progress-text');
+                if (progressContainer) progressContainer.style.display = 'block';
+
+                try {
+                    const uploadedImages = [];
+                    const imagesToProcess = window.clientAdImages || [];
+                    const totalImgs = imagesToProcess.length;
+
+                    for (let i = 0; i < totalImgs; i++) {
+                        let b64 = imagesToProcess[i];
+                        if (b64 && b64.startsWith('data:image')) {
+                            const blob = await (await fetch(b64)).blob();
+                            const file = new File([blob], `ad_img_${Date.now()}.webp`, { type: 'image/webp' });
+                            const url = await db.uploadImageToSupabase(file);
+                            if (url) uploadedImages.push(url);
+                        } else if (b64) {
+                            uploadedImages.push(b64);
+                        }
+
+                        if (progressBar && progressText) {
+                            const pct = Math.round(((i + 1) / Math.max(totalImgs, 1)) * 90);
+                            progressBar.style.width = pct + '%';
+                            progressText.textContent = pct + '%';
+                        }
+                    }
+
+                    const socialLinks = [];
+                    const fb = document.getElementById('client-ad-link-fb').value.trim();
+                    const ig = document.getElementById('client-ad-link-ig').value.trim();
+                    const tk = document.getElementById('client-ad-link-tk').value.trim();
+                    if (fb) socialLinks.push(fb);
+                    if (ig) socialLinks.push(ig);
+                    if (tk) socialLinks.push(tk);
+
+                    if (progressBar && progressText) {
+                        progressBar.style.width = '95%';
+                        progressText.textContent = '95%';
+                    }
+
+                    if (window.editingAdId) {
+                        const existingAd = db.getAllAds().find(a => String(a.id) === String(window.editingAdId));
+                        const finalImages = uploadedImages.length > 0 ? uploadedImages : (existingAd ? existingAd.images : []);
+
+                        const updatedAd = {
+                            ...(existingAd || {}),
+                            id: window.editingAdId,
+                            title: title,
+                            description: desc,
+                            address: address,
+                            scheduleMF: scheduleMF,
+                            scheduleSat: scheduleSat,
+                            scheduleSun: scheduleSun,
+                            state: state,
+                            city: city,
+                            phone: phone,
+                            whatsapp: wa,
+                            social_links: socialLinks,
+                            images: finalImages,
+                            notes: existingAd ? (existingAd.notes || []) : []
+                        };
+
+                        try {
+                            await db.saveAd(updatedAd);
+                            if (updatedAd._pendingSync) {
+                                showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
+                            } else {
+                                showAlert('¡Anuncio actualizado con éxito en la nube!', 'Actualizado en la Nube', 'check_circle');
+                            }
+                        } catch (err) {
+                            console.error("Error guardando ad en Supabase:", err);
+                            const localAds = JSON.parse(localStorage.getItem('revista_autos_ads') || '[]');
+                            const adIdx = localAds.findIndex(a => String(a.id) === String(window.editingAdId));
+                            if (adIdx > -1) {
+                                localAds[adIdx] = { ...localAds[adIdx], ...updatedAd, _pendingSync: true };
+                                localStorage.setItem('revista_autos_ads', JSON.stringify(localAds));
+                            }
+                            showAlert('Guardado en tu dispositivo. Se subirá a la nube en cuanto vuelva la conexión.', 'Guardado Offline', 'warning');
+                        }
+
+                        window.editingAdId = null;
+
+                        if (progressBar && progressText) {
+                            progressBar.style.width = '100%';
+                            progressText.textContent = '100%';
+                        }
+
+                        setTimeout(() => {
+                            const clientAdModal = document.getElementById('client-ad-modal');
+                            if (clientAdModal) clientAdModal.classList.remove('active');
+                            btnSubmitClientAd.disabled = false;
+                            btnSubmitClientAd.textContent = 'Guardar Cambios';
+                            if (progressContainer) progressContainer.style.display = 'none';
+
+                            showAlert('¡Anuncio actualizado con éxito!', 'Actualizado', 'check_circle');
+
+                            const pendingAdsList = document.getElementById('pending-ads-list');
+                            if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+                            const adminAdsTable = document.getElementById('admin-ads-table-body');
+                            if (adminAdsTable) delete adminAdsTable.dataset.lastState;
+
+                            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+                            if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+                            if (typeof renderMyListings === 'function') renderMyListings();
+                        }, 300);
+                    } else {
+                        const newAd = {
+                            title: title,
+                            description: desc,
+                            address: address,
+                            scheduleMF: scheduleMF,
+                            scheduleSat: scheduleSat,
+                            scheduleSun: scheduleSun,
+                            state: state,
+                            city: city,
+                            phone: phone,
+                            whatsapp: wa,
+                            social_links: socialLinks,
+                            images: uploadedImages,
+                            payment_status: 'pendiente',
+                            is_active: false
+                        };
+
+                        const savedAd = await db.saveAd(newAd);
+
+                        if (progressBar && progressText) {
+                            progressBar.style.width = '100%';
+                            progressText.textContent = '100%';
+                        }
+
+                        setTimeout(() => {
+                            const clientAdModal = document.getElementById('client-ad-modal');
+                            if (clientAdModal) clientAdModal.classList.remove('active');
+                            btnSubmitClientAd.disabled = false;
+                            btnSubmitClientAd.textContent = 'Confirmar Pago';
+                            if (progressContainer) progressContainer.style.display = 'none';
+                            if (typeof renderMyListings === 'function') renderMyListings();
+                            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+
+                            window.currentPendingAdId = savedAd.id;
+                            window.currentPendingListingId = null;
+
+                            const publishModal = document.getElementById('publish-options-modal');
+                            const priceText = document.getElementById('publish-price-text');
+                            const btnPayNow = document.getElementById('btn-option-pay-now');
+                            const icon = document.getElementById('publish-later-icon');
+                            const title = document.getElementById('publish-later-title');
+                            const desc = document.getElementById('publish-later-desc');
+
+                            if (publishModal) {
+                                if (Number(globalAdMonthlyPrice) === 0) {
+                                    document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
+                                    document.getElementById('publish-modal-desc').textContent = 'Tu anuncio publicitario entrará a un breve proceso de revisión por nuestro equipo para ser autorizado durante un mes. ¿Deseas publicarlo ahora?';
+                                    if (btnPayNow) btnPayNow.style.display = 'none';
+                                    if (icon) icon.textContent = 'check_circle';
+                                    if (title) title.textContent = 'Subir Anuncio';
+                                    if (desc) desc.textContent = 'Haz clic aquí para enviar tu anuncio a revisión y publicarlo sin costo.';
+                                } else if (globalMpEnabled) {
+                                    document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
+                                    document.getElementById('publish-modal-desc').textContent = '¿Cómo deseas activar tu anuncio?';
+                                    if (priceText) priceText.textContent = `$${Number(globalAdMonthlyPrice).toFixed(2)} MXN`;
+                                    if (btnPayNow) btnPayNow.style.display = 'flex';
+                                    if (icon) icon.textContent = 'support_agent';
+                                    if (title) title.textContent = 'Pago Asistido / Revisión';
+                                    if (desc) desc.textContent = 'Sube tu anuncio y nosotros te contactaremos para finalizar el proceso de pago y activación por un mes.';
+                                } else {
+                                    document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
+                                    document.getElementById('publish-modal-desc').textContent = 'Sube tu anuncio a continuación.';
+                                    if (btnPayNow) btnPayNow.style.display = 'none';
+                                    if (icon) icon.textContent = 'support_agent';
+                                    if (title) title.textContent = 'Enviar a Revisión';
+                                    if (desc) desc.textContent = 'Sube tu anuncio y nos pondremos en contacto contigo para completar la activación.';
+                                }
+
+                                publishModal.classList.add('active');
+                            }
+                        }, 300);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showAlert('Error al crear el anuncio.', 'Error', 'error');
+                    btnSubmitClientAd.disabled = false;
+                    btnSubmitClientAd.textContent = 'Confirmar Pago';
+                    progressContainer.style.display = 'none';
+                }
+            });
+        }
+
+        // Update btn-option-pay-now and later to handle ads
+        const originalBtnPayNow = document.getElementById('btn-option-pay-now');
+        if (originalBtnPayNow) {
+            const clonedBtn = originalBtnPayNow.cloneNode(true);
+            originalBtnPayNow.parentNode.replaceChild(clonedBtn, originalBtnPayNow);
+            clonedBtn.addEventListener('click', () => {
+                document.getElementById('publish-options-modal').classList.remove('active');
+                window.openedFromDashboard = false;
+                if (window.currentPendingAdId) {
+                    openMercadoPagoBrickAd(window.currentPendingAdId);
+                } else {
+                    window.openMercadoPagoBrick(window.currentPendingListingId, false);
+                }
+            });
+        }
+
+        const originalBtnPayLater = document.getElementById('btn-option-pay-later');
+        if (originalBtnPayLater) {
+            const clonedLater = originalBtnPayLater.cloneNode(true);
+            originalBtnPayLater.parentNode.replaceChild(clonedLater, originalBtnPayLater);
+            clonedLater.addEventListener('click', () => {
+                document.getElementById('publish-options-modal').classList.remove('active');
+                if (window.currentPendingAdId) {
+                    window.currentPendingAdId = null;
+                    showAlert('Tu anuncio ha sido guardado y está pendiente de aprobación.', 'Anuncio Creado', 'check_circle', () => {
+                        if (typeof switchView === 'function') switchView('view-alta');
+                        if (typeof renderMyListings === 'function') renderMyListings();
+                    });
+                } else {
+                    showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle', () => {
+                        if (typeof switchView === 'function') switchView('view-alta');
+                        if (typeof renderMyListings === 'function') renderMyListings();
+                    });
+                }
+            });
+        }
+
+        window.openMercadoPagoBrickAd = function (adId) {
+            try {
+                if (!globalMpPublicKey) {
+                    showAlert('El sistema de pagos no está configurado.', 'Error', 'error');
+                    return;
+                }
+
+                const modalMp = document.getElementById('mercado-pago-modal');
+                modalMp.classList.add('active');
+
+                if (window.paymentBrickController) {
+                    window.paymentBrickController.unmount();
+                    window.paymentBrickController = null;
+                }
+
+                const container = document.getElementById('paymentBrick_container');
+                container.innerHTML = '';
+
+                const mp = new MercadoPago(globalMpPublicKey, { locale: 'es-MX' });
+                const bricksBuilder = mp.bricks();
+
+                const renderPaymentBrick = async (bricksBuilder) => {
+                    const settings = {
+                        initialization: {
+                            amount: (globalAdMonthlyPrice !== undefined && globalAdMonthlyPrice !== null && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500
+                        },
+                        customization: {
+                            visual: { style: { theme: 'default' } },
+                            paymentMethods: { creditCard: "all", debitCard: "all" }
+                        },
+                        callbacks: {
+                            onReady: () => { console.log("Ad Brick is ready!"); },
+                            onSubmit: ({ selectedPaymentMethod, formData }) => {
+                                return new Promise((resolve, reject) => {
+                                    setTimeout(async () => {
+                                        resolve();
+                                        modalMp.classList.remove('active');
+
+                                        const ads = db.getAllAds();
+                                        const adIdx = ads.findIndex(a => String(a.id) === String(adId));
+                                        if (adIdx > -1) {
+                                            ads[adIdx].is_active = true;
+                                            ads[adIdx].payment_status = 'pagado';
+
+                                            const now = new Date();
+                                            ads[adIdx].start_date = now.toISOString();
+                                            const end = new Date(now);
+                                            end.setDate(end.getDate() + 30);
+                                            ads[adIdx].end_date = end.toISOString();
+
+                                            await db.saveAd(ads[adIdx]);
+
+                                            const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                                            db.addAdPayment(ads[adIdx].id, amount, null, 'Publicidad', 'mercadopago');
+                                            db.logActivity('Pago de publicidad (MP)', `Publicidad #${ads[adIdx].id} (${ads[adIdx].title || 'Sin título'})`, ads[adIdx].city || ads[adIdx].target_city || 'Global');
+                                        }
+
+                                        window.currentPendingAdId = null;
+                                        showAlert('¡Pago exitoso! Tu anuncio ya está ACTIVO.', 'Pago Aprobado', 'check_circle', () => {
+                                            if (typeof switchView === 'function') switchView('view-alta');
+                                            if (typeof renderMyListings === 'function') renderMyListings();
+                                        });
+                                    }, 2000);
+                                });
+                            },
+                            onError: (error) => {
+                                showAlert('Error en el formulario de pago: ' + error.message, 'Error', 'error');
+                            },
+                        },
+                    };
+                    window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
+                };
+                setTimeout(() => { renderPaymentBrick(bricksBuilder); }, 100);
+            } catch (globalErr) {
+                console.error("Global MP Error:", globalErr);
+            }
+        };
+
+        // --- Admin Pending Ads Rendering ---
+        window.renderAdminAdsTable = async function () {
+            const tbody = document.getElementById('ads-table-body');
+            if (!tbody) return;
+
+            // Renderizar primero desde localStorage (inmediato, sin bloquear)
+            // La sincronizacion con Supabase se hace en segundo plano
+            if (typeof db !== 'undefined' && db.syncAdsWithServer) {
+                db.syncAdsWithServer().then(() => {
+                    const tbodyAfterSync = document.getElementById('ads-table-body');
+                    if (tbodyAfterSync) {
+                        const adsSync = db.getAllAds();
+                        const stateKeySync = JSON.stringify(adsSync);
+                        if (tbodyAfterSync.dataset.lastState !== stateKeySync) {
+                            delete tbodyAfterSync.dataset.lastState;
+                            window.renderAdminAdsTable();
+                        }
+                    }
+                }).catch(e => console.warn('Sync ads error (background):', e));
+            }
+
+
+            const searchInput = document.getElementById('ads-search-input');
+            if (searchInput && !searchInput.dataset.hasListener) {
+                searchInput.dataset.hasListener = 'true';
+                searchInput.addEventListener('input', () => window.renderAdminAdsTable());
+            }
+
+            let ads = db.getAllAds().filter(a => a.payment_status !== 'pendiente');
+
+            // --- FILTRO EMPLEADO LIMITADO: solo ve anuncios de su región ---
+            const currentRole = window.currentAdminUser ? window.currentAdminUser.role : null;
+            if (currentRole === 'empleado_limitado' && window.currentAdminUser) {
+                const allowedStates = window.currentAdminUser.allowedStates || [];
+                const allowedCities = window.currentAdminUser.allowedCities || [];
+                if (allowedStates.length > 0 || allowedCities.length > 0) {
+                    ads = ads.filter(a => {
+                        const adState = (a.state || '').trim();
+                        const adCity = (a.city || '').trim();
+                        // Si el estado completo está permitido
+                        if (allowedStates.includes(adState)) return true;
+                        // Si la ciudad específica está permitida
+                        if (allowedCities.includes(adCity)) return true;
+                        return false;
+                    });
+                }
+            }
+            // --- FIN FILTRO EMPLEADO LIMITADO ---
+
+            const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            if (query) {
+                ads = ads.filter(a =>
+                    (a.title && a.title.toLowerCase().includes(query)) ||
+                    (a.phone && a.phone.includes(query)) ||
+                    (a.ref_number && String(a.ref_number).includes(query)) ||
+                    (String(a.id).includes(query))
+                );
+            }
+            const stateKey = JSON.stringify(ads);
+            if (tbody.dataset.lastState === stateKey) return;
+            tbody.dataset.lastState = stateKey;
+
+            if (!ads || ads.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color:var(--text-muted);">No hay anuncios registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ads.map(ad => {
+                const firstImg = (ad.images && ad.images.length > 0) ? ad.images[0] : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+                const refNum = ad.ref_number || ad.id;
+
+                let statusBadge = '<span class="status-badge status-pendiente">Pendiente</span>';
+                if (ad.is_active) {
+                    statusBadge = '<span class="status-badge status-autorizado" style="background: var(--success-color); color: white;">Activo</span>';
+                } else if (ad.payment_status === 'pendiente') {
+                    statusBadge = '<span class="status-badge status-pendiente" style="background: #f59e0b; color: white;">Pendiente Pago</span>';
+                } else {
+                    statusBadge = '<span class="status-badge status-caducado" style="background: var(--danger-color); color: white;">Inactivo</span>';
+                }
+
+                let vigenciaStr = 'Sin definir';
+                if (ad.start_date && ad.end_date) {
+                    const start = new Date(ad.start_date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' });
+                    const end = new Date(ad.end_date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                    vigenciaStr = `${start} al ${end}`;
+                }
+
+                return `
                 <tr>
                     <td style="text-align:center; padding: 6px 4px;">
                         <span style="display:inline-block; background:rgba(245,158,11,0.12); color:#f59e0b; border-radius:6px; padding:3px 7px; font-size:0.75rem; font-weight:700; letter-spacing:0.03em; white-space:nowrap;">#${refNum}</span>
@@ -7476,54 +7476,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                 </tr>
             `;
-        }).join('');
-    };
+            }).join('');
+        };
 
-    window.expandedAdminAdCards = window.expandedAdminAdCards || new Set();
+        window.expandedAdminAdCards = window.expandedAdminAdCards || new Set();
 
-    window.togglePendingAdDetail = function(id) {
-        const targetIdStr = String(id);
-        const isCurrentlyExpanded = window.expandedAdminAdCards && window.expandedAdminAdCards.has(targetIdStr);
+        window.togglePendingAdDetail = function (id) {
+            const targetIdStr = String(id);
+            const isCurrentlyExpanded = window.expandedAdminAdCards && window.expandedAdminAdCards.has(targetIdStr);
 
-        // Cerrar todas las tarjetas abiertas previamente (modo acordeón)
-        if (window.expandedAdminAdCards) {
-            window.expandedAdminAdCards.forEach(openId => {
-                const openCard = document.getElementById(`pending-ad-card-${openId}`);
-                const openIcon = document.getElementById(`pending-ad-expand-icon-${openId}`);
-                if (openCard) openCard.classList.remove('expanded');
-                if (openIcon) openIcon.style.transform = 'rotate(0deg)';
-            });
-            window.expandedAdminAdCards.clear();
-        }
-
-        // Si no estaba abierta, abrir la tarjeta seleccionada
-        if (!isCurrentlyExpanded) {
-            const card = document.getElementById(`pending-ad-card-${id}`);
-            const icon = document.getElementById(`pending-ad-expand-icon-${id}`);
-            if (card) {
-                card.classList.add('expanded');
-                if (icon) icon.style.transform = 'rotate(180deg)';
-                window.expandedAdminAdCards.add(targetIdStr);
+            // Cerrar todas las tarjetas abiertas previamente (modo acordeón)
+            if (window.expandedAdminAdCards) {
+                window.expandedAdminAdCards.forEach(openId => {
+                    const openCard = document.getElementById(`pending-ad-card-${openId}`);
+                    const openIcon = document.getElementById(`pending-ad-expand-icon-${openId}`);
+                    if (openCard) openCard.classList.remove('expanded');
+                    if (openIcon) openIcon.style.transform = 'rotate(0deg)';
+                });
+                window.expandedAdminAdCards.clear();
             }
-        }
-    };
 
-    window.savePendingAdNote = function(id) {
-        const input = document.getElementById(`ad-note-input-${id}`);
-        if (!input || !input.value.trim()) return;
+            // Si no estaba abierta, abrir la tarjeta seleccionada
+            if (!isCurrentlyExpanded) {
+                const card = document.getElementById(`pending-ad-card-${id}`);
+                const icon = document.getElementById(`pending-ad-expand-icon-${id}`);
+                if (card) {
+                    card.classList.add('expanded');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                    window.expandedAdminAdCards.add(targetIdStr);
+                }
+            }
+        };
 
-        const noteText = input.value.trim();
-        const newNote = db.addAdNote(id, noteText);
+        window.savePendingAdNote = function (id) {
+            const input = document.getElementById(`ad-note-input-${id}`);
+            if (!input || !input.value.trim()) return;
 
-        if (newNote) {
-            input.value = '';
-            
-            const listEl = document.getElementById(`crm-ad-notes-list-${id}`);
-            const noMsgEl = document.getElementById(`no-ad-notes-msg-${id}`);
-            if (noMsgEl) noMsgEl.remove();
+            const noteText = input.value.trim();
+            const newNote = db.addAdNote(id, noteText);
 
-            if (listEl) {
-                const noteItemHTML = `
+            if (newNote) {
+                input.value = '';
+
+                const listEl = document.getElementById(`crm-ad-notes-list-${id}`);
+                const noMsgEl = document.getElementById(`no-ad-notes-msg-${id}`);
+                if (noMsgEl) noMsgEl.remove();
+
+                if (listEl) {
+                    const noteItemHTML = `
                     <div class="crm-note-item" style="animation: fadeIn 0.3s ease;">
                         <div class="crm-note-time">
                             <span class="material-symbols-rounded" style="font-size:13px; vertical-align:middle;">schedule</span> ${newNote.timestamp}
@@ -7531,80 +7531,80 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="crm-note-text">${newNote.text}</div>
                     </div>
                 `;
-                listEl.insertAdjacentHTML('afterbegin', noteItemHTML);
+                    listEl.insertAdjacentHTML('afterbegin', noteItemHTML);
+                }
+
+                const ads = db.getAllAds();
+                const ad = ads.find(a => String(a.id) === String(id));
+                const notesCount = ad && ad.notes ? ad.notes.length : 1;
+                const badgeEl = document.getElementById(`ad-notes-badge-${id}`);
+                if (badgeEl) {
+                    badgeEl.className = 'pending-notes-badge has-notes';
+                    badgeEl.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM`;
+                }
+            }
+        };
+
+        window.updateAdminAdsApprovals = function () {
+            const list = document.getElementById('pending-ads-list');
+            const badge = document.getElementById('pending-ads-count-badge');
+            const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
+            if (!list) return;
+
+            let pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente');
+
+            if (badge) badge.textContent = pendingAds.length;
+            if (sidebarBadge) {
+                sidebarBadge.textContent = pendingAds.length;
+                sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
             }
 
-            const ads = db.getAllAds();
-            const ad = ads.find(a => String(a.id) === String(id));
-            const notesCount = ad && ad.notes ? ad.notes.length : 1;
-            const badgeEl = document.getElementById(`ad-notes-badge-${id}`);
-            if (badgeEl) {
-                badgeEl.className = 'pending-notes-badge has-notes';
-                badgeEl.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM`;
+            const searchInput = document.getElementById('pending-search-input');
+            const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            if (query) {
+                pendingAds = pendingAds.filter(a =>
+                    (a.title && a.title.toLowerCase().includes(query)) ||
+                    (a.phone && a.phone.includes(query)) ||
+                    (a.ref_number && String(a.ref_number).includes(query))
+                );
             }
-        }
-    };
 
-    window.updateAdminAdsApprovals = function() {
-        const list = document.getElementById('pending-ads-list');
-        const badge = document.getElementById('pending-ads-count-badge');
-        const sidebarBadge = document.getElementById('sidebar-pending-ads-badge');
-        if (!list) return;
+            const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',') + '_' + query;
+            if (list.dataset.lastState === stateKey) return;
+            list.dataset.lastState = stateKey;
 
-        let pendingAds = db.getAllAds().filter(a => a.payment_status === 'pendiente');
+            if (pendingAds.length === 0) {
+                list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay anuncios pendientes de aprobación.</p>';
+                return;
+            }
 
-        if (badge) badge.textContent = pendingAds.length;
-        if (sidebarBadge) {
-            sidebarBadge.textContent = pendingAds.length;
-            sidebarBadge.style.display = pendingAds.length > 0 ? 'inline-block' : 'none';
-        }
-
-        const searchInput = document.getElementById('pending-search-input');
-        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        if (query) {
-            pendingAds = pendingAds.filter(a => 
-                (a.title && a.title.toLowerCase().includes(query)) ||
-                (a.phone && a.phone.includes(query)) ||
-                (a.ref_number && String(a.ref_number).includes(query))
-            );
-        }
-
-        const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',') + '_' + query;
-        if (list.dataset.lastState === stateKey) return;
-        list.dataset.lastState = stateKey;
-
-        if (pendingAds.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay anuncios pendientes de aprobación.</p>';
-            return;
-        }
-
-        list.innerHTML = pendingAds.map(ad => {
-            const images = ad.images || [];
-            const mainImg = images.length > 0 ? images[0] : 'https://via.placeholder.com/60';
-            const imgGalleryHTML = images.map((img, index) => `
+            list.innerHTML = pendingAds.map(ad => {
+                const images = ad.images || [];
+                const mainImg = images.length > 0 ? images[0] : 'https://via.placeholder.com/60';
+                const imgGalleryHTML = images.map((img, index) => `
                 <div style="position: relative; display: inline-block;">
                     <img src="${img}" onclick="event.stopPropagation(); window.open('${img}', '_blank')" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); flex-shrink: 0; cursor: pointer;" title="Ver imagen en tamaño completo">
                 </div>
             `).join('');
 
-            let socialLinks = ad.social_links || [];
-            if (typeof socialLinks === 'string') {
-                try { socialLinks = JSON.parse(socialLinks); } catch(e) { socialLinks = []; }
-            }
-            const socialLinksStr = Array.isArray(socialLinks) && socialLinks.length > 0
-                ? socialLinks.map(s => typeof s === 'object' ? `${s.platform || 'Red'}: ${s.url || ''}` : s).join(', ')
-                : 'Ninguna';
+                let socialLinks = ad.social_links || [];
+                if (typeof socialLinks === 'string') {
+                    try { socialLinks = JSON.parse(socialLinks); } catch (e) { socialLinks = []; }
+                }
+                const socialLinksStr = Array.isArray(socialLinks) && socialLinks.length > 0
+                    ? socialLinks.map(s => typeof s === 'object' ? `${s.platform || 'Red'}: ${s.url || ''}` : s).join(', ')
+                    : 'Ninguna';
 
-            let notes = ad.notes || [];
-            if (typeof notes === 'string') {
-                try { notes = JSON.parse(notes); } catch(e) { notes = []; }
-            }
-            const notesCount = notes.length;
-            const notesBadgeHTML = notesCount > 0 
-                ? `<span class="pending-notes-badge has-notes" id="ad-notes-badge-${ad.id}"><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM</span>`
-                : `<span class="pending-notes-badge" id="ad-notes-badge-${ad.id}">Sin notas</span>`;
+                let notes = ad.notes || [];
+                if (typeof notes === 'string') {
+                    try { notes = JSON.parse(notes); } catch (e) { notes = []; }
+                }
+                const notesCount = notes.length;
+                const notesBadgeHTML = notesCount > 0
+                    ? `<span class="pending-notes-badge has-notes" id="ad-notes-badge-${ad.id}"><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM</span>`
+                    : `<span class="pending-notes-badge" id="ad-notes-badge-${ad.id}">Sin notas</span>`;
 
-            const notesListHTML = notes.length > 0 ? notes.map(n => `
+                const notesListHTML = notes.length > 0 ? notes.map(n => `
                 <div class="crm-note-item">
                     <div class="crm-note-time">
                         <span class="material-symbols-rounded" style="font-size:13px; vertical-align:middle;">schedule</span> ${n.timestamp}
@@ -7613,9 +7613,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `).join('') : `<p id="no-ad-notes-msg-${ad.id}" style="color:var(--text-muted); font-size:0.82rem; margin:0;">No hay notas registradas aún. Escribe abajo para dejar evidencia.</p>`;
 
-            const isExpanded = window.expandedAdminAdCards && window.expandedAdminAdCards.has(String(ad.id));
+                const isExpanded = window.expandedAdminAdCards && window.expandedAdminAdCards.has(String(ad.id));
 
-            return `
+                return `
             <div class="pending-approval-card ${isExpanded ? 'expanded' : ''}" id="pending-ad-card-${ad.id}" style="border-left: 4px solid #f59e0b;">
                 <div class="pending-row-header" onclick="togglePendingAdDetail(${ad.id})">
                     <div class="pending-row-left">
@@ -7721,60 +7721,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             `;
-        }).join('');
-    };
+            }).join('');
+        };
 
-    window.approveAd = async function(id) {
-        window.appConfirm('¿Estás seguro de autorizar este anuncio? Pasará a estar ACTIVO.', async () => {
-            let ads = db.getAllAds();
-            let ad = ads.find(a => String(a.id) === String(id));
+        window.approveAd = async function (id) {
+            window.appConfirm('¿Estás seguro de autorizar este anuncio? Pasará a estar ACTIVO.', async () => {
+                let ads = db.getAllAds();
+                let ad = ads.find(a => String(a.id) === String(id));
 
-            if (!ad && typeof supabaseClient !== 'undefined' && supabaseClient) {
-                try {
-                    const { data } = await supabaseClient.from('ads').select('*').eq('id', id);
-                    if (data && data.length > 0) ad = data[0];
-                } catch(e) {}
-            }
+                if (!ad && typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    try {
+                        const { data } = await supabaseClient.from('ads').select('*').eq('id', id);
+                        if (data && data.length > 0) ad = data[0];
+                    } catch (e) { }
+                }
 
-            if (ad) {
-                ad.is_active = true;
-                ad.payment_status = 'pagado';
-                
-                const now = new Date();
-                ad.start_date = now.toISOString();
-                const end = new Date(now);
-                end.setDate(end.getDate() + 30);
-                ad.end_date = end.toISOString();
-                
-                await db.saveAd(ad);
-                
-                const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
-                db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
-                db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
-                
-                showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
+                if (ad) {
+                    ad.is_active = true;
+                    ad.payment_status = 'pagado';
+
+                    const now = new Date();
+                    ad.start_date = now.toISOString();
+                    const end = new Date(now);
+                    end.setDate(end.getDate() + 30);
+                    ad.end_date = end.toISOString();
+
+                    await db.saveAd(ad);
+
+                    const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                    db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
+                    db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
+
+                    showAlert('El anuncio ha sido autorizado y está visible.', 'Anuncio Autorizado', 'check_circle');
+                    if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                    if (typeof updateAdminAdsApprovals === 'function') await updateAdminAdsApprovals();
+                    if (typeof updateAdminPendingAds === 'function') await updateAdminPendingAds();
+                    if (typeof renderAdminAdsTable === 'function') await renderAdminAdsTable();
+                }
+            });
+        };
+
+        window.deleteAdAdmin = async function (id) {
+            window.appConfirm('¿Rechazar y eliminar permanentemente este anuncio?', async () => {
+                await db.deleteAd(id);
+                showAlert('Anuncio rechazado y eliminado.', 'Eliminado', 'info');
                 if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-                if (typeof updateAdminAdsApprovals === 'function') await updateAdminAdsApprovals();
-                if (typeof updateAdminPendingAds === 'function') await updateAdminPendingAds();
-                if (typeof renderAdminAdsTable === 'function') await renderAdminAdsTable();
-            }
-        });
-    };
+            });
+        };
 
-    window.deleteAdAdmin = async function(id) {
-        window.appConfirm('¿Rechazar y eliminar permanentemente este anuncio?', async () => {
-            await db.deleteAd(id);
-            showAlert('Anuncio rechazado y eliminado.', 'Eliminado', 'info');
-            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-        });
-    };
-
-    // Hook updateAdminAdsApprovals into forceInstantAdminRefresh
-    const originalRefresh = window.forceInstantAdminRefresh;
-    window.forceInstantAdminRefresh = function() {
-        if (originalRefresh) originalRefresh();
-        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
-    };
+        // Hook updateAdminAdsApprovals into forceInstantAdminRefresh
+        const originalRefresh = window.forceInstantAdminRefresh;
+        window.forceInstantAdminRefresh = function () {
+            if (originalRefresh) originalRefresh();
+            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+        };
     } // End of CLIENT AD FLOW scope
 
     // --- Global Fullscreen Navigation & Keyboard ---
@@ -7824,7 +7824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Autoplay Fullscreen Carousels ---
     let autoplayInterval = null;
 
-    window.startFullscreenAutoplay = function(isAd = false, imagesLength = 0) {
+    window.startFullscreenAutoplay = function (isAd = false, imagesLength = 0) {
         if (imagesLength <= 1) return;
         window.stopFullscreenAutoplay();
 
@@ -7845,7 +7845,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     };
 
-    window.stopFullscreenAutoplay = function() {
+    window.stopFullscreenAutoplay = function () {
         if (autoplayInterval) {
             clearInterval(autoplayInterval);
             autoplayInterval = null;
@@ -7853,7 +7853,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Lógica de Auto-Scroll Inteligente ---
-    window.initAutoScroll = function(container) {
+    window.initAutoScroll = function (container) {
         // Prevenir inicialización múltiple
         if (container.dataset.autoScrollInit) return;
         container.dataset.autoScrollInit = "true";
@@ -7871,22 +7871,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isAutoScrolling) return;
             isAutoScrolling = true;
             swipeCount = 0;
-            
+
             function step() {
                 if (!isAutoScrolling) return;
-                
+
                 // Guardamos el scroll actual antes de mover
                 const prevScroll = container.scrollLeft;
-                
+
                 // Sumamos 1 pixel o fracción
                 container.scrollLeft += 1;
-                
+
                 // Si el scroll no cambió, llegamos al final (o al límite derecho)
                 if (container.scrollLeft === prevScroll) {
                     stopAutoScroll();
                     return;
                 }
-                
+
                 autoScrollId = requestAnimationFrame(step);
             }
             autoScrollId = requestAnimationFrame(step);
@@ -7908,7 +7908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.addEventListener('touchend', (e) => {
             touchEndX = e.changedTouches[0].screenX;
             const distance = touchStartX - touchEndX; // Positivo significa deslizar hacia la izquierda (avanzar carrusel)
-            
+
             // Detectar swipe intencional (ej. > 30px)
             if (Math.abs(distance) > 30) {
                 const now = Date.now();
@@ -7921,12 +7921,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastSwipeTime = now;
 
                 clearTimeout(swipeResetTimeout);
-                
+
                 if (swipeCount >= 2) {
                     // Esperamos un poquito para que el scroll nativo termine la inercia, luego auto-scroll
                     setTimeout(() => {
                         startAutoScroll();
-                    }, 500); 
+                    }, 500);
                 } else {
                     // Si no llega al segundo swipe en 3 segundos, reset
                     swipeResetTimeout = setTimeout(() => {
@@ -7940,7 +7940,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.addEventListener('mousedown', () => {
             stopAutoScroll();
         });
-        
+
         // Detener al usar la rueda del ratón
         container.addEventListener('wheel', () => {
             stopAutoScroll();
@@ -7951,24 +7951,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+
 // --- Funciones para Interacciones Sociales en Fullscreen ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
 
 function playBubbleSound(isReverse = false) {
     if (!audioCtx) {
-        try { audioCtx = new AudioContext(); } catch(e) { return; }
+        try { audioCtx = new AudioContext(); } catch (e) { return; }
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    
+
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
+
     osc.type = 'sine';
     const now = audioCtx.currentTime;
-    
+
     if (isReverse) {
         osc.frequency.setValueAtTime(600, now);
         osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
@@ -7976,29 +7977,29 @@ function playBubbleSound(isReverse = false) {
         osc.frequency.setValueAtTime(150, now);
         osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
     }
-    
+
     gain.gain.setValueAtTime(0.5, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-    
+
     osc.start(now);
     osc.stop(now + 0.15);
 }
 
-window.toggleSocialReaction = function(event, listingId, reactionType) {
+window.toggleSocialReaction = function (event, listingId, reactionType) {
     event.stopPropagation();
-    
+
     let userReactions = {};
-    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
-    
+    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
+
     const btn = event.currentTarget;
     const currentReaction = userReactions[listingId];
-    
+
     // Preparar UI
     const container = btn.closest('.social-toolbar-fullscreen');
     const allBtns = container.querySelectorAll('.reaction-btn');
     const countEl = btn.querySelector('.social-count');
     let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
-    
+
     if (currentReaction === reactionType) {
         // Remove reaction
         playBubbleSound(true); // reverse sound
@@ -8018,212 +8019,17 @@ window.toggleSocialReaction = function(event, listingId, reactionType) {
             }
             if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
         }
-        
+
         btn.classList.add('active');
         countEl.textContent = (currentCount + 1).toLocaleString('en-US');
         userReactions[listingId] = reactionType;
         if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, 1);
     }
-    
-    localStorage.setItem('user_reactions', JSON.stringify(userReactions));
-};
-const carousel = document.querySelector('.detalle-img-carousel');
-                if (carousel) {
-                    const scrollAmount = carousel.clientWidth;
-                    if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
-                        carousel.scrollTo({ left: 0, behavior: 'smooth' });
-                    } else {
-                        carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-                    }
-                }
-            }
-        }, 4000);
-    };
 
-    window.stopFullscreenAutoplay = function() {
-        if (autoplayInterval) {
-            clearInterval(autoplayInterval);
-            autoplayInterval = null;
-        }
-    };
-
-    // --- Lógica de Auto-Scroll Inteligente ---
-    window.initAutoScroll = function(container) {
-        // Prevenir inicialización múltiple
-        if (container.dataset.autoScrollInit) return;
-        container.dataset.autoScrollInit = "true";
-
-        let swipeCount = 0;
-        let lastSwipeTime = 0;
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let autoScrollId = null;
-        let swipeResetTimeout = null;
-        let isAutoScrolling = false;
-        let lastScrollLeft = -1; // para detectar si ya no avanza (llegó al final)
-
-        function startAutoScroll() {
-            if (isAutoScrolling) return;
-            isAutoScrolling = true;
-            swipeCount = 0;
-            
-            function step() {
-                if (!isAutoScrolling) return;
-                
-                // Guardamos el scroll actual antes de mover
-                const prevScroll = container.scrollLeft;
-                
-                // Sumamos 1 pixel o fracción
-                container.scrollLeft += 1;
-                
-                // Si el scroll no cambió, llegamos al final (o al límite derecho)
-                if (container.scrollLeft === prevScroll) {
-                    stopAutoScroll();
-                    return;
-                }
-                
-                autoScrollId = requestAnimationFrame(step);
-            }
-            autoScrollId = requestAnimationFrame(step);
-        }
-
-        function stopAutoScroll() {
-            if (autoScrollId) {
-                cancelAnimationFrame(autoScrollId);
-                autoScrollId = null;
-            }
-            isAutoScrolling = false;
-        }
-
-        container.addEventListener('touchstart', (e) => {
-            stopAutoScroll(); // Al tocar, se detiene la animación
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-
-        container.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            const distance = touchStartX - touchEndX; // Positivo significa deslizar hacia la izquierda (avanzar carrusel)
-            
-            // Detectar swipe intencional (ej. > 30px)
-            if (Math.abs(distance) > 30) {
-                const now = Date.now();
-                if (now - lastSwipeTime < 3000) {
-                    // Si el último swipe fue hace menos de 3 seg
-                    swipeCount++;
-                } else {
-                    swipeCount = 1; // Reiniciar cuenta si pasó mucho tiempo
-                }
-                lastSwipeTime = now;
-
-                clearTimeout(swipeResetTimeout);
-                
-                if (swipeCount >= 2) {
-                    // Esperamos un poquito para que el scroll nativo termine la inercia, luego auto-scroll
-                    setTimeout(() => {
-                        startAutoScroll();
-                    }, 500); 
-                } else {
-                    // Si no llega al segundo swipe en 3 segundos, reset
-                    swipeResetTimeout = setTimeout(() => {
-                        swipeCount = 0;
-                    }, 3000);
-                }
-            }
-        }, { passive: true });
-
-        // Detener con clics de mouse también
-        container.addEventListener('mousedown', () => {
-            stopAutoScroll();
-        });
-        
-        // Detener al usar la rueda del ratón
-        container.addEventListener('wheel', () => {
-            stopAutoScroll();
-        }, { passive: true });
-    };
-
-    if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
-
-});
-
-// --- Funciones para Interacciones Sociales en Fullscreen ---
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
-
-function playBubbleSound(isReverse = false) {
-    if (!audioCtx) {
-        try { audioCtx = new AudioContext(); } catch(e) { return; }
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc.type = 'sine';
-    const now = audioCtx.currentTime;
-    
-    if (isReverse) {
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
-    } else {
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
-    }
-    
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-    
-    osc.start(now);
-    osc.stop(now + 0.15);
-}
-
-window.toggleSocialReaction = function(event, listingId, reactionType) {
-    event.stopPropagation();
-    
-    let userReactions = {};
-    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
-    
-    const btn = event.currentTarget;
-    const currentReaction = userReactions[listingId];
-    
-    // Preparar UI
-    const container = btn.closest('.social-toolbar-fullscreen');
-    const allBtns = container.querySelectorAll('.reaction-btn');
-    const countEl = btn.querySelector('.social-count');
-    let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
-    
-    if (currentReaction === reactionType) {
-        // Remove reaction
-        playBubbleSound(true); // reverse sound
-        btn.classList.remove('active');
-        countEl.textContent = Math.max(0, currentCount - 1).toLocaleString('en-US');
-        delete userReactions[listingId];
-        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, -1);
-    } else {
-        // Add new reaction (and remove old if exists)
-        playBubbleSound(false); // pop sound
-        if (currentReaction) {
-            const oldBtn = container.querySelector(`.reaction-btn[data-type="${currentReaction}"]`);
-            if (oldBtn) {
-                oldBtn.classList.remove('active');
-                const oldCountEl = oldBtn.querySelector('.social-count');
-                oldCountEl.textContent = Math.max(0, parseInt(oldCountEl.textContent.replace(/,/g, '')) - 1).toLocaleString('en-US');
-            }
-            if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
-        }
-        
-        btn.classList.add('active');
-        countEl.textContent = (currentCount + 1).toLocaleString('en-US');
-        userReactions[listingId] = reactionType;
-        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, 1);
-    }
-    
     localStorage.setItem('user_reactions', JSON.stringify(userReactions));
 };
 
-window.shareListing = function(event, id, title) {
+window.shareListing = function (event, id, title) {
     event.stopPropagation();
     const url = window.location.origin + window.location.pathname + '?id=' + id;
     if (navigator.share) {
@@ -8239,13 +8045,13 @@ window.shareListing = function(event, id, title) {
     }
 };
 
-window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title) {
+window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title) {
     let userReactions = {};
-    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
+    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
     const userReact = userReactions[id];
-    
+
     const reactions = reactionsObj || { like: 0, love: 0, fire: 0, angry: 0 };
-    
+
     return `
         <div class="social-toolbar-fullscreen">
             <div class="social-btn-container">
@@ -8277,7 +8083,7 @@ window.addEventListener('load', () => {
         const sharedId = urlParams.get('id');
         if (sharedId && typeof window.viewListing === 'function') {
             window.viewListing(sharedId);
-            
+
             // Clean up the URL so it looks nice without reloading
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.replaceState({ path: newUrl }, '', newUrl);
