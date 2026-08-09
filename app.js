@@ -7992,6 +7992,7 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
     try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
 
     const btn = event.currentTarget;
+    const isCurrentlyActive = btn.classList.contains('active');
     const currentReaction = userReactions[listingId];
 
     // Preparar UI
@@ -8003,7 +8004,7 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
 
     let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
 
-    if (currentReaction === reactionType) {
+    if (isCurrentlyActive) {
         // Remove reaction
         playBubbleSound(true); // reverse sound
         btn.classList.remove('active');
@@ -8013,7 +8014,7 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
     } else {
         // Add new reaction (and remove old if exists)
         playBubbleSound(false); // pop sound
-        if (currentReaction) {
+        if (currentReaction && currentReaction !== reactionType) {
             const oldBtn = container.querySelector(`.reaction-btn[data-type="${currentReaction}"]`);
             if (oldBtn) {
                 oldBtn.classList.remove('active');

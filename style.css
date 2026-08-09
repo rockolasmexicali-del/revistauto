@@ -2463,13 +2463,13 @@ input:checked+.slider:before {
 }
 
 .social-btn:active {
-    transform: scale(0.9);
+    transform: scale(1.15);
 }
 
 .social-btn.active {
     background: transparent !important;
     border: none !important;
-    transform: scale(1.25);
+    transform: scale(1.3);
 }
 
 .social-count {
