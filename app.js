@@ -8027,51 +8027,51 @@ window.toggleSocialReaction = function(event, listingId, reactionType) {
     
     localStorage.setItem('user_reactions', JSON.stringify(userReactions));
 };
+const carousel = document.querySelector('.detalle-img-carousel');
+                if (carousel) {
+                    const scrollAmount = carousel.clientWidth;
+                    if (carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10) {
+                        carousel.scrollTo({ left: 0, behavior: 'smooth' });
+                    } else {
+                        carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    }
+                }
+            }
+        }, 4000);
+    };
 
-window.shareListing = function(event, id, title) {
-    event.stopPropagation();
-    const url = window.location.origin + window.location.pathname + '?id=' + id;
-    if (navigator.share) {
-        navigator.share({
-            title: title,
-            text: '¡Mira este auto en Revistauto!',
-            url: url
-        }).catch(console.error);
-    } else {
-        navigator.clipboard.writeText(url).then(() => {
-            window.showAlert('Enlace copiado al portapapeles', 'Compartir', 'content_copy');
-        });
-    }
-};
+    window.stopFullscreenAutoplay = function() {
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+            autoplayInterval = null;
+        }
+    };
 
-window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title) {
-    let userReactions = {};
-    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
-    const userReact = userReactions[id];
-    
-    const reactions = reactionsObj || { like: 0, love: 0, fire: 0, angry: 0 };
-    
-    return `
-        <div class="social-toolbar-fullscreen">
-            <div class="social-btn-container">
-                <div class="social-btn reaction-btn ${userReact === 'like' ? 'active' : ''}" data-type="like" onclick="window.toggleSocialReaction(event, '${id}', 'like')">👍</div>
-                <div class="social-count">${(reactions.like || 0).toLocaleString('en-US')}</div>
-            </div>
-            <div class="social-btn-container">
-                <div class="social-btn reaction-btn ${userReact === 'love' ? 'active' : ''}" data-type="love" onclick="window.toggleSocialReaction(event, '${id}', 'love')">😍</div>
-                <div class="social-count">${(reactions.love || 0).toLocaleString('en-US')}</div>
-            </div>
-            <div class="social-btn-container">
-                <div class="social-btn reaction-btn ${userReact === 'fire' ? 'active' : ''}" data-type="fire" onclick="window.toggleSocialReaction(event, '${id}', 'fire')">🔥</div>
-                <div class="social-count">${(reactions.fire || 0).toLocaleString('en-US')}</div>
-            </div>
-            <div class="social-btn-container">
-                <div class="social-btn" style="cursor: default; background: rgba(0,0,0,0.3); border:none;">
-                    <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
-                </div>
-                <div class="social-count">${(viewsCount || 0).toLocaleString('en-US')}</div>
-            </div>
-            <div class="social-btn-container">
+    // --- Lógica de Auto-Scroll Inteligente ---
+    window.initAutoScroll = function(container) {
+        // Prevenir inicialización múltiple
+        if (container.dataset.autoScrollInit) return;
+        container.dataset.autoScrollInit = "true";
+
+        let swipeCount = 0;
+        let lastSwipeTime = 0;
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let autoScrollId = null;
+        let swipeResetTimeout = null;
+        let isAutoScrolling = false;
+        let lastScrollLeft = -1; // para detectar si ya no avanza (llegó al final)
+
+        function startAutoScroll() {
+            if (isAutoScrolling) return;
+            isAutoScrolling = true;
+            swipeCount = 0;
+            
+            function step() {
+                if (!isAutoScrolling) return;
+                
+                // Guardamos el scroll actual antes de mover
+                const prevScroll = container.scrollLeft;
                 
                 // Sumamos 1 pixel o fracción
                 container.scrollLeft += 1;
