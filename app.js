@@ -2724,6 +2724,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         payments: Array.isArray(data.payments) ? data.payments : (typeof data.payments === 'string' ? JSON.parse(data.payments || '[]') : []),
                         isMyListing: data.publisher_id === window.db.uuid || data.publisherId === window.db.uuid
                     };
+
+                    // Reconciliar con la memoria viva: si el usuario ya reaccionó en esta sesión,
+                    // preferir esos datos para no resetear el contador al regresar a la tarjeta.
+                    const liveItem = (typeof activeFeedListings !== 'undefined' && activeFeedListings.find(l => String(l.id) === strId))
+                                  || (window.searchCascadeList && window.searchCascadeList.find(l => String(l.id) === strId))
+                                  || (window.currentSearchContext && window.currentSearchContext.level1 && window.currentSearchContext.level1.find(l => String(l.id) === strId));
+                    if (liveItem && liveItem.reactions && typeof liveItem.reactions === 'object') {
+                        listing.reactions = liveItem.reactions;
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching individual listing:", err);

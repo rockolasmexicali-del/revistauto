@@ -1747,9 +1747,11 @@ class Database {
         }
 
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            // Convertir a Number para coincidir con el tipo BIGINT del RPC en Supabase
+            const numericId = Number(id);
             try {
                 const { error } = await supabaseClient.rpc('update_reaction', {
-                    listing_id: id,
+                    listing_id: numericId,
                     reaction_type: reactionType,
                     increment_val: incrementVal
                 });
@@ -1757,14 +1759,14 @@ class Database {
                 if (error) {
                     console.warn("RPC update_reaction no disponible, usando fallback directo:", error.message);
                     if (listing && listing.reactions) {
-                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', id);
+                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', numericId);
                     }
                 }
             } catch (err) {
                 console.warn("Error de red actualizando reaccion:", err);
                 if (listing && listing.reactions) {
                     try {
-                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', id);
+                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', numericId);
                     } catch (e) {}
                 }
             }
