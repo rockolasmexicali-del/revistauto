@@ -8072,6 +8072,201 @@ window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title)
                 <div class="social-count">${(viewsCount || 0).toLocaleString('en-US')}</div>
             </div>
             <div class="social-btn-container">
+                
+                // Sumamos 1 pixel o fracción
+                container.scrollLeft += 1;
+                
+                // Si el scroll no cambió, llegamos al final (o al límite derecho)
+                if (container.scrollLeft === prevScroll) {
+                    stopAutoScroll();
+                    return;
+                }
+                
+                autoScrollId = requestAnimationFrame(step);
+            }
+            autoScrollId = requestAnimationFrame(step);
+        }
+
+        function stopAutoScroll() {
+            if (autoScrollId) {
+                cancelAnimationFrame(autoScrollId);
+                autoScrollId = null;
+            }
+            isAutoScrolling = false;
+        }
+
+        container.addEventListener('touchstart', (e) => {
+            stopAutoScroll(); // Al tocar, se detiene la animación
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const distance = touchStartX - touchEndX; // Positivo significa deslizar hacia la izquierda (avanzar carrusel)
+            
+            // Detectar swipe intencional (ej. > 30px)
+            if (Math.abs(distance) > 30) {
+                const now = Date.now();
+                if (now - lastSwipeTime < 3000) {
+                    // Si el último swipe fue hace menos de 3 seg
+                    swipeCount++;
+                } else {
+                    swipeCount = 1; // Reiniciar cuenta si pasó mucho tiempo
+                }
+                lastSwipeTime = now;
+
+                clearTimeout(swipeResetTimeout);
+                
+                if (swipeCount >= 2) {
+                    // Esperamos un poquito para que el scroll nativo termine la inercia, luego auto-scroll
+                    setTimeout(() => {
+                        startAutoScroll();
+                    }, 500); 
+                } else {
+                    // Si no llega al segundo swipe en 3 segundos, reset
+                    swipeResetTimeout = setTimeout(() => {
+                        swipeCount = 0;
+                    }, 3000);
+                }
+            }
+        }, { passive: true });
+
+        // Detener con clics de mouse también
+        container.addEventListener('mousedown', () => {
+            stopAutoScroll();
+        });
+        
+        // Detener al usar la rueda del ratón
+        container.addEventListener('wheel', () => {
+            stopAutoScroll();
+        }, { passive: true });
+    };
+
+    if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
+
+});
+
+// --- Funciones para Interacciones Sociales en Fullscreen ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function playBubbleSound(isReverse = false) {
+    if (!audioCtx) {
+        try { audioCtx = new AudioContext(); } catch(e) { return; }
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    const now = audioCtx.currentTime;
+    
+    if (isReverse) {
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+    } else {
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+    }
+    
+    gain.gain.setValueAtTime(0.5, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    
+    osc.start(now);
+    osc.stop(now + 0.15);
+}
+
+window.toggleSocialReaction = function(event, listingId, reactionType) {
+    event.stopPropagation();
+    
+    let userReactions = {};
+    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
+    
+    const btn = event.currentTarget;
+    const currentReaction = userReactions[listingId];
+    
+    // Preparar UI
+    const container = btn.closest('.social-toolbar-fullscreen');
+    const allBtns = container.querySelectorAll('.reaction-btn');
+    const countEl = btn.querySelector('.social-count');
+    let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
+    
+    if (currentReaction === reactionType) {
+        // Remove reaction
+        playBubbleSound(true); // reverse sound
+        btn.classList.remove('active');
+        countEl.textContent = Math.max(0, currentCount - 1).toLocaleString('en-US');
+        delete userReactions[listingId];
+        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, -1);
+    } else {
+        // Add new reaction (and remove old if exists)
+        playBubbleSound(false); // pop sound
+        if (currentReaction) {
+            const oldBtn = container.querySelector(`.reaction-btn[data-type="${currentReaction}"]`);
+            if (oldBtn) {
+                oldBtn.classList.remove('active');
+                const oldCountEl = oldBtn.querySelector('.social-count');
+                oldCountEl.textContent = Math.max(0, parseInt(oldCountEl.textContent.replace(/,/g, '')) - 1).toLocaleString('en-US');
+            }
+            if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
+        }
+        
+        btn.classList.add('active');
+        countEl.textContent = (currentCount + 1).toLocaleString('en-US');
+        userReactions[listingId] = reactionType;
+        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, 1);
+    }
+    
+    localStorage.setItem('user_reactions', JSON.stringify(userReactions));
+};
+
+window.shareListing = function(event, id, title) {
+    event.stopPropagation();
+    const url = window.location.origin + window.location.pathname + '?id=' + id;
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            text: '¡Mira este auto en Revistauto!',
+            url: url
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            window.showAlert('Enlace copiado al portapapeles', 'Compartir', 'content_copy');
+        });
+    }
+};
+
+window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title) {
+    let userReactions = {};
+    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
+    const userReact = userReactions[id];
+    
+    const reactions = reactionsObj || { like: 0, love: 0, fire: 0, angry: 0 };
+    
+    return `
+        <div class="social-toolbar-fullscreen">
+            <div class="social-btn-container">
+                <div class="social-btn reaction-btn ${userReact === 'like' ? 'active' : ''}" data-type="like" onclick="window.toggleSocialReaction(event, '${id}', 'like')">👍</div>
+                <div class="social-count">${(reactions.like || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn reaction-btn ${userReact === 'love' ? 'active' : ''}" data-type="love" onclick="window.toggleSocialReaction(event, '${id}', 'love')">😍</div>
+                <div class="social-count">${(reactions.love || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn reaction-btn ${userReact === 'fire' ? 'active' : ''}" data-type="fire" onclick="window.toggleSocialReaction(event, '${id}', 'fire')">🔥</div>
+                <div class="social-count">${(reactions.fire || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn" style="cursor: default; background: rgba(0,0,0,0.3); border:none;">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
+                </div>
+                <div class="social-count">${(viewsCount || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
                 <div class="social-btn" onclick="window.shareListing(event, '${id}', '${title.replace(/'/g, "\\'")}')">
                     <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
                 </div>
@@ -8080,3 +8275,18 @@ window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title)
         </div>
     `;
 };
+
+// --- Deep Linking ---
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedId = urlParams.get('id');
+        if (sharedId && typeof window.viewListing === 'function') {
+            window.viewListing(sharedId);
+            
+            // Clean up the URL so it looks nice without reloading
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+    }, 800); // Damos 800ms para asegurar que el catálogo base y listings estén listos
+});
