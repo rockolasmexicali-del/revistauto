@@ -468,6 +468,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.db.adFrequencyScroll = data.settings.ad_frequency_scroll !== undefined ? data.settings.ad_frequency_scroll : 10;
                     window.db.adFallbackLimit = data.settings.ad_fallback_limit !== undefined ? data.settings.ad_fallback_limit : 21;
                 }
+                
+                const btnAdvertise = document.getElementById('btn-advertise');
+                const btnAdvertiseMobile = document.getElementById('btn-advertise-mobile');
+                const adsActive = data.settings.ads_enabled !== undefined ? data.settings.ads_enabled : true;
+                if (btnAdvertise) {
+                    btnAdvertise.style.display = adsActive ? 'flex' : 'none';
+                }
+                if (btnAdvertiseMobile) {
+                    btnAdvertiseMobile.style.display = adsActive ? 'flex' : 'none';
+                }
+                
+                if (typeof renderMyListings === 'function') {
+                    // Force refresh just in case the tab is open
+                    const myListingsContainer = document.getElementById('my-listings-container');
+                    if (myListingsContainer) delete myListingsContainer.dataset.lastState;
+                    renderMyListings();
+                }
             }
         } catch (e) { console.error('Error loading settings', e); }
     }
@@ -3375,7 +3392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="pub-col pub-col-ads">
                     <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Anuncios Publicitarios</h3>
-                    <button class="primary-btn desktop-only-btn" onclick="document.getElementById('btn-advertise').click()" style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-symbols-rounded">add</span> Nueva Publicidad</button>
+                    ${(window.db && window.db.adsEnabled === false) ? '' : `<button class="primary-btn desktop-only-btn" onclick="document.getElementById('btn-advertise').click()" style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-symbols-rounded">add</span> Nueva Publicidad</button>`}
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                         ${adsHTML}
                     </div>
