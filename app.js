@@ -8261,12 +8261,6 @@ window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title)
                 <div class="social-count">${(reactions.fire || 0).toLocaleString('en-US')}</div>
             </div>
             <div class="social-btn-container">
-                <div class="social-btn" style="cursor: default; background: rgba(0,0,0,0.3); border:none;">
-                    <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
-                </div>
-                <div class="social-count">${(viewsCount || 0).toLocaleString('en-US')}</div>
-            </div>
-            <div class="social-btn-container">
                 <div class="social-btn" onclick="window.shareListing(event, '${id}', '${title.replace(/'/g, "\\'")}')">
                     <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
                 </div>

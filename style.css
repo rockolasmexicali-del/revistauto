@@ -2204,7 +2204,7 @@ input:checked + .slider:before {
 .social-toolbar-fullscreen {
     position: absolute;
     bottom: 24px;
-    left: 16px;
+    right: 16px;
     display: flex;
     flex-direction: column;
     gap: 16px;
