@@ -1,16 +1,16 @@
-const APP_VERSION = "1.4.4"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.4.5"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
-        'Acura', 'Alfa Romeo', 'Aprilia', 'Aston Martin', 'Audi', 'BAIC', 'Bajaj', 'Bentley', 
-        'BMW', 'Buick', 'BYD', 'Cadillac', 'Can-Am', 'CFMoto', 'Changan', 'Chevrolet', 'Chirey', 
-        'Chrysler', 'Cupra', 'Dodge', 'Ducati', 'Ferrari', 'Fiat', 'Ford', 'Foton', 'Freightliner', 'Genesis', 
-        'GMC', 'GWM', 'Harley-Davidson', 'Hero', 'Hino', 'Honda', 'Hummer', 'Hyundai', 'Indian Motorcycle', 
-        'Infiniti', 'International', 'Isuzu', 'Italika', 'JAC', 'JAECOO', 'Jaguar', 'Jeep', 'Jetour', 'Kawasaki', 
-        'Kenworth', 'Kia', 'KTM', 'Kymco', 'Land Rover', 'Lexus', 'Lincoln', 'Lucid', 'Mack', 'Maserati', 
-        'Mazda', 'McLaren', 'Mercedes-Benz', 'MG', 'MINI', 'Mitsubishi', 'Nissan', 'Omoda', 
-        'Peugeot', 'Peterbilt', 'Polaris', 'Polestar', 'Pontiac', 'Porsche', 'Ram', 'Renault', 'Rivian', 
-        'Royal Enfield', 'Saturn', 'Scania', 'Scion', 'Sea-Doo', 'SEAT', 'Subaru', 'Suzuki', 'Tesla', 
+        'Acura', 'Alfa Romeo', 'Aprilia', 'Aston Martin', 'Audi', 'BAIC', 'Bajaj', 'Bentley',
+        'BMW', 'Buick', 'BYD', 'Cadillac', 'Can-Am', 'CFMoto', 'Changan', 'Chevrolet', 'Chirey',
+        'Chrysler', 'Cupra', 'Dodge', 'Ducati', 'Ferrari', 'Fiat', 'Ford', 'Foton', 'Freightliner', 'Genesis',
+        'GMC', 'GWM', 'Harley-Davidson', 'Hero', 'Hino', 'Honda', 'Hummer', 'Hyundai', 'Indian Motorcycle',
+        'Infiniti', 'International', 'Isuzu', 'Italika', 'JAC', 'JAECOO', 'Jaguar', 'Jeep', 'Jetour', 'Kawasaki',
+        'Kenworth', 'Kia', 'KTM', 'Kymco', 'Land Rover', 'Lexus', 'Lincoln', 'Lucid', 'Mack', 'Maserati',
+        'Mazda', 'McLaren', 'Mercedes-Benz', 'MG', 'MINI', 'Mitsubishi', 'Nissan', 'Omoda',
+        'Peugeot', 'Peterbilt', 'Polaris', 'Polestar', 'Pontiac', 'Porsche', 'Ram', 'Renault', 'Rivian',
+        'Royal Enfield', 'Saturn', 'Scania', 'Scion', 'Sea-Doo', 'SEAT', 'Subaru', 'Suzuki', 'Tesla',
         'Toyota', 'Triumph', 'TVS', 'Veloci', 'Vento', 'Volkswagen', 'Volvo', 'Yamaha'
     ],
     modelsByMake: {
@@ -264,9 +264,9 @@ const defaultCatalogData = {
     types: ['Sedán', 'Pickup', 'Camioneta', 'Van / Furgoneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
     colors: ['Blanco', 'Negro', 'Plata', 'Gris', 'Rojo', 'Azul', 'Guindo/Tinto', 'Beige', 'Amarillo', 'Verde', 'Otro'],
     states: [
-        'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Ciudad de México', 
-        'Coahuila', 'Colima', 'Durango', 'Estado de México', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'Michoacán', 
-        'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 
+        'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Ciudad de México',
+        'Coahuila', 'Colima', 'Durango', 'Estado de México', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'Michoacán',
+        'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa',
         'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas'
     ],
     citiesByState: {
@@ -417,11 +417,11 @@ class Database {
     async syncWithServer() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                
+
                 let query = supabaseClient.from('listings').select('*').order('created_at', { ascending: false });
-                
+
                 const isAdmin = localStorage.getItem('admin_token') !== null;
-                
+
                 if (!isAdmin) {
                     let queryStr = `publisher_id.eq.${this.uuid}`; // Mis anuncios
                     const savedIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
@@ -435,7 +435,7 @@ class Database {
 
                 if (!error && Array.isArray(data)) {
                     this.isServerConnected = true;
-                    
+
                     const localListings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
                     const localListingsMap = new Map();
                     localListings.forEach(l => {
@@ -447,76 +447,77 @@ class Database {
                     const normalized = data
                         .filter(item => item.status !== 'eliminado' && item.status !== 'rechazado')
                         .map(item => {
-                        const localListing = localListingsMap.get(String(item.id));
-                        const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || (localListing && localListing.isMyListing);
+                            const localListing = localListingsMap.get(String(item.id));
+                            const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || (localListing && localListing.isMyListing);
 
-                        // Preservar y fusionar notas CRM
-                        let serverNotes = [];
-                        if (item.notes) {
-                            try { serverNotes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes; } catch(e) { serverNotes = []; }
-                        }
-                        let localNotes = localListing && Array.isArray(localListing.notes) ? localListing.notes : [];
-
-                        const notesMap = new Map();
-                        [...serverNotes, ...localNotes].forEach(n => {
-                            if (n && n.text) {
-                                const key = n.id || `${n.timestamp}_${n.text}`;
-                                if (!notesMap.has(key)) notesMap.set(key, n);
+                            // Preservar y fusionar notas CRM
+                            let serverNotes = [];
+                            if (item.notes) {
+                                try { serverNotes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes; } catch (e) { serverNotes = []; }
                             }
-                        });
-                        const mergedNotes = Array.from(notesMap.values());
+                            let localNotes = localListing && Array.isArray(localListing.notes) ? localListing.notes : [];
 
-                        // Preservar y fusionar pagos
-                        let serverPayments = [];
-                        if (item.payments) {
-                            try { serverPayments = typeof item.payments === 'string' ? JSON.parse(item.payments) : item.payments; } catch(e) { serverPayments = []; }
-                        }
-                        let localPayments = localListing && Array.isArray(localListing.payments) ? localListing.payments : [];
+                            const notesMap = new Map();
+                            [...serverNotes, ...localNotes].forEach(n => {
+                                if (n && n.text) {
+                                    const key = n.id || `${n.timestamp}_${n.text}`;
+                                    if (!notesMap.has(key)) notesMap.set(key, n);
+                                }
+                            });
+                            const mergedNotes = Array.from(notesMap.values());
 
-                        const paymentsMap = new Map();
-                        [...serverPayments, ...localPayments].forEach(p => {
-                            if (p && (p.amount !== undefined || p.id)) {
-                                const key = p.id || `${p.date}_${p.amount}`;
-                                if (!paymentsMap.has(key)) paymentsMap.set(key, p);
+                            // Preservar y fusionar pagos
+                            let serverPayments = [];
+                            if (item.payments) {
+                                try { serverPayments = typeof item.payments === 'string' ? JSON.parse(item.payments) : item.payments; } catch (e) { serverPayments = []; }
                             }
-                        });
-                        const mergedPayments = Array.from(paymentsMap.values());
+                            let localPayments = localListing && Array.isArray(localListing.payments) ? localListing.payments : [];
 
-                        // Si la publicación local tenía cambios pendientes de sincronización por estar offline, preservarlos
-                        let mergedFields = { ...item };
-                        if (localListing && localListing._pendingSync) {
-                            mergedFields = {
-                                ...item,
-                                ...localListing
+                            const paymentsMap = new Map();
+                            [...serverPayments, ...localPayments].forEach(p => {
+                                if (p && (p.amount !== undefined || p.id)) {
+                                    const key = p.id || `${p.date}_${p.amount}`;
+                                    if (!paymentsMap.has(key)) paymentsMap.set(key, p);
+                                }
+                            });
+                            const mergedPayments = Array.from(paymentsMap.values());
+
+                            // Si la publicación local tenía cambios pendientes de sincronización por estar offline, preservarlos
+                            let mergedFields = { ...item };
+                            if (localListing && localListing._pendingSync) {
+                                mergedFields = {
+                                    ...item,
+                                    ...localListing
+                                };
+                                delete mergedFields._pendingSync;
+                                delete localListing._pendingSync;
+                                // Reintentar sincronizar a la nube de fondo
+                                this.saveListing(localListing).catch(e => console.warn('Retry sync listing failed:', e));
+                            }
+
+                            return {
+                                ...mergedFields,
+                                engine: mergedFields.engine || item.engine || item.motor || (localListing ? localListing.engine : ''),
+                                legal: mergedFields.legal || item.legal || item.situacion || (localListing ? localListing.legal : ''),
+                                ac: mergedFields.ac || item.ac || (localListing ? localListing.ac : ''),
+                                mileage: mergedFields.mileage !== undefined && mergedFields.mileage !== null ? String(mergedFields.mileage) : (localListing ? localListing.mileage : ''),
+                                phone: mergedFields.seller_phone || mergedFields.phone || item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
+                                whatsapp: mergedFields.seller_whatsapp || mergedFields.whatsapp || item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
+                                publishedAt: item.published_at || item.publishedAt || (localListing ? localListing.publishedAt : null),
+                                expiresAt: item.expires_at || item.expiresAt || (localListing ? localListing.expiresAt : null),
+                                lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
+                                paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
+                                images: mergedFields.images && mergedFields.images.length > 0 ? mergedFields.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
+                                notes: mergedNotes,
+                                payments: mergedPayments,
+                                reactions: item.reactions ? (typeof item.reactions === 'string' ? (function(){ try { return JSON.parse(item.reactions); } catch(e) { return item.reactions; } })() : item.reactions) : (localListing && localListing.reactions ? localListing.reactions : { like: 0, love: 0, fire: 0, angry: 0 }),
+                                ref_number: item.ref_number || item.ref_number || (localListing ? localListing.ref_number : null),
+                                old_price: item.old_price !== undefined && item.old_price !== null ? Number(item.old_price) : (localListing ? localListing.old_price : null),
+                                publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
+                                publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
+                                isMyListing: isMine
                             };
-                            delete mergedFields._pendingSync;
-                            delete localListing._pendingSync;
-                            // Reintentar sincronizar a la nube de fondo
-                            this.saveListing(localListing).catch(e => console.warn('Retry sync listing failed:', e));
-                        }
-
-                        return {
-                            ...mergedFields,
-                            engine: mergedFields.engine || item.engine || item.motor || (localListing ? localListing.engine : ''),
-                            legal: mergedFields.legal || item.legal || item.situacion || (localListing ? localListing.legal : ''),
-                            ac: mergedFields.ac || item.ac || (localListing ? localListing.ac : ''),
-                            mileage: mergedFields.mileage !== undefined && mergedFields.mileage !== null ? String(mergedFields.mileage) : (localListing ? localListing.mileage : ''),
-                            phone: mergedFields.seller_phone || mergedFields.phone || item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
-                            whatsapp: mergedFields.seller_whatsapp || mergedFields.whatsapp || item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
-                            publishedAt: item.published_at || item.publishedAt || (localListing ? localListing.publishedAt : null),
-                            expiresAt: item.expires_at || item.expiresAt || (localListing ? localListing.expiresAt : null),
-                            lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
-                            paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
-                            images: mergedFields.images && mergedFields.images.length > 0 ? mergedFields.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
-                            notes: mergedNotes,
-                            payments: mergedPayments,
-                            ref_number: item.ref_number || item.ref_number || (localListing ? localListing.ref_number : null),
-                            old_price: item.old_price !== undefined && item.old_price !== null ? Number(item.old_price) : (localListing ? localListing.old_price : null),
-                            publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
-                            publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
-                            isMyListing: isMine
-                        };
-                    });
+                        });
 
                     let finalListings = [];
                     if (isAdmin) {
@@ -538,7 +539,7 @@ class Database {
 
                     const newListingsStr = JSON.stringify(finalListings);
                     const oldListingsStr = localStorage.getItem(this.listingsKey);
-                    
+
                     if (newListingsStr !== oldListingsStr) {
                         localStorage.setItem(this.listingsKey, newListingsStr);
                         if (typeof window.onServerDataSynced === 'function') {
@@ -590,7 +591,7 @@ class Database {
             }
 
             const { data, error, count } = await query;
-            
+
             if (error) {
                 console.error('Error fetching ids for shuffle:', error);
                 return { data: [], total: 0, hasMore: false };
@@ -644,11 +645,11 @@ class Database {
                 .from('listings')
                 .select('type, views')
                 .eq('status', 'autorizado');
-                
+
             if (cities && cities.length > 0) {
                 query = query.in('city', cities);
             }
-            
+
             const { data, error } = await query;
             if (error) {
                 console.warn('Error fetching category stats:', error);
@@ -745,7 +746,7 @@ class Database {
                 } else {
                     delete ad._pendingSync;
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error('⚠️ Excepción al guardar Ad en Supabase:', e);
                 ad._pendingSync = true;
             }
@@ -759,7 +760,7 @@ class Database {
             ads.push(ad);
         }
         localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
-        
+
         return ad;
     }
 
@@ -890,6 +891,7 @@ class Database {
                 images: listing.images || [],
                 status: listing.status || 'pendiente autorizacion',
                 views: listing.views || 0,
+                reactions: listing.reactions || { like: 0, love: 0, fire: 0, angry: 0 },
                 notes: listing.notes || [],
                 payments: listing.payments || [],
                 publisher_id: listing.publisherId || listing.publisher_id || '',
@@ -911,7 +913,7 @@ class Database {
                     delete listing._pendingSync;
                     console.log('✅ Anuncio sincronizado exitosamente con Supabase Cloud');
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error('⚠️ Excepción al guardar en Supabase:', e);
                 listing._pendingSync = true;
             }
@@ -936,7 +938,7 @@ class Database {
             listings.push(listing);
         }
         localStorage.setItem(this.listingsKey, JSON.stringify(listings));
-        
+
         return listing;
     }
 
@@ -968,7 +970,7 @@ class Database {
 
             // 2. Eliminar permanentemente el registro de la base de datos
             const { error } = await supabaseClient.from('listings').delete().eq('id', id);
-            
+
             if (error) {
                 console.error('⚠️ Error al eliminar en Supabase, aplicando soft-delete:', error);
                 if (listingToDelete) {
@@ -989,7 +991,7 @@ class Database {
     getMyListings() {
         return this.getAllListings().filter(l => l.isMyListing);
     }
-    
+
     isListingActive(listing) {
         if (listing.status !== 'autorizado') return false;
 
@@ -1014,8 +1016,8 @@ class Database {
             return (catalogData && catalogData.makes) ? catalogData.makes : defaultCatalogData.makes;
         }
 
-        const typeMap = (catalogData && catalogData.modelsByTypeAndMake) 
-            ? catalogData.modelsByTypeAndMake[type] 
+        const typeMap = (catalogData && catalogData.modelsByTypeAndMake)
+            ? catalogData.modelsByTypeAndMake[type]
             : (defaultCatalogData.modelsByTypeAndMake ? defaultCatalogData.modelsByTypeAndMake[type] : null);
 
         if (typeMap) {
@@ -1028,9 +1030,9 @@ class Database {
         const motoOnlyMakes = ['Italika', 'Vento', 'Bajaj', 'Harley-Davidson', 'KTM', 'Polaris', 'Can-Am', 'CFMoto', 'Veloci', 'Hero', 'TVS', 'Indian Motorcycle', 'Aprilia', 'Kymco', 'Royal Enfield', 'Triumph', 'Ducati'];
         const marineMakes = ['Sea-Doo', 'Yamaha', 'Honda', 'Suzuki', 'Kawasaki'];
         const truckMakes = ['Kenworth', 'Freightliner', 'International', 'Peterbilt', 'Hino', 'Isuzu', 'Mack', 'Scania', 'Volvo', 'Foton', 'JAC', 'Ram', 'Chevrolet', 'Ford', 'GMC', 'Mercedes-Benz', 'Volkswagen'];
-        
+
         const allMakes = (catalogData && catalogData.makes) ? catalogData.makes : defaultCatalogData.makes;
-        
+
         if (type === 'Motocicleta' || type === 'Cuatrimoto / ATV') {
             return allMakes.filter(m => motoOnlyMakes.includes(m) || ['Honda', 'Yamaha', 'Suzuki', 'BMW', 'Sea-Doo', 'Kawasaki'].includes(m));
         } else if (type === 'Barco') {
@@ -1040,22 +1042,22 @@ class Database {
         } else if (['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo'].includes(type)) {
             return allMakes.filter(m => !motoOnlyMakes.includes(m));
         }
-        
+
         return allMakes;
     }
 
     getModelsForTypeAndMake(type, make) {
         if (!make) return [];
-        const allModels = (catalogData && catalogData.modelsByMake && catalogData.modelsByMake[make]) 
-            ? catalogData.modelsByMake[make] 
+        const allModels = (catalogData && catalogData.modelsByMake && catalogData.modelsByMake[make])
+            ? catalogData.modelsByMake[make]
             : (defaultCatalogData.modelsByMake[make] || []);
 
         if (!type || type === 'Otros' || type === 'Todas') {
             return allModels;
         }
 
-        const typeMap = (catalogData && catalogData.modelsByTypeAndMake) 
-            ? catalogData.modelsByTypeAndMake[type] 
+        const typeMap = (catalogData && catalogData.modelsByTypeAndMake)
+            ? catalogData.modelsByTypeAndMake[type]
             : (defaultCatalogData.modelsByTypeAndMake ? defaultCatalogData.modelsByTypeAndMake[type] : null);
 
         if (typeMap && typeMap[make] && Array.isArray(typeMap[make]) && typeMap[make].length > 0) {
@@ -1069,18 +1071,18 @@ class Database {
         let activeListings = this.getAllListings().filter(l => this.isListingActive(l));
         if (city) {
             const cityListings = activeListings.filter(l => l.city === city);
-            if (cityListings.length >= count/2) {
+            if (cityListings.length >= count / 2) {
                 activeListings = cityListings;
             }
         }
         const shuffled = activeListings.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
     }
-    
+
     async search(criteria) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             let query = supabaseClient.from('listings').select('*').eq('status', 'autorizado');
-            
+
             if (criteria.query) {
                 const q = criteria.query.toLowerCase();
                 query = query.or(`title.ilike.%${q}%,make.ilike.%${q}%,model.ilike.%${q}%,type.ilike.%${q}%`);
@@ -1106,29 +1108,29 @@ class Database {
             if (criteria.color && criteria.color !== 'Todos') {
                 query = query.eq('color', criteria.color);
             }
-            
+
             // Limit search results to avoid massive payloads
             query = query.limit(50);
-            
+
             const { data, error } = await query;
             if (!error && data) {
                 return data;
             }
         }
-        
+
         // Fallback offline (sólo buscará en favoritos y mis anuncios)
         let results = this.getAllListings().filter(l => this.isListingActive(l));
-        
+
         if (criteria.query) {
             const q = criteria.query.toLowerCase();
-            results = results.filter(l => 
-                (l.title && l.title.toLowerCase().includes(q)) || 
-                (l.make && l.make.toLowerCase().includes(q)) || 
+            results = results.filter(l =>
+                (l.title && l.title.toLowerCase().includes(q)) ||
+                (l.make && l.make.toLowerCase().includes(q)) ||
                 (l.model && l.model.toLowerCase().includes(q)) ||
                 (l.type && l.type.toLowerCase().includes(q))
             );
         }
-        
+
         if (criteria.cities && criteria.cities.length > 0) {
             results = results.filter(l => criteria.cities.includes(l.city));
         }
@@ -1153,7 +1155,7 @@ class Database {
         }
         return results;
     }
-    
+
     markAsSold(id) {
         const listings = this.getAllListings();
         const index = listings.findIndex(l => String(l.id) === String(id));
@@ -1204,10 +1206,10 @@ class Database {
     }
 
     addSuggestion(type, value, parentMake = null) {
-        if(!value || value.trim() === '') return;
+        if (!value || value.trim() === '') return;
         const suggestions = this.getSuggestions();
         const valueTrim = value.trim();
-        
+
         let existing = suggestions.find(s => s.type === type && s.value.toLowerCase() === valueTrim.toLowerCase() && s.parentMake === parentMake);
         if (existing) {
             existing.count += 1;
@@ -1222,10 +1224,10 @@ class Database {
             };
             suggestions.push(existing);
         }
-        
+
         if (existing.count >= 2 && existing.status !== 'approved') {
             existing.status = 'approved';
-            
+
             if (existing.type === 'make') {
                 if (!catalogData.makes.includes(existing.value)) {
                     catalogData.makes.push(existing.value);
@@ -1260,7 +1262,7 @@ class Database {
             const now = new Date();
             const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
             const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
-            
+
             const newNote = {
                 id: Date.now(),
                 timestamp: `${dateStr}, ${timeStr}`,
@@ -1281,7 +1283,7 @@ class Database {
         const now = new Date();
         const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
         const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
-        
+
         const newPayment = {
             id: Date.now(),
             date: `${dateStr}, ${timeStr}`,
@@ -1319,7 +1321,7 @@ class Database {
         const now = new Date();
         const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
         const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
-        
+
         const adTitle = index !== -1 ? (ads[index].title || `Publicidad #${adId}`) : `Publicidad #${adId}`;
         const adCity = index !== -1 ? (ads[index].city || ads[index].target_city || ads[index].state || 'Global') : 'Global';
 
@@ -1377,7 +1379,7 @@ class Database {
         });
         // Si encontramos pagos legacy, migrarlos al nuevo log
         if (allPayments.length > 0) {
-            localStorage.setItem(logKey, JSON.stringify(allPayments.sort((a,b) => (b.id||0)-(a.id||0))));
+            localStorage.setItem(logKey, JSON.stringify(allPayments.sort((a, b) => (b.id || 0) - (a.id || 0))));
         }
         return allPayments.sort((a, b) => (b.id || b.timestamp || 0) - (a.id || a.timestamp || 0));
     }
@@ -1409,7 +1411,7 @@ class Database {
             const { data, error } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
             if (data) {
                 const fallbackVal = parsedLocal.ad_fallback_limit !== undefined ? Number(parsedLocal.ad_fallback_limit) : 21;
-                const s = { 
+                const s = {
                     monthlyPrice: data.monthlyprice !== undefined ? data.monthlyprice : (data.monthlyPrice || 500),
                     adMonthlyPrice: data.admonthlyprice !== undefined ? data.admonthlyprice : (data.adMonthlyPrice || 500),
                     mercadoPagoEnabled: data.mercadopagoenabled !== undefined ? data.mercadopagoenabled : (data.mercadoPagoEnabled || false),
@@ -1440,8 +1442,8 @@ class Database {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 // Postgres guarda columnas sin comillas en minúsculas. Mapeamos de camelCase a minúsculas
-                const payload = { 
-                    id: 1, 
+                const payload = {
+                    id: 1,
                     monthlyprice: settings.monthlyPrice,
                     admonthlyprice: settings.adMonthlyPrice,
                     mercadopagoenabled: settings.mercadoPagoEnabled,
@@ -1477,7 +1479,7 @@ class Database {
                     .from('listings')
                     .select('state, city, expires_at, status')
                     .eq('status', 'autorizado');
-                
+
                 if (!error && data) {
                     activeListings = data.filter(l => {
                         if (l.expires_at) {
@@ -1488,7 +1490,7 @@ class Database {
                 } else {
                     activeListings = this.getAllListings().filter(l => this.isListingActive(l));
                 }
-            } catch(e) {
+            } catch (e) {
                 activeListings = this.getAllListings().filter(l => this.isListingActive(l));
             }
         } else {
@@ -1496,11 +1498,11 @@ class Database {
         }
 
         const locationsMap = {};
-        
+
         activeListings.forEach(l => {
             let state = l.state;
             const city = l.city;
-            
+
             // Si no hay estado pero sí ciudad, intentar deducirlo del catálogo
             if (!state && city && typeof catalogData !== 'undefined') {
                 for (const s of catalogData.states) {
@@ -1510,7 +1512,7 @@ class Database {
                     }
                 }
             }
-            
+
             if (state) {
                 if (!locationsMap[state]) locationsMap[state] = [];
                 if (city && !locationsMap[state].includes(city)) {
@@ -1536,24 +1538,24 @@ class Database {
                     .eq('username', username)
                     .eq('password', password)
                     .maybeSingle();
-                
+
                 if (error) {
                     console.error("Error consultando admin_users:", error);
                 }
 
                 if (data) {
-                    return { 
-                        success: true, 
-                        token: 'admin-token-' + data.id, 
-                        role: data.role, 
-                        user: { id: data.id, username: data.username, role: data.role, allowedStates: data.allowedStates, allowedCities: data.allowedCities } 
+                    return {
+                        success: true,
+                        token: 'admin-token-' + data.id,
+                        role: data.role,
+                        user: { id: data.id, username: data.username, role: data.role, allowedStates: data.allowedStates, allowedCities: data.allowedCities }
                     };
                 }
             } catch (err) {
                 console.warn("Error de red al consultar admin_users en Supabase:", err);
             }
         }
-        
+
         return { success: false, error: 'Usuario o contraseña incorrectos' };
     }
 
@@ -1586,13 +1588,13 @@ class Database {
                 };
                 delete dbUser.allowedStates;
                 delete dbUser.allowedCities;
-                
+
                 if (dbUser.id) {
                     dbUser.id = Number(dbUser.id);
                 } else {
                     delete dbUser.id;
                 }
-                
+
                 const { error } = await supabaseClient.from('admin_users').upsert([dbUser], { onConflict: 'username' });
                 if (error) {
                     console.warn("Error guardando adminUser en Supabase:", error.message);
@@ -1627,13 +1629,13 @@ class Database {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 const today = new Date().toISOString().split('T')[0];
-                
+
                 // Generar ID único de sesión temporal si no existe
                 if (!sessionStorage.getItem('revista_visitor_id')) {
                     sessionStorage.setItem('revista_visitor_id', 'v_' + Math.random().toString(36).substring(2));
                 }
                 const isNewVisitor = !sessionStorage.getItem('revista_visitor_counted_' + today);
-                
+
                 // Get current stats for today
                 let { data: stats } = await supabaseClient
                     .from('traffic_stats')
@@ -1648,11 +1650,11 @@ class Database {
 
                 // Prepare update payload
                 const payload = { page_views: (stats.page_views || 0) + 1 };
-                
+
                 if (isNewVisitor) {
                     payload.unique_visitors = (stats.unique_visitors || 0) + 1;
                     sessionStorage.setItem('revista_visitor_counted_' + today, 'true');
-                    
+
                     if (source === 'pwa' || window.matchMedia('(display-mode: standalone)').matches) {
                         payload.app_opens = (stats.app_opens || 0) + 1;
                     } else {
@@ -1690,7 +1692,7 @@ class Database {
         let viewedThisSession = [];
         try {
             viewedThisSession = JSON.parse(sessionStorage.getItem('revista_autos_viewed_session') || '[]');
-        } catch (e) {}
+        } catch (e) { }
 
         if (viewedThisSession.includes(String(id))) {
             const listings = this.getAllListings();
@@ -1713,12 +1715,12 @@ class Database {
             try {
                 const now = new Date();
                 const visit_date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                
+
                 const { error } = await supabaseClient.rpc('increment_visit', {
                     listing_id: id,
                     visit_date: visit_date
                 });
-                
+
                 if (error) {
                     console.warn("Error RPC increment_visit, aplicando fallback local:", error.message);
                 }
@@ -1748,12 +1750,20 @@ class Database {
                     reaction_type: reactionType,
                     increment_val: incrementVal
                 });
-                
+
                 if (error) {
-                    console.warn("Error RPC update_reaction:", error.message);
+                    console.warn("RPC update_reaction no disponible, usando fallback directo:", error.message);
+                    if (listing && listing.reactions) {
+                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', id);
+                    }
                 }
             } catch (err) {
                 console.warn("Error de red actualizando reaccion:", err);
+                if (listing && listing.reactions) {
+                    try {
+                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', id);
+                    } catch (e) {}
+                }
             }
         }
     }
@@ -1765,7 +1775,7 @@ class Database {
                     .from('daily_visits')
                     .select('*')
                     .order('date', { ascending: true });
-                    
+
                 if (error) {
                     console.warn("Error fetching daily_visits:", error.message);
                     return [];
@@ -1878,10 +1888,10 @@ class Database {
 
                     const normalizedAds = data.map(ad => {
                         const localAd = localAdsMap.get(String(ad.id));
-                        
+
                         let serverNotes = [];
                         if (ad.notes) {
-                            try { serverNotes = typeof ad.notes === 'string' ? JSON.parse(ad.notes) : ad.notes; } catch(e) { serverNotes = []; }
+                            try { serverNotes = typeof ad.notes === 'string' ? JSON.parse(ad.notes) : ad.notes; } catch (e) { serverNotes = []; }
                         }
                         let localNotes = localAd && Array.isArray(localAd.notes) ? localAd.notes : [];
 
@@ -1896,7 +1906,7 @@ class Database {
 
                         let socialLinks = [];
                         if (ad.social_links) {
-                            try { socialLinks = typeof ad.social_links === 'string' ? JSON.parse(ad.social_links) : ad.social_links; } catch(e) { socialLinks = []; }
+                            try { socialLinks = typeof ad.social_links === 'string' ? JSON.parse(ad.social_links) : ad.social_links; } catch (e) { socialLinks = []; }
                         } else if (localAd && localAd.social_links) {
                             socialLinks = localAd.social_links;
                         }
@@ -1921,7 +1931,7 @@ class Database {
 
                     const newAdsStr = JSON.stringify(normalizedAds);
                     const oldAdsStr = localStorage.getItem('revista_autos_ads');
-                    
+
                     if (newAdsStr !== oldAdsStr) {
                         localStorage.setItem('revista_autos_ads', newAdsStr);
                         if (typeof window.onAdsSynced === 'function') window.onAdsSynced();
@@ -1954,7 +1964,7 @@ class Database {
                 activeAds = activeAds.filter(ad => ad.city && validCities.includes(ad.city));
             }
         }
-        
+
         const limit = this.adFallbackLimit !== undefined ? this.adFallbackLimit : 21;
         let resultPool = [...activeAds];
         if (includeFallback && activeAds.length < limit) {
@@ -1975,7 +1985,7 @@ class Database {
             const now = new Date();
             const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
             const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
-            
+
             const newNote = {
                 id: Date.now(),
                 timestamp: `${dateStr}, ${timeStr}`,
@@ -1992,12 +2002,12 @@ class Database {
     async incrementAdViews(adId) {
         let ad = this.getAllAds().find(a => String(a.id) === String(adId));
         if (!ad) return null;
-        
+
         // Evitar múltiples conteos por sesión para la misma publicidad
         let viewedThisSession = [];
         try {
             viewedThisSession = JSON.parse(sessionStorage.getItem('revista_ads_viewed_session') || '[]');
-        } catch (e) {}
+        } catch (e) { }
 
         if (viewedThisSession.includes(String(adId))) {
             return ad;
@@ -2017,7 +2027,7 @@ class Database {
 
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             // Fire and forget
-            supabaseClient.from('ads').update({ views: ad.views }).eq('id', adId).then(({error}) => {
+            supabaseClient.from('ads').update({ views: ad.views }).eq('id', adId).then(({ error }) => {
                 if (error) console.warn("Error updating ad views in supabase:", error);
             });
         }
@@ -2105,7 +2115,7 @@ class Database {
                 console.warn('Error fetching activity logs from Supabase:', err);
             }
         }
-        
+
         // Fallback to local
         const logs = JSON.parse(localStorage.getItem('revista_activity_logs') || '[]');
         return { success: true, logs: logs };
