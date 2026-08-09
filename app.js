@@ -2697,11 +2697,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. Si aún no está, intentar buscar en Supabase directamente (fuente de la verdad)
         if (!listing && typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                const { data, error } = await supabaseClient
+                const queryId = !isNaN(strId) ? Number(strId) : strId;
+                let { data, error } = await supabaseClient
                     .from('listings')
                     .select('*')
-                    .eq('id', strId)
+                    .eq('id', queryId)
                     .maybeSingle();
+
+                if ((!data || error) && typeof queryId === 'number') {
+                    const fallback = await supabaseClient
+                        .from('listings')
+                        .select('*')
+                        .eq('id', strId)
+                        .maybeSingle();
+                    if (fallback.data && !fallback.error) {
+                        data = fallback.data;
+                        error = null;
+                    }
+                }
 
                 if (data && !error) {
                     listing = {
@@ -8111,16 +8124,20 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
 };
 
 // --- Deep Linking ---
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const sharedId = urlParams.get('id');
-        if (sharedId && typeof window.viewListing === 'function') {
-            window.viewListing(sharedId);
-
-            // Clean up the URL so it looks nice without reloading
+window.checkDeepLink = function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedId = urlParams.get('id');
+    if (sharedId && typeof window.viewListing === 'function') {
+        window.viewListing(sharedId).then(() => {
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.replaceState({ path: newUrl }, '', newUrl);
-        }
-    }, 800); // Damos 800ms para asegurar que el catálogo base y listings estén listos
+        }).catch(err => console.error("Error opening shared listing:", err));
+    }
+};
+
+window.addEventListener('load', () => {
+    setTimeout(window.checkDeepLink, 300);
 });
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(window.checkDeepLink, 300);
+}
