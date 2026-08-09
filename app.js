@@ -7996,8 +7996,11 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
 
     // Preparar UI
     const container = btn.closest('.social-toolbar-fullscreen');
-    const allBtns = container.querySelectorAll('.reaction-btn');
-    const countEl = btn.querySelector('.social-count');
+    if (!container) return;
+    const parentContainer = btn.closest('.social-btn-container');
+    const countEl = parentContainer ? parentContainer.querySelector('.social-count') : null;
+    if (!countEl) return;
+
     let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
 
     if (currentReaction === reactionType) {
@@ -8014,8 +8017,11 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
             const oldBtn = container.querySelector(`.reaction-btn[data-type="${currentReaction}"]`);
             if (oldBtn) {
                 oldBtn.classList.remove('active');
-                const oldCountEl = oldBtn.querySelector('.social-count');
-                oldCountEl.textContent = Math.max(0, parseInt(oldCountEl.textContent.replace(/,/g, '')) - 1).toLocaleString('en-US');
+                const oldParent = oldBtn.closest('.social-btn-container');
+                const oldCountEl = oldParent ? oldParent.querySelector('.social-count') : null;
+                if (oldCountEl) {
+                    oldCountEl.textContent = Math.max(0, parseInt(oldCountEl.textContent.replace(/,/g, '') || '0') - 1).toLocaleString('en-US');
+                }
             }
             if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
         }
