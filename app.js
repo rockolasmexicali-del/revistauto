@@ -2763,7 +2763,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="carousel-nav-btn next" onclick="scrollCarousel(event, this, 1)"><span class="material-symbols-rounded">chevron_right</span></button>
             `;
         }
-
         detalleContent.innerHTML = `
             <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
             <button class="global-nav-btn next desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(1);"><span class="material-symbols-rounded">arrow_forward_ios</span></button>
@@ -2774,7 +2773,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${navArrows}
                 ${images.length > 1 ? `<div class="image-counter" style="position: absolute; bottom: 8px; right: 8px;">1 / ${images.length}</div>` : ''}
                 
-                <button id="detalle-heart-btn-${id}" class="detalle-floating-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); window.toggleSaveDetalle('${id}', this)" style="right: 16px; color: ${isSaved ? '#EF4444' : 'white'}; z-index: 10; transition: color 0.3s ease;">
+                ${window.generateSocialToolbarHTML ? window.generateSocialToolbarHTML(listing.id, listing.reactions, listing.views, listing.title) : ''}
+                
+                <button id="detalle-heart-btn-${id}" class="detalle-floating-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation(); window.toggleSaveDetalle('${id}', this)" style="right: 16px; color: ${isSaved ? '#EF4444' : 'white'}; z-index: 100; transition: color 0.3s ease;">
                     <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">${isSaved ? 'favorite' : 'favorite_border'}</span>
                 </button>
             </div>
@@ -7949,3 +7950,133 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
 
 });
+
+// --- Funciones para Interacciones Sociales en Fullscreen ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function playBubbleSound(isReverse = false) {
+    if (!audioCtx) {
+        try { audioCtx = new AudioContext(); } catch(e) { return; }
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    const now = audioCtx.currentTime;
+    
+    if (isReverse) {
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+    } else {
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+    }
+    
+    gain.gain.setValueAtTime(0.5, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    
+    osc.start(now);
+    osc.stop(now + 0.15);
+}
+
+window.toggleSocialReaction = function(event, listingId, reactionType) {
+    event.stopPropagation();
+    
+    let userReactions = {};
+    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
+    
+    const btn = event.currentTarget;
+    const currentReaction = userReactions[listingId];
+    
+    // Preparar UI
+    const container = btn.closest('.social-toolbar-fullscreen');
+    const allBtns = container.querySelectorAll('.reaction-btn');
+    const countEl = btn.querySelector('.social-count');
+    let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
+    
+    if (currentReaction === reactionType) {
+        // Remove reaction
+        playBubbleSound(true); // reverse sound
+        btn.classList.remove('active');
+        countEl.textContent = Math.max(0, currentCount - 1).toLocaleString('en-US');
+        delete userReactions[listingId];
+        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, -1);
+    } else {
+        // Add new reaction (and remove old if exists)
+        playBubbleSound(false); // pop sound
+        if (currentReaction) {
+            const oldBtn = container.querySelector(`.reaction-btn[data-type="${currentReaction}"]`);
+            if (oldBtn) {
+                oldBtn.classList.remove('active');
+                const oldCountEl = oldBtn.querySelector('.social-count');
+                oldCountEl.textContent = Math.max(0, parseInt(oldCountEl.textContent.replace(/,/g, '')) - 1).toLocaleString('en-US');
+            }
+            if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
+        }
+        
+        btn.classList.add('active');
+        countEl.textContent = (currentCount + 1).toLocaleString('en-US');
+        userReactions[listingId] = reactionType;
+        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, 1);
+    }
+    
+    localStorage.setItem('user_reactions', JSON.stringify(userReactions));
+};
+
+window.shareListing = function(event, id, title) {
+    event.stopPropagation();
+    const url = window.location.origin + window.location.pathname + '?id=' + id;
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            text: '¡Mira este auto en Revistauto!',
+            url: url
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            window.showAlert('Enlace copiado al portapapeles', 'Compartir', 'content_copy');
+        });
+    }
+};
+
+window.generateSocialToolbarHTML = function(id, reactionsObj, viewsCount, title) {
+    let userReactions = {};
+    try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch(e) {}
+    const userReact = userReactions[id];
+    
+    const reactions = reactionsObj || { like: 0, love: 0, fire: 0, angry: 0 };
+    
+    return `
+        <div class="social-toolbar-fullscreen">
+            <div class="social-btn-container">
+                <div class="social-btn reaction-btn ${userReact === 'like' ? 'active' : ''}" data-type="like" onclick="window.toggleSocialReaction(event, '${id}', 'like')">👍</div>
+                <div class="social-count">${(reactions.like || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn reaction-btn ${userReact === 'love' ? 'active' : ''}" data-type="love" onclick="window.toggleSocialReaction(event, '${id}', 'love')">😍</div>
+                <div class="social-count">${(reactions.love || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn reaction-btn ${userReact === 'fire' ? 'active' : ''}" data-type="fire" onclick="window.toggleSocialReaction(event, '${id}', 'fire')">🔥</div>
+                <div class="social-count">${(reactions.fire || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn" style="cursor: default; background: rgba(0,0,0,0.3); border:none;">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">visibility</span>
+                </div>
+                <div class="social-count">${(viewsCount || 0).toLocaleString('en-US')}</div>
+            </div>
+            <div class="social-btn-container">
+                <div class="social-btn" onclick="window.shareListing(event, '${id}', '${title.replace(/'/g, "\\'")}')">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
+                </div>
+                <div class="social-count">Share</div>
+            </div>
+        </div>
+    `;
+};

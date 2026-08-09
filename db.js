@@ -1729,6 +1729,35 @@ class Database {
         return listing ? listing.views : 0;
     }
 
+    async updateReaction(id, reactionType, incrementVal) {
+        // Actualizamos localmente primero
+        const listings = this.getAllListings();
+        const listing = listings.find(l => String(l.id) === String(id));
+        if (listing) {
+            if (!listing.reactions) {
+                listing.reactions = { like: 0, love: 0, fire: 0, angry: 0 };
+            }
+            listing.reactions[reactionType] = Math.max(0, (listing.reactions[reactionType] || 0) + incrementVal);
+            localStorage.setItem(this.listingsKey, JSON.stringify(listings));
+        }
+
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                const { error } = await supabaseClient.rpc('update_reaction', {
+                    listing_id: id,
+                    reaction_type: reactionType,
+                    increment_val: incrementVal
+                });
+                
+                if (error) {
+                    console.warn("Error RPC update_reaction:", error.message);
+                }
+            } catch (err) {
+                console.warn("Error de red actualizando reaccion:", err);
+            }
+        }
+    }
+
     async fetchTrafficStats() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {

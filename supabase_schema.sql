@@ -45,6 +45,7 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS payment_status TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sold_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS ref_number INTEGER;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS old_price NUMERIC(12,2);
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb;
 -- 2.6 COMANDO PARA CAMBIAR MILEAGE A TEXTO (EJECÚTALO PARA ARREGLAR EL ERROR DE "invalid input syntax for type integer")
 ALTER TABLE public.listings ALTER COLUMN mileage TYPE TEXT USING mileage::TEXT;
 -- 3. Habilitar la búsqueda rápida e índices
@@ -159,6 +160,22 @@ BEGIN
     -- Incrementar en la tabla listings
     UPDATE public.listings 
     SET views = COALESCE(views, 0) + 1 
+    WHERE id = listing_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Función segura para actualizar reacciones
+CREATE OR REPLACE FUNCTION update_reaction(listing_id BIGINT, reaction_type TEXT, increment_val INT)
+RETURNS void AS $$
+BEGIN
+    UPDATE public.listings 
+    SET reactions = jsonb_set(
+        COALESCE(reactions, '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb),
+        array[reaction_type],
+        to_jsonb(
+            COALESCE((reactions->>reaction_type)::int, 0) + increment_val
+        )
+    )
     WHERE id = listing_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
