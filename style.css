@@ -2422,45 +2422,44 @@ input:checked+.slider:before {
 /* --- Social Toolbar Fullscreen --- */
 .social-toolbar-fullscreen {
     position: absolute;
-    bottom: 16px;
-    left: 16px;
+    bottom: 8px !important;
+    left: 8px !important;
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 16px !important;
+    gap: 10px !important;
     z-index: 100 !important;
-    background: rgba(0, 0, 0, 0.55) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    padding: 8px 16px !important;
-    border-radius: 40px !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .social-btn-container {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 3px !important;
 }
 
 .social-btn {
-    width: 44px;
-    height: 44px;
+    width: 28px !important;
+    height: 28px !important;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 16px !important;
     cursor: pointer;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: none !important;
 }
 
 .social-btn:active {
@@ -2468,14 +2467,14 @@ input:checked+.slider:before {
 }
 
 .social-btn.active {
-    background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    transform: scale(1.1);
+    background: transparent !important;
+    border: none !important;
+    transform: scale(1.25);
 }
 
 .social-count {
     color: white;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
 }
