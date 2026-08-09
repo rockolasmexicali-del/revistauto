@@ -8005,6 +8005,26 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
 
     let currentCount = parseInt(countEl.textContent.replace(/,/g, '') || '0');
 
+    // Helper para actualizar memoria viva (evita que el contador vuelva a 0 al cambiar de auto)
+    const updateMemory = (id, rType, inc) => {
+        const updateList = (list) => {
+            if (!list) return;
+            const item = list.find(l => String(l.id) === String(id));
+            if (item) {
+                if (typeof item.reactions === 'string') {
+                    try { item.reactions = JSON.parse(item.reactions); } catch(e) { item.reactions = null; }
+                }
+                if (!item.reactions || typeof item.reactions !== 'object') {
+                    item.reactions = { like: 0, love: 0, fire: 0, angry: 0 };
+                }
+                item.reactions[rType] = Math.max(0, (item.reactions[rType] || 0) + inc);
+            }
+        };
+        if (typeof activeFeedListings !== 'undefined') updateList(activeFeedListings);
+        if (window.searchCascadeList) updateList(window.searchCascadeList);
+        if (window.currentSearchContext && window.currentSearchContext.level1) updateList(window.currentSearchContext.level1);
+    };
+
     if (isCurrentlyActive) {
         // Remove reaction
         playBubbleSound(true); // reverse sound
@@ -8012,6 +8032,7 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
         countEl.textContent = Math.max(0, currentCount - 1).toLocaleString('en-US');
         delete userReactions[listingId];
         if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, -1);
+        updateMemory(listingId, reactionType, -1);
     } else {
         // Add new reaction (and remove old if exists)
         playBubbleSound(false); // pop sound
@@ -8026,12 +8047,14 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
                 }
             }
             if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
+            updateMemory(listingId, currentReaction, -1);
         }
 
         btn.classList.add('active');
         countEl.textContent = (currentCount + 1).toLocaleString('en-US');
         userReactions[listingId] = reactionType;
         if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, 1);
+        updateMemory(listingId, reactionType, 1);
     }
 
     localStorage.setItem('user_reactions', JSON.stringify(userReactions));
