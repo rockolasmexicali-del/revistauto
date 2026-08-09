@@ -8105,7 +8105,6 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
                 <div class="social-btn" onclick="window.shareListing(event, '${id}', '${title.replace(/'/g, "\\'")}')">
                     <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
                 </div>
-                <div class="social-count">Share</div>
             </div>
         </div>
     `;
