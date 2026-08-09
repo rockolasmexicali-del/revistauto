@@ -8133,15 +8133,46 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
 };
 
 // --- Deep Linking ---
+// Abre directamente la tarjeta fullscreen del auto cuando se comparte un link con ?id=
 window.checkDeepLink = function () {
     const urlParams = new URLSearchParams(window.location.search);
     const sharedId = urlParams.get('id');
-    if (sharedId && typeof window.viewListing === 'function') {
-        window.viewListing(sharedId).then(() => {
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-            window.history.replaceState({ path: newUrl }, '', newUrl);
-        }).catch(err => console.error("Error opening shared listing:", err));
-    }
+    if (!sharedId) return;
+
+    // Limpiar el ?id= de la URL inmediatamente para no repetirlo
+    const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+    window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+    // Asegurarse de que view-inicio esté activo como fondo (para que al cerrar no quede en blanco)
+    const viewInicio = document.getElementById('view-inicio');
+    const allViews = document.querySelectorAll('.view');
+    allViews.forEach(v => v.classList.remove('active'));
+    if (viewInicio) viewInicio.classList.add('active');
+
+    // Activar el nav item de inicio
+    const allNavItems = document.querySelectorAll('.nav-item');
+    allNavItems.forEach(n => {
+        if (n.getAttribute('data-target') === 'view-inicio') {
+            n.classList.add('active');
+        } else {
+            n.classList.remove('active');
+        }
+    });
+
+    // Esperar a que openListingDetails esté disponible (la app puede aún estar inicializando)
+    let attempts = 0;
+    const maxAttempts = 40; // hasta 4 segundos de espera
+    const tryOpen = () => {
+        if (typeof window.openListingDetails === 'function') {
+            window.openListingDetails(sharedId);
+        } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(tryOpen, 100);
+        } else {
+            console.warn('RevistAuto: openListingDetails no disponible para deep link id=', sharedId);
+        }
+    };
+    tryOpen();
 };
 
 window.addEventListener('load', () => {
