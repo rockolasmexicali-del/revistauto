@@ -1891,6 +1891,7 @@ input:checked + .slider:before {
         border-right: 1px solid var(--border-color);
         border-radius: 16px 0 0 16px !important;
         overflow: hidden;
+        position: relative !important;
     }
 
     /* Info container */
@@ -2203,19 +2204,27 @@ input:checked + .slider:before {
 /* --- Social Toolbar Fullscreen --- */
 .social-toolbar-fullscreen {
     position: absolute;
-    bottom: 24px;
-    right: 16px;
+    bottom: 16px;
+    left: 16px;
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
     z-index: 100;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 6px 14px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .social-btn-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .social-btn {

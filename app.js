@@ -2766,7 +2766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         detalleContent.innerHTML = `
             <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
             <button class="global-nav-btn next desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(1);"><span class="material-symbols-rounded">arrow_forward_ios</span></button>
-            <div style="position: relative; width: 100%; border-radius: 0 0 16px 16px; overflow: hidden;">
+            <div style="position: relative; width: 100%; height: 100%; border-radius: 0 0 16px 16px; overflow: hidden;">
                 <div class="detalle-img-carousel" onscroll="updateCounter(this)">
                     ${imageElements}
                 </div>
