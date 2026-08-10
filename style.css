@@ -2458,8 +2458,14 @@ input:checked+.slider:before {
     justify-content: center;
     font-size: 24px !important;
     cursor: pointer;
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s ease, opacity 0.3s ease;
     box-shadow: none !important;
+}
+
+/* Emojis de reacción en gris cuando no están activos */
+.social-btn.reaction-btn {
+    filter: grayscale(100%);
+    opacity: 0.6;
 }
 
 .social-btn:active {
@@ -2470,6 +2476,16 @@ input:checked+.slider:before {
     background: transparent !important;
     border: none !important;
     transform: scale(1.3);
+    filter: grayscale(0%) !important;
+    opacity: 1 !important;
+}
+
+/* Botón de compartir siempre en azul */
+.social-btn.share-btn {
+    color: #4DA6FF !important;
+    filter: none !important;
+    opacity: 1 !important;
+    text-shadow: 0 1px 6px rgba(0, 122, 255, 0.4);
 }
 
 .social-count {
