@@ -2173,4 +2173,5 @@ class Database {
 }
 
 const db = new Database();
+window.db = db; // Exponer globalmente para que toggleSocialReaction y otros handlers inline puedan acceder
 
