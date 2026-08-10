@@ -1370,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Fallback al muestreo local si el caché aún no está listo
             const localListings = db.getAllListings().filter(l => db.isListingActive(l));
-            const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+            const feedListings = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
             let listings = [...localListings];
             feedListings.forEach(fl => {
                 if (!listings.some(l => String(l.id) === String(fl.id))) {
@@ -2066,7 +2066,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Unir datos disponibles localmente para hacer la cascada
         const localListings = db.getAllListings().filter(l => db.isListingActive(l));
-        const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+        const feedListings = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
         const level1 = ctx.level1;
 
         const allActiveMap = new Map();
@@ -2101,7 +2101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var currentFeedPage = 1;
     var isLoadingFeed = false;
     var hasMoreFeedItems = true;
-    var activeFeedListings = [];
+    window.activeFeedListings = [];
     var PAGE_SIZE = 20;
 
     async function fetchNextFeedBlock() {
@@ -2123,8 +2123,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (res.data.length > 0) {
             // Eliminar duplicados por id
-            const newItems = res.data.filter(newItem => !activeFeedListings.some(existing => existing.id === newItem.id));
-            activeFeedListings = [...activeFeedListings, ...newItems];
+            const newItems = res.data.filter(newItem => !window.activeFeedListings.some(existing => existing.id === newItem.id));
+            window.activeFeedListings = [...window.activeFeedListings, ...newItems];
 
             // Añadir al DOM
             appendFeedListingsToDOM(newItems);
@@ -2186,7 +2186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Reset pagination state
         currentFeedPage = 1;
-        activeFeedListings = [];
+        window.activeFeedListings = [];
         hasMoreFeedItems = true;
         feedContainer.innerHTML = '';
 
@@ -2245,7 +2245,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function appendFeedListingsToDOM(newItems) {
         if (!newItems || newItems.length === 0) {
-            if (activeFeedListings.length === 0) {
+            if (window.activeFeedListings.length === 0) {
                 feedContainer.classList.remove('listings-grid');
                 feedContainer.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: center; min-height: 40vh; width: 100%;">
@@ -2269,7 +2269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let finalHTML = '';
             for (let i = 0; i < newItems.length; i++) {
                 finalHTML += createListingCardHTML(newItems[i], true);
-                if ((activeFeedListings.length - newItems.length + i + 1) % freq === 0 && db.adsEnabled) {
+                if ((window.activeFeedListings.length - newItems.length + i + 1) % freq === 0 && db.adsEnabled) {
                     const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
                     finalHTML += createAdCardHTML(ad, newItems[i].id, newItems[i].id);
                 }
@@ -2291,7 +2291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let existingRow = feedContainer.querySelector(`.netflix-row[data-category="${type}"]`);
 
-                const typeListings = activeFeedListings.filter(l => l.type === type);
+                const typeListings = window.activeFeedListings.filter(l => l.type === type);
                 const existingCountForType = typeListings.length - grouped[type].length;
 
                 let rowCardsHTML = '';
@@ -2652,7 +2652,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Saved / Library ---
     function renderSavedListings() {
         const allLocal = db.getAllListings();
-        const allFeed = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+        const allFeed = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
 
         // Combinar ambas fuentes evitando duplicados
         const allMap = new Map();
@@ -2685,8 +2685,8 @@ document.addEventListener('DOMContentLoaded', () => {
         listing = allListings.find(l => String(l.id) === strId);
 
         // 2. Buscar en Feed Activo (Paginado)
-        if (!listing && typeof activeFeedListings !== 'undefined') {
-            listing = activeFeedListings.find(l => String(l.id) === strId);
+        if (!listing && typeof window.activeFeedListings !== 'undefined') {
+            listing = window.activeFeedListings.find(l => String(l.id) === strId);
         }
 
         // 3. Buscar en contexto de búsqueda (si venimos de una búsqueda reciente)
@@ -2727,7 +2727,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Reconciliar con la memoria viva: si el usuario ya reaccionó en esta sesión,
                     // preferir esos datos para no resetear el contador al regresar a la tarjeta.
-                    const liveItem = (typeof activeFeedListings !== 'undefined' && activeFeedListings.find(l => String(l.id) === strId))
+                    const liveItem = (typeof window.activeFeedListings !== 'undefined' && window.activeFeedListings.find(l => String(l.id) === strId))
                                   || (window.searchCascadeList && window.searchCascadeList.find(l => String(l.id) === strId))
                                   || (window.currentSearchContext && window.currentSearchContext.level1 && window.currentSearchContext.level1.find(l => String(l.id) === strId));
                     if (liveItem && liveItem.reactions && typeof liveItem.reactions === 'object') {
@@ -2736,6 +2736,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 console.error("Error fetching individual listing:", err);
+            }
+        }
+
+        // ── Reconciliación Universal de Reacciones ──
+        // Sin importar de dónde se obtuvo el listing (localStorage, feed, búsqueda, Supabase),
+        // SIEMPRE reconciliar con la memoria viva para que los contadores de emojis
+        // no se reseteen al cambiar de tarjeta y regresar.
+        if (listing) {
+            const liveItemForReactions = 
+                (typeof window.activeFeedListings !== 'undefined' && window.activeFeedListings.find(l => String(l.id) === strId))
+                || (window.searchCascadeList && window.searchCascadeList.find(l => String(l.id) === strId))
+                || (window.currentSearchContext && window.currentSearchContext.level1 && window.currentSearchContext.level1.find(l => String(l.id) === strId));
+            
+            if (liveItemForReactions && liveItemForReactions.reactions && typeof liveItemForReactions.reactions === 'object') {
+                listing.reactions = liveItemForReactions.reactions;
             }
         }
 
@@ -2790,7 +2805,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
             <button class="global-nav-btn next desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(1);"><span class="material-symbols-rounded">arrow_forward_ios</span></button>
             <div style="position: relative; width: 100%; height: 100%; border-radius: 0 0 16px 16px; overflow: hidden;">
-                <div class="detalle-img-carousel" onscroll="updateCounter(this)">
+                <div class="detalle-img-carousel" onscroll="updateCounter(this)" ondblclick="window.handleDoubleTapLike(event, '${listing.id}')">
                     ${imageElements}
                 </div>
                 ${navArrows}
@@ -2939,7 +2954,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // Combinar autos locales (favoritos/mis anuncios) con el feed activo (paginado)
                     const localListings = db.getAllListings().filter(l => db.isListingActive(l));
-                    const feedListings = typeof activeFeedListings !== 'undefined' ? activeFeedListings : [];
+                    const feedListings = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
 
                     // Unir evitando duplicados por ID
                     const allAvailable = [...localListings];
@@ -3096,8 +3111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const strId = String(listingId);
         let listing = db.getAllListings().find(l => String(l.id) === strId);
 
-        if (!listing && typeof activeFeedListings !== 'undefined') {
-            listing = activeFeedListings.find(l => String(l.id) === strId);
+        if (!listing && typeof window.activeFeedListings !== 'undefined') {
+            listing = window.activeFeedListings.find(l => String(l.id) === strId);
         }
         if (!listing && window.currentSearchContext && window.currentSearchContext.level1) {
             listing = window.currentSearchContext.level1.find(l => String(l.id) === strId);
@@ -8011,6 +8026,9 @@ function playBubbleSound(isReverse = false) {
 window.toggleSocialReaction = function (event, listingId, reactionType) {
     event.stopPropagation();
 
+    console.log(`👆 toggleSocialReaction: listingId=${listingId}, type=${reactionType}`);
+    console.log(`   window.db existe: ${!!window.db}, updateReaction existe: ${!!(window.db && window.db.updateReaction)}`);
+
     let userReactions = {};
     try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
 
@@ -8042,9 +8060,21 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
                 item.reactions[rType] = Math.max(0, (item.reactions[rType] || 0) + inc);
             }
         };
-        if (typeof activeFeedListings !== 'undefined') updateList(activeFeedListings);
+        if (typeof window.activeFeedListings !== 'undefined') updateList(window.activeFeedListings);
         if (window.searchCascadeList) updateList(window.searchCascadeList);
         if (window.currentSearchContext && window.currentSearchContext.level1) updateList(window.currentSearchContext.level1);
+    };
+
+    // Helper para llamar updateReaction con captura de errores
+    const safeUpdateReaction = (lid, rType, inc) => {
+        if (window.db && window.db.updateReaction) {
+            console.log(`   📡 Llamando db.updateReaction(${lid}, ${rType}, ${inc})...`);
+            window.db.updateReaction(lid, rType, inc)
+                .then(() => console.log(`   ✅ db.updateReaction completado para ${lid}`))
+                .catch(err => console.error(`   ❌ db.updateReaction FALLÓ:`, err));
+        } else {
+            console.error('   ❌ window.db o updateReaction NO EXISTE - las reacciones NO se guardarán en Supabase');
+        }
     };
 
     if (isCurrentlyActive) {
@@ -8053,7 +8083,7 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
         btn.classList.remove('active');
         countEl.textContent = Math.max(0, currentCount - 1).toLocaleString('en-US');
         delete userReactions[listingId];
-        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, -1);
+        safeUpdateReaction(listingId, reactionType, -1);
         updateMemory(listingId, reactionType, -1);
     } else {
         // Add new reaction (and remove old if exists)
@@ -8068,19 +8098,67 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
                     oldCountEl.textContent = Math.max(0, parseInt(oldCountEl.textContent.replace(/,/g, '') || '0') - 1).toLocaleString('en-US');
                 }
             }
-            if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, currentReaction, -1);
+            safeUpdateReaction(listingId, currentReaction, -1);
             updateMemory(listingId, currentReaction, -1);
         }
 
         btn.classList.add('active');
         countEl.textContent = (currentCount + 1).toLocaleString('en-US');
         userReactions[listingId] = reactionType;
-        if (window.db && window.db.updateReaction) window.db.updateReaction(listingId, reactionType, 1);
+        safeUpdateReaction(listingId, reactionType, 1);
         updateMemory(listingId, reactionType, 1);
     }
 
     localStorage.setItem('user_reactions', JSON.stringify(userReactions));
 };
+
+// ── Doble clic en foto fullscreen = Like (estilo Instagram) ──
+window.handleDoubleTapLike = function (event, listingId) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Buscar la toolbar de reacciones en la misma tarjeta
+    const detalleContent = document.getElementById('detalle-content');
+    if (!detalleContent) return;
+
+    const toolbar = detalleContent.querySelector('.social-toolbar-fullscreen');
+    if (!toolbar) return;
+
+    const likeBtn = toolbar.querySelector('.reaction-btn[data-type="like"]');
+    if (!likeBtn) return;
+
+    // Determinar si ya tiene like activo
+    const isCurrentlyLiked = likeBtn.classList.contains('active');
+
+    // Mostrar animación de corazón en la foto (siempre, como Instagram)
+    showHeartAnimation(event, detalleContent, !isCurrentlyLiked);
+
+    // Simular clic en el botón de like para reutilizar toda la lógica existente
+    // (sonido, actualización de memoria viva, Supabase, localStorage, etc.)
+    likeBtn.click();
+};
+
+// ── Animación de 👍/👎 flotante estilo globo (doble clic) ──
+function showHeartAnimation(event, container, isAdding) {
+    const heart = document.createElement('div');
+    heart.className = 'dbl-tap-heart ' + (isAdding ? 'heart-in' : 'heart-out');
+    heart.innerHTML = isAdding ? '👍' : '👎';
+
+    // Posicionar sobre donde se hizo doble clic
+    const rect = container.getBoundingClientRect();
+    const carousel = container.querySelector('.detalle-img-carousel');
+    const carouselRect = carousel ? carousel.getBoundingClientRect() : rect;
+    
+    heart.style.left = (event.clientX - carouselRect.left) + 'px';
+    heart.style.top = (event.clientY - carouselRect.top) + 'px';
+
+    // Insertar dentro del contenedor relativo de la imagen
+    const imgWrapper = carousel ? carousel.parentElement : container;
+    imgWrapper.appendChild(heart);
+
+    // Remover después de la animación
+    setTimeout(() => heart.remove(), 1100);
+}
 
 window.shareListing = function (event, id, title, price, city) {
     event.stopPropagation();

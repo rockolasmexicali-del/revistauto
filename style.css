@@ -2478,3 +2478,67 @@ input:checked+.slider:before {
     font-weight: 700;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
 }
+
+/* ── Doble clic Like – Animación de 👍/👎 estilo globo flotante ── */
+.dbl-tap-heart {
+    position: absolute;
+    font-size: 72px;
+    pointer-events: none;
+    z-index: 200;
+    transform: translate(-50%, -50%) scale(0);
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.dbl-tap-heart.heart-in {
+    animation: thumbBubbleUp 1s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
+}
+
+.dbl-tap-heart.heart-out {
+    animation: thumbBubbleDown 0.9s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
+}
+
+@keyframes thumbBubbleUp {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+        opacity: 0;
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(1.25) rotate(5deg);
+        opacity: 1;
+    }
+    35% {
+        transform: translate(-50%, -55%) scale(0.95) rotate(-2deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -65%) scale(1.05) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -180%) scale(0.6) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+@keyframes thumbBubbleDown {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(15deg);
+        opacity: 0;
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(1.2) rotate(-5deg);
+        opacity: 1;
+    }
+    35% {
+        transform: translate(-50%, -55%) scale(0.95) rotate(2deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -65%) scale(1) rotate(0deg);
+        opacity: 0.9;
+    }
+    100% {
+        transform: translate(-50%, -180%) scale(0.5) rotate(0deg);
+        opacity: 0;
+    }
+}

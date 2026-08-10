@@ -1732,7 +1732,9 @@ class Database {
     }
 
     async updateReaction(id, reactionType, incrementVal) {
-        // Actualizamos localmente primero
+        console.log(`🎯 updateReaction llamado: id=${id}, type=${reactionType}, inc=${incrementVal}`);
+        
+        // Actualizamos localmente primero (listings propios / favoritos en localStorage)
         const listings = this.getAllListings();
         const listing = listings.find(l => String(l.id) === String(id));
         if (listing) {
@@ -1744,11 +1746,31 @@ class Database {
             }
             listing.reactions[reactionType] = Math.max(0, (listing.reactions[reactionType] || 0) + incrementVal);
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
+            console.log('📦 Actualizado en localStorage:', listing.reactions);
+        } else {
+            console.log('ℹ️ Listing NO está en localStorage (es del feed online)');
         }
 
+        // Obtener las reactions actualizadas de la memoria viva (para el fallback directo)
+        const getLiveReactions = () => {
+            const liveItem = (typeof window.activeFeedListings !== 'undefined' && window.activeFeedListings.find(l => String(l.id) === String(id)))
+                || (window.searchCascadeList && window.searchCascadeList.find(l => String(l.id) === String(id)))
+                || (window.currentSearchContext && window.currentSearchContext.level1 && window.currentSearchContext.level1.find(l => String(l.id) === String(id)));
+            if (liveItem && liveItem.reactions && typeof liveItem.reactions === 'object') {
+                return { ...liveItem.reactions };
+            }
+            return listing ? { ...listing.reactions } : null;
+        };
+
+        // Persistir en Supabase (fuente de verdad global)
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            // Convertir a Number para coincidir con el tipo BIGINT del RPC en Supabase
             const numericId = Number(id);
+            if (isNaN(numericId)) {
+                console.warn('⚠️ updateReaction: ID no numérico:', id);
+                return;
+            }
+
+            // Estrategia 1: Intentar RPC (más eficiente, incrementa atómicamente)
             try {
                 const { error } = await supabaseClient.rpc('update_reaction', {
                     listing_id: numericId,
@@ -1756,20 +1778,43 @@ class Database {
                     increment_val: incrementVal
                 });
 
-                if (error) {
-                    console.warn("RPC update_reaction no disponible, usando fallback directo:", error.message);
-                    if (listing && listing.reactions) {
-                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', numericId);
-                    }
+                if (!error) {
+                    console.log('✅ Reacción guardada en Supabase via RPC exitosamente');
+                    return; // ¡Éxito! No necesitamos fallback
                 }
+                console.warn('⚠️ RPC update_reaction falló:', error.message, '→ Intentando fallback directo...');
             } catch (err) {
-                console.warn("Error de red actualizando reaccion:", err);
-                if (listing && listing.reactions) {
-                    try {
-                        await supabaseClient.from('listings').update({ reactions: listing.reactions }).eq('id', numericId);
-                    } catch (e) {}
-                }
+                console.warn('⚠️ RPC update_reaction error de red:', err.message, '→ Intentando fallback directo...');
             }
+
+            // Estrategia 2: Fallback - UPDATE directo a la columna reactions con el objeto completo
+            try {
+                const liveReactions = getLiveReactions();
+                if (liveReactions) {
+                    console.log('🔄 Fallback: Enviando reactions completas a Supabase:', liveReactions);
+                    const { error: updateError } = await supabaseClient
+                        .from('listings')
+                        .update({ reactions: liveReactions })
+                        .eq('id', numericId);
+                    
+                    if (!updateError) {
+                        console.log('✅ Reacción guardada en Supabase via UPDATE directo');
+                        return;
+                    }
+                    console.error('❌ UPDATE directo también falló:', updateError.message);
+                    console.error('👉 PROBABLE CAUSA: La columna "reactions" no existe en Supabase.');
+                    console.error('👉 SOLUCIÓN: Ejecuta este SQL en el SQL Editor de Supabase:');
+                    console.error(`   ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb;`);
+                    console.error(`   -- Y también crea la función RPC:`);
+                    console.error(`   CREATE OR REPLACE FUNCTION update_reaction(listing_id BIGINT, reaction_type TEXT, increment_val INT) RETURNS void AS $$ BEGIN UPDATE public.listings SET reactions = jsonb_set(COALESCE(reactions, '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb), array[reaction_type], to_jsonb(COALESCE((reactions->>reaction_type)::int, 0) + increment_val)) WHERE id = listing_id; END; $$ LANGUAGE plpgsql SECURITY DEFINER;`);
+                } else {
+                    console.warn('⚠️ No hay reactions en memoria viva para enviar como fallback');
+                }
+            } catch (e) {
+                console.error('❌ Fallback directo completamente falló:', e);
+            }
+        } else {
+            console.warn('⚠️ supabaseClient no disponible - reacciones solo en memoria local');
         }
     }
 
