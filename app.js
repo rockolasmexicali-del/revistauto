@@ -8229,7 +8229,7 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
             </div>
             <div class="social-btn-container">
                 <div class="social-btn share-btn" style="color: #007AFF;" onclick="window.shareListing(event, '${id}', '${safeTitle}', ${price || 0}, '${safeCity}')">
-                    <span class="material-symbols-rounded" style="font-size: 20px;">share</span>
+                    <span class="material-symbols-rounded" style="font-size: 24px;">share</span>
                 </div>
             </div>
         </div>
