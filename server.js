@@ -237,14 +237,8 @@ app.post('/api/process_payment', async (req, res) => {
         }
     } catch (error) {
         console.error('Error al procesar pago MP:', error);
-        
-        let diagnosticPrefix = '';
-        const settings = db.getSettings();
-        if (settings && settings.mpAccessToken) {
-            diagnosticPrefix = `[Token usado empieza con: ${settings.mpAccessToken.substring(0, 12)}...] `;
-        }
-        
-        res.status(500).json({ success: false, error: diagnosticPrefix + error.message });
+        // SECURITY: No se exponen credenciales ni detalles internos al cliente
+        res.status(500).json({ success: false, error: 'Error al procesar el pago. Intente nuevamente o contacte al administrador.' });
     }
 });
 
@@ -579,7 +573,8 @@ app.post('/api/upload', upload.array('images', 10), async (req, res) => {
 app.delete('/api/upload/:filename', (req, res) => {
     const filename = req.params.filename;
     
-    if (filename.includes('..') || filename.includes('/')) {
+    // SECURITY: Validar contra path traversal en Unix (/) y Windows (\)
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\') || filename.includes('%2F') || filename.includes('%5C') || !/^[a-zA-Z0-9._-]+$/.test(filename)) {
         return res.status(400).json({ success: false, error: 'Nombre de archivo inválido' });
     }
     

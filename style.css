@@ -340,18 +340,19 @@ textarea,
     top: 50%;
     transform: translateY(-50%);
     background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     color: white;
     border: none;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    width: 32px;
-    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    backdrop-filter: blur(4px);
-    transition: background 0.3s;
-    z-index: 5;
+    transition: background 0.3s, transform 0.2s;
+    z-index: 10;
 }
 
 .carousel-nav-btn:hover {
@@ -360,10 +361,12 @@ textarea,
 
 .carousel-nav-btn.prev {
     left: 8px;
+    animation: bounceLeft 1.5s infinite ease-in-out;
 }
 
 .carousel-nav-btn.next {
     right: 8px;
+    animation: bounceRight 1.5s infinite ease-in-out;
 }
 
 
@@ -1279,34 +1282,7 @@ select:focus {
 }
 
 /* Vista Detalle */
-.carousel-nav-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    color: white;
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-}
 
-.carousel-nav-btn.prev {
-    left: 8px;
-    animation: bounceLeft 1.5s infinite ease-in-out;
-}
-
-.carousel-nav-btn.next {
-    right: 8px;
-    animation: bounceRight 1.5s infinite ease-in-out;
-}
 
 @keyframes bounceLeft {
 
@@ -1908,7 +1884,7 @@ input:checked+.slider:before {
     }
 }
 
-@keyframes slideInRight {
+@keyframes slideInFromRight {
     0% {
         transform: translateX(100%);
         opacity: 0;
@@ -1941,7 +1917,7 @@ input:checked+.slider:before {
 }
 
 .slide-in-right {
-    animation: slideInRight 0.25s forwards ease-in-out;
+    animation: slideInFromRight 0.25s forwards ease-in-out;
 }
 
 .slide-in-left {
@@ -2462,22 +2438,46 @@ input:checked+.slider:before {
     box-shadow: none !important;
 }
 
-/* Emojis de reacción en gris cuando no están activos */
+/* Emojis de reacción en gris con contorno amarillo brillante en estado inactivo */
 .social-btn.reaction-btn {
-    filter: grayscale(100%);
-    opacity: 0.6;
+    filter: grayscale(100%) drop-shadow(0 0 1.5px #FFD700) drop-shadow(0 0 3px rgba(255, 215, 0, 0.75));
+    opacity: 0.85;
+    transition: transform 0.15s ease, filter 0.3s ease, opacity 0.3s ease;
 }
 
-.social-btn:active {
+.social-btn.reaction-btn:hover {
+    opacity: 1;
     transform: scale(1.15);
+    filter: grayscale(70%) drop-shadow(0 0 2.5px #FFD700) drop-shadow(0 0 5px rgba(255, 215, 0, 0.95));
 }
 
-.social-btn.active {
+.social-btn.reaction-btn:active {
+    transform: scale(0.7) !important;
+}
+
+/* Estado activo: Color vivo pleno + animación caricatura elástica + resplandor dorado */
+.social-btn.reaction-btn.active {
     background: transparent !important;
     border: none !important;
-    transform: scale(1.3);
-    filter: grayscale(0%) !important;
+    filter: grayscale(0%) drop-shadow(0 2px 8px rgba(255, 215, 0, 0.65)) !important;
     opacity: 1 !important;
+    animation: emojiCartoonPop 0.42s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* Animación elástica estilo caricatura (encoge -> pop gigante -> rebote elástico) */
+@keyframes emojiCartoonPop {
+    0% {
+        transform: scale(0.7);
+    }
+    45% {
+        transform: scale(1.48);
+    }
+    75% {
+        transform: scale(1.12);
+    }
+    100% {
+        transform: scale(1.28);
+    }
 }
 
 /* Botón de compartir siempre en azul */
@@ -2495,22 +2495,54 @@ input:checked+.slider:before {
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
-/* ── Doble clic Like – Animación de 👍/👎 estilo globo flotante ── */
+/* ── Doble clic Like – Animación de 👍/👎 +1 / -1 estilo Mario 1-UP ── */
 .dbl-tap-heart {
     position: absolute;
-    font-size: 72px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     pointer-events: none;
     z-index: 200;
     transform: translate(-50%, -50%) scale(0);
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.7));
+    user-select: none;
+}
+
+.mario-icon {
+    font-size: 58px;
+    line-height: 1;
+}
+
+.mario-badge {
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    line-height: 1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+.mario-badge.badge-plus {
+    color: #25D366;
+    background: rgba(10, 25, 15, 0.85);
+    border: 1.5px solid #25D366;
+}
+
+.mario-badge.badge-minus {
+    color: #FF4D4D;
+    background: rgba(30, 10, 10, 0.85);
+    border: 1.5px solid #FF4D4D;
 }
 
 .dbl-tap-heart.heart-in {
-    animation: thumbBubbleUp 1s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
+    animation: thumbBubbleUp 1.05s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
 }
 
 .dbl-tap-heart.heart-out {
-    animation: thumbBubbleDown 0.9s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
+    animation: thumbBubbleDown 1.05s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
 }
 
 @keyframes thumbBubbleUp {

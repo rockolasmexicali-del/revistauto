@@ -1,4 +1,4 @@
-const APP_VERSION = "1.5.7"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.6.3"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1537,27 +1537,27 @@ class Database {
     async loginAdmin(username, password) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
+                // SECURITY: Se usa una función RPC segura (verify_admin_user) en lugar de
+                // consultar la tabla admin_users directamente. Esto evita que cualquier
+                // usuario con la anon key pueda enumerar o leer la tabla de administradores.
                 const { data, error } = await supabaseClient
-                    .from('admin_users')
-                    .select('*')
-                    .eq('username', username)
-                    .eq('password', password)
-                    .maybeSingle();
+                    .rpc('verify_admin_user', { p_username: username, p_password: password });
 
                 if (error) {
-                    console.error("Error consultando admin_users:", error);
+                    console.error("Error verificando credenciales de admin:", error.message);
                 }
 
-                if (data) {
+                if (data && data.length > 0) {
+                    const user = data[0];
                     return {
                         success: true,
-                        token: 'admin-token-' + data.id,
-                        role: data.role,
-                        user: { id: data.id, username: data.username, role: data.role, allowedStates: data.allowedStates, allowedCities: data.allowedCities }
+                        token: 'admin-token-' + user.id,
+                        role: user.role,
+                        user: { id: user.id, username: user.username, role: user.role, allowedStates: user.allowed_states, allowedCities: user.allowed_cities }
                     };
                 }
             } catch (err) {
-                console.warn("Error de red al consultar admin_users en Supabase:", err);
+                console.warn("Error de red al verificar credenciales de admin:", err);
             }
         }
 
@@ -1674,23 +1674,6 @@ class Database {
         }
     }
 
-    async fetchTrafficStats() {
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('traffic_stats')
-                    .select('*')
-                    .order('date', { ascending: false });
-
-                if (!error && data) {
-                    return data;
-                }
-            } catch (err) {
-                console.warn('Error fetching traffic stats:', err);
-            }
-        }
-        return [];
-    }
 
     async incrementViews(id) {
         // Evitar múltiples conteos por sesión para el mismo anuncio

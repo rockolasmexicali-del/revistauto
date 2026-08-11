@@ -1335,20 +1335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.syncSearchLocationWithHome = syncSearchLocationWithHome;
 
-    function updateStateSelectLabel(state) {
-        if (state === 'Todos') return;
-        const option = Array.from(userStateSelect.options).find(opt => opt.value === state);
-        if (option) {
-            // Restore default states first
-            Array.from(userStateSelect.options).forEach(opt => {
-                if (opt.value !== 'Todos') opt.textContent = opt.value;
-            });
-            // Update selected one if it's just 1 city
-            if (selectedCities.length === 1) {
-                option.textContent = `${state} / ${selectedCities[0]}`;
-            }
-        }
-    }
+
 
     window.cachedCategoryStats = null;
 
@@ -4748,7 +4735,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}</span>
                                 <span>📍 ${listing.city}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar teléfono">📞 ${listing.phone}</span>
-                                ${listing.whatsapp ? `<a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
+                                ${listing.whatsapp ? `<a href="${buildAdminWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.82rem; color: ${listing.paymentStatus === 'paid' ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: bold; margin-top: 3px;">
@@ -4797,7 +4784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
                         <div><strong>Ubicación:</strong> ${listing.state ? listing.state + ', ' : ''}${listing.city}</div>
                         <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar al portapapeles">${listing.phone}</span></div>
-                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span> <a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:8px;" onclick="event.stopPropagation();">Abrir Chat</a></div>` : ''}
+                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span> <a href="${buildAdminWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:8px;" onclick="event.stopPropagation();">Abrir Chat</a></div>` : ''}
                     </div>
 
                     <!-- Módulo CRM de Bitácora / Notas de Seguimiento -->
@@ -5004,7 +4991,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}</span>
                                 <span>📍 ${listing.city}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${listing.phone}', 'Teléfono')">📞 ${listing.phone}</span>
-                                ${listing.whatsapp ? `<a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
+                                ${listing.whatsapp ? `<a href="${buildAdminWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.82rem; color: var(--danger-color); font-weight: bold; margin-top: 3px;">
@@ -5053,7 +5040,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
                         <div><strong>Ubicación:</strong> ${listing.state ? listing.state + ', ' : ''}${listing.city}</div>
                         <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar al portapapeles">${listing.phone}</span></div>
-                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span> <a href="${buildWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:8px;" onclick="event.stopPropagation();">Abrir Chat</a></div>` : ''}
+                        ${listing.whatsapp ? `<div style="grid-column: span 1;"><strong>WhatsApp:</strong> <span class="copyable-phone" onclick="copyToClipboard('${listing.whatsapp}', 'WhatsApp')" title="Clic para copiar al portapapeles">${listing.whatsapp}</span> <a href="${buildAdminWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:8px;" onclick="event.stopPropagation();">Abrir Chat</a></div>` : ''}
                     </div>
 
                     <!-- Módulo CRM de Bitácora / Notas de Seguimiento -->
@@ -5225,7 +5212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="pending-sub-info">
                                 <span>📍 ${ad.state ? ad.state + ' / ' : ''}${ad.city || ''}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone || 'Sin tel'}</span>
-                                ${ad.whatsapp ? `<a href="${typeof buildWhatsAppUrl === 'function' ? buildWhatsAppUrl(ad.whatsapp, ad.title) : '#'}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
+                                ${ad.whatsapp ? `<a href="${typeof buildAdminWhatsAppUrl === 'function' ? buildAdminWhatsAppUrl(ad.whatsapp, ad.title) : '#'}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -6079,7 +6066,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else {
             try {
-                const token = localStorage.getItem('revista_admin_token');
+                const token = localStorage.getItem('admin_token');
                 const res = await fetch(`${db.apiBaseUrl}/payments?from=${fromISO}&to=${toISO}`, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
@@ -6674,7 +6661,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // UTILIDADES PARA WHATSAPP
     // ==========================================
-    window.buildWhatsAppUrl = function (phone, listingTitle) {
+    window.buildAdminWhatsAppUrl = function (phone, listingTitle) {
         if (!phone) return '#';
         let cleanPhone = String(phone).replace(/\D/g, '');
         if (cleanPhone.length === 10) {
@@ -6978,7 +6965,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     async function renderUsersAdmin() {
-        if (!usersTableBody || window.currentAdminUser.role !== 'admin') return;
+        if (!usersTableBody || !window.currentAdminUser || window.currentAdminUser.role !== 'admin') return;
         try {
             const data = await db.getAdminUsers();
             if (data.success) {
@@ -8376,27 +8363,42 @@ function playBubbleSound(isReverse = false) {
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.type = 'sine';
     const now = audioCtx.currentTime;
 
-    if (isReverse) {
+    if (!isReverse) {
+        // Sonido para LIKE: Tono agudo y suave (880Hz -> 420Hz)
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(420, now + 0.07);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc.start(now);
+        osc.stop(now + 0.08);
+    } else {
+        // Sonido para DISLIKE / Quitar reacción: Sonido burbuja anterior (600Hz -> 150Hz)
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.type = 'sine';
         osc.frequency.setValueAtTime(600, now);
         osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
-    } else {
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
     }
-
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
-    osc.start(now);
-    osc.stop(now + 0.15);
 }
 
 window.toggleSocialReaction = function (event, listingId, reactionType) {
@@ -8478,6 +8480,8 @@ window.toggleSocialReaction = function (event, listingId, reactionType) {
             updateMemory(listingId, currentReaction, -1);
         }
 
+        btn.classList.remove('active');
+        void btn.offsetWidth; // Fuerza reflow para reiniciar la animación caricatura pop
         btn.classList.add('active');
         countEl.textContent = (currentCount + 1).toLocaleString('en-US');
         userReactions[listingId] = reactionType;
@@ -8514,11 +8518,17 @@ window.handleDoubleTapLike = function (event, listingId) {
     likeBtn.click();
 };
 
-// ── Animación de 👍/👎 flotante estilo globo (doble clic) ──
+// ── Animación de 👍/👎 +1/-1 flotante estilo Mario 1-UP (doble clic) ──
 function showHeartAnimation(event, container, isAdding) {
     const heart = document.createElement('div');
     heart.className = 'dbl-tap-heart ' + (isAdding ? 'heart-in' : 'heart-out');
-    heart.innerHTML = isAdding ? '👍' : '👎';
+
+    const iconHtml = `<span class="mario-icon">${isAdding ? '👍' : '👎'}</span>`;
+    const badgeHtml = isAdding 
+        ? '<span class="mario-badge badge-plus">+1</span>' 
+        : '<span class="mario-badge badge-minus">-1</span>';
+
+    heart.innerHTML = iconHtml + badgeHtml;
 
     // Posicionar sobre donde se hizo doble clic
     const rect = container.getBoundingClientRect();
