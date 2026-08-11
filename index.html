@@ -571,22 +571,41 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Flex Container for Chart -->
-                        <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch;">
+                        <!-- Flex Container for Charts -->
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch; margin-bottom: 24px;">
 
-                        <div class="chart-section" style="flex: 0 1 50%; min-width: 300px; max-width: 600px; background: var(--surface-color); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                                <h4 id="traffic-chart-title" style="margin: 0;">Tráfico de Visitas</h4>
-                                <select id="traffic-period-select" class="form-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none; width: auto;">
-                                    <option value="7d">Últimos 7 días</option>
-                                    <option value="month">Por Mes (Ene-Dic)</option>
-                                    <option value="year">Por Año (Histórico)</option>
-                                </select>
+                            <div class="chart-section" style="flex: 1 1 320px; background: var(--surface-color); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h4 id="traffic-chart-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        <span class="material-symbols-rounded" style="color: var(--primary-color);">bar_chart</span> Tráfico de Visitas
+                                    </h4>
+                                    <select id="traffic-period-select" class="form-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none; width: auto; cursor: pointer;">
+                                        <option value="7d" selected>Últimos 7 días</option>
+                                        <option value="month">Por Mes (Ene-Dic)</option>
+                                        <option value="year">Por Año (Histórico)</option>
+                                    </select>
+                                </div>
+                                <div class="bar-chart-container" id="traffic-chart" style="display: flex; align-items: stretch; justify-content: space-between; height: 160px; gap: 8px;">
+                                    <!-- Barras inyectadas por JS -->
+                                </div>
                             </div>
-                            <div class="bar-chart-container" id="traffic-chart" style="display: flex; align-items: flex-end; justify-content: space-between; height: 150px; gap: 8px;">
-                                <!-- Barras inyectadas por JS -->
+
+                            <div class="chart-section" style="flex: 1 1 320px; background: var(--surface-color); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h4 id="sales-chart-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        <span class="material-symbols-rounded" style="color: #f59e0b;">sell</span> Autos Vendidos
+                                    </h4>
+                                    <select id="sales-period-select" class="form-select" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none; width: auto; cursor: pointer;">
+                                        <option value="7d" selected>Últimos 7 días</option>
+                                        <option value="month">Por Mes (Ene-Dic)</option>
+                                        <option value="year">Por Año (Histórico)</option>
+                                    </select>
+                                </div>
+                                <div class="bar-chart-container" id="sales-chart" style="display: flex; align-items: stretch; justify-content: space-between; height: 160px; gap: 8px;">
+                                    <!-- Barras inyectadas por JS -->
+                                </div>
                             </div>
-                        </div>
+
                         </div> <!-- End Flex Container -->
                     </div>
 

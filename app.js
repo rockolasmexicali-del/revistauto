@@ -4280,6 +4280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminAdsRenewals === 'function') updateAdminAdsRenewals();
         updateBillingList();
         renderTrafficChart();
+        renderSalesChart();
     }
 
     let titleClickCount = 0;
@@ -4388,6 +4389,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.updateQuickSales(period, activeSalesBtn);
             } else if (typeof window.updateQuickSales === 'function') {
                 window.updateQuickSales('todo', document.querySelector('.quick-sale-btn[onclick*="todo"]'));
+            }
+
+            if (typeof window.renderSalesChart === 'function') {
+                window.renderSalesChart();
             }
         });
 
@@ -4581,6 +4586,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
 
             visitsData.forEach(row => {
+                if (!row.date) return;
                 const parts = row.date.split('-');
                 const rowDate = new Date(parts[0], parts[1] - 1, parts[2]);
                 if (rowDate >= startOfWeek) {
@@ -4596,10 +4602,13 @@ document.addEventListener('DOMContentLoaded', () => {
             data = new Array(12).fill(0);
 
             visitsData.forEach(row => {
+                if (!row.date) return;
                 const parts = row.date.split('-');
                 if (parseInt(parts[0]) === now.getFullYear()) {
                     const monthIndex = parseInt(parts[1]) - 1;
-                    data[monthIndex] += row.visits || 0;
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                        data[monthIndex] += row.visits || 0;
+                    }
                 }
             });
         } else if (period === 'year') {
@@ -4608,6 +4617,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data = [0, 0, 0, 0];
 
             visitsData.forEach(row => {
+                if (!row.date) return;
                 const parts = row.date.split('-');
                 const rowYear = parseInt(parts[0]);
                 const diff = currentYear - rowYear;
@@ -4617,18 +4627,186 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        let highlightIdx = -1;
+        if (period === '7d') {
+            const dayOfWeek = now.getDay();
+            highlightIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        } else if (period === 'month') {
+            highlightIdx = now.getMonth();
+        } else if (period === 'year') {
+            highlightIdx = 3;
+        }
+
         const max = Math.max(...data, 1); // Evitar división por cero
 
         chartContainer.innerHTML = data.map((val, i) => {
             const height = (val / max) * 100;
+            const isCurrent = (i === highlightIdx);
+
+            const barBg = isCurrent
+                ? 'linear-gradient(180deg, #38bdf8 0%, #2563eb 100%)'
+                : 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)';
+            const barBorder = isCurrent ? '2px solid #38bdf8' : 'none';
+            const trackBg = isCurrent
+                ? 'rgba(56, 189, 248, 0.15)'
+                : 'rgba(255, 255, 255, 0.03)';
+            const trackBorder = isCurrent
+                ? '1px dashed #38bdf8'
+                : '1px solid transparent';
+            const labelStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #ffffff; background: #2563eb; border: 1px solid #38bdf8; border-radius: 6px; padding: 2px 6px; box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);'
+                : 'font-size: 0.7rem; color: var(--text-muted); text-align: center; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%;';
+            const valStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #38bdf8; margin-bottom: 2px;'
+                : `font-size: 0.68rem; font-weight: 600; color: ${val > 0 ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${val > 0 ? 1 : 0.4}; margin-bottom: 2px;`;
+            const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
+
             return `
-            <div class="bar-chart-col" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                <div class="bar-chart-bar" style="height: ${height}%; width: 100%; min-width: 15px; max-width: 40px; background: var(--primary-color); border-radius: 4px 4px 0 0; transition: height 0.5s ease;" data-value="${val}" title="${val} vistas"></div>
-                <span class="bar-chart-label" style="font-size: 0.7rem; color: var(--text-muted); text-align: center;">${labels[i]}</span>
+            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+                <span class="bar-chart-val" style="${valStyle}">${val}</span>
+                <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
+                    <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} vistas ${isCurrent ? '(Actual)' : ''}"></div>
+                </div>
+                <span class="bar-chart-label" style="${labelStyle}">${labels[i]}</span>
             </div>
             `;
         }).join('');
     }
+    window.renderTrafficChart = renderTrafficChart;
+
+    function renderSalesChart() {
+        const chartContainer = document.getElementById('sales-chart');
+        const periodSelect = document.getElementById('sales-period-select');
+        if (!chartContainer) return;
+
+        if (periodSelect && !periodSelect.dataset.listener) {
+            periodSelect.dataset.listener = 'true';
+            periodSelect.addEventListener('change', renderSalesChart);
+        }
+
+        const period = periodSelect ? periodSelect.value : '7d';
+        let labels = [];
+        let data = [];
+        const sales = window.salesHistoryCache || [];
+        const allListings = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+        const soldListings = allListings.filter(l => l.status === 'vendido');
+
+        // Unificar histórico de ventas con autos actualmente marcados como vendidos
+        const salesMap = new Map();
+        sales.forEach(s => salesMap.set(String(s.listing_id || s.id), s));
+        soldListings.forEach(l => {
+            const key = String(l.id);
+            if (!salesMap.has(key)) {
+                salesMap.set(key, {
+                    listing_id: l.id,
+                    sold_at: l.soldAt || l.sold_at || l.publishedAt || l.published_at || new Date().toISOString()
+                });
+            }
+        });
+        const combinedSales = Array.from(salesMap.values());
+        const now = new Date();
+
+        if (period === '7d') {
+            labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            data = [0, 0, 0, 0, 0, 0, 0];
+
+            const dayOfWeek = now.getDay();
+            const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+
+            combinedSales.forEach(s => {
+                const dateStr = s.sold_at || s.soldAt || s.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                if (itemDate >= startOfWeek) {
+                    const itemDay = itemDate.getDay();
+                    const index = itemDay === 0 ? 6 : itemDay - 1; // 0=Lun, 6=Dom
+                    if (index >= 0 && index < 7) {
+                        data[index]++;
+                    }
+                }
+            });
+        } else if (period === 'month') {
+            labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            data = new Array(12).fill(0);
+
+            combinedSales.forEach(s => {
+                const dateStr = s.sold_at || s.soldAt || s.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                if (itemDate.getFullYear() === now.getFullYear()) {
+                    const monthIndex = itemDate.getMonth();
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                        data[monthIndex]++;
+                    }
+                }
+            });
+        } else if (period === 'year') {
+            const currentYear = now.getFullYear();
+            labels = [String(currentYear - 3), String(currentYear - 2), String(currentYear - 1), String(currentYear)];
+            data = [0, 0, 0, 0];
+
+            combinedSales.forEach(s => {
+                const dateStr = s.sold_at || s.soldAt || s.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                const rowYear = itemDate.getFullYear();
+                const diff = currentYear - rowYear;
+                if (diff >= 0 && diff <= 3) {
+                    data[3 - diff]++;
+                }
+            });
+        }
+
+        let highlightIdx = -1;
+        if (period === '7d') {
+            const dayOfWeek = now.getDay();
+            highlightIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        } else if (period === 'month') {
+            highlightIdx = now.getMonth();
+        } else if (period === 'year') {
+            highlightIdx = 3;
+        }
+
+        const max = Math.max(...data, 1); // Evitar división por cero
+
+        chartContainer.innerHTML = data.map((val, i) => {
+            const height = (val / max) * 100;
+            const isCurrent = (i === highlightIdx);
+
+            const barBg = isCurrent
+                ? 'linear-gradient(180deg, #facc15 0%, #ea580c 100%)'
+                : 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)';
+            const barBorder = isCurrent ? '2px solid #facc15' : 'none';
+            const trackBg = isCurrent
+                ? 'rgba(251, 191, 36, 0.15)'
+                : 'rgba(255, 255, 255, 0.03)';
+            const trackBorder = isCurrent
+                ? '1px dashed #facc15'
+                : '1px solid transparent';
+            const labelStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #000000; background: #facc15; border: 1px solid #fbbf24; border-radius: 6px; padding: 2px 6px; box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);'
+                : 'font-size: 0.7rem; color: var(--text-muted); text-align: center; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%;';
+            const valStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #fbbf24; margin-bottom: 2px;'
+                : `font-size: 0.68rem; font-weight: 600; color: ${val > 0 ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${val > 0 ? 1 : 0.4}; margin-bottom: 2px;`;
+            const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(250, 204, 21, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
+
+            return `
+            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+                <span class="bar-chart-val" style="${valStyle}">${val}</span>
+                <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
+                    <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} autos vendidos ${isCurrent ? '(Actual)' : ''}"></div>
+                </div>
+                <span class="bar-chart-label" style="${labelStyle}">${labels[i]}</span>
+            </div>
+            `;
+        }).join('');
+    }
+    window.renderSalesChart = renderSalesChart;
 
     async function renderAdminInventory() {
         const tbody = document.getElementById('inventory-table-body');
