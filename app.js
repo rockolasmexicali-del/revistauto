@@ -6323,6 +6323,308 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // --- Admin Create Ad Modal Handler ("Crear Anuncio") ---
+    const btnAdminAddAd = document.getElementById('btn-admin-add-ad');
+    const adminAdModal = document.getElementById('admin-ad-modal');
+    const btnCloseAdminAd = document.getElementById('btn-close-admin-ad');
+    const btnCancelAdminAd = document.getElementById('btn-cancel-admin-ad');
+    const btnSaveAdminAd = document.getElementById('btn-save-admin-ad');
+    const adminAdForm = document.getElementById('admin-ad-form');
+    const adStateSelect = document.getElementById('ad-state');
+    const adCitySelect = document.getElementById('ad-city');
+    const adImageUpload = document.getElementById('ad-image-upload');
+    const adImagePreviewContainer = document.getElementById('ad-image-preview-container');
+    const adFileChosenText = document.getElementById('ad-file-chosen-text');
+
+    window.adminAdImages = [];
+
+    function renderAdminAdImagePreviews() {
+        if (!adImagePreviewContainer || !adFileChosenText) return;
+        adImagePreviewContainer.innerHTML = '';
+
+        if (!window.adminAdImages || window.adminAdImages.length === 0) {
+            adFileChosenText.textContent = '0 fotos (recuerda que la 1ra es la portada)';
+            return;
+        }
+
+        adFileChosenText.textContent = `${window.adminAdImages.length} foto(s) seleccionada(s)`;
+
+        window.adminAdImages.forEach((imgSrc, idx) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.display = 'inline-block';
+
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.style.width = '60px';
+            img.style.height = '60px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '6px';
+            img.style.border = idx === 0 ? '2px solid #f59e0b' : '1px solid var(--border-color)';
+
+            if (idx === 0) {
+                const badge = document.createElement('div');
+                badge.textContent = 'PORTADA';
+                badge.style.position = 'absolute';
+                badge.style.bottom = '0';
+                badge.style.left = '0';
+                badge.style.right = '0';
+                badge.style.background = '#f59e0b';
+                badge.style.color = 'white';
+                badge.style.fontSize = '0.5rem';
+                badge.style.textAlign = 'center';
+                badge.style.fontWeight = 'bold';
+                badge.style.borderRadius = '0 0 6px 6px';
+                wrapper.appendChild(badge);
+            }
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 14px;">close</span>';
+            delBtn.style.position = 'absolute';
+            delBtn.style.top = '-4px';
+            delBtn.style.right = '-4px';
+            delBtn.style.background = 'rgba(255,0,0,0.8)';
+            delBtn.style.color = 'white';
+            delBtn.style.border = 'none';
+            delBtn.style.borderRadius = '50%';
+            delBtn.style.width = '20px';
+            delBtn.style.height = '20px';
+            delBtn.style.display = 'flex';
+            delBtn.style.alignItems = 'center';
+            delBtn.style.justifyContent = 'center';
+            delBtn.style.cursor = 'pointer';
+
+            delBtn.onclick = (ev) => {
+                ev.preventDefault();
+                window.adminAdImages.splice(idx, 1);
+                renderAdminAdImagePreviews();
+            };
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(delBtn);
+            adImagePreviewContainer.appendChild(wrapper);
+        });
+    }
+
+    function populateAdminAdStates() {
+        if (!adStateSelect) return;
+        adStateSelect.innerHTML = '<option value="" disabled selected>Selecciona</option>';
+
+        const statesSet = new Set();
+        if (typeof catalogData !== 'undefined' && catalogData.citiesByState) {
+            Object.keys(catalogData.citiesByState).sort().forEach(s => statesSet.add(s));
+        }
+        if (window.activeLocations && window.activeLocations.states) {
+            window.activeLocations.states.forEach(s => statesSet.add(s));
+        }
+
+        statesSet.forEach(state => {
+            adStateSelect.innerHTML += `<option value="${state}">${state}</option>`;
+        });
+    }
+
+    if (adStateSelect && adCitySelect) {
+        adStateSelect.addEventListener('change', (e) => {
+            const state = e.target.value;
+            adCitySelect.innerHTML = '<option value="" disabled selected>Selecciona</option>';
+
+            let cities = [];
+            if (typeof catalogData !== 'undefined' && catalogData.citiesByState && catalogData.citiesByState[state]) {
+                cities = catalogData.citiesByState[state];
+            } else if (window.activeLocations && window.activeLocations.citiesByState && window.activeLocations.citiesByState[state]) {
+                cities = window.activeLocations.citiesByState[state];
+            }
+
+            if (cities.length > 0) {
+                cities.sort().forEach(city => {
+                    adCitySelect.innerHTML += `<option value="${city}">${city}</option>`;
+                });
+            } else {
+                adCitySelect.innerHTML = '<option value="" disabled selected>No hay ciudades</option>';
+            }
+        });
+    }
+
+    if (adImageUpload) {
+        adImageUpload.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            window.adminAdImages = window.adminAdImages || [];
+
+            if (window.adminAdImages.length + files.length > 7) {
+                showAlert('Solo puedes subir hasta 7 fotos.', 'Límite de fotos', 'warning');
+                return;
+            }
+
+            const uploadBtnLabel = document.querySelector('label[for="ad-image-upload"]');
+            let originalText = '';
+            if (uploadBtnLabel) {
+                originalText = uploadBtnLabel.innerHTML;
+                uploadBtnLabel.innerHTML = '<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">autorenew</span> Procesando...';
+                uploadBtnLabel.style.pointerEvents = 'none';
+            }
+
+            for (let file of files) {
+                try {
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 800;
+                                let scaleSize = 1;
+                                if (img.width > MAX_WIDTH) {
+                                    scaleSize = MAX_WIDTH / img.width;
+                                }
+                                canvas.width = img.width * scaleSize;
+                                canvas.height = img.height * scaleSize;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/webp', 0.8));
+                            };
+                            img.onerror = () => reject(new Error("Error cargando imagen"));
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = () => reject(new Error("Error leyendo archivo"));
+                        reader.readAsDataURL(file);
+                    });
+
+                    window.adminAdImages.push(dataUrl);
+                } catch (err) {
+                    console.error("Error procesando imagen del anuncio admin", err);
+                }
+            }
+
+            if (uploadBtnLabel) {
+                uploadBtnLabel.innerHTML = originalText;
+                uploadBtnLabel.style.pointerEvents = 'auto';
+            }
+
+            renderAdminAdImagePreviews();
+        });
+    }
+
+    function openAdminAdModal() {
+        if (adminAdForm) adminAdForm.reset();
+        window.adminAdImages = [];
+        renderAdminAdImagePreviews();
+        populateAdminAdStates();
+
+        if (adCitySelect) {
+            adCitySelect.innerHTML = '<option value="" disabled selected>Selecciona</option>';
+        }
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const inOneMonth = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const inOneMonthStr = inOneMonth.toISOString().split('T')[0];
+
+        const startDateInput = document.getElementById('ad-start-date');
+        const endDateInput = document.getElementById('ad-end-date');
+        if (startDateInput) startDateInput.value = todayStr;
+        if (endDateInput) endDateInput.value = inOneMonthStr;
+
+        if (adminAdModal) adminAdModal.classList.add('active');
+    }
+
+    function closeAdminAdModal() {
+        if (adminAdModal) adminAdModal.classList.remove('active');
+        if (adminAdForm) adminAdForm.reset();
+        window.adminAdImages = [];
+    }
+
+    if (btnAdminAddAd) {
+        btnAdminAddAd.onclick = (e) => {
+            e.preventDefault();
+            openAdminAdModal();
+        };
+    }
+
+    if (btnCloseAdminAd) btnCloseAdminAd.onclick = (e) => { e.preventDefault(); closeAdminAdModal(); };
+    if (btnCancelAdminAd) btnCancelAdminAd.onclick = (e) => { e.preventDefault(); closeAdminAdModal(); };
+
+    if (btnSaveAdminAd) {
+        btnSaveAdminAd.onclick = async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('ad-title')?.value.trim() || '';
+            const description = document.getElementById('ad-description')?.value.trim() || '';
+            const state = document.getElementById('ad-state')?.value || '';
+            const city = document.getElementById('ad-city')?.value || '';
+            const phone = document.getElementById('ad-phone')?.value.trim() || '';
+            const whatsapp = document.getElementById('ad-whatsapp')?.value.trim() || '';
+            const startDate = document.getElementById('ad-start-date')?.value || '';
+            const endDate = document.getElementById('ad-end-date')?.value || '';
+            const fb = document.getElementById('ad-link-fb')?.value.trim() || '';
+            const ig = document.getElementById('ad-link-ig')?.value.trim() || '';
+            const tk = document.getElementById('ad-link-tk')?.value.trim() || '';
+
+            if (!title || !description || !state || !city || !startDate || !endDate) {
+                showAlert('Por favor llena los campos requeridos (*): Nombre, Descripción, Estado, Ciudad y Fechas.', 'Faltan Datos', 'warning');
+                return;
+            }
+
+            if (!window.adminAdImages || window.adminAdImages.length === 0) {
+                showAlert('Debes agregar al menos una foto para el anuncio.', 'Foto Requerida', 'warning');
+                return;
+            }
+
+            btnSaveAdminAd.disabled = true;
+            btnSaveAdminAd.textContent = 'Guardando...';
+
+            try {
+                const social_links = [fb, ig, tk].filter(Boolean);
+                const newAd = {
+                    id: Date.now(),
+                    publisher_id: window.currentAdminUser ? window.currentAdminUser.id || 'admin' : 'admin',
+                    title: title,
+                    description: description,
+                    state: state,
+                    city: city,
+                    phone: phone,
+                    whatsapp: whatsapp,
+                    start_date: startDate,
+                    end_date: endDate,
+                    social_links: social_links,
+                    images: [...window.adminAdImages],
+                    is_active: true,
+                    payment_status: 'pagado',
+                    views: 0,
+                    clicks: 0,
+                    created_at: new Date().toISOString()
+                };
+
+                await db.saveAd(newAd);
+                if (typeof db.addAdPayment === 'function') {
+                    db.addAdPayment(newAd.id, 0, null, 'Alta Directa Admin', 'manual');
+                }
+
+                // Invalidate cache dataset on tables for immediate re-render
+                const tbody = document.getElementById('ads-table-body');
+                if (tbody) delete tbody.dataset.lastState;
+                const adminAdsTable = document.getElementById('admin-ads-table-body');
+                if (adminAdsTable) delete adminAdsTable.dataset.lastState;
+                const pendingAdsList = document.getElementById('pending-ads-list');
+                if (pendingAdsList) delete pendingAdsList.dataset.lastState;
+
+                if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+                if (typeof renderAdminAdsTable === 'function') await renderAdminAdsTable();
+
+                closeAdminAdModal();
+                showAlert('El anuncio ha sido creado y activado exitosamente.', 'Anuncio Creado', 'check_circle');
+            } catch (err) {
+                console.error("Error al crear anuncio:", err);
+                showAlert('Ocurrió un error al guardar el anuncio. Por favor reintenta.', 'Error', 'danger');
+            } finally {
+                btnSaveAdminAd.disabled = false;
+                btnSaveAdminAd.textContent = 'Guardar Anuncio';
+            }
+        };
+    }
+
     window.deleteListingImageAdmin = async function (id, index) {
         window.appConfirm('¿Seguro que deseas eliminar esta foto de la publicación?', async () => {
             const listings = db.getAllListings();
