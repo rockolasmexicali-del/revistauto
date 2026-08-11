@@ -2662,6 +2662,52 @@ document.addEventListener('DOMContentLoaded', () => {
         savedListingsContainer.innerHTML = saved.map(l => createListingCardHTML(l, false)).join('');
     }
 
+    // --- Modal de Publicación Vendida o No Disponible ---
+    window.showUnavailableListingModal = function (type = 'sold') {
+        const modal = document.getElementById('modal-unavailable-listing');
+        const titleEl = document.getElementById('unavailable-modal-title');
+        const msgEl = document.getElementById('unavailable-modal-message');
+        const iconEl = document.getElementById('unavailable-modal-icon');
+        const acceptBtn = document.getElementById('btn-unavailable-accept');
+
+        if (!modal) return;
+
+        if (type === 'sold') {
+            if (titleEl) titleEl.textContent = '¡Este vehículo ya fue vendido!';
+            if (msgEl) msgEl.textContent = 'El automóvil que intentas ver ya se ha vendido. Te invitamos a explorar las opciones activas disponibles en tu ciudad.';
+            if (iconEl) iconEl.textContent = 'sell';
+        } else {
+            if (titleEl) titleEl.textContent = 'Publicación no disponible';
+            if (msgEl) msgEl.textContent = 'El vehículo que intentas ver ya no se encuentra disponible o fue retirado. Te invitamos a explorar otras opciones en tu ciudad.';
+            if (iconEl) iconEl.textContent = 'visibility_off';
+        }
+
+        modal.classList.add('active');
+
+        if (acceptBtn) {
+            acceptBtn.onclick = () => {
+                modal.classList.remove('active');
+                
+                // Redirigir al usuario al INICIO
+                const viewInicio = document.getElementById('view-inicio');
+                const allViews = document.querySelectorAll('.view');
+                allViews.forEach(v => v.classList.remove('active'));
+                if (viewInicio) viewInicio.classList.add('active');
+
+                const allNavItems = document.querySelectorAll('.nav-item');
+                allNavItems.forEach(n => {
+                    if (n.getAttribute('data-target') === 'view-inicio') {
+                        n.classList.add('active');
+                    } else {
+                        n.classList.remove('active');
+                    }
+                });
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        }
+    };
+
     // --- Detalles ---
     window.openListingDetails = async function (id) {
         let listing = null;
@@ -2741,8 +2787,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (!listing) {
-            console.error("Listing no encontrado en local ni en servidor:", id);
+        const isSold = listing && (String(listing.status).toLowerCase() === 'vendido' || listing.sold_at || listing.isSold);
+        const isUnavailable = !listing || String(listing.status).toLowerCase() === 'eliminado';
+
+        if (isSold || isUnavailable) {
+            if (typeof window.showUnavailableListingModal === 'function') {
+                window.showUnavailableListingModal(isSold ? 'sold' : 'unavailable');
+            }
             return;
         }
 
@@ -8671,3 +8722,156 @@ window.addEventListener('load', () => {
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(window.checkDeepLink, 300);
 }
+
+// ==========================================
+// MÓDULO UP NEXT EN ENCABEZADO (NOVEDADES POR CIUDAD)
+// ==========================================
+(function initUpNextHeaderManager() {
+    let currentUpNextTimer = null;
+    let viewedUpNextIds = [];
+
+    async function getActiveListingsForUpNext(userCity) {
+        let allListings = [];
+        try {
+            if (window.db && typeof window.db.getAllListings === 'function') {
+                allListings = await window.db.getAllListings();
+            }
+        } catch (e) {
+            allListings = window.listingsData || [];
+        }
+
+        if (!Array.isArray(allListings) || allListings.length === 0) return [];
+
+        // Filtrar solo autos activos (excluyendo vendidos y no autorizados)
+        let active = allListings.filter(l => {
+            const st = String(l.status || '').toLowerCase();
+            return st === 'autorizado' || st === 'destacado' || st === 'activo' || st === '';
+        });
+
+        // Filtrar por ciudad si no es 'Todos'
+        if (userCity && userCity !== 'Todos') {
+            const local = active.filter(l => l.city && l.city.toLowerCase() === userCity.toLowerCase());
+            if (local.length > 0) active = local;
+        }
+
+        return active;
+    }
+
+    function buildUpNextCandidates(listings) {
+        const candidates = [];
+
+        listings.forEach(l => {
+            const price = Number(l.price) || 0;
+            const oldPrice = Number(l.oldPrice || l.old_price) || 0;
+            const views = Number(l.views) || 0;
+
+            // 1. Baja de Precio
+            if (oldPrice > price && price > 0) {
+                const diff = oldPrice - price;
+                const diffStr = diff >= 1000 ? `$${Math.round(diff / 1000)}k` : `$${diff}`;
+                candidates.push({
+                    type: 'discount',
+                    badgeClass: 'badge-discount',
+                    text: `📉 ¡Bajó ${diffStr}! ${l.make || ''} ${l.model || l.title || ''}`,
+                    listingId: l.id,
+                    weight: 10
+                });
+            }
+
+            // 2. Recién Publicado (nuevos)
+            const created = l.created_at ? new Date(l.created_at) : null;
+            const isRecent = created && (Date.now() - created.getTime() < 7 * 24 * 3600 * 1000);
+            if (isRecent) {
+                candidates.push({
+                    type: 'new',
+                    badgeClass: 'badge-new',
+                    text: `✨ ¡Nuevo! ${l.make || ''} ${l.model || l.title || ''}`,
+                    listingId: l.id,
+                    weight: 8
+                });
+            }
+
+            // 3. En Tendencia / Popular
+            if (views > 3 || l.status === 'destacado') {
+                candidates.push({
+                    type: 'trending',
+                    badgeClass: 'badge-trending',
+                    text: `🔥 ¡Popular! ${l.make || ''} ${l.model || l.title || ''}`,
+                    listingId: l.id,
+                    weight: 5
+                });
+            }
+        });
+
+        return candidates;
+    }
+
+    async function showNextHeaderPill() {
+        const pill = document.getElementById('header-upnext-pill');
+        const advertiseBtn = document.getElementById('btn-advertise');
+        if (!pill) return;
+
+        // Leer la ciudad seleccionada del usuario
+        let userCity = 'Todos';
+        const userCityBtn = document.getElementById('btn-user-cities');
+        if (userCityBtn && userCityBtn.textContent) {
+            userCity = userCityBtn.textContent.trim().replace(/▾|▼/g, '').trim();
+        }
+
+        const listings = await getActiveListingsForUpNext(userCity);
+        if (listings.length === 0) return;
+
+        const candidates = buildUpNextCandidates(listings);
+        if (candidates.length === 0) return;
+
+        // Seleccionar una candidatura no vista recientemente
+        let selected = candidates.find(c => !viewedUpNextIds.includes(c.listingId));
+        if (!selected) {
+            viewedUpNextIds = []; // Reiniciar ciclo de memoria vista
+            selected = candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
+        if (!selected) return;
+
+        viewedUpNextIds.push(selected.listingId);
+        if (viewedUpNextIds.length > 15) viewedUpNextIds.shift();
+
+        // Ocultar botón Anúnciate momentáneamente
+        if (advertiseBtn) advertiseBtn.style.display = 'none';
+
+        // Renderizar la cápsula pill
+        pill.className = `header-upnext-pill ${selected.badgeClass} pill-in`;
+        pill.innerHTML = `<span class="upnext-text">${selected.text}</span><span class="upnext-arrow">›</span>`;
+        pill.style.display = 'inline-flex';
+
+        // Clic redirige al vehículo
+        pill.onclick = (e) => {
+            e.stopPropagation();
+            if (typeof window.openListingDetails === 'function') {
+                window.openListingDetails(selected.listingId);
+            }
+        };
+
+        // Después de 4.5 segundos, guardar la cápsula
+        setTimeout(() => {
+            pill.className = `header-upnext-pill ${selected.badgeClass} pill-out`;
+            setTimeout(() => {
+                pill.style.display = 'none';
+                if (advertiseBtn) advertiseBtn.style.display = 'inline-flex';
+            }, 400);
+        }, 4500);
+    }
+
+    function startUpNextLoop() {
+        // Primera ejecución a los 3 segundos
+        setTimeout(showNextHeaderPill, 3000);
+        // Ciclo cada 22 segundos
+        currentUpNextTimer = setInterval(showNextHeaderPill, 22000);
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(startUpNextLoop, 1500);
+    } else {
+        window.addEventListener('DOMContentLoaded', () => setTimeout(startUpNextLoop, 1500));
+    }
+})();

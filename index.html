@@ -58,9 +58,12 @@
                 </button>
             </nav>
 
-            <button id="btn-advertise" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 16px; background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 4px; box-shadow: none; white-space: nowrap; width: auto; max-width: max-content; cursor: pointer; transition: all 0.2s ease;">
-                <span class="material-symbols-rounded" style="font-size: 15px;">storefront</span> Anúnciate
-            </button>
+            <div id="header-upnext-container" class="header-upnext-container">
+                <button id="btn-advertise" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 16px; background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 4px; box-shadow: none; white-space: nowrap; width: auto; max-width: max-content; cursor: pointer; transition: all 0.3s ease;">
+                    <span class="material-symbols-rounded" style="font-size: 15px;">storefront</span> Anúnciate
+                </button>
+                <div id="header-upnext-pill" class="header-upnext-pill" style="display: none;"></div>
+            </div>
         </header>
 
         <main id="main-content">
@@ -1752,6 +1755,22 @@
             </p>
             <button id="btn-activate-gps" class="primary-btn" style="width: 100%; font-size: 1.1rem; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <span class="material-symbols-rounded">my_location</span> Activar mi Ubicación
+            </button>
+        </div>
+    <!-- Modal de Publicación Vendida o No Disponible -->
+    <div id="modal-unavailable-listing" class="modal" style="z-index: 10008; backdrop-filter: blur(8px);">
+        <div class="modal-content" style="max-width: 390px; text-align: center; padding: 32px 24px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(18, 24, 38, 0.95); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+            <div style="margin-bottom: 20px;">
+                <div style="width: 76px; height: 76px; background: rgba(245, 158, 11, 0.15); border: 2px solid #F59E0B; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);">
+                    <span class="material-symbols-rounded" style="font-size: 38px; color: #F59E0B;" id="unavailable-modal-icon">sell</span>
+                </div>
+            </div>
+            <h3 id="unavailable-modal-title" style="margin-bottom: 12px; font-size: 1.35rem; font-weight: 700; color: white;">¡Este vehículo ya fue vendido!</h3>
+            <p id="unavailable-modal-message" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.55; margin-bottom: 28px;">
+                El automóvil que intentas ver ya no se encuentra disponible porque fue vendido o retirado por su propietario. Te invitamos a explorar las opciones activas disponibles.
+            </p>
+            <button id="btn-unavailable-accept" class="primary-btn" style="width: 100%; font-size: 1.05rem; padding: 13px; border-radius: 14px; font-weight: 700; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: transform 0.2s ease;">
+                Aceptar
             </button>
         </div>
     </div>

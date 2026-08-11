@@ -2480,12 +2480,11 @@ input:checked+.slider:before {
     }
 }
 
-/* Botón de compartir siempre en azul */
+/* Botón de compartir en azul con delineado negro para darle cuerpo y definición */
 .social-btn.share-btn {
     color: #4DA6FF !important;
-    filter: none !important;
+    filter: drop-shadow(1px 0 0 #000000) drop-shadow(-1px 0 0 #000000) drop-shadow(0 1px 0 #000000) drop-shadow(0 -1px 0 #000000) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)) !important;
     opacity: 1 !important;
-    text-shadow: 0 1px 6px rgba(0, 122, 255, 0.4);
 }
 
 .social-count {
@@ -2587,6 +2586,108 @@ input:checked+.slider:before {
     }
     100% {
         transform: translate(-50%, -180%) scale(0.5) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+/* ── Módulo Up Next Encabezado Lado Derecho ── */
+.header-upnext-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 32px;
+}
+
+.header-upnext-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #ffffff;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    white-space: nowrap;
+    user-select: none;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.header-upnext-pill:hover {
+    transform: scale(1.04);
+    filter: brightness(1.15);
+}
+
+.header-upnext-pill:active {
+    transform: scale(0.96);
+}
+
+.header-upnext-pill .upnext-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-upnext-pill .upnext-arrow {
+    font-size: 11px;
+    opacity: 0.85;
+    margin-left: 2px;
+}
+
+/* Variantes Neón según el tipo de novedad */
+.header-upnext-pill.badge-discount {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1.5px solid #10B981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.header-upnext-pill.badge-new {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1.5px solid #F59E0B;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.header-upnext-pill.badge-trending {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1.5px solid #3B82F6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+/* Transiciones de animación */
+.header-upnext-pill.pill-in {
+    animation: upNextSlideIn 0.45s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
+}
+
+.header-upnext-pill.pill-out {
+    animation: upNextSlideOut 0.4s cubic-bezier(0.22, 0.68, 0.31, 1) forwards;
+}
+
+@keyframes upNextSlideIn {
+    0% {
+        transform: translateX(100%) scale(0.85);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes upNextSlideOut {
+    0% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%) scale(0.85);
         opacity: 0;
     }
 }
