@@ -3094,7 +3094,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // No necesitamos volver a agregar .active al prev porque nunca se le quitó
         if (previousViewId === 'view-biblioteca') renderSavedListings();
 
-        // Sincronizar el estado del historial si tenía abierto el detalle
+                        // Sincronizar el estado del historial si tenía abierto el detalle
         if (history.state && history.state.page === 'listing-details') {
             try { history.replaceState({ page: 'root' }, ''); } catch (e) { }
         }
@@ -3106,47 +3106,97 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.enablePinchZoom = function (imgElement) {
-        let scale = 1;
+        if (!imgElement || imgElement.dataset.pinchZoomEnabled) return;
+        imgElement.dataset.pinchZoomEnabled = 'true';
+
         let initialDistance = 0;
+        let initialMidX = 0;
+        let initialMidY = 0;
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        let isPinching = false;
 
         imgElement.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
-                initialDistance = Math.hypot(
-                    e.touches[0].pageX - e.touches[1].pageX,
-                    e.touches[0].pageY - e.touches[1].pageY
-                );
-            }
-        }, { passive: false });
+                isPinching = true;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
 
-        imgElement.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const currentDistance = Math.hypot(
-                    e.touches[0].pageX - e.touches[1].pageX,
-                    e.touches[0].pageY - e.touches[1].pageY
+                initialDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
                 );
-                scale = Math.min(Math.max(1, currentDistance / initialDistance), 4);
-                imgElement.style.transform = `scale(${scale})`;
+
+                initialMidX = (touch1.clientX + touch2.clientX) / 2;
+                initialMidY = (touch1.clientY + touch2.clientY) / 2;
+
                 imgElement.style.transition = 'none';
-                imgElement.style.zIndex = '100';
+                imgElement.style.zIndex = '1000';
                 imgElement.style.position = 'relative';
             }
         }, { passive: false });
 
-        imgElement.addEventListener('touchend', (e) => {
-            if (e.touches.length < 2 && scale !== 1) {
-                scale = 1;
-                imgElement.style.transform = `scale(${scale})`;
-                imgElement.style.transition = 'transform 0.3s ease';
-                setTimeout(() => {
-                    if (scale === 1) {
-                        imgElement.style.zIndex = '';
-                        imgElement.style.position = '';
-                        imgElement.style.transform = '';
-                        imgElement.style.transition = '';
-                    }
-                }, 300);
+        imgElement.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && isPinching) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+
+                const currentDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
+                );
+
+                const currentMidX = (touch1.clientX + touch2.clientX) / 2;
+                const currentMidY = (touch1.clientY + touch2.clientY) / 2;
+
+                // Calcular escala (zoom entre 1x y 4x)
+                if (initialDistance > 0) {
+                    scale = Math.min(Math.max(1, currentDistance / initialDistance), 4);
+                }
+
+                // Calcular desplazamiento 2D siguiendo el punto medio de los 2 dedos
+                translateX = (currentMidX - initialMidX) / scale;
+                translateY = (currentMidY - initialMidY) / scale;
+
+                // Aplicar transformación 2D (zoom enfocado + desplazamiento)
+                imgElement.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
             }
+        }, { passive: false });
+
+        const resetZoom = () => {
+            if (!isPinching) return;
+            isPinching = false;
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            initialDistance = 0;
+
+            // Transición de regreso suave al tamaño y posición original (1x centrado)
+            imgElement.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            imgElement.style.transform = 'scale(1) translate(0px, 0px)';
+
+            setTimeout(() => {
+                if (!isPinching) {
+                    imgElement.style.zIndex = '';
+                    imgElement.style.position = '';
+                    imgElement.style.transform = '';
+                    imgElement.style.transition = '';
+                }
+            }, 300);
+        };
+
+        imgElement.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                resetZoom();
+            }
+        });
+
+        imgElement.addEventListener('touchcancel', (e) => {
+            resetZoom();
         });
     };
 
