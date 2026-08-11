@@ -1,4 +1,4 @@
-const APP_VERSION = "1.5.5"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.5.7"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1357,11 +1357,17 @@ class Database {
     getAllPayments() {
         // Priorizar el log independiente (sobrevive a borrado de listings)
         const logKey = 'revista_payments_log';
-        const log = JSON.parse(localStorage.getItem(logKey) || '[]');
-        if (log.length > 0) {
+        const rawLog = localStorage.getItem(logKey);
+
+        // Si la clave YA EXISTE (aunque sea array vacío), respetamos ese estado.
+        // Solo hacemos fallback si nunca se inicializó (clave null = sistema antiguo).
+        if (rawLog !== null) {
+            const log = JSON.parse(rawLog);
             return log.sort((a, b) => (b.id || 0) - (a.id || 0));
         }
-        // Fallback: leer desde los listings (sistema anterior)
+
+        // Fallback ÚNICO: migración desde el sistema anterior (listings con payments embebidos)
+        // Solo entra aquí si la clave nunca existió en localStorage
         const listings = this.getAllListings();
         let allPayments = [];
         listings.forEach(l => {
@@ -1377,11 +1383,10 @@ class Database {
                 });
             }
         });
-        // Si encontramos pagos legacy, migrarlos al nuevo log
-        if (allPayments.length > 0) {
-            localStorage.setItem(logKey, JSON.stringify(allPayments.sort((a, b) => (b.id || 0) - (a.id || 0))));
-        }
-        return allPayments.sort((a, b) => (b.id || b.timestamp || 0) - (a.id || a.timestamp || 0));
+        // Migrar al nuevo log (una sola vez) e inicializar la clave
+        const migratedLog = allPayments.sort((a, b) => (b.id || b.timestamp || 0) - (a.id || a.timestamp || 0));
+        localStorage.setItem(logKey, JSON.stringify(migratedLog));
+        return migratedLog;
     }
 
     deletePayment(paymentId) {
@@ -2048,6 +2053,33 @@ class Database {
         }
         return null;
     }
+
+    // Limpiar notas CRM de un listing al entrar a Renovaciones (nuevo ciclo)
+    clearListingNotes(id) {
+        const listings = this.getAllListings();
+        const index = listings.findIndex(l => String(l.id) === String(id));
+        if (index !== -1 && listings[index].notes && listings[index].notes.length > 0) {
+            listings[index].notes = [];
+            localStorage.setItem(this.listingsKey, JSON.stringify(listings));
+            this.saveListing(listings[index]); // Sincroniza con Supabase en background
+            return true;
+        }
+        return false;
+    }
+
+    // Limpiar notas CRM de un anuncio al entrar a Renovaciones (nuevo ciclo)
+    clearAdNotes(id) {
+        const ads = this.getAllAds();
+        const index = ads.findIndex(a => String(a.id) === String(id));
+        if (index !== -1 && ads[index].notes && ads[index].notes.length > 0) {
+            ads[index].notes = [];
+            localStorage.setItem('revista_autos_ads', JSON.stringify(ads));
+            this.saveAd(ads[index]); // Sincroniza con Supabase en background
+            return true;
+        }
+        return false;
+    }
+
 
     async incrementAdViews(adId) {
         let ad = this.getAllAds().find(a => String(a.id) === String(adId));

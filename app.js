@@ -4183,6 +4183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
         updateAdminRenewals();
+        if (typeof updateAdminAdsRenewals === 'function') updateAdminAdsRenewals();
         updateBillingList();
         renderTrafficChart();
     }
@@ -4246,6 +4247,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (targetId === 'tab-renovaciones') {
                 if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+                if (typeof updateAdminAdsRenewals === 'function') updateAdminAdsRenewals();
             }
             if (targetId === 'tab-bitacora') {
                 if (typeof renderAdminAuditLog === 'function') renderAdminAuditLog();
@@ -4674,7 +4676,16 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
 
-        const stateKey = JSON.stringify(pending) + '_' + query;
+        // Ordenar: items con nota CRM reciente van al final (cola de revisión)
+        if (window.pendingListingsMoveToEnd && window.pendingListingsMoveToEnd.size > 0) {
+            pending.sort((a, b) => {
+                const aEnd = window.pendingListingsMoveToEnd.has(String(a.id)) ? 1 : 0;
+                const bEnd = window.pendingListingsMoveToEnd.has(String(b.id)) ? 1 : 0;
+                return aEnd - bEnd;
+            });
+        }
+
+        const stateKey = JSON.stringify(pending) + '_' + query + '_' + Array.from(window.pendingListingsMoveToEnd || []).join(',');
         if (list.dataset.lastState === stateKey) return;
         list.dataset.lastState = stateKey;
 
@@ -4881,6 +4892,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return expDate <= alertThreshold; // Vence en <= 5 días o ya venció
         });
 
+        // Auto-limpiar CRM: la primera vez que un listing entra a Renovaciones, borrar sus notas
+        const clearedListings = getRenewalClearedSet('listings');
+        pendingRenewals.forEach(listing => {
+            if (!clearedListings.has(String(listing.id))) {
+                markRenewalCleared('listings', listing.id);
+                db.clearListingNotes(listing.id); // Limpia en DB (localStorage + Supabase async)
+                listing.notes = []; // Actualiza referencia local para el render inmediato
+            }
+        });
+
         // Filtrado por búsqueda
         if (searchInput && !searchInput.dataset.hasListener) {
             searchInput.dataset.hasListener = 'true';
@@ -4903,7 +4924,16 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarBadge.style.display = pendingRenewals.length > 0 ? 'inline-block' : 'none';
         }
 
-        const stateKey = JSON.stringify(pendingRenewals) + '_' + query;
+        // Ordenar: items con nota CRM reciente van al final (cola de revisión)
+        if (window.pendingListingsMoveToEnd && window.pendingListingsMoveToEnd.size > 0) {
+            pendingRenewals.sort((a, b) => {
+                const aEnd = window.pendingListingsMoveToEnd.has(String(a.id)) ? 1 : 0;
+                const bEnd = window.pendingListingsMoveToEnd.has(String(b.id)) ? 1 : 0;
+                return aEnd - bEnd;
+            });
+        }
+
+        const stateKey = JSON.stringify(pendingRenewals) + '_' + query + '_' + Array.from(window.pendingListingsMoveToEnd || []).join(',');
         if (list.dataset.lastState === stateKey) return;
         list.dataset.lastState = stateKey;
 
@@ -5084,6 +5114,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('renew-confirm-modal');
             if (modal) modal.classList.remove('active');
 
+            // Desmarcar tracking para que el próximo ciclo de vencimiento limpie CRM de nuevo
+            unmarkRenewalCleared('listings', id);
+
             const listing = db.getAllListings().find(l => String(l.id) === String(id));
             const city = listing ? listing.city : 'N/A';
             db.logActivity('Renovación de vehículo', `Publicación #${id}`, city);
@@ -5093,11 +5126,307 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // ================================================================
+    // NUEVA FUNCIÓN: Publicidad próxima a vencer → Sección Renovaciones
+    // ================================================================
+    window.updateAdminAdsRenewals = function () {
+        const list = document.getElementById('renewals-ads-list');
+        const badge = document.getElementById('renewals-ads-count-badge');
+        if (!list) return;
+
+        const now = new Date();
+        const alertThreshold = new Date(now);
+        alertThreshold.setDate(alertThreshold.getDate() + 5); // 5 días de anticipación
+
+        let expiringAds = db.getAllAds().filter(a => {
+            if (!a.is_active) return false;
+            if (!a.end_date) return false;
+            const expDate = new Date(a.end_date);
+            return expDate <= alertThreshold; // Vence en <= 5 días o ya venció
+        });
+
+        if (badge) badge.textContent = expiringAds.length;
+
+        // Auto-limpiar CRM: la primera vez que un anuncio entra a Renovaciones, borrar sus notas
+        const clearedAds = getRenewalClearedSet('ads');
+        expiringAds.forEach(ad => {
+            if (!clearedAds.has(String(ad.id))) {
+                markRenewalCleared('ads', ad.id);
+                db.clearAdNotes(ad.id); // Limpia en DB (localStorage + Supabase async)
+                ad.notes = []; // Actualiza referencia local para el render inmediato
+            }
+        });
+
+        // Ordenar: ads de renovación con nota CRM reciente van al final (cola de revisión)
+        if (window.renewalAdsMoveToEnd && window.renewalAdsMoveToEnd.size > 0) {
+            expiringAds.sort((a, b) => {
+                const aEnd = window.renewalAdsMoveToEnd.has(String(a.id)) ? 1 : 0;
+                const bEnd = window.renewalAdsMoveToEnd.has(String(b.id)) ? 1 : 0;
+                return aEnd - bEnd;
+            });
+        }
+
+        const stateKey = JSON.stringify(expiringAds) + '_' + Array.from(window.expandedAdminAdRenewCards || []).join(',') + '_' + Array.from(window.renewalAdsMoveToEnd || []).join(',');
+        if (list.dataset.lastState === stateKey) return;
+        list.dataset.lastState = stateKey;
+
+        if (expiringAds.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 20px;">No hay publicidad próxima a renovar (dentro de los próximos 5 días).</p>';
+            return;
+        }
+
+        list.innerHTML = expiringAds.map(ad => {
+            const images = ad.images || [];
+            const mainImg = images.length > 0 ? images[0] : 'https://via.placeholder.com/60';
+
+            let notes = ad.notes || [];
+            if (typeof notes === 'string') {
+                try { notes = JSON.parse(notes); } catch (e) { notes = []; }
+            }
+            const notesCount = notes.length;
+            const notesBadgeHTML = notesCount > 0
+                ? `<span class="pending-notes-badge has-notes" id="ad-ren-notes-badge-${ad.id}"><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM</span>`
+                : `<span class="pending-notes-badge" id="ad-ren-notes-badge-${ad.id}">Sin notas</span>`;
+
+            const notesListHTML = notes.length > 0 ? notes.map(n => `
+                <div class="crm-note-item">
+                    <div class="crm-note-time">
+                        <span class="material-symbols-rounded" style="font-size:13px; vertical-align:middle;">schedule</span> ${n.timestamp}
+                    </div>
+                    <div class="crm-note-text">${n.text}</div>
+                </div>
+            `).join('') : `<p id="no-ad-ren-notes-msg-${ad.id}" style="color:var(--text-muted); font-size:0.82rem; margin:0;">No hay notas registradas aún. Escribe abajo para dejar evidencia.</p>`;
+
+            const isExpanded = window.expandedAdminAdRenewCards && window.expandedAdminAdRenewCards.has(String(ad.id));
+
+            // Calcular estado de vencimiento
+            let statusTagHTML = '';
+            if (ad.end_date) {
+                const expDate = new Date(ad.end_date);
+                const diffTime = expDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays < 0) {
+                    statusTagHTML = `<span style="background:var(--danger-color); color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-left:6px;">¡CADUCADO!</span>`;
+                } else {
+                    statusTagHTML = `<span style="background:#f59e0b; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-left:6px;">Vence en ${diffDays} día(s)</span>`;
+                }
+            }
+
+            return `
+            <div class="pending-approval-card ${isExpanded ? 'expanded' : ''}" id="renew-ad-card-${ad.id}" style="border-left: 4px solid #f59e0b;">
+                <div class="pending-row-header" onclick="toggleRenewAdDetail(${ad.id})">
+                    <div class="pending-row-left">
+                        <div class="pending-thumb-wrapper">
+                            <img src="${mainImg}" alt="${ad.title || 'Publicidad'}">
+                            ${images.length > 1 ? `<span class="pending-img-count">📸 ${images.length}</span>` : ''}
+                        </div>
+                        <div class="pending-main-info">
+                            <div class="pending-title">${ad.title || 'Sin título'} ${statusTagHTML}</div>
+                            <div class="pending-sub-info">
+                                <span>📍 ${ad.state ? ad.state + ' / ' : ''}${ad.city || ''}</span>
+                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone || 'Sin tel'}</span>
+                                ${ad.whatsapp ? `<a href="${typeof buildWhatsAppUrl === 'function' ? buildWhatsAppUrl(ad.whatsapp, ad.title) : '#'}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
+                                ${notesBadgeHTML}
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${ad.description || 'Sin descripción'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pending-row-right">
+                        <button class="danger-btn" onclick="event.stopPropagation(); window.appConfirm('¿Dar de baja este anuncio de publicidad?', async () => { await db.deleteAd(${ad.id}); const l=document.getElementById('renewals-ads-list'); if(l) delete l.dataset.lastState; if(typeof updateAdminAdsRenewals==='function') updateAdminAdsRenewals(); showAlert('Publicidad dada de baja.', 'Baja registrada', 'check_circle'); })" title="Dar de baja anuncio" style="padding: 6px 12px; display:flex; align-items:center; gap:4px;">
+                            <span class="material-symbols-rounded" style="font-size:16px;">close</span> Dar de Baja
+                        </button>
+                        <button class="success-btn" onclick="event.stopPropagation(); renewAdAdmin(${ad.id})" title="Renovar publicidad por 30 días más" style="padding: 6px 12px; display:flex; align-items:center; gap:4px; background:#f59e0b;">
+                            <span class="material-symbols-rounded" style="font-size:16px;">autorenew</span> Renovar
+                        </button>
+                        <span id="renew-ad-expand-icon-${ad.id}" class="material-symbols-rounded" style="transition: transform 0.2s; color: var(--text-muted); ${isExpanded ? 'transform: rotate(180deg);' : ''}">expand_more</span>
+                    </div>
+                </div>
+
+                <!-- Panel Expandible de Detalle y CRM de Renovación Publicidad -->
+                <div class="pending-detail-panel">
+                    <!-- Datos del anuncio -->
+                    <div style="background: var(--surface-color); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem; margin-bottom: 12px;">
+                        <div style="font-weight: bold; font-size: 0.95rem; color: #f59e0b; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">campaign</span> Información de la Publicidad
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                            <div><strong>Título:</strong> ${ad.title || '-'}</div>
+                            <div><strong>Ciudad:</strong> ${ad.state ? ad.state + ' / ' : ''}${ad.city || '-'}</div>
+                            <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')" title="Clic para copiar">${ad.phone || '-'}</span></div>
+                            <div><strong>WhatsApp:</strong> ${ad.whatsapp ? `<span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.whatsapp}', 'WhatsApp')">${ad.whatsapp}</span>` : '-'}</div>
+                            <div><strong>Correo:</strong> ${ad.email || '-'}</div>
+                            <div><strong>Fin de vigencia:</strong> ${ad.end_date ? new Date(ad.end_date).toLocaleDateString('es-MX') : '-'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Módulo CRM de Bitácora / Notas de Seguimiento Renovación Publicidad -->
+                    <div class="crm-notes-container">
+                        <div class="crm-notes-header">
+                            <span style="display:flex; align-items:center; gap:6px;">
+                                <span class="material-symbols-rounded" style="color:#f59e0b;">history_edu</span>
+                                Bitácora CRM — Seguimiento Renovación
+                            </span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">Historial guardado permanente</span>
+                        </div>
+                        <div class="crm-notes-list" id="crm-ad-ren-notes-list-${ad.id}">
+                            ${notesListHTML}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" id="ad-ren-note-input-${ad.id}" placeholder="Escribe un seguimiento de renovación (ej: llamada, pago recibido)..." style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--surface-light); color:var(--text-main); font-size:0.85rem; outline:none;" onkeydown="if(event.key==='Enter'){ event.preventDefault(); saveRenewalAdNote(${ad.id}); }">
+                            <button class="primary-btn" onclick="saveRenewalAdNote(${ad.id})" style="width:auto; padding:8px 14px; font-size:0.85rem; border-radius:6px; background:#f59e0b;">
+                                <span class="material-symbols-rounded" style="font-size:16px;">save</span> Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    };
+
+    // Toggle acordeón para Renovaciones → Publicidad
+    window.expandedAdminAdRenewCards = window.expandedAdminAdRenewCards || new Set();
+
+    window.toggleRenewAdDetail = function (id) {
+        const targetIdStr = String(id);
+        const isCurrentlyExpanded = window.expandedAdminAdRenewCards && window.expandedAdminAdRenewCards.has(targetIdStr);
+
+        if (window.expandedAdminAdRenewCards) {
+            window.expandedAdminAdRenewCards.forEach(openId => {
+                const openCard = document.getElementById(`renew-ad-card-${openId}`);
+                const openIcon = document.getElementById(`renew-ad-expand-icon-${openId}`);
+                if (openCard) openCard.classList.remove('expanded');
+                if (openIcon) openIcon.style.transform = 'rotate(0deg)';
+            });
+            window.expandedAdminAdRenewCards.clear();
+        }
+
+        if (!isCurrentlyExpanded) {
+            const card = document.getElementById(`renew-ad-card-${id}`);
+            const icon = document.getElementById(`renew-ad-expand-icon-${id}`);
+            if (card) {
+                card.classList.add('expanded');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                window.expandedAdminAdRenewCards.add(targetIdStr);
+            }
+        }
+    };
+
+    // Guardar nota CRM en Renovaciones → Publicidad (misma DB que Aprobaciones)
+    window.saveRenewalAdNote = function (id) {
+        const input = document.getElementById(`ad-ren-note-input-${id}`);
+        if (!input || !input.value.trim()) return;
+
+        const noteText = input.value.trim();
+        const newNote = db.addAdNote(id, noteText);
+
+        if (newNote) {
+            input.value = '';
+
+            const listEl = document.getElementById(`crm-ad-ren-notes-list-${id}`);
+            const noMsgEl = document.getElementById(`no-ad-ren-notes-msg-${id}`);
+            if (noMsgEl) noMsgEl.remove();
+
+            if (listEl) {
+                const noteItemHTML = `
+                    <div class="crm-note-item" style="animation: fadeIn 0.3s ease;">
+                        <div class="crm-note-time">
+                            <span class="material-symbols-rounded" style="font-size:13px; vertical-align:middle;">schedule</span> ${newNote.timestamp}
+                        </div>
+                        <div class="crm-note-text">${newNote.text}</div>
+                    </div>
+                `;
+                listEl.insertAdjacentHTML('afterbegin', noteItemHTML);
+            }
+
+            // Actualizar badge
+            const ads = db.getAllAds();
+            const ad = ads.find(a => String(a.id) === String(id));
+            const notesCount = ad && ad.notes ? ad.notes.length : 1;
+            const badgeEl = document.getElementById(`ad-ren-notes-badge-${id}`);
+            if (badgeEl) {
+                badgeEl.className = 'pending-notes-badge has-notes';
+                badgeEl.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM`;
+            }
+
+            // --- Auto-cerrar renglón y moverlo al final vía re-render ordenado ---
+            const card = document.getElementById(`renew-ad-card-${id}`);
+            if (card) {
+                card.classList.remove('expanded');
+                const icon = document.getElementById(`renew-ad-expand-icon-${id}`);
+                if (icon) icon.style.transform = 'rotate(0deg)';
+                if (window.expandedAdminAdRenewCards) window.expandedAdminAdRenewCards.delete(String(id));
+            }
+            // Marcar como "ya procesado" para que el render lo coloque al final
+            window.renewalAdsMoveToEnd = window.renewalAdsMoveToEnd || new Set();
+            window.renewalAdsMoveToEnd.add(String(id));
+            // Forzar re-render con nuevo orden
+            const renewalsAdsListEl = document.getElementById('renewals-ads-list');
+            if (renewalsAdsListEl) delete renewalsAdsListEl.dataset.lastState;
+            if (typeof updateAdminAdsRenewals === 'function') updateAdminAdsRenewals();
+        }
+    };
+
+    // Renovar publicidad desde sección Renovaciones
+    window.renewAdAdmin = async function (adId) {
+        window.appConfirm('¿Renovar este anuncio publicitario por 30 días más?', async () => {
+            try {
+                const ads = db.getAllAds();
+                const ad = ads.find(a => String(a.id) === String(adId));
+                if (ad) {
+                    const currentEnd = ad.end_date ? new Date(ad.end_date) : new Date();
+                    const baseDate = currentEnd > new Date() ? currentEnd : new Date();
+                    baseDate.setDate(baseDate.getDate() + 30);
+                    ad.end_date = baseDate.toISOString();
+                    ad.is_active = true;
+                    ad.payment_status = 'pagado';
+
+                    await db.saveAd(ad);
+
+                    // Desmarcar tracking para que el próximo ciclo de vencimiento limpie CRM de nuevo
+                    unmarkRenewalCleared('ads', adId);
+
+                    db.logActivity('Renovación de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
+                    showAlert('Publicidad renovada por 30 días más.', 'Renovación Exitosa', 'autorenew');
+                    forceInstantAdminRefresh();
+                }
+            } catch (e) {
+                showAlert('Error al renovar publicidad', 'Error', 'error');
+            }
+        });
+    };
+
+    // ================================================================
+    // HELPERS: Limpieza automática de CRM al entrar a Renovaciones
+    // Se guarda en localStorage para persistir entre recargas de página
+    // ================================================================
+    function getRenewalClearedSet(type) {
+        try {
+            return new Set(JSON.parse(localStorage.getItem(`revista_renewal_cleared_${type}`) || '[]'));
+        } catch (e) { return new Set(); }
+    }
+
+    function markRenewalCleared(type, id) {
+        const set = getRenewalClearedSet(type);
+        set.add(String(id));
+        localStorage.setItem(`revista_renewal_cleared_${type}`, JSON.stringify(Array.from(set)));
+    }
+
+    function unmarkRenewalCleared(type, id) {
+        const set = getRenewalClearedSet(type);
+        set.delete(String(id));
+        localStorage.setItem(`revista_renewal_cleared_${type}`, JSON.stringify(Array.from(set)));
+    }
+
     function forceInstantAdminRefresh() {
         const pendingList = document.getElementById('pending-approvals-list');
         if (pendingList) delete pendingList.dataset.lastState;
         const renewalsList = document.getElementById('renewals-list');
         if (renewalsList) delete renewalsList.dataset.lastState;
+        const renewalsAdsList = document.getElementById('renewals-ads-list');
+        if (renewalsAdsList) delete renewalsAdsList.dataset.lastState;
         const inventoryTable = document.getElementById('inventory-table-body');
         if (inventoryTable) delete inventoryTable.dataset.lastState;
         const pendingAdsList = document.getElementById('pending-ads-list');
@@ -5110,6 +5439,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
+        if (typeof updateAdminAdsRenewals === 'function') updateAdminAdsRenewals();
         if (typeof renderAdminInventory === 'function') renderAdminInventory();
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
@@ -5187,6 +5517,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 badgeEl.className = 'pending-notes-badge has-notes';
                 badgeEl.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM`;
             }
+
+            // --- Auto-cerrar renglón y moverlo al final vía re-render ordenado ---
+            // (NO usamos appendChild directo para evitar duplicados con el re-render del polling)
+            const card = document.getElementById(`pending-card-${id}`);
+            if (card) {
+                card.classList.remove('expanded');
+                const icon = document.getElementById(`pending-expand-icon-${id}`);
+                if (icon) icon.style.transform = 'rotate(0deg)';
+                if (window.expandedAdminCards) window.expandedAdminCards.delete(String(id));
+            }
+            // Marcar este ID como "ya procesado" para que el render lo coloque al final
+            window.pendingListingsMoveToEnd = window.pendingListingsMoveToEnd || new Set();
+            window.pendingListingsMoveToEnd.add(String(id));
+            // Forzar re-render con nuevo orden (el item irá al final de la lista)
+            const pendingListEl = document.getElementById('pending-approvals-list');
+            if (pendingListEl) delete pendingListEl.dataset.lastState;
+            const renewalsListEl = document.getElementById('renewals-list');
+            if (renewalsListEl) delete renewalsListEl.dataset.lastState;
+            if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+            if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
         }
     };
 
@@ -5883,27 +6233,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Limpiar listeners anteriores en el select-all
         const selectAllCb = document.getElementById('billing-select-all');
-        const btnDeleteSelected = document.getElementById('btn-delete-selected-payments');
         const selectedCountEl = document.getElementById('selected-payments-count');
 
         // Helper: recalcular cuántos están seleccionados
+        // IMPORTANTE: siempre leer el botón fresco del DOM (evita bug de referencia rota por cloneNode)
         function updateSelectionState() {
             const checked = tbody.querySelectorAll('.billing-row-cb:checked');
             const count = checked.length;
+            const btnDel = document.getElementById('btn-delete-selected-payments');
             if (selectedCountEl) selectedCountEl.textContent = count;
-            if (btnDeleteSelected) {
-                btnDeleteSelected.style.display = count > 0 ? 'flex' : 'none';
+            if (btnDel) {
+                btnDel.style.display = count > 0 ? 'flex' : 'none';
             }
-            if (selectAllCb) {
+            const allCb = document.getElementById('billing-select-all');
+            if (allCb) {
                 const all = tbody.querySelectorAll('.billing-row-cb');
-                selectAllCb.checked = all.length > 0 && count === all.length;
-                selectAllCb.indeterminate = count > 0 && count < all.length;
+                allCb.checked = all.length > 0 && count === all.length;
+                allCb.indeterminate = count > 0 && count < all.length;
             }
         }
 
         if (payments.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding: 24px;">No hay registros de cobros aún.</td></tr>';
-            if (btnDeleteSelected) btnDeleteSelected.style.display = 'none';
+            const btnDel = document.getElementById('btn-delete-selected-payments');
+            if (btnDel) btnDel.style.display = 'none';
             if (selectAllCb) selectAllCb.checked = false;
             return;
         }
@@ -5937,13 +6290,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSelectionState();
         };
 
-        // Select-all: registrar una sola vez por renderizado
-        if (selectAllCb) {
-            const newSelectAll = selectAllCb.cloneNode(true);
-            selectAllCb.parentNode.replaceChild(newSelectAll, selectAllCb);
-            newSelectAll.addEventListener('change', () => {
+        // Select-all: usar flag data-hasListener para no duplicar listeners
+        if (selectAllCb && !selectAllCb.dataset.hasListener) {
+            selectAllCb.dataset.hasListener = 'true';
+            selectAllCb.addEventListener('change', () => {
                 tbody.querySelectorAll('.billing-row-cb').forEach(cb => {
-                    cb.checked = newSelectAll.checked;
+                    cb.checked = selectAllCb.checked;
                     const row = cb.closest('tr');
                     if (row) row.style.background = cb.checked ? 'rgba(239,68,68,0.08)' : '';
                 });
@@ -5951,11 +6303,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Botón Borrar Seleccionados
-        if (btnDeleteSelected) {
-            const newBtn = btnDeleteSelected.cloneNode(true);
-            btnDeleteSelected.parentNode.replaceChild(newBtn, btnDeleteSelected);
-            newBtn.addEventListener('click', () => {
+        // Botón Borrar Seleccionados: usar flag data-hasListener para no duplicar listeners
+        const btnDeleteSelected = document.getElementById('btn-delete-selected-payments');
+        if (btnDeleteSelected && !btnDeleteSelected.dataset.hasListener) {
+            btnDeleteSelected.dataset.hasListener = 'true';
+            btnDeleteSelected.addEventListener('click', () => {
                 const checked = tbody.querySelectorAll('.billing-row-cb:checked');
                 if (checked.length === 0) return;
                 window.appConfirm(
@@ -5974,7 +6326,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateSelectionState();
     }
-
 
     function updateStats() {
         const listings = db.getAllListings();
@@ -7580,6 +7931,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     badgeEl.className = 'pending-notes-badge has-notes';
                     badgeEl.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">chat</span> ${notesCount} nota(s) CRM`;
                 }
+
+                // --- Auto-cerrar renglón de publicidad y moverlo al final vía re-render ordenado ---
+                const card = document.getElementById(`pending-ad-card-${id}`);
+                if (card) {
+                    card.classList.remove('expanded');
+                    const icon = document.getElementById(`pending-ad-expand-icon-${id}`);
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                    if (window.expandedAdminAdCards) window.expandedAdminAdCards.delete(String(id));
+                }
+                // Marcar este ID como "ya procesado" para que el render lo coloque al final
+                window.pendingAdsMoveToEnd = window.pendingAdsMoveToEnd || new Set();
+                window.pendingAdsMoveToEnd.add(String(id));
+                // Forzar re-render con nuevo orden
+                const pendingAdsListEl = document.getElementById('pending-ads-list');
+                if (pendingAdsListEl) delete pendingAdsListEl.dataset.lastState;
+                if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
             }
         };
 
@@ -7607,7 +7974,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
             }
 
-            const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',') + '_' + query;
+            // Ordenar: ads con nota CRM reciente van al final (cola de revisión)
+            if (window.pendingAdsMoveToEnd && window.pendingAdsMoveToEnd.size > 0) {
+                pendingAds.sort((a, b) => {
+                    const aEnd = window.pendingAdsMoveToEnd.has(String(a.id)) ? 1 : 0;
+                    const bEnd = window.pendingAdsMoveToEnd.has(String(b.id)) ? 1 : 0;
+                    return aEnd - bEnd;
+                });
+            }
+
+            const stateKey = JSON.stringify(pendingAds) + '_' + Array.from(window.expandedAdminAdCards || []).join(',') + '_' + query + '_' + Array.from(window.pendingAdsMoveToEnd || []).join(',');
             if (list.dataset.lastState === stateKey) return;
             list.dataset.lastState = stateKey;
 
