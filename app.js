@@ -4350,10 +4350,65 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    function updateTrendBadge(elementId, currentValue, prevYearValue, prevMonthValue) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+
+        let pct = 0;
+        let labelTag = 'vs año ant.';
+        let compareValue = prevYearValue;
+
+        if (prevYearValue > 0) {
+            compareValue = prevYearValue;
+            labelTag = 'vs año ant.';
+        } else if (typeof prevMonthValue !== 'undefined' && prevMonthValue > 0) {
+            compareValue = prevMonthValue;
+            labelTag = 'vs mes ant.';
+        } else {
+            compareValue = 0;
+            labelTag = 'vs mes ant.';
+        }
+
+        if (compareValue > 0) {
+            pct = Math.round(((currentValue - compareValue) / compareValue) * 100);
+        } else if (currentValue > 0) {
+            pct = 100;
+        } else {
+            pct = 0;
+        }
+
+        if (compareValue === 0 && currentValue === 0) {
+            el.className = 'stat-trend neutral';
+            el.style.color = 'var(--text-muted)';
+            el.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px;">horizontal_rule</span> 0% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:2px;">${labelTag}</span>`;
+            return;
+        }
+
+        if (pct > 0) {
+            el.className = 'stat-trend positive';
+            el.style.color = '#10b981'; // Verde
+            el.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px;">trending_up</span> +${pct}% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:2px;">${labelTag}</span>`;
+        } else if (pct < 0) {
+            el.className = 'stat-trend negative';
+            el.style.color = '#ef4444'; // Rojo
+            el.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px;">trending_down</span> ${pct}% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:2px;">${labelTag}</span>`;
+        } else {
+            el.className = 'stat-trend neutral';
+            el.style.color = 'var(--text-muted)'; // Gris Neutro
+            el.innerHTML = `<span class="material-symbols-rounded" style="font-size:15px;">horizontal_rule</span> 0% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:2px;">${labelTag}</span>`;
+        }
+    }
+
     function updateAdminStats() {
         const allListings = db.getAllListings();
         const active = allListings.filter(l => l.status === 'autorizado');
         const pendingCount = allListings.filter(l => l.status === 'pendiente autorizacion').length;
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const currentDay = now.getDate();
+        const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        const prevMonthIndex = currentMonth === 0 ? 11 : currentMonth - 1;
 
         const statViews = document.getElementById('stat-views');
         if (statViews) {
@@ -4372,11 +4427,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof window.renderTrafficChart === 'function') {
                     window.renderTrafficChart();
                 }
+
+                // Tendencia Visitas (Año anterior o Fallback Mes anterior)
+                let curVisits = 0;
+                let prevYearVisits = 0;
+                let prevMonthVisits = 0;
+                (data || []).forEach(row => {
+                    if (!row.date) return;
+                    const parts = row.date.split('-');
+                    const rYear = parseInt(parts[0]);
+                    const rMonth = parseInt(parts[1]) - 1;
+                    const rDay = parseInt(parts[2]);
+
+                    if (rDay <= currentDay) {
+                        if (rYear === currentYear && rMonth === currentMonth) {
+                            curVisits += row.visits || 0;
+                        } else if (rYear === currentYear - 1 && rMonth === currentMonth) {
+                            prevYearVisits += row.visits || 0;
+                        } else if (rYear === prevMonthYear && rMonth === prevMonthIndex) {
+                            prevMonthVisits += row.visits || 0;
+                        }
+                    }
+                });
+                updateTrendBadge('stat-trend-views', curVisits, prevYearVisits, prevMonthVisits);
             });
         }
 
         const statActive = document.getElementById('stat-active');
         if (statActive) statActive.textContent = active.length;
+
+        // Tendencia Autos Activos (Año anterior o Fallback Mes anterior)
+        let curActiveListings = 0;
+        let prevYearActiveListings = 0;
+        let prevMonthActiveListings = 0;
+        allListings.forEach(l => {
+            const dateStr = l.createdAt || l.created_at || l.publishedAt || l.published_at;
+            if (!dateStr) return;
+            const itemDate = new Date(dateStr);
+            if (isNaN(itemDate.getTime())) return;
+
+            const rYear = itemDate.getFullYear();
+            const rMonth = itemDate.getMonth();
+            const rDay = itemDate.getDate();
+
+            if (rDay <= currentDay) {
+                if (rYear === currentYear && rMonth === currentMonth) {
+                    curActiveListings++;
+                } else if (rYear === currentYear - 1 && rMonth === currentMonth) {
+                    prevYearActiveListings++;
+                } else if (rYear === prevMonthYear && rMonth === prevMonthIndex) {
+                    prevMonthActiveListings++;
+                }
+            }
+        });
+        updateTrendBadge('stat-trend-active', curActiveListings, prevYearActiveListings, prevMonthActiveListings);
 
         // Cargar historial de ventas asincrónicamente
         db.fetchSalesHistory().then(sales => {
@@ -4394,6 +4498,46 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof window.renderSalesChart === 'function') {
                 window.renderSalesChart();
             }
+
+            // Tendencia Autos Vendidos (Año anterior o Fallback Mes anterior)
+            const soldListings = allListings.filter(l => l.status === 'vendido');
+            const salesMap = new Map();
+            (sales || []).forEach(s => salesMap.set(String(s.listing_id || s.id), s));
+            soldListings.forEach(l => {
+                const key = String(l.id);
+                if (!salesMap.has(key)) {
+                    salesMap.set(key, {
+                        listing_id: l.id,
+                        sold_at: l.soldAt || l.sold_at || l.publishedAt || l.published_at || new Date().toISOString()
+                    });
+                }
+            });
+            const combinedSales = Array.from(salesMap.values());
+
+            let curSales = 0;
+            let prevYearSales = 0;
+            let prevMonthSales = 0;
+            combinedSales.forEach(s => {
+                const dateStr = s.sold_at || s.soldAt || s.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+
+                const rYear = itemDate.getFullYear();
+                const rMonth = itemDate.getMonth();
+                const rDay = itemDate.getDate();
+
+                if (rDay <= currentDay) {
+                    if (rYear === currentYear && rMonth === currentMonth) {
+                        curSales++;
+                    } else if (rYear === currentYear - 1 && rMonth === currentMonth) {
+                        prevYearSales++;
+                    } else if (rYear === prevMonthYear && rMonth === prevMonthIndex) {
+                        prevMonthSales++;
+                    }
+                }
+            });
+            updateTrendBadge('stat-trend-sold', curSales, prevYearSales, prevMonthSales);
         });
 
         const sidebarBadge = document.getElementById('sidebar-pending-badge');
@@ -4417,6 +4561,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statActiveAds) {
             statActiveAds.textContent = activeAdsCount;
         }
+
+        // Tendencia Publicidad (Año anterior o Fallback Mes anterior)
+        let curAds = 0;
+        let prevYearAds = 0;
+        let prevMonthAds = 0;
+        allAds.forEach(ad => {
+            const dateStr = ad.createdAt || ad.created_at;
+            if (!dateStr) return;
+            const itemDate = new Date(dateStr);
+            if (isNaN(itemDate.getTime())) return;
+
+            const rYear = itemDate.getFullYear();
+            const rMonth = itemDate.getMonth();
+            const rDay = itemDate.getDate();
+
+            if (rDay <= currentDay) {
+                if (rYear === currentYear && rMonth === currentMonth) {
+                    curAds++;
+                } else if (rYear === currentYear - 1 && rMonth === currentMonth) {
+                    prevYearAds++;
+                } else if (rYear === prevMonthYear && rMonth === prevMonthIndex) {
+                    prevMonthAds++;
+                }
+            }
+        });
+        updateTrendBadge('stat-trend-ads', curAds, prevYearAds, prevMonthAds);
     }
 
     window.updateQuickSales = function (period, btnElement) {

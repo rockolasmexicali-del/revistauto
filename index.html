@@ -533,6 +533,7 @@
                                 <div class="stat-details" style="width: 100%;">
                                     <h4>Visitas Totales</h4>
                                     <p id="stat-views" class="stat-value">0</p>
+                                    <span id="stat-trend-views" class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.78rem; display:flex; align-items:center; gap: 2px; margin-top: 2px;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:3px;">vs año ant.</span></span>
                                     <div style="display:flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;" onclick="event.stopPropagation();">
                                         <button onclick="updateQuickViews('dia', this)" class="quick-view-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Día</button>
                                         <button onclick="updateQuickViews('semana', this)" class="quick-view-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Sem</button>
@@ -546,7 +547,7 @@
                                 <div class="stat-details">
                                     <h4>Autos Activos</h4>
                                     <p id="stat-active" class="stat-value">0</p>
-                                    <span class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0%</span>
+                                    <span id="stat-trend-active" class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.78rem; display:flex; align-items:center; gap: 2px;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:3px;">vs año ant.</span></span>
                                 </div>
                             </div>
                             <div class="stat-premium-card" style="min-height: 120px;">
@@ -554,6 +555,7 @@
                                 <div class="stat-details" style="width: 100%;">
                                     <h4>Autos Vendidos</h4>
                                     <p id="stat-sold" class="stat-value">0</p>
+                                    <span id="stat-trend-sold" class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.78rem; display:flex; align-items:center; gap: 2px; margin-top: 2px;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:3px;">vs año ant.</span></span>
                                     <div style="display:flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;" onclick="event.stopPropagation();">
                                         <button onclick="updateQuickSales('dia', this)" class="quick-sale-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Día</button>
                                         <button onclick="updateQuickSales('mes', this)" class="quick-sale-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-muted); cursor: pointer; transition: all 0.2s;">Mes</button>
@@ -567,7 +569,7 @@
                                 <div class="stat-details">
                                     <h4>Publicidad Activa</h4>
                                     <p id="stat-active-ads" class="stat-value">0</p>
-                                    <span class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.8rem; display:flex; align-items:center;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0%</span>
+                                    <span id="stat-trend-ads" class="stat-trend neutral" style="color: var(--text-muted); font-size: 0.78rem; display:flex; align-items:center; gap: 2px;"><span class="material-symbols-rounded" style="font-size:14px;">horizontal_rule</span> 0% <span style="font-size:0.7rem; color:var(--text-muted); margin-left:3px;">vs año ant.</span></span>
                                 </div>
                             </div>
                         </div>
