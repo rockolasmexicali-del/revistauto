@@ -8852,21 +8852,31 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
             }
         };
 
-        // Después de 4.5 segundos, guardar la cápsula
+        // Después de 6 segundos en pantalla, guardar la cápsula
         setTimeout(() => {
             pill.className = `header-upnext-pill ${selected.badgeClass} pill-out`;
             setTimeout(() => {
                 pill.style.display = 'none';
                 if (advertiseBtn) advertiseBtn.style.display = 'inline-flex';
             }, 400);
-        }, 4500);
+        }, 6000);
+    }
+
+    function scheduleNextPill() {
+        // Frecuencia variable orgánica entre 22 y 40 segundos (22000ms a 40000ms)
+        const randomDelay = Math.floor(Math.random() * (40000 - 22000 + 1)) + 22000;
+        currentUpNextTimer = setTimeout(async () => {
+            await showNextHeaderPill();
+            scheduleNextPill();
+        }, randomDelay);
     }
 
     function startUpNextLoop() {
-        // Primera ejecución a los 3 segundos
-        setTimeout(showNextHeaderPill, 3000);
-        // Ciclo cada 22 segundos
-        currentUpNextTimer = setInterval(showNextHeaderPill, 22000);
+        // Primera ejecución exactamente a los 3 segundos de cargar
+        setTimeout(async () => {
+            await showNextHeaderPill();
+            scheduleNextPill();
+        }, 3000);
     }
 
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
