@@ -2787,8 +2787,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const isSold = listing && (String(listing.status).toLowerCase() === 'vendido' || listing.sold_at || listing.isSold);
-        const isUnavailable = !listing || String(listing.status).toLowerCase() === 'eliminado';
+        const isSold = listing && (
+            String(listing.status || '').toLowerCase() === 'vendido' || 
+            listing.sold_at || 
+            listing.soldAt || 
+            listing.isSold
+        );
+        const isUnavailable = !listing || String(listing.status || '').toLowerCase() === 'eliminado';
 
         if (isSold || isUnavailable) {
             if (typeof window.showUnavailableListingModal === 'function') {
