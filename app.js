@@ -226,8 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- Custom Select Logic ---
     class CustomSelectWrapper {
-        constructor(selectElement) {
+        constructor(selectElement, opts = {}) {
             this.select = selectElement;
+            this.opts = opts;
             this.options = [];
 
             // Ocultar select original
@@ -235,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Crear contenedor
             this.wrapper = document.createElement('div');
-            this.wrapper.className = 'custom-select-wrapper';
+            this.wrapper.className = 'custom-select-wrapper' + (opts.dropUp ? ' drop-up' : '');
             this.select.parentNode.insertBefore(this.wrapper, this.select);
             this.wrapper.appendChild(this.select);
 
@@ -1035,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customFilterLegalSelect = new CustomSelectWrapper(filterLegal);
 
         const formColorEl = document.getElementById('form-color');
-        if (formColorEl) window.customColorSelect = new CustomSelectWrapper(formColorEl);
+        if (formColorEl) window.customColorSelect = new CustomSelectWrapper(formColorEl, { dropUp: true });
 
         const filterColorEl = document.getElementById('filter-color');
         if (filterColorEl) window.customFilterColorSelect = new CustomSelectWrapper(filterColorEl);
