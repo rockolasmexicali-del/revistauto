@@ -69,7 +69,10 @@
                 </button>
             </nav>
 
-            <div id="header-upnext-container" class="header-upnext-container">
+            <div id="header-upnext-container" class="header-upnext-container" style="display: flex; align-items: center; gap: 6px;">
+                <button id="btn-legal-info" onclick="window.openLegalModal('terms')" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 16px; background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 4px; box-shadow: none; white-space: nowrap; width: auto; max-width: max-content; cursor: pointer; transition: all 0.3s ease;" title="Términos y Privacidad">
+                    <span class="material-symbols-rounded" style="font-size: 15px;">gavel</span> Legales
+                </button>
                 <button id="btn-advertise" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 16px; background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 4px; box-shadow: none; white-space: nowrap; width: auto; max-width: max-content; cursor: pointer; transition: all 0.3s ease;">
                     <span class="material-symbols-rounded" style="font-size: 15px;">storefront</span> Anúnciate
                 </button>
@@ -422,6 +425,10 @@
                                     <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
                                     <button type="button" id="btn-wizard-submit" class="success-btn" style="display: none; flex: 1.5; padding: 18px 16px; font-size: 1.1rem; font-weight: 700; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);">Publicar Vehículo</button>
                                 </div>
+                                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 4px; margin-bottom: 0;">
+                                    Al publicar declaras que la información es verídica y aceptas nuestros 
+                                    <a href="#" onclick="event.preventDefault(); window.openLegalModal('terms');" style="color: var(--primary-color); text-decoration: underline;">Términos de Servicio</a>.
+                                </p>
                             </div>
                         </form>
                     </div>
@@ -1782,12 +1789,47 @@
                 </div>
             </div>
             <h2 style="margin-bottom: 16px; font-size: 1.5rem; font-weight: 700; color: var(--text-main);">¡Bienvenido a RevistAuto!</h2>
-            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 32px;">
+            <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5; margin-bottom: 24px;">
                 Para mostrarte los vehículos que están a la venta cerca de tu ciudad, necesitamos acceder a tu ubicación.
             </p>
             <button id="btn-activate-gps" class="primary-btn" style="width: 100%; font-size: 1.1rem; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <span class="material-symbols-rounded">my_location</span> Activar mi Ubicación
             </button>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 18px; margin-bottom: 0; line-height: 1.4;">
+                Al activar tu ubicación y navegar en RevistAuto, aceptas nuestros 
+                <a href="#" onclick="event.preventDefault(); window.openLegalModal('terms');" style="color: var(--primary-color); text-decoration: underline; font-weight: 600;">Términos y Condiciones</a> 
+                y <a href="#" onclick="event.preventDefault(); window.openLegalModal('privacy');" style="color: var(--primary-color); text-decoration: underline; font-weight: 600;">Política de Privacidad</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal Público de Páginas Legales -->
+    <div id="legal-pages-modal" class="modal" style="z-index: 10015; backdrop-filter: blur(10px);">
+        <div class="modal-content legal-modal-content" style="max-width: 650px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; padding: 0; border-radius: 20px; overflow: hidden; background: var(--bg-color); border: 1px solid var(--border-color);">
+            <div style="padding: 16px 20px; background: var(--surface-dark); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded" style="color: var(--primary-color);">gavel</span>
+                    <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700;">Información Legal y Términos</h3>
+                </div>
+                <button id="btn-close-legal-modal" class="icon-btn" onclick="window.closeLegalModal()"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="legal-tabs-bar">
+                <button class="legal-tab-btn active" onclick="window.switchLegalTab('terms')" id="legal-tab-terms">
+                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">description</span> Términos y Condiciones
+                </button>
+                <button class="legal-tab-btn" onclick="window.switchLegalTab('privacy')" id="legal-tab-privacy">
+                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">shield</span> Política de Privacidad
+                </button>
+                <button class="legal-tab-btn" onclick="window.switchLegalTab('contact')" id="legal-tab-contact">
+                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">support_agent</span> Contacto & Soporte
+                </button>
+            </div>
+            <div id="legal-modal-body" style="padding: 24px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: var(--text-main); flex: 1;">
+                <!-- Inyectado por JS -->
+            </div>
+            <div style="padding: 12px 20px; background: var(--surface-dark); border-top: 1px solid var(--border-color); text-align: right;">
+                <button class="primary-btn" onclick="window.closeLegalModal()" style="padding: 8px 20px; font-size: 0.9rem;">Entendido</button>
+            </div>
         </div>
     </div>
 

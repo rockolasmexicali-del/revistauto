@@ -109,22 +109,33 @@ ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para Listings (Permitir lectura y creación a todos)
+DROP POLICY IF EXISTS "Permitir lectura pública de anuncios" ON public.listings;
 CREATE POLICY "Permitir lectura pública de anuncios" ON public.listings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir insertar anuncios" ON public.listings;
 CREATE POLICY "Permitir insertar anuncios" ON public.listings FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir actualizar anuncios" ON public.listings;
 CREATE POLICY "Permitir actualizar anuncios" ON public.listings FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Permitir eliminar anuncios" ON public.listings;
 CREATE POLICY "Permitir eliminar anuncios" ON public.listings FOR DELETE USING (true);
 
 -- Políticas para Catálogo y Locations
+DROP POLICY IF EXISTS "Permitir lectura pública de catálogo" ON public.catalog;
 CREATE POLICY "Permitir lectura pública de catálogo" ON public.catalog FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir actualización de catálogo" ON public.catalog;
 CREATE POLICY "Permitir actualización de catálogo" ON public.catalog FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura pública de ubicaciones" ON public.locations;
 CREATE POLICY "Permitir lectura pública de ubicaciones" ON public.locations FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir actualización de ubicaciones" ON public.locations;
 CREATE POLICY "Permitir actualización de ubicaciones" ON public.locations FOR ALL USING (true);
 
 -- Políticas para Settings y Admins (Públicas en este momento, considerar ajustar seguridad en producción)
+DROP POLICY IF EXISTS "Permitir lectura pública de settings" ON public.settings;
 CREATE POLICY "Permitir lectura pública de settings" ON public.settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir actualización de settings" ON public.settings;
 CREATE POLICY "Permitir actualización de settings" ON public.settings FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir acceso a admin_users" ON public.admin_users;
 CREATE POLICY "Permitir acceso a admin_users" ON public.admin_users FOR ALL USING (true);
 
 -- 6. Configurar Bucket de Almacenamiento de Fotos ('car-images')
@@ -133,8 +144,11 @@ VALUES ('car-images', 'car-images', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Permisos públicos para el bucket car-images
+DROP POLICY IF EXISTS "Acceso público a fotos de autos" ON storage.objects;
 CREATE POLICY "Acceso público a fotos de autos" ON storage.objects FOR SELECT USING (bucket_id = 'car-images');
+DROP POLICY IF EXISTS "Permitir subir fotos de autos" ON storage.objects;
 CREATE POLICY "Permitir subir fotos de autos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'car-images');
+DROP POLICY IF EXISTS "Permitir borrar fotos de autos" ON storage.objects;
 CREATE POLICY "Permitir borrar fotos de autos" ON storage.objects FOR DELETE USING (bucket_id = 'car-images');
 
 -- 7. Tabla de Visitas Diarias (Para analíticas reales)
@@ -144,7 +158,9 @@ CREATE TABLE IF NOT EXISTS public.daily_visits (
 );
 
 ALTER TABLE public.daily_visits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir lectura publica de visitas" ON public.daily_visits;
 CREATE POLICY "Permitir lectura publica de visitas" ON public.daily_visits FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir insercion publica de visitas" ON public.daily_visits;
 CREATE POLICY "Permitir insercion publica de visitas" ON public.daily_visits FOR ALL USING (true);
 
 -- Función segura para incrementar vistas y visitas globales al mismo tiempo
@@ -215,9 +231,13 @@ CREATE TABLE IF NOT EXISTS public.ads (
 
 -- 2. POLÍTICAS DE SEGURIDAD (RLS) PARA ANUNCIOS
 ALTER TABLE public.ads ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir lectura publica de anuncios" ON public.ads;
 CREATE POLICY "Permitir lectura publica de anuncios" ON public.ads FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir insertar anuncios" ON public.ads;
 CREATE POLICY "Permitir insertar anuncios" ON public.ads FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir actualizar anuncios" ON public.ads;
 CREATE POLICY "Permitir actualizar anuncios" ON public.ads FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Permitir eliminar anuncios" ON public.ads;
 CREATE POLICY "Permitir eliminar anuncios" ON public.ads FOR DELETE USING (true);
 
 -- ====================================================
@@ -240,9 +260,13 @@ CREATE TABLE IF NOT EXISTS public.sales_history (
 );
 
 ALTER TABLE public.sales_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir lectura publica de historial de ventas" ON public.sales_history;
 CREATE POLICY "Permitir lectura publica de historial de ventas" ON public.sales_history FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir insercion publica de historial de ventas" ON public.sales_history;
 CREATE POLICY "Permitir insercion publica de historial de ventas" ON public.sales_history FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir actualizacion de historial de ventas" ON public.sales_history;
 CREATE POLICY "Permitir actualizacion de historial de ventas" ON public.sales_history FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Permitir eliminacion de historial de ventas" ON public.sales_history;
 CREATE POLICY "Permitir eliminacion de historial de ventas" ON public.sales_history FOR DELETE USING (true);
 
 

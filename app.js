@@ -9598,3 +9598,84 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
         window.addEventListener('DOMContentLoaded', () => setTimeout(startUpNextLoop, 1500));
     }
 })();
+
+// ====================================================
+// MÓDULO DE PÁGINAS LEGALES (TÉRMINOS, PRIVACIDAD Y CONTACTO)
+// ====================================================
+window.LEGAL_CONTENT = {
+    terms: `
+        <div class="legal-section-block">
+            <h4 style="margin-top:0;">1. Naturaleza del Servicio</h4>
+            <p><strong>RevistAuto</strong> es una plataforma digital de catálogo y clasificados automotrices que conecta a vendedores (lotes de autos, agencias y particulares) con compradores potenciales. RevistAuto <strong>no es propietaria</strong> de los vehículos anunciados por terceros, no intermedia en la transacción financiera ni cobra comisiones sobre la compraventa de unidades.</p>
+
+            <h4>2. Veracidad y Responsabilidad de las Publicaciones</h4>
+            <p>Cada anunciante es el único responsable de la veracidad, exactitud y legalidad de los datos proporcionados (precio, año, millaje/kilometraje, estado legal del vehículo, fotografías y datos de contacto). Queda estrictamente prohibido publicar vehículos con reporte de robo activo, documentación apócrifa o imágenes engañosas. RevistAuto se reserva el derecho de pausar o retirar cualquier publicación que viole estas políticas.</p>
+
+            <h4>3. Acuerdos de Compraventa e Inspección</h4>
+            <p>Cualquier trato, negociación, revisión mecánica, inspección jurídica o pago de un vehículo se realiza exclusivamente de forma directa entre el comprador y el vendedor. Se recomienda a los usuarios realizar inspecciones mecánicas en lugares seguros y verificar la documentación original ante las autoridades correspondientes antes de efectuar cualquier pago o transferencia.</p>
+
+            <h4>4. Geolocalización y Filtros por Ciudad</h4>
+            <p>Al hacer uso de la geolocalización (GPS) o seleccionar manualmente una ubicación, el usuario consiente que la aplicación priorice y filtre los vehículos disponibles en su ciudad o región geográfica.</p>
+        </div>
+    `,
+    privacy: `
+        <div class="legal-section-block">
+            <h4 style="margin-top:0;">1. Información Recabada</h4>
+            <p>RevistAuto únicamente recaba información de geolocalización aproximada (Estado/Ciudad) para optimizar la búsqueda de vehículos cercanos, así como los datos de contacto que el usuario o vendedor proporcione de forma voluntaria al registrarse o publicar una unidad (nombre, teléfono, ciudad y WhatsApp).</p>
+
+            <h4>2. Uso y Finalidad de los Datos</h4>
+            <p>La información recopilada se utiliza exclusivamente con el fin de facilitar el contacto directo entre compradores y vendedores mediante enlaces a WhatsApp o llamadas telefónicas, así como para la analítica interna de tráfico y rendimiento de la revista digital.</p>
+
+            <h4>3. Protección y No Transferencia a Terceros</h4>
+            <p>RevistAuto <strong>no vende, alquila ni comparte</strong> datos personales o números de contacto con empresas terceras de telemercadeo o publicidad no solicitada (SPAM). Sus datos están protegidos conforme a las mejores prácticas de seguridad digital.</p>
+        </div>
+    `,
+    contact: `
+        <div class="legal-section-block">
+            <h4 style="margin-top:0;">Contacto & Soporte Técnico</h4>
+            <p>Si tienes preguntas sobre nuestros Términos y Condiciones, necesitas asistencia con tu publicación o requieres apoyo sobre la plataforma, contáctanos a través de nuestros canales oficiales:</p>
+            
+            <div style="background: var(--surface-light); padding: 16px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--border-color);">
+                <p style="margin-bottom: 8px;"><strong>💬 Atención y Soporte vía WhatsApp / Teléfono:</strong></p>
+                <p style="margin-bottom: 12px; font-size: 1.1rem; font-weight: 700; color: var(--primary-color);">
+                    <a href="https://wa.me/526861329430?text=Hola,%20necesito%20soporte%20en%20RevistAuto" target="_blank" style="color: #10B981; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="material-symbols-rounded" style="vertical-align: middle;">chat</span> (686) 132-9430
+                    </a>
+                </p>
+                <p style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.88rem;">Horario: Lunes a Sábado de 9:00 AM a 7:00 PM</p>
+                <p style="margin: 0; font-size: 0.9rem;"><strong>📧 Correo de Soporte:</strong> soporte@revistauto.com</p>
+            </div>
+        </div>
+    `
+};
+
+window.openLegalModal = function(tab = 'terms') {
+    const modal = document.getElementById('legal-pages-modal');
+    if (modal) {
+        modal.classList.add('active');
+        window.switchLegalTab(tab);
+    }
+};
+
+window.closeLegalModal = function() {
+    const modal = document.getElementById('legal-pages-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+};
+
+window.switchLegalTab = function(tab) {
+    const body = document.getElementById('legal-modal-body');
+    const termsBtn = document.getElementById('legal-tab-terms');
+    const privacyBtn = document.getElementById('legal-tab-privacy');
+    const contactBtn = document.getElementById('legal-tab-contact');
+
+    if (termsBtn) termsBtn.classList.toggle('active', tab === 'terms');
+    if (privacyBtn) privacyBtn.classList.toggle('active', tab === 'privacy');
+    if (contactBtn) contactBtn.classList.toggle('active', tab === 'contact');
+
+    if (body && window.LEGAL_CONTENT && window.LEGAL_CONTENT[tab]) {
+        body.innerHTML = window.LEGAL_CONTENT[tab];
+        body.scrollTop = 0;
+    }
+};
