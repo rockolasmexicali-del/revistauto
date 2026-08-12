@@ -783,6 +783,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Guardar en caché local
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: stateName, city: cityName }));
+
+                // Cargar stats de popularidad para la ciudad detectada (dropdowns inteligentes)
+                if (db && db.fetchPopularityStats) {
+                    db.fetchPopularityStats(matchedCity || cityName);
+                }
             } else if (isManualClick) {
                 // Si la ciudad no tiene autos activos, lo dejamos en "Todos"
                 userStateSelect.value = 'Todos';
@@ -918,8 +923,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.customModelSelect) window.customModelSelect.update();
         }
 
-        // Populating types
-        catalogData.types.forEach(type => {
+        // Populating types (ordenados por popularidad de la ciudad)
+        const sortedTypes = db.sortByPopularity ? db.sortByPopularity([...catalogData.types], 'types') : catalogData.types;
+        sortedTypes.forEach(type => {
             formType.innerHTML += `<option value="${type}">${type}</option>`;
         });
         formType.innerHTML += `<option value="Otros">Otros...</option>`;
@@ -927,10 +933,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populating initial makes based on type
         populateMakesForType(formType.value);
 
-        // Populating colors
+        // Populating colors (ordenados por popularidad de la ciudad)
         const formColor = document.getElementById('form-color');
         if (formColor) {
-            catalogData.colors.forEach(color => {
+            const sortedColors = db.sortByPopularity ? db.sortByPopularity([...catalogData.colors], 'colors') : catalogData.colors;
+            sortedColors.forEach(color => {
                 formColor.innerHTML += `<option value="${color}">${color}</option>`;
             });
         }

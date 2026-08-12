@@ -1,4 +1,4 @@
-const APP_VERSION = "1.9.2"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.9.3"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1011,9 +1011,65 @@ class Database {
         return true;
     }
 
+    // ── Popularidad inteligente por ciudad (GPS) ──
+    async fetchPopularityStats(city) {
+        if (!city || typeof supabaseClient === 'undefined' || !supabaseClient) {
+            window._popularityStats = null;
+            return;
+        }
+        try {
+            const { data, error } = await supabaseClient
+                .from('listings')
+                .select('type, make, model, color')
+                .eq('status', 'autorizado')
+                .eq('city', city);
+
+            if (error || !data || data.length === 0) {
+                // Sin datos para esta ciudad, intentar con todas las ciudades
+                const { data: allData, error: allError } = await supabaseClient
+                    .from('listings')
+                    .select('type, make, model, color')
+                    .eq('status', 'autorizado');
+
+                if (allError || !allData || allData.length === 0) {
+                    window._popularityStats = null;
+                    return;
+                }
+                data.length = 0; // limpiar
+                allData.forEach(d => data.push(d));
+            }
+
+            // Contar ocurrencias por campo
+            const counts = { types: {}, makes: {}, models: {}, colors: {} };
+            data.forEach(item => {
+                if (item.type) counts.types[item.type] = (counts.types[item.type] || 0) + 1;
+                if (item.make) counts.makes[item.make] = (counts.makes[item.make] || 0) + 1;
+                if (item.model) counts.models[item.model] = (counts.models[item.model] || 0) + 1;
+                if (item.color) counts.colors[item.color] = (counts.colors[item.color] || 0) + 1;
+            });
+
+            window._popularityStats = counts;
+            console.log('📊 Popularidad cargada para ciudad:', city, counts);
+        } catch (e) {
+            console.warn('⚠️ Error cargando stats de popularidad:', e);
+            window._popularityStats = null;
+        }
+    }
+
+    sortByPopularity(list, field) {
+        if (!window._popularityStats || !window._popularityStats[field]) return list;
+        const counts = window._popularityStats[field];
+        const withCount = list.filter(item => counts[item] && counts[item] > 0);
+        const withoutCount = list.filter(item => !counts[item] || counts[item] === 0);
+        withCount.sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+        withoutCount.sort((a, b) => a.localeCompare(b, 'es'));
+        return [...withCount, ...withoutCount];
+    }
+
     getMakesForType(type) {
         if (!type || type === 'Otros' || type === 'Todas') {
-            return (catalogData && catalogData.makes) ? catalogData.makes : defaultCatalogData.makes;
+            const makes = (catalogData && catalogData.makes) ? [...catalogData.makes] : [...defaultCatalogData.makes];
+            return this.sortByPopularity(makes, 'makes');
         }
 
         const typeMap = (catalogData && catalogData.modelsByTypeAndMake)
@@ -1023,7 +1079,7 @@ class Database {
         if (typeMap) {
             const availableMakes = Object.keys(typeMap).filter(make => typeMap[make] && typeMap[make].length > 0);
             if (availableMakes.length > 0) {
-                return availableMakes;
+                return this.sortByPopularity(availableMakes, 'makes');
             }
         }
 
@@ -1031,29 +1087,32 @@ class Database {
         const marineMakes = ['Sea-Doo', 'Yamaha', 'Honda', 'Suzuki', 'Kawasaki'];
         const truckMakes = ['Kenworth', 'Freightliner', 'International', 'Peterbilt', 'Hino', 'Isuzu', 'Mack', 'Scania', 'Volvo', 'Foton', 'JAC', 'Ram', 'Chevrolet', 'Ford', 'GMC', 'Mercedes-Benz', 'Volkswagen'];
 
-        const allMakes = (catalogData && catalogData.makes) ? catalogData.makes : defaultCatalogData.makes;
+        const allMakes = (catalogData && catalogData.makes) ? [...catalogData.makes] : [...defaultCatalogData.makes];
 
+        let filtered;
         if (type === 'Motocicleta' || type === 'Cuatrimoto / ATV') {
-            return allMakes.filter(m => motoOnlyMakes.includes(m) || ['Honda', 'Yamaha', 'Suzuki', 'BMW', 'Sea-Doo', 'Kawasaki'].includes(m));
+            filtered = allMakes.filter(m => motoOnlyMakes.includes(m) || ['Honda', 'Yamaha', 'Suzuki', 'BMW', 'Sea-Doo', 'Kawasaki'].includes(m));
         } else if (type === 'Barco') {
-            return allMakes.filter(m => marineMakes.includes(m));
+            filtered = allMakes.filter(m => marineMakes.includes(m));
         } else if (type === 'Camión') {
-            return allMakes.filter(m => truckMakes.includes(m));
+            filtered = allMakes.filter(m => truckMakes.includes(m));
         } else if (['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo'].includes(type)) {
-            return allMakes.filter(m => !motoOnlyMakes.includes(m));
+            filtered = allMakes.filter(m => !motoOnlyMakes.includes(m));
+        } else {
+            filtered = allMakes;
         }
 
-        return allMakes;
+        return this.sortByPopularity(filtered, 'makes');
     }
 
     getModelsForTypeAndMake(type, make) {
         if (!make) return [];
         const allModels = (catalogData && catalogData.modelsByMake && catalogData.modelsByMake[make])
-            ? catalogData.modelsByMake[make]
-            : (defaultCatalogData.modelsByMake[make] || []);
+            ? [...catalogData.modelsByMake[make]]
+            : [...(defaultCatalogData.modelsByMake[make] || [])];
 
         if (!type || type === 'Otros' || type === 'Todas') {
-            return allModels;
+            return this.sortByPopularity(allModels, 'models');
         }
 
         const typeMap = (catalogData && catalogData.modelsByTypeAndMake)
@@ -1061,10 +1120,10 @@ class Database {
             : (defaultCatalogData.modelsByTypeAndMake ? defaultCatalogData.modelsByTypeAndMake[type] : null);
 
         if (typeMap && typeMap[make] && Array.isArray(typeMap[make]) && typeMap[make].length > 0) {
-            return typeMap[make];
+            return this.sortByPopularity([...typeMap[make]], 'models');
         }
 
-        return allModels;
+        return this.sortByPopularity(allModels, 'models');
     }
 
     getRandomListings(count, city = null) {
