@@ -310,7 +310,6 @@ const currentLocalVersion = localStorage.getItem('revista_app_version');
 if (currentLocalVersion !== APP_VERSION) {
     console.log(`Versión actualizada de ${currentLocalVersion} a ${APP_VERSION}. Purgando caché obsoleta...`);
     localStorage.removeItem('revista_autos_catalog');
-    localStorage.removeItem('user_reactions'); // Purgar likes huérfanos al cambiar de versión
     // Actualizamos la versión local
     localStorage.setItem('revista_app_version', APP_VERSION);
 }
