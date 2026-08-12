@@ -67,22 +67,32 @@ const checkRegionPermission = (req, listing) => {
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     
-    // Fuerza Bruta
+    // Fuerza Bruta - Bloqueo progresivo a los 3 intentos fallidos
     const now = Date.now();
     const attempt = loginAttempts[username] || { count: 0, lockUntil: 0 };
     if (attempt.lockUntil > now) {
         const remaining = Math.ceil((attempt.lockUntil - now) / 1000);
-        return res.status(429).json({ success: false, error: `Demasiados intentos. Intenta en ${remaining} segundos.`, locked: true, remaining });
+        return res.status(429).json({ success: false, error: `Demasiados intentos. Intenta en ${remaining} segundos.`, locked: true, remaining, attempts: attempt.count });
     }
 
     const user = db.getUserByUsername(username);
     if (!user || user.password !== password) {
         attempt.count += 1;
-        if (attempt.count >= 5) {
-            attempt.lockUntil = now + 60000; // 1 min lock
+        if (attempt.count >= 3) {
+            let lockSeconds = 15;
+            if (attempt.count === 4) lockSeconds = 30;
+            else if (attempt.count === 5) lockSeconds = 60;
+            else if (attempt.count === 6) lockSeconds = 120;
+            else if (attempt.count >= 7) lockSeconds = 300;
+
+            attempt.lockUntil = now + (lockSeconds * 1000);
         }
         loginAttempts[username] = attempt;
-        return res.status(401).json({ success: false, error: 'Credenciales inválidas' });
+        const attemptsLeft = Math.max(0, 3 - attempt.count);
+        const warningMsg = attempt.count >= 3 
+            ? `Demasiados intentos fallidos. Bloqueado temporalmente.` 
+            : `Credenciales inválidas. Intento ${attempt.count} de 3.`;
+        return res.status(401).json({ success: false, error: warningMsg, attempts: attempt.count, lockUntil: attempt.lockUntil });
     }
 
     // Success

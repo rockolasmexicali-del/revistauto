@@ -7291,8 +7291,130 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAdminLogin = document.getElementById('btn-admin-login');
     const loginError = document.getElementById('login-error-message');
 
+    // Módulo de Seguridad y Bloqueo Progresivo Anti-Robots
+    const LoginSecurityManager = {
+        STORAGE_KEY: 'admin_login_lockout_data',
+        timerId: null,
+
+        getData() {
+            try {
+                const raw = localStorage.getItem(this.STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {
+                console.warn('Error leyendo estado de bloqueo:', e);
+            }
+            return { attempts: 0, lockUntil: 0 };
+        },
+
+        saveData(attempts, lockUntil) {
+            try {
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ attempts, lockUntil }));
+            } catch (e) {
+                console.warn('Error guardando estado de bloqueo:', e);
+            }
+        },
+
+        reset() {
+            if (this.timerId) {
+                clearInterval(this.timerId);
+                this.timerId = null;
+            }
+            localStorage.removeItem(this.STORAGE_KEY);
+        },
+
+        getLockDurationSeconds(attempts) {
+            if (attempts < 3) return 0;
+            if (attempts === 3) return 15;
+            if (attempts === 4) return 30;
+            if (attempts === 5) return 60;
+            if (attempts === 6) return 120;
+            return 300; // 5 min máximo para 7+ intentos
+        },
+
+        registerFailedAttempt() {
+            const data = this.getData();
+            const newAttempts = (data.attempts || 0) + 1;
+            let lockUntil = 0;
+
+            if (newAttempts >= 3) {
+                const lockSec = this.getLockDurationSeconds(newAttempts);
+                lockUntil = Date.now() + (lockSec * 1000);
+            }
+
+            this.saveData(newAttempts, lockUntil);
+            return { attempts: newAttempts, lockUntil };
+        },
+
+        isLocked() {
+            const data = this.getData();
+            return !!(data.lockUntil && data.lockUntil > Date.now());
+        },
+
+        checkAndApplyLockoutUI(btnElement, errorElement, inputUser, inputPass) {
+            if (this.timerId) {
+                clearInterval(this.timerId);
+                this.timerId = null;
+            }
+
+            const data = this.getData();
+            const now = Date.now();
+
+            if (data.lockUntil && data.lockUntil > now) {
+                const updateUI = () => {
+                    const currentNow = Date.now();
+                    const remainingMs = data.lockUntil - currentNow;
+                    const remainingSec = Math.ceil(remainingMs / 1000);
+
+                    if (remainingSec > 0) {
+                        if (btnElement) {
+                            btnElement.disabled = true;
+                            btnElement.style.opacity = '0.6';
+                            btnElement.textContent = `Bloqueado (${remainingSec}s)`;
+                        }
+                        if (inputUser) inputUser.disabled = true;
+                        if (inputPass) inputPass.disabled = true;
+
+                        if (errorElement) {
+                            errorElement.style.color = 'var(--danger-color, #ef4444)';
+                            errorElement.innerHTML = `🔒 <strong>Demasiados intentos fallidos.</strong><br>Por seguridad, reintenta en <strong>${remainingSec} segundos</strong>.`;
+                        }
+                    } else {
+                        if (this.timerId) {
+                            clearInterval(this.timerId);
+                            this.timerId = null;
+                        }
+                        if (btnElement) {
+                            btnElement.disabled = false;
+                            btnElement.style.opacity = '1';
+                            btnElement.textContent = 'Ingresar';
+                        }
+                        if (inputUser) inputUser.disabled = false;
+                        if (inputPass) inputPass.disabled = false;
+
+                        if (errorElement) {
+                            errorElement.textContent = 'Puedes intentar ingresar de nuevo.';
+                            errorElement.style.color = 'var(--text-muted, #94a3b8)';
+                        }
+                    }
+                };
+
+                updateUI();
+                this.timerId = setInterval(updateUI, 1000);
+                return true;
+            } else {
+                if (btnElement) {
+                    btnElement.disabled = false;
+                    btnElement.style.opacity = '1';
+                    btnElement.textContent = 'Ingresar';
+                }
+                if (inputUser) inputUser.disabled = false;
+                if (inputPass) inputPass.disabled = false;
+                return false;
+            }
+        }
+    };
+
     // Interceptar la apertura del panel de admin
-    // Como el botón oculto abre adminDashboardModal, vamos a crear una función global para abrirlo
     window.openAdminPanel = function () {
         updateAdminVersionDisplay();
         if (window.adminToken && window.currentAdminUser) {
@@ -7306,8 +7428,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).catch(e => console.warn("Admin initial sync failed:", e));
             }
         } else {
-            // Mostrar Login
+            // Mostrar Login y verificar bloqueo
             adminLoginModal.classList.add('active');
+            LoginSecurityManager.checkAndApplyLockoutUI(
+                btnAdminLogin,
+                loginError,
+                document.getElementById('login-username'),
+                document.getElementById('login-password')
+            );
         }
     };
 
@@ -7315,48 +7443,87 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseLogin.addEventListener('click', () => adminLoginModal.classList.remove('active'));
     }
 
-    if (btnAdminLogin) {
-        btnAdminLogin.addEventListener('click', async () => {
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-password').value.trim();
-            if (!user || !pass) {
-                loginError.textContent = 'Ingresa usuario y contraseña.';
-                return;
-            }
+    const handleLoginSubmit = async () => {
+        const inputUser = document.getElementById('login-username');
+        const inputPass = document.getElementById('login-password');
 
+        if (LoginSecurityManager.isLocked()) {
+            LoginSecurityManager.checkAndApplyLockoutUI(btnAdminLogin, loginError, inputUser, inputPass);
+            return;
+        }
+
+        const user = inputUser ? inputUser.value.trim() : '';
+        const pass = inputPass ? inputPass.value.trim() : '';
+        if (!user || !pass) {
+            if (loginError) loginError.textContent = 'Ingresa usuario y contraseña.';
+            return;
+        }
+
+        if (btnAdminLogin) {
             btnAdminLogin.disabled = true;
             btnAdminLogin.textContent = 'Iniciando...';
-            loginError.textContent = '';
+        }
+        if (loginError) loginError.textContent = '';
 
-            try {
-                const data = await db.loginAdmin(user, pass);
+        try {
+            const data = await db.loginAdmin(user, pass);
 
-                if (data.success) {
-                    window.adminToken = data.token;
-                    window.currentAdminUser = data.user;
-                    localStorage.setItem('admin_token', data.token);
-                    localStorage.setItem('admin_user', JSON.stringify(data.user));
+            if (data.success) {
+                LoginSecurityManager.reset();
+                window.adminToken = data.token;
+                window.currentAdminUser = data.user;
+                localStorage.setItem('admin_token', data.token);
+                localStorage.setItem('admin_user', JSON.stringify(data.user));
 
-                    adminLoginModal.classList.remove('active');
-                    setupAdminPermissions();
-                    adminDashboardModal.classList.add('active');
-                    renderUsersAdmin();
-                    document.getElementById('login-password').value = '';
-                    if (typeof db !== 'undefined' && db.syncWithServer) {
-                        db.syncWithServer().then(() => {
-                            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-                        }).catch(e => console.warn("Admin login sync failed:", e));
-                    }
-                } else {
-                    loginError.textContent = data.error;
+                adminLoginModal.classList.remove('active');
+                setupAdminPermissions();
+                adminDashboardModal.classList.add('active');
+                renderUsersAdmin();
+                if (inputPass) inputPass.value = '';
+                if (typeof db !== 'undefined' && db.syncWithServer) {
+                    db.syncWithServer().then(() => {
+                        if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
+                    }).catch(e => console.warn("Admin login sync failed:", e));
                 }
-            } catch (e) {
-                loginError.textContent = 'Error de conexión.';
+            } else {
+                // Registrar intento fallido
+                const lockInfo = LoginSecurityManager.registerFailedAttempt();
+                if (lockInfo.attempts >= 3) {
+                    LoginSecurityManager.checkAndApplyLockoutUI(btnAdminLogin, loginError, inputUser, inputPass);
+                } else {
+                    const attemptsLeft = 3 - lockInfo.attempts;
+                    if (loginError) {
+                        loginError.style.color = 'var(--danger-color, #ef4444)';
+                        loginError.textContent = `Usuario o contraseña incorrectos. (Intento ${lockInfo.attempts} de 3 - Quedan ${attemptsLeft} antes de bloqueo)`;
+                    }
+                }
             }
+        } catch (e) {
+            if (loginError) loginError.textContent = 'Error de conexión.';
+        }
+
+        if (!LoginSecurityManager.isLocked() && btnAdminLogin) {
             btnAdminLogin.disabled = false;
             btnAdminLogin.textContent = 'Ingresar';
-        });
+        }
+    };
+
+    if (btnAdminLogin) {
+        btnAdminLogin.addEventListener('click', handleLoginSubmit);
     }
+
+    // Permitir iniciar sesión presionando Enter en los inputs
+    ['login-username', 'login-password'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLoginSubmit();
+                }
+            });
+        }
+    });
 
     // Configurar qué pestañas puede ver el usuario
     function setupAdminPermissions() {
