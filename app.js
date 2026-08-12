@@ -9349,6 +9349,17 @@ window.shareListing = function (event, id, title, price, city) {
     }
 };
 
+window.formatSocialCount = function (num) {
+    const val = Math.max(0, Number(num) || 0);
+    if (val >= 1000000) {
+        return (val / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (val >= 1000) {
+        return (val / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return val.toString();
+};
+
 window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title, price, city) {
     let userReactions = {};
     try { userReactions = JSON.parse(localStorage.getItem('user_reactions') || '{}'); } catch (e) { }
@@ -9367,15 +9378,15 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
         <div class="social-toolbar-fullscreen">
             <div class="social-btn-container">
                 <div class="social-btn reaction-btn ${userReact === 'like' ? 'active' : ''}" data-type="like" onclick="window.toggleSocialReaction(event, '${id}', 'like')">👍</div>
-                <div class="social-count">${Math.max(0, reactions.like || 0).toLocaleString('en-US')}</div>
+                <div class="social-count">${window.formatSocialCount(reactions.like)}</div>
             </div>
             <div class="social-btn-container">
                 <div class="social-btn reaction-btn ${userReact === 'love' ? 'active' : ''}" data-type="love" onclick="window.toggleSocialReaction(event, '${id}', 'love')">😍</div>
-                <div class="social-count">${Math.max(0, reactions.love || 0).toLocaleString('en-US')}</div>
+                <div class="social-count">${window.formatSocialCount(reactions.love)}</div>
             </div>
             <div class="social-btn-container">
                 <div class="social-btn reaction-btn ${userReact === 'fire' ? 'active' : ''}" data-type="fire" onclick="window.toggleSocialReaction(event, '${id}', 'fire')">🔥</div>
-                <div class="social-count">${Math.max(0, reactions.fire || 0).toLocaleString('en-US')}</div>
+                <div class="social-count">${window.formatSocialCount(reactions.fire)}</div>
             </div>
             <div class="social-btn-container">
                 <div class="social-btn share-btn" style="color: #007AFF;" onclick="window.shareListing(event, '${id}', '${safeTitle}', ${price || 0}, '${safeCity}')">
