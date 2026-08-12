@@ -165,7 +165,7 @@ app.get('/api/settings', (req, res) => {
     }
 });
 
-app.post('/api/settings', (req, res) => {
+app.post('/api/settings', requireAuth, requireAdmin, (req, res) => {
     try {
         const newSettings = db.updateSettings(req.body);
         res.json({ success: true, settings: newSettings });
@@ -306,7 +306,7 @@ app.get('/api/listings/my', (req, res) => {
 });
 
 // 3. Obtener publicaciones pendientes de aprobación (Admin)
-app.get('/api/listings/pending', (req, res) => {
+app.get('/api/listings/pending', requireAuth, requireAdmin, (req, res) => {
     try {
         const listings = db.getAllListings().filter(l => l.status === 'pendiente autorizacion');
         res.json({ success: true, listings });
@@ -343,6 +343,35 @@ app.post('/api/listings', (req, res) => {
 // 6. Actualizar una publicación existente
 app.put('/api/listings/:id', (req, res) => {
     try {
+        const listing = db.getAllListings().find(l => l.id === Number(req.params.id));
+        if (!listing) {
+            return res.status(404).json({ success: false, error: 'Publicación no encontrada' });
+        }
+
+        // Verificar permisos: admin autenticado O propietario por publisherId
+        const authHeader = req.headers.authorization;
+        let isAuthorized = false;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            const session = activeSessions[token];
+            if (session) {
+                req.user = session;
+                isAuthorized = checkRegionPermission(req, listing);
+            }
+        }
+
+        if (!isAuthorized) {
+            const publisherId = req.query.publisherId || (req.body && req.body.publisherId);
+            if (publisherId && listing.publisherId && listing.publisherId === publisherId) {
+                isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, error: 'No tienes permiso para modificar esta publicación' });
+        }
+
         const updated = db.updateListing(req.params.id, req.body);
         if (!updated) {
             return res.status(404).json({ success: false, error: 'Publicación no encontrada' });
@@ -539,7 +568,7 @@ app.get('/api/catalog', (req, res) => {
 });
 
 // 12. Estadísticas del Admin
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', requireAuth, requireAdmin, (req, res) => {
     try {
         const stats = db.getStats();
         res.json({ success: true, stats });

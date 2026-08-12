@@ -1,3 +1,14 @@
+
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 window.appConfirm = function (message, onConfirm, title = '¿Estás seguro?') {
     const modal = document.getElementById('custom-confirm-modal');
     if (!modal) {
@@ -5673,12 +5684,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="pending-title">${ad.title || 'Sin título'} ${statusTagHTML}</div>
                             <div class="pending-sub-info">
                                 <span>📍 ${ad.state ? ad.state + ' / ' : ''}${ad.city || ''}</span>
-                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone || 'Sin tel'}</span>
+                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${escapeHTML(ad.phone)}', 'Teléfono')">📞 ${escapeHTML(ad.phone || 'Sin tel')}</span>
                                 ${ad.whatsapp ? `<a href="${typeof buildAdminWhatsAppUrl === 'function' ? buildAdminWhatsAppUrl(ad.whatsapp, ad.title) : '#'}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${ad.description || 'Sin descripción'}
+                                ${escapeHTML(ad.description || 'Sin descripción')}
                             </div>
                         </div>
                     </div>
@@ -5703,8 +5714,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                             <div><strong>Título:</strong> ${ad.title || '-'}</div>
                             <div><strong>Ciudad:</strong> ${ad.state ? ad.state + ' / ' : ''}${ad.city || '-'}</div>
-                            <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')" title="Clic para copiar">${ad.phone || '-'}</span></div>
-                            <div><strong>WhatsApp:</strong> ${ad.whatsapp ? `<span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.whatsapp}', 'WhatsApp')">${ad.whatsapp}</span>` : '-'}</div>
+                            <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${escapeHTML(ad.phone)}', 'Teléfono')" title="Clic para copiar">${escapeHTML(ad.phone || '-')}</span></div>
+                            <div><strong>WhatsApp:</strong> ${ad.whatsapp ? `<span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${escapeHTML(ad.whatsapp)}', 'WhatsApp')">${escapeHTML(ad.whatsapp)}</span>` : '-'}</div>
                             <div><strong>Correo:</strong> ${ad.email || '-'}</div>
                             <div><strong>Fin de vigencia:</strong> ${ad.end_date ? new Date(ad.end_date).toLocaleDateString('es-MX') : '-'}</div>
                         </div>
@@ -7024,8 +7035,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         style="cursor:pointer; width:16px; height:16px; accent-color: var(--danger-color);"
                         onchange="window._billingCbChanged(this)">
                 </td>
-                <td style="white-space:nowrap; font-size:0.9rem;">${payment.date}</td>
-                <td><strong>${payment.listingTitle || '—'}</strong>${payment.listingId ? ` <span style="font-size:0.8rem;color:var(--text-muted);">(ID: ${payment.listingId})</span>` : ''}<br><span style="font-size:0.8rem; color:var(--text-muted);">${payment.type || ''}</span></td>
+                <td style="white-space:nowrap; font-size:0.9rem;">${escapeHTML(payment.date)}</td>
+                <td><strong>${payment.listingTitle || '—'}</strong>${payment.listingId ? ` <span style="font-size:0.8rem;color:var(--text-muted);">(ID: ${payment.listingId})</span>` : ''}<br><span style="font-size:0.8rem; color:var(--text-muted);">${escapeHTML(payment.type || '')}</span></td>
                 <td style="color: var(--success-color); font-weight:bold; white-space:nowrap;">$${parseFloat(payment.amount).toLocaleString('es-MX')} MXN</td>
                 <td style="text-align: center; vertical-align: middle;">${receiptBtn}</td>
             </tr>
@@ -8768,7 +8779,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <img src="${firstImg}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">
                         <div>
                             <strong style="color:var(--text-main); font-size: 0.9rem;">${ad.title || 'Sin título'}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">${ad.phone || ''}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${escapeHTML(ad.phone || '')}</div>
                         </div>
                     </td>
                     <td>${ad.state || ''} ${ad.city ? '/ ' + ad.city : ''}</td>
@@ -8959,11 +8970,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="pending-title">${ad.title || 'Sin título'} <span style="background:var(--danger-color); color:white; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">Pago Asistido / Pendiente</span></div>
                             <div class="pending-sub-info">
                                 <span>📍 ${ad.state ? ad.state + ' / ' : ''}${ad.city || ''}</span>
-                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')">📞 ${ad.phone || 'Sin tel'}</span>
+                                <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${escapeHTML(ad.phone)}', 'Teléfono')">📞 ${escapeHTML(ad.phone || 'Sin tel')}</span>
                                 ${notesBadgeHTML}
                             </div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${ad.description || 'Sin descripción'}
+                                ${escapeHTML(ad.description || 'Sin descripción')}
                             </div>
                         </div>
                     </div>
@@ -9008,8 +9019,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             
                             <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.phone}', 'Teléfono')" title="Clic para copiar">${ad.phone || '-'}</span></div>
-                                <div><strong>WhatsApp:</strong> ${ad.whatsapp ? `<span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${ad.whatsapp}', 'WhatsApp')" title="Clic para copiar">${ad.whatsapp}</span>` : '-'}</div>
+                                <div><strong>Teléfono:</strong> <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${escapeHTML(ad.phone)}', 'Teléfono')" title="Clic para copiar">${escapeHTML(ad.phone || '-')}</span></div>
+                                <div><strong>WhatsApp:</strong> ${ad.whatsapp ? `<span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${escapeHTML(ad.whatsapp)}', 'WhatsApp')" title="Clic para copiar">${escapeHTML(ad.whatsapp)}</span>` : '-'}</div>
                                 <div><strong>Correo:</strong> ${ad.email || '-'}</div>
                             </div>
                             
@@ -9020,14 +9031,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             
                             <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <div><strong>Sitio Web / Link:</strong> ${ad.website ? `<a href="${ad.website.startsWith('http') ? ad.website : 'https://' + ad.website}" target="_blank" style="color:var(--primary-color); text-decoration:underline;">${ad.website}</a>` : '-'}</div>
+                                <div><strong>Sitio Web / Link:</strong> ${ad.website ? `<a href="${ad.website.startsWith('http') ? ad.website : 'https://' + ad.website}" target="_blank" style="color:var(--primary-color); text-decoration:underline;">${escapeHTML(ad.website)}</a>` : '-'}</div>
                                 <div><strong>Redes Sociales:</strong> ${socialLinksStr}</div>
                             </div>
                         </div>
 
                         <div style="background: var(--surface-light); padding: 10px; border-radius: 6px; margin-top: 16px;">
                             <strong style="display: block; margin-bottom: 4px;">Descripción completa:</strong>
-                            <span style="color: var(--text-main); white-space: pre-wrap;">${ad.description || 'Sin descripción'}</span>
+                            <span style="color: var(--text-main); white-space: pre-wrap;">${escapeHTML(ad.description || 'Sin descripción')}</span>
                         </div>
                     </div>
 
