@@ -1,4 +1,4 @@
-const APP_VERSION = "2.0.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.0.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -309,7 +309,17 @@ const defaultCatalogData = {
 const currentLocalVersion = localStorage.getItem('revista_app_version');
 if (currentLocalVersion !== APP_VERSION) {
     console.log(`Versión actualizada de ${currentLocalVersion} a ${APP_VERSION}. Purgando caché obsoleta...`);
-    localStorage.removeItem('revista_autos_catalog');
+    const keysToPurge = [
+        'revista_autos_catalog',
+        'revista_autos_sales_history',
+        'revista_autos_listings',
+        'revista_autos_ads',
+        'revista_autos_pending',
+        'revista_autos_saved',
+        'revista_autos_daily_visits',
+        'user_reactions'
+    ];
+    keysToPurge.forEach(k => localStorage.removeItem(k));
     // Actualizamos la versión local
     localStorage.setItem('revista_app_version', APP_VERSION);
 }
@@ -1935,6 +1945,7 @@ class Database {
     }
 
     async fetchSalesHistory() {
+        let serverFetched = false;
         let serverSales = [];
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
@@ -1945,26 +1956,19 @@ class Database {
 
                 if (!error && Array.isArray(data)) {
                     serverSales = data;
+                    serverFetched = true;
                 }
             } catch (err) {
                 console.warn("Error de red obteniendo sales_history:", err);
             }
         }
 
-        const localSales = JSON.parse(localStorage.getItem('revista_autos_sales_history') || '[]');
-        const salesMap = new Map();
+        if (serverFetched) {
+            localStorage.setItem('revista_autos_sales_history', JSON.stringify(serverSales));
+            return serverSales;
+        }
 
-        serverSales.forEach(s => salesMap.set(String(s.listing_id || s.id), s));
-        localSales.forEach(s => {
-            const key = String(s.listing_id || s.id);
-            if (!salesMap.has(key)) {
-                salesMap.set(key, s);
-            }
-        });
-
-        const combined = Array.from(salesMap.values());
-        localStorage.setItem('revista_autos_sales_history', JSON.stringify(combined));
-        return combined;
+        return JSON.parse(localStorage.getItem('revista_autos_sales_history') || '[]');
     }
     // ==========================================
     // SECCIÓN DE ANUNCIOS Y PUBLICIDAD (FASE 1)
