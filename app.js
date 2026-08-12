@@ -9360,15 +9360,15 @@ window.generateSocialToolbarHTML = function (id, reactionsObj, viewsCount, title
         <div class="social-toolbar-fullscreen">
             <div class="social-btn-container">
                 <div class="social-btn reaction-btn ${userReact === 'like' ? 'active' : ''}" data-type="like" onclick="window.toggleSocialReaction(event, '${id}', 'like')">👍</div>
-                <div class="social-count">${(reactions.like || 0).toLocaleString('en-US')}</div>
+                <div class="social-count">${Math.max(0, reactions.like || 0).toLocaleString('en-US')}</div>
             </div>
             <div class="social-btn-container">
                 <div class="social-btn reaction-btn ${userReact === 'love' ? 'active' : ''}" data-type="love" onclick="window.toggleSocialReaction(event, '${id}', 'love')">😍</div>
-                <div class="social-count">${(reactions.love || 0).toLocaleString('en-US')}</div>
+                <div class="social-count">${Math.max(0, reactions.love || 0).toLocaleString('en-US')}</div>
             </div>
             <div class="social-btn-container">
                 <div class="social-btn reaction-btn ${userReact === 'fire' ? 'active' : ''}" data-type="fire" onclick="window.toggleSocialReaction(event, '${id}', 'fire')">🔥</div>
-                <div class="social-count">${(reactions.fire || 0).toLocaleString('en-US')}</div>
+                <div class="social-count">${Math.max(0, reactions.fire || 0).toLocaleString('en-US')}</div>
             </div>
             <div class="social-btn-container">
                 <div class="social-btn share-btn" style="color: #007AFF;" onclick="window.shareListing(event, '${id}', '${safeTitle}', ${price || 0}, '${safeCity}')">

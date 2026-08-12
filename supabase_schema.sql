@@ -173,7 +173,7 @@ BEGIN
         COALESCE(reactions, '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb),
         array[reaction_type],
         to_jsonb(
-            COALESCE((reactions->>reaction_type)::int, 0) + increment_val
+            GREATEST(0, COALESCE((reactions->>reaction_type)::int, 0) + increment_val)
         )
     )
     WHERE id = listing_id;

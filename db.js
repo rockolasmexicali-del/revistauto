@@ -1,4 +1,4 @@
-const APP_VERSION = "1.9.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "1.9.2"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -310,6 +310,7 @@ const currentLocalVersion = localStorage.getItem('revista_app_version');
 if (currentLocalVersion !== APP_VERSION) {
     console.log(`Versión actualizada de ${currentLocalVersion} a ${APP_VERSION}. Purgando caché obsoleta...`);
     localStorage.removeItem('revista_autos_catalog');
+    localStorage.removeItem('user_reactions'); // Purgar likes huérfanos al cambiar de versión
     // Actualizamos la versión local
     localStorage.setItem('revista_app_version', APP_VERSION);
 }
@@ -1794,7 +1795,7 @@ class Database {
                     console.error('👉 SOLUCIÓN: Ejecuta este SQL en el SQL Editor de Supabase:');
                     console.error(`   ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb;`);
                     console.error(`   -- Y también crea la función RPC:`);
-                    console.error(`   CREATE OR REPLACE FUNCTION update_reaction(listing_id BIGINT, reaction_type TEXT, increment_val INT) RETURNS void AS $$ BEGIN UPDATE public.listings SET reactions = jsonb_set(COALESCE(reactions, '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb), array[reaction_type], to_jsonb(COALESCE((reactions->>reaction_type)::int, 0) + increment_val)) WHERE id = listing_id; END; $$ LANGUAGE plpgsql SECURITY DEFINER;`);
+                    console.error(`   CREATE OR REPLACE FUNCTION update_reaction(listing_id BIGINT, reaction_type TEXT, increment_val INT) RETURNS void AS $$ BEGIN UPDATE public.listings SET reactions = jsonb_set(COALESCE(reactions, '{"like": 0, "love": 0, "fire": 0, "angry": 0}'::jsonb), array[reaction_type], to_jsonb(GREATEST(0, COALESCE((reactions->>reaction_type)::int, 0) + increment_val))) WHERE id = listing_id; END; $$ LANGUAGE plpgsql SECURITY DEFINER;`);
                 } else {
                     console.warn('⚠️ No hay reactions en memoria viva para enviar como fallback');
                 }
