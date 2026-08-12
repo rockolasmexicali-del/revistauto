@@ -2797,14 +2797,15 @@ input:checked+.slider:before {
     background: rgba(0, 0, 0, 0.25);
     border-bottom: 1px solid var(--border-color);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    width: 100%;
 }
 .legal-tabs-bar::-webkit-scrollbar {
     display: none;
 }
 .legal-tab-btn {
-    flex: 1;
-    min-width: 140px;
+    flex: 1 0 auto;
     padding: 12px 16px;
     background: transparent;
     border: none;
@@ -2820,6 +2821,7 @@ input:checked+.slider:before {
     align-items: center;
     justify-content: center;
     gap: 6px;
+    box-sizing: border-box;
 }
 .legal-tab-btn:hover {
     color: var(--text-main);
@@ -2828,6 +2830,13 @@ input:checked+.slider:before {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
     background: rgba(59, 130, 246, 0.08);
+}
+@media (max-width: 480px) {
+    .legal-tab-btn {
+        padding: 10px 10px;
+        font-size: 0.78rem;
+        gap: 4px;
+    }
 }
 .legal-section-block h4 {
     color: var(--primary-color);

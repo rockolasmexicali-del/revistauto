@@ -69,10 +69,7 @@
                 </button>
             </nav>
 
-            <div id="header-upnext-container" class="header-upnext-container" style="display: flex; align-items: center; gap: 6px;">
-                <button id="btn-legal-info" onclick="window.openLegalModal('terms')" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 16px; background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 4px; box-shadow: none; white-space: nowrap; width: auto; max-width: max-content; cursor: pointer; transition: all 0.3s ease;" title="Términos y Privacidad">
-                    <span class="material-symbols-rounded" style="font-size: 15px;">gavel</span> Legales
-                </button>
+            <div id="header-upnext-container" class="header-upnext-container">
                 <button id="btn-advertise" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 16px; background: rgba(255, 255, 255, 0.08); color: rgba(255,255,255,0.9); border: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 4px; box-shadow: none; white-space: nowrap; width: auto; max-width: max-content; cursor: pointer; transition: all 0.3s ease;">
                     <span class="material-symbols-rounded" style="font-size: 15px;">storefront</span> Anúnciate
                 </button>
@@ -1815,13 +1812,13 @@
             </div>
             <div class="legal-tabs-bar">
                 <button class="legal-tab-btn active" onclick="window.switchLegalTab('terms')" id="legal-tab-terms">
-                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">description</span> Términos y Condiciones
+                    <span class="material-symbols-rounded" style="font-size: 16px; flex-shrink: 0;">description</span> <span>Términos y Condiciones</span>
                 </button>
                 <button class="legal-tab-btn" onclick="window.switchLegalTab('privacy')" id="legal-tab-privacy">
-                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">shield</span> Política de Privacidad
+                    <span class="material-symbols-rounded" style="font-size: 16px; flex-shrink: 0;">shield</span> <span>Privacidad</span>
                 </button>
                 <button class="legal-tab-btn" onclick="window.switchLegalTab('contact')" id="legal-tab-contact">
-                    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle;">support_agent</span> Contacto & Soporte
+                    <span class="material-symbols-rounded" style="font-size: 16px; flex-shrink: 0;">support_agent</span> <span>Contacto</span>
                 </button>
             </div>
             <div id="legal-modal-body" style="padding: 24px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: var(--text-main); flex: 1;">
