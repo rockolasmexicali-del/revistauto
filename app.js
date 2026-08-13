@@ -4298,7 +4298,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateAdminAdsRenewals === 'function') updateAdminAdsRenewals();
         updateBillingList();
         renderTrafficChart();
+        if (typeof renderActiveCarsChart === 'function') renderActiveCarsChart();
         renderSalesChart();
+        if (typeof renderActiveAdsChart === 'function') renderActiveAdsChart();
     }
 
     let titleClickCount = 0;
@@ -4499,6 +4501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         updateTrendBadge('stat-trend-active', curActiveListings, prevYearActiveListings, prevMonthActiveListings);
+        if (typeof window.renderActiveCarsChart === 'function') window.renderActiveCarsChart();
 
         // Cargar historial de ventas asincrónicamente
         db.fetchSalesHistory().then(sales => {
@@ -4605,6 +4608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         updateTrendBadge('stat-trend-ads', curAds, prevYearAds, prevMonthAds);
+        if (typeof window.renderActiveAdsChart === 'function') window.renderActiveAdsChart();
     }
 
     window.updateQuickSales = function (period, btnElement) {
@@ -4995,6 +4999,244 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
     window.renderSalesChart = renderSalesChart;
+
+    function renderActiveCarsChart() {
+        const chartContainer = document.getElementById('active-cars-chart');
+        const periodSelect = document.getElementById('active-cars-period-select');
+        if (!chartContainer) return;
+
+        if (periodSelect && !periodSelect.dataset.listener) {
+            periodSelect.dataset.listener = 'true';
+            periodSelect.addEventListener('change', renderActiveCarsChart);
+        }
+
+        const period = periodSelect ? periodSelect.value : '7d';
+        let labels = [];
+        let data = [];
+        const allListings = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+        const activeListings = allListings.filter(l => l.status === 'autorizado');
+        const now = new Date();
+
+        if (period === '7d') {
+            labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            data = [0, 0, 0, 0, 0, 0, 0];
+
+            const dayOfWeek = now.getDay();
+            const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+
+            activeListings.forEach(l => {
+                const dateStr = l.publishedAt || l.published_at || l.createdAt || l.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                if (itemDate >= startOfWeek) {
+                    const itemDay = itemDate.getDay();
+                    const index = itemDay === 0 ? 6 : itemDay - 1; // 0=Lun, 6=Dom
+                    if (index >= 0 && index < 7) {
+                        data[index]++;
+                    }
+                }
+            });
+        } else if (period === 'month') {
+            labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            data = new Array(12).fill(0);
+
+            activeListings.forEach(l => {
+                const dateStr = l.publishedAt || l.published_at || l.createdAt || l.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                if (itemDate.getFullYear() === now.getFullYear()) {
+                    const monthIndex = itemDate.getMonth();
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                        data[monthIndex]++;
+                    }
+                }
+            });
+        } else if (period === 'year') {
+            const currentYear = now.getFullYear();
+            labels = [String(currentYear - 3), String(currentYear - 2), String(currentYear - 1), String(currentYear)];
+            data = [0, 0, 0, 0];
+
+            activeListings.forEach(l => {
+                const dateStr = l.publishedAt || l.published_at || l.createdAt || l.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                const rowYear = itemDate.getFullYear();
+                const diff = currentYear - rowYear;
+                if (diff >= 0 && diff <= 3) {
+                    data[3 - diff]++;
+                }
+            });
+        }
+
+        let highlightIdx = -1;
+        if (period === '7d') {
+            const dayOfWeek = now.getDay();
+            highlightIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        } else if (period === 'month') {
+            highlightIdx = now.getMonth();
+        } else if (period === 'year') {
+            highlightIdx = 3;
+        }
+
+        const max = Math.max(...data, 1);
+
+        chartContainer.innerHTML = data.map((val, i) => {
+            const height = (val / max) * 100;
+            const isCurrent = (i === highlightIdx);
+
+            const barBg = isCurrent
+                ? 'linear-gradient(180deg, #34d399 0%, #059669 100%)'
+                : 'linear-gradient(180deg, #10b981 0%, #047857 100%)';
+            const barBorder = isCurrent ? '2px solid #34d399' : 'none';
+            const trackBg = isCurrent
+                ? 'rgba(52, 211, 153, 0.15)'
+                : 'rgba(255, 255, 255, 0.03)';
+            const trackBorder = isCurrent
+                ? '1px dashed #34d399'
+                : '1px solid transparent';
+            const labelStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #ffffff; background: #059669; border: 1px solid #34d399; border-radius: 6px; padding: 2px 6px; box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);'
+                : 'font-size: 0.7rem; color: var(--text-muted); text-align: center; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%;';
+            const valStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #34d399; margin-bottom: 2px;'
+                : `font-size: 0.68rem; font-weight: 600; color: ${val > 0 ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${val > 0 ? 1 : 0.4}; margin-bottom: 2px;`;
+            const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(52, 211, 153, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
+
+            return `
+            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+                <span class="bar-chart-val" style="${valStyle}">${val}</span>
+                <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
+                    <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} autos activos ${isCurrent ? '(Actual)' : ''}"></div>
+                </div>
+                <span class="bar-chart-label" style="${labelStyle}">${labels[i]}</span>
+            </div>
+            `;
+        }).join('');
+    }
+    window.renderActiveCarsChart = renderActiveCarsChart;
+
+    function renderActiveAdsChart() {
+        const chartContainer = document.getElementById('active-ads-chart');
+        const periodSelect = document.getElementById('active-ads-period-select');
+        if (!chartContainer) return;
+
+        if (periodSelect && !periodSelect.dataset.listener) {
+            periodSelect.dataset.listener = 'true';
+            periodSelect.addEventListener('change', renderActiveAdsChart);
+        }
+
+        const period = periodSelect ? periodSelect.value : '7d';
+        let labels = [];
+        let data = [];
+        const allAds = (typeof db !== 'undefined' && db.getAllAds) ? db.getAllAds() : [];
+        const activeAds = allAds.filter(ad => (typeof db.isAdActive === 'function' ? db.isAdActive(ad) : (ad.status === 'activo' || ad.active)));
+        const now = new Date();
+
+        if (period === '7d') {
+            labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            data = [0, 0, 0, 0, 0, 0, 0];
+
+            const dayOfWeek = now.getDay();
+            const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+
+            activeAds.forEach(ad => {
+                const dateStr = ad.approvedAt || ad.approved_at || ad.createdAt || ad.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                if (itemDate >= startOfWeek) {
+                    const itemDay = itemDate.getDay();
+                    const index = itemDay === 0 ? 6 : itemDay - 1; // 0=Lun, 6=Dom
+                    if (index >= 0 && index < 7) {
+                        data[index]++;
+                    }
+                }
+            });
+        } else if (period === 'month') {
+            labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            data = new Array(12).fill(0);
+
+            activeAds.forEach(ad => {
+                const dateStr = ad.approvedAt || ad.approved_at || ad.createdAt || ad.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                if (itemDate.getFullYear() === now.getFullYear()) {
+                    const monthIndex = itemDate.getMonth();
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                        data[monthIndex]++;
+                    }
+                }
+            });
+        } else if (period === 'year') {
+            const currentYear = now.getFullYear();
+            labels = [String(currentYear - 3), String(currentYear - 2), String(currentYear - 1), String(currentYear)];
+            data = [0, 0, 0, 0];
+
+            activeAds.forEach(ad => {
+                const dateStr = ad.approvedAt || ad.approved_at || ad.createdAt || ad.created_at;
+                if (!dateStr) return;
+                const itemDate = new Date(dateStr);
+                if (isNaN(itemDate.getTime())) return;
+                const rowYear = itemDate.getFullYear();
+                const diff = currentYear - rowYear;
+                if (diff >= 0 && diff <= 3) {
+                    data[3 - diff]++;
+                }
+            });
+        }
+
+        let highlightIdx = -1;
+        if (period === '7d') {
+            const dayOfWeek = now.getDay();
+            highlightIdx = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        } else if (period === 'month') {
+            highlightIdx = now.getMonth();
+        } else if (period === 'year') {
+            highlightIdx = 3;
+        }
+
+        const max = Math.max(...data, 1);
+
+        chartContainer.innerHTML = data.map((val, i) => {
+            const height = (val / max) * 100;
+            const isCurrent = (i === highlightIdx);
+
+            const barBg = isCurrent
+                ? 'linear-gradient(180deg, #c084fc 0%, #7c3aed 100%)'
+                : 'linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%)';
+            const barBorder = isCurrent ? '2px solid #c084fc' : 'none';
+            const trackBg = isCurrent
+                ? 'rgba(192, 132, 252, 0.15)'
+                : 'rgba(255, 255, 255, 0.03)';
+            const trackBorder = isCurrent
+                ? '1px dashed #c084fc'
+                : '1px solid transparent';
+            const labelStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #ffffff; background: #7c3aed; border: 1px solid #c084fc; border-radius: 6px; padding: 2px 6px; box-shadow: 0 0 8px rgba(192, 132, 252, 0.5);'
+                : 'font-size: 0.7rem; color: var(--text-muted); text-align: center; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%;';
+            const valStyle = isCurrent
+                ? 'font-size: 0.72rem; font-weight: 800; color: #c084fc; margin-bottom: 2px;'
+                : `font-size: 0.68rem; font-weight: 600; color: ${val > 0 ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${val > 0 ? 1 : 0.4}; margin-bottom: 2px;`;
+            const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(192, 132, 252, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
+
+            return `
+            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+                <span class="bar-chart-val" style="${valStyle}">${val}</span>
+                <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
+                    <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} publicidad activa ${isCurrent ? '(Actual)' : ''}"></div>
+                </div>
+                <span class="bar-chart-label" style="${labelStyle}">${labels[i]}</span>
+            </div>
+            `;
+        }).join('');
+    }
+    window.renderActiveAdsChart = renderActiveAdsChart;
 
     async function renderAdminInventory() {
         const tbody = document.getElementById('inventory-table-body');
