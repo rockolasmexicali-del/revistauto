@@ -101,6 +101,28 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
 INSERT INTO public.admin_users (username, password, role) 
 VALUES ('admin', 'admin', 'admin') ON CONFLICT DO NOTHING;
 
+-- Función RPC para verificación de usuarios administradores
+CREATE OR REPLACE FUNCTION verify_admin_user(p_username TEXT, p_password TEXT)
+RETURNS TABLE (
+    id BIGINT,
+    username TEXT,
+    role TEXT,
+    allowed_states JSONB,
+    allowed_cities JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        au.id,
+        au.username,
+        au.role,
+        COALESCE(au."allowedStates", au."allowedstates", '[]'::jsonb) AS allowed_states,
+        COALESCE(au."allowedCities", au."allowedcities", '[]'::jsonb) AS allowed_cities
+    FROM public.admin_users au
+    WHERE au.username = p_username AND au.password = p_password;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- 5. Habilitar Políticas de Acceso Público (Lectura y Escritura para la App)
 ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.catalog ENABLE ROW LEVEL SECURITY;

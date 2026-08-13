@@ -4434,14 +4434,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statViews) {
             db.fetchTrafficStats().then(data => {
                 window.trafficStatsCache = data;
-                const activeViewsBtn = document.querySelector('.quick-view-btn.active');
-                if (activeViewsBtn && typeof window.updateQuickViews === 'function') {
-                    const onclickAttr = activeViewsBtn.getAttribute('onclick') || '';
-                    const match = onclickAttr.match(/'(.*?)'/);
-                    const period = match ? match[1] : 'todo';
-                    window.updateQuickViews(period, activeViewsBtn);
-                } else if (typeof window.updateQuickViews === 'function') {
-                    window.updateQuickViews('todo', document.querySelector('.quick-view-btn[onclick*="todo"]'));
+                if (typeof window.updateQuickViews === 'function') {
+                    window.updateQuickViews('todo');
                 }
 
                 if (typeof window.renderTrafficChart === 'function') {
@@ -4506,14 +4500,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cargar historial de ventas asincrónicamente
         db.fetchSalesHistory().then(sales => {
             window.salesHistoryCache = sales;
-            const activeSalesBtn = document.querySelector('.quick-sale-btn.active');
-            if (activeSalesBtn && typeof window.updateQuickSales === 'function') {
-                const onclickAttr = activeSalesBtn.getAttribute('onclick') || '';
-                const match = onclickAttr.match(/'(.*?)'/);
-                const period = match ? match[1] : 'todo';
-                window.updateQuickSales(period, activeSalesBtn);
-            } else if (typeof window.updateQuickSales === 'function') {
-                window.updateQuickSales('todo', document.querySelector('.quick-sale-btn[onclick*="todo"]'));
+            if (typeof window.updateQuickSales === 'function') {
+                window.updateQuickSales('todo');
             }
 
             if (typeof window.renderSalesChart === 'function') {
