@@ -1191,12 +1191,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('form-image').addEventListener('change', function () {
             if (this.files && this.files.length > 0) {
                 let newFiles = Array.from(this.files).map(f => ({ file: f, url: URL.createObjectURL(f) }));
-                const slotsLeft = 7 - selectedImageFiles.length;
+                const slotsLeft = 8 - selectedImageFiles.length;
                 if (slotsLeft <= 0) {
-                    showAlert('Has alcanzado el límite máximo de 7 fotos.', 'Límite alcanzado', 'warning');
+                    showAlert('Has alcanzado el límite máximo de 8 fotos.', 'Límite alcanzado', 'warning');
                 } else {
                     if (newFiles.length > slotsLeft) {
-                        showAlert(`Solo se pueden subir 7 fotos en total. Se omitieron ${newFiles.length - slotsLeft} foto(s).`, 'Límite de fotos', 'warning');
+                        showAlert(`Solo se pueden subir 8 fotos en total. Se omitieron ${newFiles.length - slotsLeft} foto(s).`, 'Límite de fotos', 'warning');
                         newFiles = newFiles.slice(0, slotsLeft);
                     }
                     selectedImageFiles.push(...newFiles);
@@ -1214,8 +1214,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formImageCamera) {
             formImageCamera.addEventListener('change', function () {
                 if (this.files && this.files.length > 0) {
-                    if (selectedImageFiles.length >= 7) {
-                        showAlert('Has alcanzado el límite máximo de 7 fotos.', 'Límite alcanzado', 'warning');
+                    if (selectedImageFiles.length >= 8) {
+                        showAlert('Has alcanzado el límite máximo de 8 fotos.', 'Límite alcanzado', 'warning');
                         this.value = '';
                         return;
                     }
@@ -1224,8 +1224,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedImageFiles.push(newFiles[0]); // Normalmente la cámara toma 1 sola foto
                     renderImagePreviews();
 
-                    if (selectedImageFiles.length >= 7) {
-                        showAlert('Has llegado al límite de 7 fotos. Esta es la última foto.', 'Límite alcanzado', 'info');
+                    if (selectedImageFiles.length >= 8) {
+                        showAlert('Has llegado al límite de 8 fotos. Esta es la última foto.', 'Límite alcanzado', 'info');
                     } else {
                         // Mostrar modal preguntando si desea otra foto
                         if (morePhotosModal) {
@@ -6471,8 +6471,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             window.adminAdImages = window.adminAdImages || [];
 
-            if (window.adminAdImages.length + files.length > 7) {
-                showAlert('Solo puedes subir hasta 7 fotos.', 'Límite de fotos', 'warning');
+            if (window.adminAdImages.length + files.length > 8) {
+                showAlert('Solo puedes subir hasta 8 fotos.', 'Límite de fotos', 'warning');
                 return;
             }
 
@@ -8230,8 +8230,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 window.clientAdImages = window.clientAdImages || [];
 
-                if (window.clientAdImages.length + files.length > 7) {
-                    showAlert('Solo puedes subir hasta 7 fotos.', 'Límite de fotos', 'warning');
+                if (window.clientAdImages.length + files.length > 8) {
+                    showAlert('Solo puedes subir hasta 8 fotos.', 'Límite de fotos', 'warning');
                     return;
                 }
 
