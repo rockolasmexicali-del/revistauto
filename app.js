@@ -972,6 +972,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const formCustomType = document.getElementById('form-custom-type');
+
+        function updateLegalOptions() {
+            if (!formLegal) return;
+            const typeVal = formType ? formType.value : '';
+            const customTypeVal = formCustomType ? formCustomType.value : '';
+            const typeNormalized = (typeVal === 'Otros' ? customTypeVal : typeVal)
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+
+            const isTruck = typeNormalized.includes('camion') || typeNormalized.includes('tractocamion');
+            const currentSelected = formLegal.value;
+
+            let optionsHTML = '<option value="" disabled selected>Selecciona una opción</option>';
+            if (isTruck) {
+                optionsHTML += `
+                    <option value="Nacional A1">Nacional A1</option>
+                    <option value="Nacional VU">Nacional VU</option>
+                    <option value="Americano">Americano</option>
+                `;
+            } else {
+                optionsHTML += `
+                    <option value="Nacional">Nacional</option>
+                    <option value="Fronterizo">Fronterizo</option>
+                    <option value="Americano">Americano</option>
+                    <option value="Decreto">Decreto</option>
+                `;
+            }
+
+            formLegal.innerHTML = optionsHTML;
+
+            if (currentSelected) {
+                const matchingOpt = Array.from(formLegal.options).find(o => o.value === currentSelected);
+                if (matchingOpt) {
+                    formLegal.value = currentSelected;
+                } else {
+                    formLegal.value = '';
+                }
+            } else {
+                formLegal.value = '';
+            }
+
+            if (window.customLegalSelect) {
+                window.customLegalSelect.update();
+            }
+        }
+
         formType.addEventListener('change', (e) => {
             const selectedType = e.target.value;
             if (selectedType === 'Otros') {
@@ -990,7 +1037,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (formMake.value && formMake.value !== '') {
                 formMake.dispatchEvent(new Event('change'));
             }
+            updateLegalOptions();
         });
+
+        if (formCustomType) {
+            formCustomType.addEventListener('input', updateLegalOptions);
+            formCustomType.addEventListener('change', updateLegalOptions);
+        }
 
         // Dynamic models based on make and type (for form)
         formMake.addEventListener('change', (e) => {
