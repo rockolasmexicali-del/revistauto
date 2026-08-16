@@ -906,6 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formCustomMake = document.getElementById('form-custom-make');
         const formCustomModel = document.getElementById('form-custom-model');
+        const formCustomColor = document.getElementById('form-custom-color');
 
         function populateMakesForType(selectedType) {
             formMake.innerHTML = '<option value="" disabled selected>Selecciona una marca</option>';
@@ -950,6 +951,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const sortedColors = db.sortByPopularity ? db.sortByPopularity([...catalogData.colors], 'colors') : catalogData.colors;
             sortedColors.forEach(color => {
                 formColor.innerHTML += `<option value="${color}">${color}</option>`;
+            });
+            formColor.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val === 'Otro' || val === 'Otros') {
+                    if (formCustomColor) {
+                        formCustomColor.style.display = 'block';
+                        formCustomColor.required = true;
+                    }
+                } else {
+                    if (formCustomColor) {
+                        formCustomColor.style.display = 'none';
+                        formCustomColor.required = false;
+                        formCustomColor.value = '';
+                    }
+                }
             });
         }
 
@@ -3798,6 +3814,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.customAcSelect) window.customAcSelect.update();
         if (window.customLegalSelect) window.customLegalSelect.update();
         if (window.customColorSelect) window.customColorSelect.update();
+        if (formCustomColor) {
+            formCustomColor.style.display = 'none';
+            formCustomColor.required = false;
+            formCustomColor.value = '';
+        }
         whatsappModified = false;
         selectedImageFiles = [];
         if (typeof renderImagePreviews === 'function') renderImagePreviews();
@@ -3947,8 +3968,34 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('form-price').value = '';
         }
 
-        document.getElementById('form-color').value = listing.color || '';
-        if (window.customColorSelect) window.customColorSelect.update();
+        if (formColor) {
+            let listColor = listing.color || '';
+            let colorOptions = Array.from(formColor.options).map(o => o.value);
+            if (colorOptions.includes(listColor)) {
+                formColor.value = listColor;
+                if (formCustomColor) {
+                    formCustomColor.style.display = 'none';
+                    formCustomColor.required = false;
+                    formCustomColor.value = '';
+                }
+            } else if (listColor) {
+                let otroOpt = colorOptions.find(o => o === 'Otro' || o === 'Otros') || 'Otro';
+                formColor.value = otroOpt;
+                if (formCustomColor) {
+                    formCustomColor.style.display = 'block';
+                    formCustomColor.required = true;
+                    formCustomColor.value = listColor;
+                }
+            } else {
+                formColor.value = '';
+                if (formCustomColor) {
+                    formCustomColor.style.display = 'none';
+                    formCustomColor.required = false;
+                    formCustomColor.value = '';
+                }
+            }
+            if (window.customColorSelect) window.customColorSelect.update();
+        }
 
         const formTrim = document.getElementById('form-trim');
         if (formTrim) formTrim.value = listing.trim || '';
@@ -4177,7 +4224,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const typeVal = formType.value === 'Otros' ? document.getElementById('form-custom-type').value.trim() : formType.value;
-        const colorVal = document.getElementById('form-color').value;
+        const rawColorVal = formColor ? formColor.value : '';
+        const colorVal = ((rawColorVal === 'Otro' || rawColorVal === 'Otros') && formCustomColor && formCustomColor.value.trim() !== '') 
+            ? formCustomColor.value.trim() 
+            : rawColorVal;
         const updatedData = {
             title: title,
             type: typeVal,
