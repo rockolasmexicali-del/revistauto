@@ -4991,7 +4991,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
 
             return `
-            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+            <div class="bar-chart-col" onclick="window.showChartBreakdown('traffic', '${period}', ${i}, '${labels[i]}')" title="Ver desglose por ubicación (${labels[i]})" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; cursor: pointer;">
                 <span class="bar-chart-val" style="${valStyle}">${val}</span>
                 <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
                     <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} vistas ${isCurrent ? '(Actual)' : ''}"></div>
@@ -5125,7 +5125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(250, 204, 21, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
 
             return `
-            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+            <div class="bar-chart-col" onclick="window.showChartBreakdown('sales', '${period}', ${i}, '${labels[i]}')" title="Ver desglose por ubicación (${labels[i]})" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; cursor: pointer;">
                 <span class="bar-chart-val" style="${valStyle}">${val}</span>
                 <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
                     <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} autos vendidos ${isCurrent ? '(Actual)' : ''}"></div>
@@ -5244,7 +5244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(52, 211, 153, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
 
             return `
-            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+            <div class="bar-chart-col" onclick="window.showChartBreakdown('active-cars', '${period}', ${i}, '${labels[i]}')" title="Ver desglose por ubicación (${labels[i]})" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; cursor: pointer;">
                 <span class="bar-chart-val" style="${valStyle}">${val}</span>
                 <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
                     <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} autos activos ${isCurrent ? '(Actual)' : ''}"></div>
@@ -5363,7 +5363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const barGlow = isCurrent ? 'box-shadow: 0 0 12px rgba(192, 132, 252, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);' : '';
 
             return `
-            <div class="bar-chart-col" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;">
+            <div class="bar-chart-col" onclick="window.showChartBreakdown('active-ads', '${period}', ${i}, '${labels[i]}')" title="Ver desglose por ubicación (${labels[i]})" style="flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; cursor: pointer;">
                 <span class="bar-chart-val" style="${valStyle}">${val}</span>
                 <div class="bar-chart-track" style="flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; background: ${trackBg}; border: ${trackBorder}; border-radius: 6px; padding: 4px 2px; transition: all 0.3s ease;">
                     <div class="bar-chart-bar" style="height: ${height}%; width: 75%; max-width: 32px; min-height: 4px; background: ${barBg}; border: ${barBorder}; ${barGlow} border-radius: 4px 4px 0 0; transition: height 0.4s ease;" title="${val} publicidad activa ${isCurrent ? '(Actual)' : ''}"></div>
@@ -5374,6 +5374,247 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
     window.renderActiveAdsChart = renderActiveAdsChart;
+
+    // ==========================================
+    // HOOK DE DESGLOSE POR UBICACIÓN DE GRÁFICOS
+    // ==========================================
+    function useChartBreakdownHook() {
+        function getPeriodRange(period, index) {
+            const now = new Date();
+            if (period === '7d') {
+                const dayOfWeek = now.getDay();
+                const diffToMonday = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diffToMonday, 0, 0, 0, 0);
+                const targetStart = new Date(startOfWeek);
+                targetStart.setDate(targetStart.getDate() + index);
+                const targetEnd = new Date(targetStart);
+                targetEnd.setHours(23, 59, 59, 999);
+                return { start: targetStart, end: targetEnd };
+            } else if (period === 'month') {
+                const year = now.getFullYear();
+                const targetStart = new Date(year, index, 1, 0, 0, 0, 0);
+                const targetEnd = new Date(year, index + 1, 0, 23, 59, 59, 999);
+                return { start: targetStart, end: targetEnd };
+            } else if (period === 'year') {
+                const currentYear = now.getFullYear();
+                const year = currentYear - (3 - index);
+                const targetStart = new Date(year, 0, 1, 0, 0, 0, 0);
+                const targetEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+                return { start: targetStart, end: targetEnd };
+            }
+            return { start: null, end: null };
+        }
+
+        function resolveState(city, state) {
+            if (state && typeof state === 'string' && state.trim() !== '') return state.trim();
+            if (!city || typeof city !== 'string' || city.trim() === '') return 'Baja California';
+            const cleanCity = city.trim();
+            if (typeof catalogData !== 'undefined' && catalogData.citiesByState) {
+                for (const [st, cities] of Object.entries(catalogData.citiesByState)) {
+                    if (Array.isArray(cities) && cities.includes(cleanCity)) {
+                        return st;
+                    }
+                }
+            }
+            if (['Mexicali', 'Tijuana', 'Ensenada', 'Tecate', 'Rosarito', 'San Quintín'].includes(cleanCity)) return 'Baja California';
+            if (['Hermosillo', 'Ciudad Obregón', 'Nogales', 'San Luis Río Colorado', 'Guaymas'].includes(cleanCity)) return 'Sonora';
+            if (['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc'].includes(cleanCity)) return 'Chihuahua';
+            return 'Baja California';
+        }
+
+        function computeBreakdown(chartType, period, index) {
+            const { start, end } = getPeriodRange(period, index);
+            const cityMap = new Map();
+
+            if (chartType === 'sales') {
+                const sales = window.salesHistoryCache || [];
+                const allListings = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+                const soldListings = allListings.filter(l => l.status === 'vendido');
+                const salesMap = new Map();
+                sales.forEach(s => salesMap.set(String(s.listing_id || s.id), s));
+                soldListings.forEach(l => {
+                    const key = String(l.id);
+                    if (!salesMap.has(key)) {
+                        salesMap.set(key, {
+                            listing_id: l.id,
+                            sold_at: l.soldAt || l.sold_at || l.publishedAt || l.published_at || new Date().toISOString()
+                        });
+                    }
+                });
+                const combinedSales = Array.from(salesMap.values());
+                const listingsById = new Map();
+                allListings.forEach(l => listingsById.set(String(l.id), l));
+
+                combinedSales.forEach(s => {
+                    const dateStr = s.sold_at || s.soldAt || s.created_at;
+                    if (!dateStr) return;
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return;
+                    if (start && end && (d < start || d > end)) return;
+
+                    const l = listingsById.get(String(s.listing_id || s.id)) || {};
+                    const rawCity = l.city || s.city || 'Mexicali';
+                    const city = rawCity.split(',')[0].trim();
+                    const state = resolveState(city, l.state || s.state);
+                    const groupKey = `${city}|${state}`;
+                    cityMap.set(groupKey, (cityMap.get(groupKey) || 0) + 1);
+                });
+            } else if (chartType === 'active-cars') {
+                const allListings = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+                const activeListings = allListings.filter(l => l.status === 'autorizado');
+                activeListings.forEach(l => {
+                    const dateStr = l.publishedAt || l.published_at || l.createdAt || l.created_at;
+                    if (!dateStr) return;
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return;
+                    if (start && end && (d < start || d > end)) return;
+
+                    const rawCity = l.city || 'Mexicali';
+                    const city = rawCity.split(',')[0].trim();
+                    const state = resolveState(city, l.state);
+                    const groupKey = `${city}|${state}`;
+                    cityMap.set(groupKey, (cityMap.get(groupKey) || 0) + 1);
+                });
+            } else if (chartType === 'active-ads') {
+                const allAds = (typeof db !== 'undefined' && db.getAllAds) ? db.getAllAds() : [];
+                const activeAds = allAds.filter(ad => (typeof db.isAdActive === 'function' ? db.isAdActive(ad) : (ad.status === 'activo' || ad.active)));
+                activeAds.forEach(ad => {
+                    const dateStr = ad.approvedAt || ad.approved_at || ad.createdAt || ad.created_at;
+                    if (!dateStr) return;
+                    const d = new Date(dateStr);
+                    if (isNaN(d.getTime())) return;
+                    if (start && end && (d < start || d > end)) return;
+
+                    const rawCity = ad.city || ad.target_city || 'Mexicali';
+                    const city = rawCity.split(',')[0].trim();
+                    const state = resolveState(city, ad.state);
+                    const groupKey = `${city}|${state}`;
+                    cityMap.set(groupKey, (cityMap.get(groupKey) || 0) + 1);
+                });
+            } else if (chartType === 'traffic') {
+                const visitsData = window.trafficStatsCache || [];
+                visitsData.forEach(row => {
+                    if (!row.date) return;
+                    const parts = row.date.split('-');
+                    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+                    if (start && end && (d < start || d > end)) return;
+
+                    const visits = row.visits || 1;
+                    const rawCity = row.city || 'Mexicali';
+                    const city = rawCity.split(',')[0].trim();
+                    const state = resolveState(city, row.state);
+                    const groupKey = `${city}|${state}`;
+                    cityMap.set(groupKey, (cityMap.get(groupKey) || 0) + visits);
+                });
+            }
+
+            const items = [];
+            let grandTotal = 0;
+            cityMap.forEach((count, key) => {
+                const [city, state] = key.split('|');
+                items.push({ city, state, count });
+                grandTotal += count;
+            });
+
+            items.sort((a, b) => b.count - a.count);
+
+            return { items, grandTotal };
+        }
+
+        return { computeBreakdown };
+    }
+    window.useChartBreakdownHook = useChartBreakdownHook;
+
+    window.showChartBreakdown = function(chartType, period, index, label) {
+        const modal = document.getElementById('chart-breakdown-modal');
+        if (!modal) return;
+
+        const hook = typeof window.useChartBreakdownHook === 'function' ? window.useChartBreakdownHook() : null;
+        if (!hook) return;
+
+        const { items, grandTotal } = hook.computeBreakdown(chartType, period, index);
+
+        const titles = {
+            'sales': 'Autos Vendidos',
+            'active-cars': 'Autos Activos',
+            'active-ads': 'Publicidad Activa',
+            'traffic': 'Tráfico de Visitas'
+        };
+        const chartTitle = titles[chartType] || 'Estadísticas';
+
+        const colorTheme = {
+            'sales': { main: '#fbbf24', bg: 'rgba(250, 204, 21, 0.15)', border: 'rgba(250, 204, 21, 0.4)', fill: 'linear-gradient(90deg, #facc15, #ea580c)' },
+            'active-cars': { main: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', border: 'rgba(52, 211, 153, 0.4)', fill: 'linear-gradient(90deg, #34d399, #059669)' },
+            'active-ads': { main: '#c084fc', bg: 'rgba(192, 132, 252, 0.15)', border: 'rgba(192, 132, 252, 0.4)', fill: 'linear-gradient(90deg, #c084fc, #7c3aed)' },
+            'traffic': { main: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.4)', fill: 'linear-gradient(90deg, #38bdf8, #2563eb)' }
+        };
+        const theme = colorTheme[chartType] || colorTheme['traffic'];
+
+        const modalTitleEl = document.getElementById('chart-breakdown-modal-title');
+        const modalSubtitleEl = document.getElementById('chart-breakdown-subtitle');
+        const totalBadgeEl = document.getElementById('chart-breakdown-total-badge');
+        const tableBodyEl = document.getElementById('chart-breakdown-table-body');
+        const tableFootEl = document.getElementById('chart-breakdown-table-foot');
+
+        if (modalTitleEl) {
+            modalTitleEl.innerHTML = `<span class="material-symbols-rounded" style="color: ${theme.main}; font-size: 22px;">analytics</span> Desglose por Ubicación — ${chartTitle} (${label})`;
+        }
+        if (modalSubtitleEl) {
+            modalSubtitleEl.textContent = `Desglose de ${chartTitle.toLowerCase()} por ciudad y estado para el periodo ${label}`;
+        }
+        if (totalBadgeEl) {
+            totalBadgeEl.style.color = theme.main;
+            totalBadgeEl.style.background = theme.bg;
+            totalBadgeEl.style.borderColor = theme.border;
+            totalBadgeEl.textContent = `Total: ${grandTotal} ${chartType === 'traffic' ? 'vistas' : 'autos'}`;
+        }
+
+        if (tableBodyEl) {
+            if (items.length === 0) {
+                tableBodyEl.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 28px; color: #94a3b8; font-size: 0.9rem;">
+                            <span class="material-symbols-rounded" style="font-size: 32px; display: block; margin: 0 auto 8px; opacity: 0.5;">info</span>
+                            No hay registros disponibles para este periodo.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBodyEl.innerHTML = items.map(item => {
+                    const percent = grandTotal > 0 ? ((item.count / grandTotal) * 100).toFixed(1) : 0;
+                    return `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); color: #f1f5f9; transition: background 0.2s;">
+                            <td style="padding: 14px 16px; font-weight: 600;">${item.city}</td>
+                            <td style="padding: 14px 16px; color: #94a3b8;">${item.state}</td>
+                            <td style="padding: 14px 16px; text-align: center; font-weight: 700; color: ${theme.main}; font-size: 1rem;">${item.count}</td>
+                            <td style="padding: 14px 16px;">
+                                <div class="breakdown-percent-container">
+                                    <span class="breakdown-percent-val" style="color: ${theme.main}; min-width: 55px;">${percent}%</span>
+                                    <div class="breakdown-percent-track">
+                                        <div class="breakdown-percent-fill" style="width: ${percent}%; background: ${theme.fill};"></div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        if (tableFootEl) {
+            const uniqueStates = new Set(items.map(i => i.state)).size;
+            tableFootEl.innerHTML = `
+                <tr style="color: #f8fafc; background: rgba(255,255,255,0.03);">
+                    <td style="padding: 14px 16px; font-weight: 700;">TOTAL GENERAL</td>
+                    <td style="padding: 14px 16px; color: #94a3b8;">${uniqueStates} Estado${uniqueStates !== 1 ? 's' : ''}</td>
+                    <td style="padding: 14px 16px; text-align: center; color: ${theme.main}; font-size: 1.1rem; font-weight: 800;">${grandTotal}</td>
+                    <td style="padding: 14px 16px; color: ${theme.main}; font-weight: 800;">100%</td>
+                </tr>
+            `;
+        }
+
+        modal.classList.add('active');
+    };
 
     async function renderAdminInventory() {
         const tbody = document.getElementById('inventory-table-body');
