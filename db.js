@@ -1,4 +1,4 @@
-const APP_VERSION = "2.0.9"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.1.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1312,6 +1312,11 @@ class Database {
             } else if (existing.type === 'type') {
                 if (!catalogData.types.includes(existing.value)) {
                     catalogData.types.push(existing.value);
+                }
+            } else if (existing.type === 'color') {
+                if (!catalogData.colors) catalogData.colors = [];
+                if (!catalogData.colors.includes(existing.value)) {
+                    catalogData.colors.push(existing.value);
                 }
             }
             localStorage.setItem('revista_autos_catalog', JSON.stringify(catalogData));

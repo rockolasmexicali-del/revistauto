@@ -729,6 +729,7 @@ class BackendDatabase {
             this.addSuggestion('make', listing.make);
             this.addSuggestion('model', listing.model, listing.make);
             if (listing.type) this.addSuggestion('type', listing.type);
+            if (listing.color) this.addSuggestion('color', listing.color);
         }
         return listing;
     }
@@ -897,6 +898,11 @@ class BackendDatabase {
             } else if (existing.type === 'type') {
                 if (!catalog.types.includes(existing.value)) {
                     catalog.types.push(existing.value);
+                }
+            } else if (existing.type === 'color') {
+                if (!catalog.colors) catalog.colors = [];
+                if (!catalog.colors.includes(existing.value)) {
+                    catalog.colors.push(existing.value);
                 }
             }
         }

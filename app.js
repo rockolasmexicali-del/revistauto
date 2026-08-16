@@ -6424,6 +6424,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (listing.type && !catalogData.types.includes(listing.type)) {
                 db.addSuggestion('type', listing.type);
             }
+            if (listing.color && catalogData.colors && !catalogData.colors.includes(listing.color)) {
+                db.addSuggestion('color', listing.color);
+            }
 
             const modal = document.getElementById('approve-confirm-modal');
             if (modal) modal.classList.remove('active');
