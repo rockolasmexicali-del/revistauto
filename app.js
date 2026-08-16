@@ -142,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const formAc = document.getElementById('form-ac');
     const formMileage = document.getElementById('form-mileage');
     const formLegal = document.getElementById('form-legal');
+    const formCustomMake = document.getElementById('form-custom-make');
+    const formCustomModel = document.getElementById('form-custom-model');
+    const formCustomColor = document.getElementById('form-custom-color');
     let whatsappModified = false;
     let selectedImageFiles = [];
 
@@ -903,10 +906,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => detectUserLocation(false), 300);
             }
         }
-
-        const formCustomMake = document.getElementById('form-custom-make');
-        const formCustomModel = document.getElementById('form-custom-model');
-        const formCustomColor = document.getElementById('form-custom-color');
 
         function populateMakesForType(selectedType) {
             formMake.innerHTML = '<option value="" disabled selected>Selecciona una marca</option>';
