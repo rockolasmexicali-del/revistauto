@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formType = document.getElementById('form-type');
     const formMake = document.getElementById('form-make');
     const formModel = document.getElementById('form-model');
+    const formColor = document.getElementById('form-color');
     const formState = document.getElementById('form-state');
     const formCity = document.getElementById('form-city');
     const formPhone = document.getElementById('form-phone');
@@ -945,7 +946,6 @@ document.addEventListener('DOMContentLoaded', () => {
         populateMakesForType(formType.value);
 
         // Populating colors (ordenados por popularidad de la ciudad)
-        const formColor = document.getElementById('form-color');
         if (formColor) {
             const sortedColors = db.sortByPopularity ? db.sortByPopularity([...catalogData.colors], 'colors') : catalogData.colors;
             sortedColors.forEach(color => {
