@@ -2723,6 +2723,26 @@ document.addEventListener('DOMContentLoaded', () => {
         window.searchCascadeList = null; // Resetear para que se reconstruya al abrir la siguiente tarjeta
     });
 
+    // ==========================================
+    // HOOK DE NAVEGACIÓN EXCLUSIVA DE FAVORITOS
+    // ==========================================
+    function useFavoritesNavigationHook() {
+        function getFavoriteListings() {
+            const allLocal = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+            const allFeed = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
+            const allMap = new Map();
+            [...allLocal, ...allFeed].forEach(l => {
+                if (l && l.id) allMap.set(String(l.id), l);
+            });
+            const all = Array.from(allMap.values());
+            const favIds = typeof savedListingsIds !== 'undefined' ? savedListingsIds : [];
+            return all.filter(l => favIds.includes(Number(l.id)) && (l.status === 'autorizado' || (typeof db !== 'undefined' && db.isListingActive && db.isListingActive(l))));
+        }
+
+        return { getFavoriteListings };
+    }
+    window.useFavoritesNavigationHook = useFavoritesNavigationHook;
+
     // --- Saved / Library ---
     function renderSavedListings() {
         const allLocal = db.getAllListings();
@@ -3125,7 +3145,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const navigateListing = (direction) => {
                 let sameCategoryListings = [];
-                if (window.searchCascadeList && window.searchCascadeList.length > 0) {
+                if (previousViewId === 'view-biblioteca') {
+                    // Si el usuario viene de la sección de Favoritos, deslizar únicamente entre sus vehículos guardados
+                    const favHook = typeof window.useFavoritesNavigationHook === 'function' ? window.useFavoritesNavigationHook() : null;
+                    sameCategoryListings = favHook ? favHook.getFavoriteListings() : [];
+                } else if (window.searchCascadeList && window.searchCascadeList.length > 0) {
                     // Usar la cola de 3 niveles construida desde la búsqueda avanzada
                     sameCategoryListings = window.searchCascadeList;
                 } else {
