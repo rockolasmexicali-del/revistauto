@@ -3043,10 +3043,57 @@ document.addEventListener('DOMContentLoaded', () => {
             window.startFullscreenAutoplay(false, images.length);
         }
 
-        // Lógica de Swipe para navegar entre autos de la misma categoría
-        const infoDiv = detalleContent.querySelector('.detalle-info');
-        if (infoDiv) {
-            let startX = 0;
+    function showMobileSwipeHintIfNeeded(container) {
+        if (!container) return;
+        // Solo mostrar una vez por sesión en la primera tarjeta fullscreen abierta
+        if (sessionStorage.getItem('revistauto_swipe_hint_seen')) return;
+
+        // Solo para móviles / pantalla pequeña o táctil
+        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
+        if (!isMobile) return;
+
+        // Marcar como visto inmediatamente para que NUNCA vuelva a salir en la sesión
+        sessionStorage.setItem('revistauto_swipe_hint_seen', 'true');
+
+        // Crear el elemento flotante de ayuda
+        const hintEl = document.createElement('div');
+        hintEl.className = 'mobile-swipe-hint-toast';
+        hintEl.innerHTML = `
+            <div class="swipe-hand-icon">
+                <span class="material-symbols-rounded">touch_app</span>
+            </div>
+            <span class="swipe-text">Desliza aquí para el siguiente auto</span>
+        `;
+
+        container.appendChild(hintEl);
+
+        let dismissed = false;
+        const dismissHint = () => {
+            if (dismissed) return;
+            dismissed = true;
+            hintEl.classList.add('fade-out');
+            setTimeout(() => {
+                if (hintEl && hintEl.parentNode) {
+                    hintEl.parentNode.removeChild(hintEl);
+                }
+            }, 400);
+        };
+
+        const timer = setTimeout(dismissHint, 3200);
+
+        const onUserTouch = () => {
+            clearTimeout(timer);
+            dismissHint();
+            window.removeEventListener('touchstart', onUserTouch);
+        };
+        window.addEventListener('touchstart', onUserTouch, { passive: true, once: true });
+    }
+
+    // Lógica de Swipe para navegar entre autos de la misma categoría
+    const infoDiv = detalleContent.querySelector('.detalle-info');
+    if (infoDiv) {
+        showMobileSwipeHintIfNeeded(infoDiv);
+        let startX = 0;
             let startY = 0;
             let endX = 0;
             let endY = 0;

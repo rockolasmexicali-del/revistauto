@@ -1658,22 +1658,23 @@ input[type=number] {
 
 .row-nav-btn {
     position: absolute;
-    top: 50%;
+    top: 55%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.75);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: all 0.3s ease;
-    z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
 }
 
 .row-nav-btn.hidden {
@@ -1683,9 +1684,10 @@ input[type=number] {
 
 @media (hover: hover) {
     .row-nav-btn:hover {
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.95);
         animation: none;
-        transform: translateY(-50%) scale(1.1);
+        transform: translateY(-50%) scale(1.15);
+        border-color: var(--primary-color);
     }
 }
 
@@ -1697,7 +1699,7 @@ input[type=number] {
     }
 
     50% {
-        transform: translateY(-50%) translateX(-5px);
+        transform: translateY(-50%) translateX(-4px);
     }
 }
 
@@ -1709,24 +1711,25 @@ input[type=number] {
     }
 
     50% {
-        transform: translateY(-50%) translateX(5px);
+        transform: translateY(-50%) translateX(4px);
     }
 }
 
 .row-nav-btn.prev {
-    left: -10px;
+    left: 8px;
     animation: bounce-left 2s infinite ease-in-out;
 }
 
 .row-nav-btn.next {
-    right: -10px;
+    right: 8px;
     animation: bounce-right 2s infinite ease-in-out;
 }
 
 @media (max-width: 600px) {
     .row-nav-btn {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
+        top: 55%;
     }
 
     .row-nav-btn.prev {
@@ -2858,4 +2861,82 @@ input:checked+.slider:before {
     margin-bottom: 6px;
     font-size: 0.9rem;
     color: var(--text-main);
+}
+
+/* --- Mobile Swipe Hint Toast (Solo Primera Vista en Pantalla Completa en Móvil) --- */
+.mobile-swipe-hint-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    pointer-events: none;
+    animation: swipeHintSlideUp 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.mobile-swipe-hint-toast.fade-out {
+    animation: swipeHintFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.mobile-swipe-hint-toast .swipe-hand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffb703;
+    animation: swipeHandGesture 1.6s infinite ease-in-out;
+}
+
+.mobile-swipe-hint-toast .swipe-hand-icon span {
+    font-size: 24px;
+}
+
+.mobile-swipe-hint-toast .swipe-text {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+@keyframes swipeHintSlideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 24px) scale(0.88);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+@keyframes swipeHintFadeOut {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, 16px) scale(0.92);
+    }
+}
+
+@keyframes swipeHandGesture {
+    0%, 100% {
+        transform: translateX(14px) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(-14px) rotate(-12deg);
+        opacity: 0.75;
+    }
 }
