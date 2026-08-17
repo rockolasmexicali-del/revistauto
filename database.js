@@ -845,7 +845,11 @@ class BackendDatabase {
             results = results.filter(l => l.transmission === criteria.transmission);
         }
         if (criteria.legal && criteria.legal !== 'Todas') {
-            results = results.filter(l => l.legal === criteria.legal);
+            if (criteria.legal === 'Nacional') {
+                results = results.filter(l => ['Nacional', 'Nacional A1', 'Nacional VU'].includes(l.legal));
+            } else {
+                results = results.filter(l => l.legal === criteria.legal);
+            }
         }
         if (criteria.color && criteria.color !== 'Todos') {
             results = results.filter(l => l.color === criteria.color);

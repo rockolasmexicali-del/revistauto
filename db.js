@@ -1,4 +1,4 @@
-const APP_VERSION = "2.2.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.2.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1178,7 +1178,11 @@ class Database {
                 query = query.eq('transmission', criteria.transmission);
             }
             if (criteria.legal && criteria.legal !== 'Todas') {
-                query = query.eq('legal', criteria.legal);
+                if (criteria.legal === 'Nacional') {
+                    query = query.in('legal', ['Nacional', 'Nacional A1', 'Nacional VU']);
+                } else {
+                    query = query.eq('legal', criteria.legal);
+                }
             }
             if (criteria.color && criteria.color !== 'Todos') {
                 query = query.eq('color', criteria.color);
@@ -1222,7 +1226,11 @@ class Database {
             results = results.filter(l => l.transmission === criteria.transmission);
         }
         if (criteria.legal && criteria.legal !== 'Todas') {
-            results = results.filter(l => l.legal === criteria.legal);
+            if (criteria.legal === 'Nacional') {
+                results = results.filter(l => ['Nacional', 'Nacional A1', 'Nacional VU'].includes(l.legal));
+            } else {
+                results = results.filter(l => l.legal === criteria.legal);
+            }
         }
 
         if (criteria.color && criteria.color !== 'Todos') {

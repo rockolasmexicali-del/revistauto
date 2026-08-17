@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewInicio = document.getElementById('view-inicio');
         // Evitamos barajear los autos si el usuario está viendo la pantalla de inicio
         if (viewInicio && !viewInicio.classList.contains('active')) {
-            renderFeed();
+            renderFeed(true);
         }
 
         if (typeof renderMyListings === 'function') renderMyListings();
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Opcional: si queremos que los anuncios se refresquen en el feed
         const viewInicio = document.getElementById('view-inicio');
         if (viewInicio && !viewInicio.classList.contains('active')) {
-            renderFeed();
+            renderFeed(true);
         }
     };
 
@@ -757,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Al cambiar de estado, resetear el botón de ciudades
             if (window.updateCitiesBtn) window.updateCitiesBtn();
             if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
-            renderFeed();
+            renderFeed(true);
         });
 
         function applyDetectedLocation(stateName, cityName, isManualClick = false) {
@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.updateCitiesBtn) window.updateCitiesBtn();
                 if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
 
-                renderFeed();
+                renderFeed(true);
 
                 // Guardar en caché local
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: stateName, city: cityName }));
@@ -810,7 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 filterState.dispatchEvent(new Event('change'));
                 if (window.customUserFilterStateSelect) window.customUserFilterStateSelect.update();
                 if (window.customFilterStateSelect) window.customFilterStateSelect.update();
-                renderFeed();
+                renderFeed(true);
             }
         }
 
@@ -1381,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (window.syncSearchLocationWithHome) window.syncSearchLocationWithHome();
-            renderFeed();
+            renderFeed(true);
         });
     }
 
@@ -1566,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         centerCategoryChip(btn, true);
 
         // Actualizar el feed
-        renderFeed();
+        renderFeed(true);
     });
 
     function createListingCardHTML(listing, hideHeart = false) {
