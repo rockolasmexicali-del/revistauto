@@ -1,4 +1,4 @@
-const APP_VERSION = "2.2.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.2.2"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -577,9 +577,8 @@ class Database {
     }
 
     resetFeedShuffle() {
-        this.shuffledFeedIds = null;
-        this.currentFeedFiltersHash = null;
-        this.shuffledFeedTotalCount = 0;
+        this.shuffledFeedCache = {};
+        this.shuffledFeedTotalCountCache = {};
     }
 
     async fetchFeedPaginated({ page = 1, pageSize = 20, state = null, cities = [], filters = {}, forceRefresh = false } = {}) {
@@ -589,8 +588,11 @@ class Database {
 
         const filtersHash = JSON.stringify({ state, cities, filters });
 
-        // Inicializar el arreglo barajado de IDs sólo en la primera carga de sesión, si cambian los filtros o si se fuerza refresco
-        if (!this.shuffledFeedIds || this.currentFeedFiltersHash !== filtersHash || forceRefresh) {
+        this.shuffledFeedCache = this.shuffledFeedCache || {};
+        this.shuffledFeedTotalCountCache = this.shuffledFeedTotalCountCache || {};
+
+        // Inicializar el arreglo barajado de IDs para este filtro específico sólo la primera vez, o si se fuerza refresco
+        if (!this.shuffledFeedCache[filtersHash] || forceRefresh) {
             let query = supabaseClient.from('listings').select('id', { count: 'exact' }).eq('status', 'autorizado').limit(5000);
 
             if (cities && cities.length > 0) {
@@ -613,18 +615,20 @@ class Database {
                 return { data: [], total: 0, hasMore: false };
             }
 
-            // Guardar IDs y barajarlos aleatoriamente (sólo se manejan números, por lo que es ultra ligero)
-            this.shuffledFeedIds = (data || []).map(d => d.id).sort(() => Math.random() - 0.5);
-            this.currentFeedFiltersHash = filtersHash;
-            this.shuffledFeedTotalCount = count || this.shuffledFeedIds.length;
+            // Guardar IDs en el casillero de esta categoría/filtro y barajarlos aleatoriamente
+            this.shuffledFeedCache[filtersHash] = (data || []).map(d => d.id).sort(() => Math.random() - 0.5);
+            this.shuffledFeedTotalCountCache[filtersHash] = count || this.shuffledFeedCache[filtersHash].length;
         }
 
         const from = (page - 1) * pageSize;
         const to = page * pageSize; // exclusive para el slice
-        const idsToFetch = this.shuffledFeedIds.slice(from, to);
+        const activeShuffleList = this.shuffledFeedCache[filtersHash];
+        const activeTotalCount = this.shuffledFeedTotalCountCache[filtersHash];
+        
+        const idsToFetch = activeShuffleList.slice(from, to);
 
         if (idsToFetch.length === 0) {
-            return { data: [], total: this.shuffledFeedTotalCount, hasMore: false };
+            return { data: [], total: activeTotalCount, hasMore: false };
         }
 
         // Descargar exactamente los datos de los IDs barajados de esta página
@@ -632,7 +636,7 @@ class Database {
 
         if (error) {
             console.error('Error fetching paginated listings:', error);
-            return { data: [], total: this.shuffledFeedTotalCount, hasMore: false };
+            return { data: [], total: activeTotalCount, hasMore: false };
         }
 
         // Supabase no garantiza el orden al usar .in(), así que reordenamos los resultados según nuestro arreglo barajado
@@ -647,8 +651,8 @@ class Database {
 
         return {
             data: normalizedData,
-            total: this.shuffledFeedTotalCount,
-            hasMore: to < this.shuffledFeedIds.length
+            total: activeTotalCount,
+            hasMore: to < activeShuffleList.length
         };
     }
 
