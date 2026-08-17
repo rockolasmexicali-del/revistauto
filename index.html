@@ -225,218 +225,7 @@
                     <!-- My listings will appear here -->
                 </div>
 
-                <!-- Modal for new listing form -->
-                <div id="new-listing-modal" class="modal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Dar de Alta Vehículo</h3>
-                            <button id="btn-close-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
-                        </div>
-                        <div class="wizard-progress">
-                            <span id="wizard-step-indicator" style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">Paso 1 de 6</span>
-                            <div class="wizard-bar" style="width: 100%; height: 6px; background: var(--border-color); border-radius: 4px; margin-top: 8px; overflow: hidden;">
-                                <div id="wizard-bar-fill" style="width: 20%; height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;"></div>
-                            </div>
-                        </div>
-                        <form id="new-listing-form" style="margin-top: 20px;">
-                            
-                            <!-- PASO 1 (NUEVO) -->
-                            <div class="form-step" data-step="1">
-                                <div style="background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; padding: 24px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
-                                    <span class="material-symbols-rounded" style="color: #10b981; font-size: 48px; margin-bottom: 16px;">directions_car</span>
-                                    <h4 style="margin: 0 0 12px 0; font-size: 1.2rem; color: var(--text-main);">Publicar Vehículo</h4>
-                                    <p style="margin: 0; font-size: 1rem; color: var(--text-muted); line-height: 1.5;">
-                                        Al continuar, empezarás a publicar tu vehículo.<br><br>
-                                        Costo Mensual del Servicio:<br>
-                                        <b id="vehicle-dynamic-price" style="color: #f59e0b; font-size: 1.4rem;">$500 MXN</b>
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- PASO 2 -->
-                            <div class="form-step" data-step="2" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. Ubicación y Contacto</h4>
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Estado</label>
-                                    <select id="form-state" required>
-                                        <option value="" disabled selected>Selecciona un estado</option>
-                                    </select>
-                                </div>
-                                <div class="form-group half">
-                                    <label>Ciudad</label>
-                                    <select id="form-city" required>
-                                        <option value="" disabled selected>Selecciona una ciudad</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Teléfono</label>
-                                    <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" maxlength="10">
-                                </div>
-                                <div class="form-group half">
-                                    <label>WhatsApp</label>
-                                    <input type="tel" id="form-whatsapp" required placeholder="Ej. +52 5512345678" maxlength="14">
-                                </div>
-                            </div>
-                            </div>
-
-                            <!-- PASO 3 -->
-                            <div class="form-step" data-step="3" style="display: none;">
-                                <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. El Vehículo</h4>
-                            <div class="form-group">
-                                <label>Tipo de Vehículo</label>
-                                <select id="form-type" required>
-                                    <option value="" disabled selected>Selecciona un tipo</option>
-                                </select>
-                                <input type="text" id="form-custom-type" placeholder="Escribe el tipo (ej. Motocicleta)..." style="display: none; margin-top: 8px;">
-                            </div>
-                            <div class="form-group">
-                                <label>Marca</label>
-                                <select id="form-make" required>
-                                    <option value="" disabled selected>Selecciona una marca</option>
-                                </select>
-                                <input type="text" id="form-custom-make" placeholder="Escribe la marca..." style="display: none; margin-top: 8px;">
-                            </div>
-                            <div class="form-group">
-                                <label>Modelo</label>
-                                <select id="form-model" required>
-                                    <option value="" disabled selected>Selecciona un modelo</option>
-                                </select>
-                                <input type="text" id="form-custom-model" placeholder="Escribe el modelo..." style="display: none; margin-top: 8px;">
-                            </div>
-                            <div class="form-group">
-                                <label>Versión / Edición <span style="font-weight:normal; color:var(--text-muted); font-size:0.8rem;">(Opcional)</span></label>
-                                <input type="text" id="form-trim" placeholder="Ej. Lariat, GLI, XLE, Platinum..." maxlength="40">
-                            </div>
-                            <div class="form-group">
-                                <label>Color</label>
-                                <select id="form-color" required>
-                                    <option value="" disabled selected>Selecciona un color</option>
-                                </select>
-                                <input type="text" id="form-custom-color" placeholder="Escribe el color..." style="display: none; margin-top: 8px;">
-                            </div>
-                            </div>
-
-                            <!-- PASO 4 -->
-                            <div class="form-step" data-step="4" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Mecánica</h4>
-                            
-                            <div class="form-group">
-                                <label>Motor</label>
-                                <input type="text" id="form-engine" required placeholder="Ej. 4 cilindros, 5.0L, V6..." maxlength="18">
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Transmisión</label>
-                                    <select id="form-transmission" required>
-                                        <option value="" disabled selected>Selecciona una opción</option>
-                                        <option value="Automática">Automática</option>
-                                        <option value="Manual">Manual</option>
-                                    </select>
-                                </div>
-                                <div class="form-group half">
-                                    <label>A/C</label>
-                                    <select id="form-ac" required>
-                                        <option value="" disabled selected>Selecciona una opción</option>
-                                        <option value="Sí">Sí</option>
-                                        <option value="No">No</option>
-                                    </select>
-                                </div>
-                            </div>
-                            </div>
-
-                            <!-- PASO 5 -->
-                            <div class="form-step" data-step="5" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ficha Técnica</h4>
-
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Kilometraje / Millaje</label>
-                                    <div style="display: flex; gap: 8px;">
-                                        <input type="text" id="form-mileage" required placeholder="Ej. 120,000" inputmode="numeric" maxlength="10" style="flex: 2;">
-                                        <select id="form-mileage-unit" required style="flex: 1; padding: 0 8px; text-align: center;">
-                                            <option value="km">km</option>
-                                            <option value="mi">mi</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group half">
-                                    <label>Situación Legal</label>
-                                    <select id="form-legal" required>
-                                        <option value="" disabled selected>Selecciona una opción</option>
-                                        <option value="Nacional">Nacional</option>
-                                        <option value="Fronterizo">Fronterizo</option>
-                                        <option value="Americano">Americano</option>
-                                        <option value="Decreto">Decreto</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Año</label>
-                                    <input type="number" id="form-year" required min="1950" max="2025" placeholder="Ej. 2021">
-                                </div>
-                                <div class="form-group half">
-                                    <label>Precio de Venta</label>
-                                    <div style="display: flex; gap: 8px;">
-                                        <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 2;">
-                                        <select id="form-currency" required style="flex: 1; padding: 0 8px; text-align: center;">
-                                            <option value="MXN">MXN</option>
-                                            <option value="USD" disabled>USD</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            </div>
-
-                            <!-- PASO 6 -->
-                            <div class="form-step" data-step="6" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">6. Galería de Fotos</h4>
-                            <div class="form-group">
-                                <label>Fotos del Vehículo (Máx 8) *</label>
-                                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; border: 1px dashed var(--primary-color);">
-                                    <label for="form-image" class="primary-btn" style="width: auto; padding: 12px 20px; cursor: pointer; margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: white;">
-                                        <span class="material-symbols-rounded" style="font-size: 22px;">image</span> Elegir galería
-                                    </label>
-                                    <label for="form-image-camera" class="primary-btn" style="width: auto; padding: 12px 20px; cursor: pointer; margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: var(--text-main); background: var(--surface-light);">
-                                        <span class="material-symbols-rounded" style="font-size: 22px;">photo_camera</span> Tomar foto
-                                    </label>
-                                    <span id="file-chosen-text" style="color: var(--text-muted); font-size: 0.9rem; width: 100%;">0 fotos (recuerda que la 1ra es la portada)</span>
-                                    <input type="file" id="form-image" accept="image/*" multiple style="display: none;">
-                                    <input type="file" id="form-image-camera" accept="image/*" capture="environment" style="display: none;">
-                                </div>
-                                <div id="image-preview-container" class="image-preview-container" style="margin-top: 12px; display: flex; gap: 8px; overflow-x: auto;"></div>
-                            </div>
-                            
-                            <!-- Progress Bar for Vehicle -->
-                            <div id="vehicle-progress-container" style="display: none; margin-top: 16px; margin-bottom: 24px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-size: 0.85rem; color: var(--text-muted);">Procesando publicación...</span>
-                                    <span id="vehicle-progress-text" style="font-size: 0.85rem; font-weight: bold; color: var(--primary-color);">0%</span>
-                                </div>
-                                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
-                                    <div id="vehicle-progress-bar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s ease;"></div>
-                                </div>
-                            </div>
-                            </div>
-
-                            <div class="wizard-buttons" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
-                                <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; width: 100%;">
-                                    <button type="button" id="btn-wizard-back" class="danger-btn" style="display: none; flex: 1; background: var(--surface-light);">Atrás</button>
-                                    <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
-                                    <button type="button" id="btn-wizard-submit" class="success-btn" style="display: none; flex: 1.5; padding: 18px 16px; font-size: 1.1rem; font-weight: 700; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);">Publicar Vehículo</button>
-                                </div>
-                                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 4px; margin-bottom: 0;">
-                                    Al publicar declaras que la información es verídica y aceptas nuestros 
-                                    <a href="#" onclick="event.preventDefault(); window.openLegalModal('terms');" style="color: var(--primary-color); text-decoration: underline;">Términos de Servicio</a>.
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            </section>
         </main>
 
         <nav class="bottom-nav">
@@ -1922,10 +1711,220 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <!-- ===== MODAL GLOBAL: Dar de Alta Vehículo ===== -->
+    <div id="new-listing-modal" class="modal" style="z-index: 9999;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Dar de Alta Vehículo</h3>
+                <button id="btn-close-modal" class="icon-btn"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div class="wizard-progress">
+                <span id="wizard-step-indicator" style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">Paso 1 de 6</span>
+                <div class="wizard-bar" style="width: 100%; height: 6px; background: var(--border-color); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                    <div id="wizard-bar-fill" style="width: 20%; height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;"></div>
+                </div>
+            </div>
+            <form id="new-listing-form" style="margin-top: 20px;">
+
+                <!-- PASO 1 -->
+                <div class="form-step" data-step="1">
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; padding: 24px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
+                        <span class="material-symbols-rounded" style="color: #10b981; font-size: 48px; margin-bottom: 16px;">directions_car</span>
+                        <h4 style="margin: 0 0 12px 0; font-size: 1.2rem; color: var(--text-main);">Publicar Vehículo</h4>
+                        <p style="margin: 0; font-size: 1rem; color: var(--text-muted); line-height: 1.5;">
+                            Al continuar, empezarás a publicar tu vehículo.<br><br>
+                            Costo Mensual del Servicio:<br>
+                            <b id="vehicle-dynamic-price" style="color: #f59e0b; font-size: 1.4rem;">$500 MXN</b>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- PASO 2 -->
+                <div class="form-step" data-step="2" style="display: none;">
+                    <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. Ubicación y Contacto</h4>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Estado</label>
+                            <select id="form-state" required>
+                                <option value="" disabled selected>Selecciona un estado</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label>Ciudad</label>
+                            <select id="form-city" required>
+                                <option value="" disabled selected>Selecciona una ciudad</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Teléfono</label>
+                            <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" maxlength="10">
+                        </div>
+                        <div class="form-group half">
+                            <label>WhatsApp</label>
+                            <input type="tel" id="form-whatsapp" required placeholder="Ej. +52 5512345678" maxlength="14">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 3 -->
+                <div class="form-step" data-step="3" style="display: none;">
+                    <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. El Vehículo</h4>
+                    <div class="form-group">
+                        <label>Tipo de Vehículo</label>
+                        <select id="form-type" required>
+                            <option value="" disabled selected>Selecciona un tipo</option>
+                        </select>
+                        <input type="text" id="form-custom-type" placeholder="Escribe el tipo (ej. Motocicleta)..." style="display: none; margin-top: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <select id="form-make" required>
+                            <option value="" disabled selected>Selecciona una marca</option>
+                        </select>
+                        <input type="text" id="form-custom-make" placeholder="Escribe la marca..." style="display: none; margin-top: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo</label>
+                        <select id="form-model" required>
+                            <option value="" disabled selected>Selecciona un modelo</option>
+                        </select>
+                        <input type="text" id="form-custom-model" placeholder="Escribe el modelo..." style="display: none; margin-top: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Versión / Edición <span style="font-weight:normal; color:var(--text-muted); font-size:0.8rem;">(Opcional)</span></label>
+                        <input type="text" id="form-trim" placeholder="Ej. Lariat, GLI, XLE, Platinum..." maxlength="40">
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <select id="form-color" required>
+                            <option value="" disabled selected>Selecciona un color</option>
+                        </select>
+                        <input type="text" id="form-custom-color" placeholder="Escribe el color..." style="display: none; margin-top: 8px;">
+                    </div>
+                </div>
+
+                <!-- PASO 4 -->
+                <div class="form-step" data-step="4" style="display: none;">
+                    <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Mecánica</h4>
+                    <div class="form-group">
+                        <label>Motor</label>
+                        <input type="text" id="form-engine" required placeholder="Ej. 4 cilindros, 5.0L, V6..." maxlength="18">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Transmisión</label>
+                            <select id="form-transmission" required>
+                                <option value="" disabled selected>Selecciona una opción</option>
+                                <option value="Automática">Automática</option>
+                                <option value="Manual">Manual</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label>A/C</label>
+                            <select id="form-ac" required>
+                                <option value="" disabled selected>Selecciona una opción</option>
+                                <option value="Sí">Sí</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 5 -->
+                <div class="form-step" data-step="5" style="display: none;">
+                    <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ficha Técnica</h4>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Kilometraje / Millaje</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="form-mileage" required placeholder="Ej. 120,000" inputmode="numeric" maxlength="10" style="flex: 2;">
+                                <select id="form-mileage-unit" required style="flex: 1; padding: 0 8px; text-align: center;">
+                                    <option value="km">km</option>
+                                    <option value="mi">mi</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group half">
+                            <label>Situación Legal</label>
+                            <select id="form-legal" required>
+                                <option value="" disabled selected>Selecciona una opción</option>
+                                <option value="Nacional">Nacional</option>
+                                <option value="Fronterizo">Fronterizo</option>
+                                <option value="Americano">Americano</option>
+                                <option value="Decreto">Decreto</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Año</label>
+                            <input type="number" id="form-year" required min="1950" max="2025" placeholder="Ej. 2021">
+                        </div>
+                        <div class="form-group half">
+                            <label>Precio de Venta</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 2;">
+                                <select id="form-currency" required style="flex: 1; padding: 0 8px; text-align: center;">
+                                    <option value="MXN">MXN</option>
+                                    <option value="USD" disabled>USD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 6 -->
+                <div class="form-step" data-step="6" style="display: none;">
+                    <h4 style="margin-bottom: 16px; color: var(--text-muted);">6. Galería de Fotos</h4>
+                    <div class="form-group">
+                        <label>Fotos del Vehículo (Máx 8) *</label>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; border: 1px dashed var(--primary-color);">
+                            <label for="form-image" class="primary-btn" style="width: auto; padding: 12px 20px; cursor: pointer; margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: white;">
+                                <span class="material-symbols-rounded" style="font-size: 22px;">image</span> Elegir galería
+                            </label>
+                            <label for="form-image-camera" class="primary-btn" style="width: auto; padding: 12px 20px; cursor: pointer; margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: var(--text-main); background: var(--surface-light);">
+                                <span class="material-symbols-rounded" style="font-size: 22px;">photo_camera</span> Tomar foto
+                            </label>
+                            <span id="file-chosen-text" style="color: var(--text-muted); font-size: 0.9rem; width: 100%;">0 fotos (recuerda que la 1ra es la portada)</span>
+                            <input type="file" id="form-image" accept="image/*" multiple style="display: none;">
+                            <input type="file" id="form-image-camera" accept="image/*" capture="environment" style="display: none;">
+                        </div>
+                        <div id="image-preview-container" class="image-preview-container" style="margin-top: 12px; display: flex; gap: 8px; overflow-x: auto;"></div>
+                    </div>
+                    <!-- Progress Bar for Vehicle -->
+                    <div id="vehicle-progress-container" style="display: none; margin-top: 16px; margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Procesando publicación...</span>
+                            <span id="vehicle-progress-text" style="font-size: 0.85rem; font-weight: bold; color: var(--primary-color);">0%</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                            <div id="vehicle-progress-bar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-buttons" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; width: 100%;">
+                        <button type="button" id="btn-wizard-back" class="danger-btn" style="display: none; flex: 1; background: var(--surface-light);">Atrás</button>
+                        <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
+                        <button type="button" id="btn-wizard-submit" class="success-btn" style="display: none; flex: 1.5; padding: 18px 16px; font-size: 1.1rem; font-weight: 700; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);">Publicar Vehículo</button>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 4px; margin-bottom: 0;">
+                        Al publicar declaras que la información es verídica y aceptas nuestros
+                        <a href="#" onclick="event.preventDefault(); window.openLegalModal('terms');" style="color: var(--primary-color); text-decoration: underline;">Términos de Servicio</a>.
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- ===== FIN MODAL GLOBAL ===== -->
+
     <!-- Supabase Cloud SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabaseClient.js?v=74"></script>
-    <script src="db.js?v=74"></script>
-    <script src="app.js?v=74"></script>
+    <script src="supabaseClient.js?v=86"></script>
+    <script src="db.js?v=86"></script>
+    <script src="app.js?v=86"></script>
 </body>
 </html>
