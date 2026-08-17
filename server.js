@@ -25,9 +25,21 @@ const upload = multer({
     limits: { fileSize: 15 * 1024 * 1024 } // Máximo 15MB por archivo original
 });
 
-// Servir archivos estáticos del frontend y de las imágenes subidas
-app.use(express.static(__dirname));
-app.use('/uploads', express.static(uploadsDir));
+// Servir archivos estáticos del frontend y de las imágenes subidas con caché optimizada de alto rendimiento
+app.use(express.static(__dirname, {
+    maxAge: '1d',
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+    }
+}));
+app.use('/uploads', express.static(uploadsDir, {
+    maxAge: '30d',
+    immutable: true
+}));
 
 // --- SISTEMA DE AUTENTICACIÓN Y SEGURIDAD ---
 const activeSessions = {}; // { token: { userId, username, role, allowedStates, allowedCities } }

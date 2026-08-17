@@ -2178,6 +2178,37 @@ document.addEventListener('DOMContentLoaded', () => {
     window.activeFeedListings = [];
     var PAGE_SIZE = 20;
 
+    // ==========================================
+    // HOOK DE PRE-CARGA EN SEGUNDO PLANO (PREFETCHING)
+    // ==========================================
+    function usePrefetchHook() {
+        let prefetchTimer = null;
+        window.prefetchedFeedData = null;
+
+        function schedulePrefetch() {
+            if (prefetchTimer) clearTimeout(prefetchTimer);
+            prefetchTimer = setTimeout(async () => {
+                if (isLoadingFeed || !hasMoreFeedItems) return;
+                const state = userStateSelect ? userStateSelect.value : null;
+                try {
+                    const res = await db.fetchFeedPaginated({
+                        page: currentFeedPage,
+                        pageSize: PAGE_SIZE,
+                        state: state,
+                        cities: selectedCities,
+                        filters: { category: currentFeedCategory }
+                    });
+                    if (res && res.data && res.data.length > 0) {
+                        window.prefetchedFeedData = res;
+                    }
+                } catch (e) { }
+            }, 600);
+        }
+
+        return { schedulePrefetch };
+    }
+    window.usePrefetchHook = usePrefetchHook;
+
     async function fetchNextFeedBlock() {
         if (isLoadingFeed || !hasMoreFeedItems) return;
         isLoadingFeed = true;
@@ -2186,14 +2217,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const sentinel = document.getElementById('feed-infinite-scroll-sentinel');
         if (sentinel) sentinel.style.display = 'block';
 
-        const state = userStateSelect.value;
-        const res = await db.fetchFeedPaginated({
-            page: currentFeedPage,
-            pageSize: PAGE_SIZE,
-            state: state,
-            cities: selectedCities,
-            filters: { category: currentFeedCategory }
-        });
+        let res = null;
+        if (window.prefetchedFeedData && window.prefetchedFeedData.data && window.prefetchedFeedData.data.length > 0) {
+            // Consumir datos pre-cargados al instante sin esperar red
+            res = window.prefetchedFeedData;
+            window.prefetchedFeedData = null;
+        } else {
+            const state = userStateSelect.value;
+            res = await db.fetchFeedPaginated({
+                page: currentFeedPage,
+                pageSize: PAGE_SIZE,
+                state: state,
+                cities: selectedCities,
+                filters: { category: currentFeedCategory }
+            });
+        }
 
         if (res.data.length > 0) {
             // Eliminar duplicados por id
@@ -2233,6 +2271,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (sentinel) {
             sentinel.style.display = hasMoreFeedItems ? 'block' : 'none';
+        }
+
+        // Programar pre-carga de la siguiente página en segundo plano
+        if (hasMoreFeedItems && typeof window.usePrefetchHook === 'function') {
+            window.usePrefetchHook().schedulePrefetch();
         }
     }
 
