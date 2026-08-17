@@ -1,4 +1,4 @@
-const APP_VERSION = "2.1.7"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.1.9"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -576,15 +576,21 @@ class Database {
         }));
     }
 
-    async fetchFeedPaginated({ page = 1, pageSize = 20, state = null, cities = [], filters = {} } = {}) {
+    resetFeedShuffle() {
+        this.shuffledFeedIds = null;
+        this.currentFeedFiltersHash = null;
+        this.shuffledFeedTotalCount = 0;
+    }
+
+    async fetchFeedPaginated({ page = 1, pageSize = 20, state = null, cities = [], filters = {}, forceRefresh = false } = {}) {
         if (typeof supabaseClient === 'undefined' || !supabaseClient) {
             return { data: [], total: 0, hasMore: false };
         }
 
         const filtersHash = JSON.stringify({ state, cities, filters });
 
-        // Inicializar el arreglo barajado de IDs si es la página 1, o si los filtros cambiaron
-        if (page === 1 || this.currentFeedFiltersHash !== filtersHash || !this.shuffledFeedIds) {
+        // Inicializar el arreglo barajado de IDs sólo en la primera carga de sesión, si cambian los filtros o si se fuerza refresco
+        if (!this.shuffledFeedIds || this.currentFeedFiltersHash !== filtersHash || forceRefresh) {
             let query = supabaseClient.from('listings').select('id', { count: 'exact' }).eq('status', 'autorizado').limit(5000);
 
             if (cities && cities.length > 0) {

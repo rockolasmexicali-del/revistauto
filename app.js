@@ -2236,9 +2236,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function renderFeed() {
+    async function renderFeed(forceReload = false) {
+        const feedContainer = document.getElementById('feed-container');
+
         if (window.isWaitingForInitialGps) {
-            const feedContainer = document.getElementById('feed-container');
             if (feedContainer) {
                 feedContainer.classList.remove('listings-grid');
                 feedContainer.innerHTML = `
@@ -2251,6 +2252,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
+
+        // Si los vehículos del feed ya se encuentran renderizados en pantalla y no se fuerza recarga,
+        // retenemos el DOM existente sin vaciar el contenedor para evitar cualquier parpadeo al cambiar de pestaña.
+        if (!forceReload && window.activeFeedListings && window.activeFeedListings.length > 0 && feedContainer && feedContainer.children.length > 0) {
+            return;
+        }
+
         // Refrescar ranking desde el servidor antes de renderizar
         if (typeof window.refreshCategoryRanking === 'function') {
             await window.refreshCategoryRanking(selectedCities);
@@ -2262,7 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentFeedPage = 1;
         window.activeFeedListings = [];
         hasMoreFeedItems = true;
-        feedContainer.innerHTML = '';
+        if (feedContainer) feedContainer.innerHTML = '';
 
         // Add sentinel
         let sentinel = document.getElementById('feed-infinite-scroll-sentinel');
