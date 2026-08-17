@@ -714,6 +714,27 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 formCity.innerHTML = '<option value="" disabled selected>No hay ciudades</option>';
             }
+            
+            // Logic for USD currency availability based on border states
+            const formCurrency = document.getElementById('form-currency');
+            if (formCurrency) {
+                const borderStates = ["Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Coahuila", "Nuevo León", "Tamaulipas"];
+                const usdOption = formCurrency.querySelector('option[value="USD"]');
+                if (borderStates.includes(state)) {
+                    if (usdOption) usdOption.disabled = false;
+                    formCurrency.disabled = false;
+                    formCurrency.style.appearance = 'auto';
+                    formCurrency.style.webkitAppearance = 'auto';
+                    formCurrency.style.mozAppearance = 'auto';
+                } else {
+                    if (usdOption) usdOption.disabled = true;
+                    formCurrency.value = "MXN"; // Reset to MXN if state is not border
+                    formCurrency.disabled = true;
+                    formCurrency.style.appearance = 'none';
+                    formCurrency.style.webkitAppearance = 'none';
+                    formCurrency.style.mozAppearance = 'none';
+                }
+            }
         });
         if (formState.value && formState.value !== "") formState.dispatchEvent(new Event('change'));
 
@@ -1595,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-content">
                     <h4 class="card-title">${(listing.title || `${listing.make} ${listing.model} ${listing.year}`).replace(listing.year, '').replace(/\s+/g, ' ').trim()}</h4>
                     <p class="card-price">
-                        $${listing.price.toLocaleString('es-MX')}
+                        $${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}
                         ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.7rem; color: var(--text-muted); text-decoration: line-through; margin-left: 4px;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
                     </p>
                     <div class="card-meta">
@@ -3024,7 +3045,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 12px;">
                     <div>
                         <div class="detalle-price" style="margin-bottom: 0;">
-                            $${listing.price.toLocaleString('es-MX')}
+                            $${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}
                             ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.85rem; color: var(--text-muted); text-decoration: line-through; margin-left: 6px; font-weight: normal;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
                         </div>
                         <div class="detalle-city-pulsing">${listing.city}</div>
@@ -3630,7 +3651,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4 class="my-listing-title">${listing.title || `${listing.make} ${listing.model} ${listing.year}`}</h4>
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ref: #${refNum}</div>
                     <p style="color: var(--primary-color); font-weight: bold; margin-bottom: 4px;">
-                        $${listing.price.toLocaleString('es-MX')}
+                        $${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}
                         ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.75rem; color: var(--text-muted); text-decoration: line-through; margin-left: 4px; font-weight: normal;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
                     </p>
                     <span class="status-badge ${statusColorClass}" style="${statusColorClass === 'status-caducado' ? 'background: var(--danger-color);' : (statusColorClass === 'status-renovar' ? 'background: #f59e0b;' : '')}">${displayStatus}</span>
@@ -4088,6 +4109,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             document.getElementById('form-price').value = '';
         }
+        const formCurrency = document.getElementById('form-currency');
+        if (formCurrency) {
+            formCurrency.value = listing.currency || 'MXN';
+            // Trigger state change to correctly disable/enable USD if needed
+            const formState = document.getElementById('form-state');
+            if (formState) {
+                // Ensure the form state is the listing state before triggering change
+                formState.value = listing.state || '';
+                formState.dispatchEvent(new Event('change'));
+                // Restore currency if it was set to MXN by the state change
+                if (listing.currency) {
+                     formCurrency.value = listing.currency;
+                }
+            }
+        }
 
         if (formColor) {
             let listColor = listing.color || '';
@@ -4356,6 +4392,7 @@ document.addEventListener('DOMContentLoaded', () => {
             model: model,
             year: parseInt(year),
             price: parseInt(document.getElementById('form-price').value.replace(/[^0-9]/g, ''), 10) || 0,
+            currency: document.getElementById('form-currency') ? document.getElementById('form-currency').value : 'MXN',
             color: colorVal,
             state: formState.value,
             city: formCity.value,
@@ -5783,7 +5820,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <strong>${listing.title}</strong><br>
                     <small style="color:var(--text-muted)">${listing.year} • ${listing.city}</small>
                 </td>
-                <td>$${listing.price.toLocaleString()}</td>
+                <td>$${listing.price.toLocaleString()}${listing.currency === 'USD' ? ' USD' : ''}</td>
                 <td>${listing.views || 0}</td>
                 <td>
                     <button class="icon-btn" onclick="openEditListingAdmin(${listing.id})" style="color: #10b981;" title="Editar publicación"><span class="material-symbols-rounded">edit</span></button>
@@ -5900,7 +5937,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="pending-main-info">
                             <div class="pending-title">${listing.title} ${paymentBadgeHTML}</div>
                             <div class="pending-sub-info">
-                                <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}</span>
+                                <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}</span>
                                 <span>📍 ${listing.city}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${listing.phone}', 'Teléfono')" title="Clic para copiar teléfono">📞 ${listing.phone}</span>
                                 ${listing.whatsapp ? `<a href="${buildAdminWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
@@ -5939,7 +5976,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="primary-btn" onclick="event.stopPropagation(); openAdminEditModal(${listing.id})" style="grid-column: 1 / -1; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color);">
                             <span class="material-symbols-rounded" style="font-size: 16px;">edit</span> Editar Datos de la Publicación
                         </button>
-                        <div><strong>Precio Auto:</strong> <span style="color: var(--success-color);">$${listing.price.toLocaleString('es-MX')}</span></div>
+                        <div><strong>Precio Auto:</strong> <span style="color: var(--success-color);">$${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}</span></div>
                         <div><strong>Por Pagar:</strong> <span style="color: var(--danger-color); font-weight: bold;">$${payInfo.calculatedPrice.toFixed(2)} pesos</span></div>
                         <div><strong>Año:</strong> ${listing.year}</div>
                         <div><strong>Marca:</strong> ${listing.make}</div>
@@ -6156,7 +6193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="pending-main-info">
                             <div class="pending-title">${listing.title} ${statusTagHTML}</div>
                             <div class="pending-sub-info">
-                                <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}</span>
+                                <span class="pending-price-tag">$${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}</span>
                                 <span>📍 ${listing.city}</span>
                                 <span class="copyable-phone" onclick="event.stopPropagation(); copyToClipboard('${listing.phone}', 'Teléfono')">📞 ${listing.phone}</span>
                                 ${listing.whatsapp ? `<a href="${buildAdminWhatsAppUrl(listing.whatsapp, listing.title)}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:white; padding:2px 6px; border-radius:4px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; margin-left:6px;" onclick="event.stopPropagation();"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">chat</span> WhatsApp</a>` : ''}
@@ -6195,7 +6232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="primary-btn" onclick="event.stopPropagation(); openAdminEditModal(${listing.id})" style="grid-column: 1 / -1; margin-bottom: 8px; justify-content: center; display: flex; align-items: center; gap: 4px; padding: 6px; font-size: 0.85rem; background: var(--surface-light); border: 1px solid var(--border-color);">
                             <span class="material-symbols-rounded" style="font-size: 16px;">edit</span> Editar Datos de la Publicación
                         </button>
-                        <div><strong>Precio Auto:</strong> <span style="color: var(--success-color);">$${listing.price.toLocaleString('es-MX')}</span></div>
+                        <div><strong>Precio Auto:</strong> <span style="color: var(--success-color);">$${listing.price.toLocaleString('es-MX')}${listing.currency === 'USD' ? ' USD' : ''}</span></div>
                         <div><strong>Por Pagar:</strong> <span style="color: var(--danger-color); font-weight: bold;">$${payInfo.calculatedPrice.toFixed(2)} pesos</span></div>
                         <div><strong>Año:</strong> ${listing.year}</div>
                         <div><strong>Marca:</strong> ${listing.make}</div>

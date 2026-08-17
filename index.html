@@ -255,7 +255,36 @@
 
                             <!-- PASO 2 -->
                             <div class="form-step" data-step="2" style="display: none;">
-                                <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. El Vehículo</h4>
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">2. Ubicación y Contacto</h4>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Estado</label>
+                                    <select id="form-state" required>
+                                        <option value="" disabled selected>Selecciona un estado</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label>Ciudad</label>
+                                    <select id="form-city" required>
+                                        <option value="" disabled selected>Selecciona una ciudad</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Teléfono</label>
+                                    <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" maxlength="10">
+                                </div>
+                                <div class="form-group half">
+                                    <label>WhatsApp</label>
+                                    <input type="tel" id="form-whatsapp" required placeholder="Ej. +52 5512345678" maxlength="14">
+                                </div>
+                            </div>
+                            </div>
+
+                            <!-- PASO 3 -->
+                            <div class="form-step" data-step="3" style="display: none;">
+                                <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. El Vehículo</h4>
                             <div class="form-group">
                                 <label>Tipo de Vehículo</label>
                                 <select id="form-type" required>
@@ -290,9 +319,9 @@
                             </div>
                             </div>
 
-                            <!-- PASO 3 -->
-                            <div class="form-step" data-step="3" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">3. Mecánica</h4>
+                            <!-- PASO 4 -->
+                            <div class="form-step" data-step="4" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Mecánica</h4>
                             
                             <div class="form-group">
                                 <label>Motor</label>
@@ -318,9 +347,9 @@
                             </div>
                             </div>
 
-                            <!-- PASO 4 -->
-                            <div class="form-step" data-step="4" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Ficha Técnica</h4>
+                            <!-- PASO 5 -->
+                            <div class="form-step" data-step="5" style="display: none;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ficha Técnica</h4>
 
                             <div class="form-row">
                                 <div class="form-group half">
@@ -351,37 +380,14 @@
                                     <input type="number" id="form-year" required min="1950" max="2025" placeholder="Ej. 2021">
                                 </div>
                                 <div class="form-group half">
-                                    <label>Precio de Venta (MXN)</label>
-                                    <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. $250,000" maxlength="11">
-                                </div>
-                            </div>
-                            </div>
-
-                            <!-- PASO 5 -->
-                            <div class="form-step" data-step="5" style="display: none;">
-                            <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ubicación y Contacto</h4>
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Estado</label>
-                                    <select id="form-state" required>
-                                        <option value="" disabled selected>Selecciona un estado</option>
-                                    </select>
-                                </div>
-                                <div class="form-group half">
-                                    <label>Ciudad</label>
-                                    <select id="form-city" required>
-                                        <option value="" disabled selected>Selecciona una ciudad</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group half">
-                                    <label>Teléfono</label>
-                                    <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" maxlength="10">
-                                </div>
-                                <div class="form-group half">
-                                    <label>WhatsApp</label>
-                                    <input type="tel" id="form-whatsapp" required placeholder="Ej. +52 5512345678" maxlength="14">
+                                    <label>Precio de Venta</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 2;">
+                                        <select id="form-currency" required style="flex: 1; padding: 0 8px; text-align: center;">
+                                            <option value="MXN">MXN</option>
+                                            <option value="USD" disabled>USD</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             </div>
