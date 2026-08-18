@@ -1095,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "");
 
-            const isTruck = typeNormalized.includes('camion') || typeNormalized.includes('tractocamion');
+            const isTruck = (typeNormalized.includes('camion') || typeNormalized.includes('tracto')) && !typeNormalized.includes('camioneta');
             const currentSelected = formLegal.value;
 
             let optionsHTML = '<option value="" disabled selected>Selecciona una opción</option>';
