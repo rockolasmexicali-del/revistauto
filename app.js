@@ -51,6 +51,17 @@ window.buildWhatsAppUrl = function (phone, title) {
     return `https://wa.me/${cleanPhone}?text=${message}`;
 };
 window.sessionStartTime = Date.now();
+setTimeout(() => {
+    document.querySelectorAll('.netflix-row-cta-container button').forEach(btn => {
+        btn.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        btn.style.opacity = '0';
+        btn.style.transform = 'scale(0.95)';
+    });
+    setTimeout(() => {
+        document.querySelectorAll('.netflix-row-cta-container').forEach(el => el.innerHTML = '');
+    }, 800);
+    console.log("40 seconds elapsed, CTAs fading out smoothly.");
+}, 40000);
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
