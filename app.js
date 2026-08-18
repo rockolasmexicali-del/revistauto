@@ -1617,6 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${imageElements}
                     </div>
                     ${navArrows}
+                    ${(listing.old_price && listing.old_price > listing.price) ? `<div style="position: absolute; bottom: 0; left: 0; background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 0 8px 0 0; z-index: 3;">REBAJADO</div>` : ''}
                     <button class="card-save-btn ${savedClass}" style="${(hideHeart && !isSaved) ? 'display: none;' : ''}" onclick="event.stopPropagation(); window.toggleSave(${listing.id}, this)">
                         <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">${savedIcon}</span>
                     </button>
@@ -1625,7 +1626,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4 class="card-title">${(listing.title || `${listing.make} ${listing.model} ${listing.year}`).replace(listing.year, '').replace(/\s+/g, ' ').trim()}</h4>
                     <p class="card-price">
                         $${listing.price.toLocaleString('es-MX')} <span class="price-currency">${getListingCurrencyLabel(listing)}</span>
-                        ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.7rem; color: var(--text-muted); text-decoration: line-through; margin-left: 4px;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
                     </p>
                     <div class="card-meta">
                         <span>${listing.year}</span>
@@ -3088,7 +3088,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <div class="detalle-price" style="margin-bottom: 0;">
                             $${listing.price.toLocaleString('es-MX')} <span class="price-currency">${getListingCurrencyLabel(listing)}</span>
-                            ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.85rem; color: var(--text-muted); text-decoration: line-through; margin-left: 6px; font-weight: normal;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
+                            ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.85rem; color: #ef4444; text-decoration: line-through; margin-left: 6px; font-weight: bold;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
                         </div>
                         <div class="detalle-city-pulsing">${listing.city}</div>
                     </div>
@@ -3694,7 +3694,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ref: #${refNum}</div>
                     <p style="color: var(--primary-color); font-weight: bold; margin-bottom: 4px; display: flex; align-items: baseline; white-space: nowrap; gap: 4px;">
                         $${listing.price.toLocaleString('es-MX')} <span class="price-currency">${getListingCurrencyLabel(listing)}</span>
-                        ${(listing.old_price && listing.old_price > listing.price) ? `<span style="font-size: 0.75rem; color: var(--text-muted); text-decoration: line-through; margin-left: 4px; font-weight: normal;">$${listing.old_price.toLocaleString('es-MX')}</span>` : ''}
                     </p>
                     <span class="status-badge ${statusColorClass}" style="${statusColorClass === 'status-caducado' ? 'background: var(--danger-color);' : (statusColorClass === 'status-renovar' ? 'background: #f59e0b;' : '')}">${displayStatus}</span>
                     ${priceTextHTML}
