@@ -9,6 +9,121 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+window.parseAndFormatPhone = function (phoneStr, context = null) {
+    let rawStr = phoneStr ? String(phoneStr).trim() : '';
+
+    if (!rawStr && context && typeof context === 'object') {
+        rawStr = context.phone || context.seller_phone || context.whatsapp || context.seller_whatsapp || '';
+    }
+
+    if (!rawStr) {
+        return {
+            raw: '',
+            prefix: '+52',
+            countryLabel: 'MEX',
+            nationalDigits: '',
+            telUrl: '',
+            displayFormatted: 'MEX +52'
+        };
+    }
+
+    let digits = rawStr.replace(/[^0-9]/g, '');
+    let lowerStr = rawStr.toLowerCase();
+
+    let isUSA = false;
+    let isMEX = false;
+
+    // 1. Evaluación directa sobre el número enviado
+    if (
+        rawStr.startsWith('+1') ||
+        rawStr.startsWith('1 ') ||
+        rawStr.startsWith('1-') ||
+        rawStr.startsWith('+ 1') ||
+        lowerStr.startsWith('usa') ||
+        lowerStr.startsWith('us +1') ||
+        (digits.length === 11 && digits.startsWith('1'))
+    ) {
+        isUSA = true;
+    } else if (
+        rawStr.startsWith('+52') ||
+        rawStr.startsWith('52 ') ||
+        rawStr.startsWith('52-') ||
+        rawStr.startsWith('+ 52') ||
+        lowerStr.startsWith('mex') ||
+        lowerStr.startsWith('mx ') ||
+        (digits.length >= 12 && digits.startsWith('52'))
+    ) {
+        isMEX = true;
+    }
+
+    // 2. Si es de 10 dígitos sin prefijo explícito, consultar contexto (WhatsApp o LADA elegida)
+    if (!isUSA && !isMEX && digits.length === 10) {
+        if (context) {
+            if (typeof context === 'string') {
+                const cUpper = context.toUpperCase();
+                if (cUpper === '+1' || cUpper === 'US' || cUpper === 'USA' || cUpper.includes('+1')) {
+                    isUSA = true;
+                }
+            } else if (typeof context === 'object') {
+                const wa = String(context.whatsapp || context.seller_whatsapp || '').trim();
+                const waDigits = wa.replace(/[^0-9]/g, '');
+
+                if (
+                    wa.startsWith('+1') ||
+                    wa.startsWith('1 ') ||
+                    wa.startsWith('1-') ||
+                    wa.toLowerCase().startsWith('usa') ||
+                    (waDigits.length === 11 && waDigits.startsWith('1'))
+                ) {
+                    isUSA = true;
+                } else if (
+                    wa.startsWith('+52') ||
+                    wa.startsWith('52 ') ||
+                    (waDigits.length >= 12 && waDigits.startsWith('52'))
+                ) {
+                    isMEX = true;
+                }
+            }
+        }
+    }
+
+    // Si no fue identificado como USA de forma estricta, por defecto es México (+52)
+    let prefix = isUSA ? '+1' : '+52';
+    let countryLabel = isUSA ? 'USA' : 'MEX';
+
+    let nationalDigits = digits;
+    if (isUSA && digits.length === 11 && digits.startsWith('1')) {
+        nationalDigits = digits.substring(1);
+    } else if (isMEX && digits.length === 13 && digits.startsWith('521')) {
+        nationalDigits = digits.substring(3);
+    } else if (isMEX && digits.length === 12 && digits.startsWith('52')) {
+        nationalDigits = digits.substring(2);
+    } else if (digits.length > 10) {
+        nationalDigits = digits.slice(-10);
+    }
+
+    if (nationalDigits.length > 10) {
+        nationalDigits = nationalDigits.slice(-10);
+    }
+
+    let formattedNational = nationalDigits;
+    if (nationalDigits.length === 10) {
+        formattedNational = `(${nationalDigits.substring(0, 3)}) ${nationalDigits.substring(3, 6)}-${nationalDigits.substring(6)}`;
+    }
+
+    let fullTelNumber = prefix + nationalDigits;
+    let displayFormatted = `${countryLabel} ${prefix} ${formattedNational}`;
+
+    return {
+        raw: rawStr,
+        prefix: prefix,
+        countryLabel: countryLabel,
+        nationalDigits: nationalDigits,
+        telUrl: `tel:${fullTelNumber}`,
+        displayFormatted: displayFormatted
+    };
+};
+
 function getListingCurrencyLabel(listing) {
     if (!listing) return 'Pesos';
     const curr = typeof listing === 'string' ? listing : (listing.currency || 'MXN');
@@ -41,12 +156,10 @@ window.appConfirm = function (message, onConfirm, title = '¿Estás seguro?') {
     modal.classList.add('active');
 };
 
-window.buildWhatsAppUrl = function (phone, title) {
+window.buildWhatsAppUrl = function (phone, title, context = null) {
     if (!phone) return '#';
-    let cleanPhone = String(phone).replace(/\D/g, '');
-    if (cleanPhone.length === 10) {
-        cleanPhone = '521' + cleanPhone;
-    }
+    const waData = parseAndFormatPhone(phone, context);
+    const cleanPhone = waData.prefix.replace('+', '') + waData.nationalDigits;
     const message = encodeURIComponent(`Hola, vi tu anuncio de "${title}" en RevistAuto y me interesa.`);
     return `https://wa.me/${cleanPhone}?text=${message}`;
 };
@@ -1234,20 +1347,12 @@ document.addEventListener('DOMContentLoaded', () => {
         formPhone.addEventListener('input', (e) => {
             if (!whatsappModified) {
                 let v = e.target.value.replace(/[^0-9]/g, '');
-                const formWhatsAppLada = document.getElementById('form-whatsapp-lada');
-                if (formWhatsAppLada) formWhatsAppLada.value = '+52';
                 formWhatsApp.value = v;
             }
         });
         formWhatsApp.addEventListener('input', () => {
             whatsappModified = true;
         });
-        const formWhatsAppLada = document.getElementById('form-whatsapp-lada');
-        if (formWhatsAppLada) {
-            formWhatsAppLada.addEventListener('change', () => {
-                whatsappModified = true;
-            });
-        }
 
         window.renderImagePreviews = function () {
             const container = document.getElementById('image-preview-container');
@@ -1968,27 +2073,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnWhatsApp.style.display = ad.whatsapp ? 'flex' : 'none';
 
                 if (ad.phone) {
-                    let cleanPhoneCall = String(ad.phone).replace(/[^0-9]/g, '');
-                    if (cleanPhoneCall.length > 10) cleanPhoneCall = cleanPhoneCall.slice(-10);
-                    const formattedPhone = cleanPhoneCall.length === 10 ? `(${cleanPhoneCall.substring(0, 3)})${cleanPhoneCall.substring(3, 6)}-${cleanPhoneCall.substring(6)}` : cleanPhoneCall;
+                    const phoneData = parseAndFormatPhone(ad.phone, ad);
 
                     if (window.innerWidth >= 768) {
-                        btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
-                        btnCall.onclick = null;
-                        btnCall.style.cursor = 'default';
+                        btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${phoneData.displayFormatted}`;
+                        btnCall.style.cursor = 'pointer';
+                        btnCall.onclick = () => {
+                            db.incrementAdClicks(adId);
+                            window.open(phoneData.telUrl, '_self');
+                            document.getElementById('contact-modal').classList.remove('active');
+                        };
                     } else {
                         btnCall.innerHTML = `<span class="material-symbols-rounded">call</span> Llamar`;
                         btnCall.style.cursor = 'pointer';
                         btnCall.onclick = () => {
                             db.incrementAdClicks(adId);
-                            window.open(`tel:${cleanPhoneCall}`, '_self');
+                            window.open(phoneData.telUrl, '_self');
                             document.getElementById('contact-modal').classList.remove('active');
                         };
                     }
                 }
 
                 if (ad.whatsapp) {
-                    const cleanPhoneWa = String(ad.whatsapp).replace(/[^0-9]/g, '');
+                    const waData = parseAndFormatPhone(ad.whatsapp, ad);
+                    const cleanPhoneWa = waData.prefix.replace('+', '') + waData.nationalDigits;
                     const message = encodeURIComponent(`Hola, vi su anuncio "${ad.title}" en RevistAuto.`);
                     btnWhatsApp.onclick = () => {
                         db.incrementAdClicks(adId);
@@ -3555,27 +3663,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (listing) {
-            let phone = listing.whatsapp || listing.phone || "5512345678";
+            let phone = listing.phone || listing.whatsapp || "5512345678";
             if (phone) {
-                let cleanPhone = String(phone).replace(/[^0-9]/g, '');
-                let waClean = cleanPhone;
-                if (waClean.length === 10) waClean = '52' + waClean;
-                if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
-                const formattedPhone = cleanPhone.length === 10 ? `(${cleanPhone.substring(0, 3)})${cleanPhone.substring(3, 6)}-${cleanPhone.substring(6)}` : cleanPhone;
+                const phoneData = parseAndFormatPhone(phone, listing);
+                const waData = parseAndFormatPhone(listing.whatsapp || phone, listing);
+                const waClean = waData.prefix.replace('+', '') + waData.nationalDigits;
                 const message = encodeURIComponent(`Hola, vi tu anuncio "${listing.title}" en RevistAuto. Me interesa y quisiera más información.`);
 
                 const btnCall = document.getElementById('btn-contact-call');
                 const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
 
                 if (window.innerWidth >= 768) {
-                    btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${formattedPhone}`;
-                    btnCall.onclick = null;
-                    btnCall.style.cursor = 'default';
+                    btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${phoneData.displayFormatted}`;
+                    btnCall.style.cursor = 'pointer';
+                    btnCall.onclick = () => {
+                        window.open(phoneData.telUrl, '_self');
+                        document.getElementById('contact-modal').classList.remove('active');
+                    };
                 } else {
                     btnCall.innerHTML = `<span class="material-symbols-rounded">call</span> Llamar`;
                     btnCall.style.cursor = 'pointer';
                     btnCall.onclick = () => {
-                        window.open(`tel:${cleanPhone}`, '_self');
+                        window.open(phoneData.telUrl, '_self');
                         document.getElementById('contact-modal').classList.remove('active');
                     };
                 }
@@ -4545,9 +4654,13 @@ document.addEventListener('DOMContentLoaded', () => {
             color: colorVal,
             state: formState.value,
             city: formCity.value,
-            phone: formPhone.value,
+            phone: (() => {
+                const lada = document.getElementById('form-phone-lada') ? document.getElementById('form-phone-lada').value : '+52';
+                const phoneDigits = formPhone ? formPhone.value.replace(/[^0-9]/g, '') : '';
+                return phoneDigits ? `${lada} ${phoneDigits}` : (formPhone ? formPhone.value.trim() : '');
+            })(),
             whatsapp: (() => {
-                const lada = document.getElementById('form-whatsapp-lada') ? document.getElementById('form-whatsapp-lada').value : '+52';
+                const lada = document.getElementById('form-phone-lada') ? document.getElementById('form-phone-lada').value : '+52';
                 const waDigits = formWhatsApp ? formWhatsApp.value.replace(/[^0-9]/g, '') : '';
                 return waDigits ? `${lada} ${waDigits}` : '';
             })(),
@@ -7032,8 +7145,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-model').value = listing.model || '';
         document.getElementById('edit-type').value = listing.type || '';
         document.getElementById('edit-transmission').value = listing.transmission || '';
-        document.getElementById('edit-phone').value = listing.phone || '';
-        document.getElementById('edit-whatsapp').value = listing.whatsapp || '';
+        const phoneData = parseAndFormatPhone(listing.phone, listing);
+        const waData = parseAndFormatPhone(listing.whatsapp, listing);
+
+        const editPhoneLada = document.getElementById('edit-phone-lada');
+        const editWaLada = document.getElementById('edit-whatsapp-lada');
+        if (editPhoneLada) editPhoneLada.value = phoneData.prefix === '+1' ? '+1' : '+52';
+        document.getElementById('edit-phone').value = phoneData.nationalDigits || listing.phone || '';
+
+        if (editWaLada) editWaLada.value = waData.prefix === '+1' ? '+1' : '+52';
+        document.getElementById('edit-whatsapp').value = waData.nationalDigits || listing.whatsapp || '';
+
+        if (editPhoneLada && editWaLada) {
+            editPhoneLada.onchange = (e) => {
+                editWaLada.value = e.target.value;
+            };
+        }
 
         const modal = document.getElementById('admin-edit-modal');
         if (modal) modal.classList.add('active');
@@ -7064,8 +7191,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const make = document.getElementById('edit-make').value.trim();
             const model = document.getElementById('edit-model').value.trim();
-            const phone = document.getElementById('edit-phone').value.trim();
-            const wa = document.getElementById('edit-whatsapp').value.trim();
+            const rawPhone = document.getElementById('edit-phone').value.trim();
+            const phoneLada = document.getElementById('edit-phone-lada') ? document.getElementById('edit-phone-lada').value : '+52';
+            const phoneDigits = rawPhone.replace(/[^0-9]/g, '');
+            const phone = phoneDigits ? `${phoneLada} ${phoneDigits}` : rawPhone;
+
+            const rawWa = document.getElementById('edit-whatsapp').value.trim();
+            const waLada = document.getElementById('edit-whatsapp-lada') ? document.getElementById('edit-whatsapp-lada').value : '+52';
+            const waDigits = rawWa.replace(/[^0-9]/g, '');
+            const wa = waDigits ? `${waLada} ${waDigits}` : rawWa;
 
             if (isNaN(price) || !price || isNaN(year) || !year || !make || !model || !phone) {
                 showAlert('Por favor llena los campos requeridos (Precio, Año, Marca, Modelo, Teléfono).', 'Faltan datos', 'warning');
@@ -8495,14 +8629,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // UTILIDADES PARA WHATSAPP
     // ==========================================
-    window.buildAdminWhatsAppUrl = function (phone, listingTitle) {
+    window.buildAdminWhatsAppUrl = function (phone, listingTitle, context = null) {
         if (!phone) return '#';
-        let cleanPhone = String(phone).replace(/\D/g, '');
-        if (cleanPhone.length === 10) {
-            cleanPhone = '521' + cleanPhone; // Lada México por defecto
-        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) {
-            cleanPhone = '521' + cleanPhone.substring(2);
-        }
+        const waData = parseAndFormatPhone(phone, context);
+        const cleanPhone = waData.prefix.replace('+', '') + waData.nationalDigits;
         const text = encodeURIComponent(`Hola, te contactamos de RevistAuto sobre tu publicación '${listingTitle}'. Te recordamos que tu anuncio está próximo a vencer. ¿Te gustaría renovarlo por 30 días más?`);
         return `https://wa.me/${cleanPhone}?text=${text}`;
     };
@@ -9098,18 +9228,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Auto-sync WhatsApp
+        // Auto-sync WhatsApp for Client Ads
         const adPhone = document.getElementById('client-ad-phone');
         const adWhatsapp = document.getElementById('client-ad-whatsapp');
+        const adPhoneLada = document.getElementById('client-ad-phone-lada');
+        const adWaLada = document.getElementById('client-ad-whatsapp-lada');
         let waManuallyEdited = false;
+
+        if (adPhoneLada && adWaLada) {
+            adPhoneLada.addEventListener('change', (e) => {
+                adWaLada.value = e.target.value;
+            });
+        }
+
         if (adWhatsapp) {
             adWhatsapp.addEventListener('input', () => { waManuallyEdited = true; });
+        }
+        if (adWaLada) {
+            adWaLada.addEventListener('change', () => { waManuallyEdited = true; });
         }
         if (adPhone) {
             adPhone.addEventListener('input', (e) => {
                 if (!waManuallyEdited && adWhatsapp) {
                     const val = e.target.value.replace(/\D/g, '');
-                    adWhatsapp.value = val ? '52' + val : '';
+                    if (adPhoneLada && adWaLada) {
+                        adWaLada.value = adPhoneLada.value;
+                    }
+                    adWhatsapp.value = val;
                 }
             });
         }
@@ -9253,8 +9398,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const state = document.getElementById('client-ad-state').value.trim();
                 const city = document.getElementById('client-ad-city').value.trim();
-                const phone = document.getElementById('client-ad-phone').value.trim();
-                const wa = document.getElementById('client-ad-whatsapp').value.trim();
+                const rawPhone = document.getElementById('client-ad-phone').value.trim();
+                const phoneLada = document.getElementById('client-ad-phone-lada') ? document.getElementById('client-ad-phone-lada').value : '+52';
+                const phoneDigits = rawPhone.replace(/[^0-9]/g, '');
+                const phone = phoneDigits ? `${phoneLada} ${phoneDigits}` : rawPhone;
+
+                const rawWa = document.getElementById('client-ad-whatsapp').value.trim();
+                const waLada = document.getElementById('client-ad-whatsapp-lada') ? document.getElementById('client-ad-whatsapp-lada').value : '+52';
+                const waDigits = rawWa.replace(/[^0-9]/g, '');
+                const wa = waDigits ? `${waLada} ${waDigits}` : rawWa;
 
                 if (!title || !desc || !state || !city) {
                     showAlert('Por favor, completa los campos obligatorios (Título, Descripción, Estado y Ciudad).', 'Campos incompletos', 'warning');
