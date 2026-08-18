@@ -1,4 +1,4 @@
-const APP_VERSION = "2.3.25"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.3.26"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -818,16 +818,16 @@ class Database {
         }
     }
 
-    async uploadImageToSupabase(file) {
+    async uploadImageToSupabase(file, customPath = null) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 const fileExt = file.name ? file.name.split('.').pop().toLowerCase() : 'jpg';
                 const fileName = `auto_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-                const filePath = `cars/${fileName}`;
+                const filePath = customPath || `cars/${fileName}`;
 
                 const { data, error } = await supabaseClient.storage
                     .from('car-images')
-                    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+                    .upload(filePath, file, { cacheControl: '3600', upsert: true });
 
                 if (error) throw error;
 

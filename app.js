@@ -392,6 +392,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // ==========================================
+    // HOOK DE OPTIMIZACIÓN Y MINIATURAS (THUMBNAILS)
+    // ==========================================
+    function useImageOptimizerHook() {
+        function createThumbnailFile(sourceUrlOrFile, fileName = 'thumb.webp', maxWidth = 360, quality = 0.65) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let scaleSize = 1;
+                    if (img.width > maxWidth) {
+                        scaleSize = maxWidth / img.width;
+                    }
+                    canvas.width = Math.round(img.width * scaleSize);
+                    canvas.height = Math.round(img.height * scaleSize);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(new File([blob], fileName, { type: 'image/webp' }));
+                        } else {
+                            resolve(null);
+                        }
+                    }, 'image/webp', quality);
+                };
+                img.onerror = () => resolve(null);
+
+                if (sourceUrlOrFile instanceof File || sourceUrlOrFile instanceof Blob) {
+                    img.src = URL.createObjectURL(sourceUrlOrFile);
+                } else if (typeof sourceUrlOrFile === 'string') {
+                    img.src = sourceUrlOrFile;
+                } else {
+                    resolve(null);
+                }
+            });
+        }
+
+        function getThumbnailUrl(listing) {
+            if (!listing) return 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+            if (listing.thumbnail) return listing.thumbnail;
+
+            const images = listing.images || (listing.image ? [listing.image] : []);
+            const firstImage = images[0] || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
+
+            if (firstImage && firstImage.includes('/cars/auto_')) {
+                return firstImage.replace('/cars/auto_', '/cars/thumb_auto_');
+            }
+            return firstImage;
+        }
+
+        return {
+            createThumbnailFile,
+            getThumbnailUrl
+        };
+    }
+    window.useImageOptimizerHook = useImageOptimizerHook;
+
 
     // --- NoSleep.js para evitar que la pantalla se apague ---
     if (window.NoSleep) {
@@ -1615,9 +1673,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedIcon = isSaved ? 'favorite' : 'favorite_border';
 
         const images = listing.images || (listing.image ? [listing.image] : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']);
-        // Solo tomar la primera foto para la tarjeta de previsualización (evitar scroll doble)
         const firstImage = images[0] || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
-        const imageElements = `<img src="${firstImage}" alt="Auto" loading="lazy">`;
+        const optimizer = typeof window.useImageOptimizerHook === 'function' ? window.useImageOptimizerHook() : null;
+        const cardImage = optimizer ? optimizer.getThumbnailUrl(listing) : firstImage;
+        const imageElements = `<img src="${cardImage}" alt="Auto" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='${firstImage}';}">`;
 
         let navArrows = '';
 
@@ -4358,6 +4417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let uploadedImageUrls = [];
         const imageFiles = selectedImageFiles;
 
+        let uploadedThumbnailUrl = null;
         if (imageFiles.length > 0) {
             try {
                 for (let i = 0; i < imageFiles.length; i++) {
@@ -4411,6 +4471,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (publicUrl) {
                             uploadedImageUrls.push(publicUrl);
 
+                            // Generar y subir miniatura (thumbnail) para la foto de portada (i === 0)
+                            if (i === 0 && typeof window.useImageOptimizerHook === 'function') {
+                                try {
+                                    const optimizer = window.useImageOptimizerHook();
+                                    const thumbFile = await optimizer.createThumbnailFile(file, `thumb_${compressedFile.name || 'foto.webp'}`, 360, 0.65);
+                                    if (thumbFile) {
+                                        let thumbPath = null;
+                                        if (publicUrl.includes('/cars/auto_')) {
+                                            const relativePath = publicUrl.substring(publicUrl.indexOf('cars/auto_'));
+                                            thumbPath = relativePath.replace('cars/auto_', 'cars/thumb_auto_');
+                                        }
+                                        uploadedThumbnailUrl = await db.uploadImageToSupabase(thumbFile, thumbPath);
+                                    }
+                                } catch (thumbErr) {
+                                    console.warn('⚠️ No se pudo generar miniatura:', thumbErr);
+                                }
+                            }
+
                             const afterPercent = Math.round(((i + 1) / imageFiles.length) * 100);
                             const progressBg2 = document.getElementById('upload-progress-bg');
                             const progressText2 = document.getElementById('upload-progress-text');
@@ -4462,6 +4540,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updatedData.images = uploadedImageUrls;
         } else if (!editingListingId) {
             updatedData.images = ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80'];
+        }
+
+        if (uploadedThumbnailUrl) {
+            updatedData.thumbnail = uploadedThumbnailUrl;
         }
 
         try {
