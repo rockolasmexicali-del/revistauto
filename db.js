@@ -1,4 +1,4 @@
-const APP_VERSION = "2.3.11"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.3.15"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -523,6 +523,7 @@ class Database {
                                 reactions: item.reactions ? (typeof item.reactions === 'string' ? (function(){ try { return JSON.parse(item.reactions); } catch(e) { return item.reactions; } })() : item.reactions) : (localListing && localListing.reactions ? localListing.reactions : { like: 0, love: 0, fire: 0, angry: 0 }),
                                 ref_number: item.ref_number || item.ref_number || (localListing ? localListing.ref_number : null),
                                 old_price: item.old_price !== undefined && item.old_price !== null ? Number(item.old_price) : (localListing ? localListing.old_price : null),
+                                currency: mergedFields.currency || item.currency || (localListing ? localListing.currency : null) || 'MXN',
                                 publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
                                 publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
                                 isMyListing: isMine
@@ -895,6 +896,7 @@ class Database {
                 model: listing.model,
                 year: Number(listing.year),
                 price: Number(listing.price),
+                currency: listing.currency || 'MXN',
                 state: listing.state || '',
                 city: listing.city,
                 color: listing.color || '',

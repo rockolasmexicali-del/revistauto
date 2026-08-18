@@ -405,10 +405,21 @@ textarea,
 }
 
 .card-price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    white-space: nowrap;
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--primary-color);
     margin-bottom: 8px;
+    gap: 4px;
+}
+
+.price-currency {
+    font-size: 0.75em;
+    font-weight: 600;
+    opacity: 0.9;
 }
 
 .card-meta {
@@ -1361,10 +1372,15 @@ select:focus {
 }
 
 .detalle-price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    white-space: nowrap;
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--primary-color);
     margin-bottom: 20px;
+    gap: 6px;
 }
 
 .detalle-city-pulsing {
