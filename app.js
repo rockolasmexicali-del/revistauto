@@ -1234,12 +1234,20 @@ document.addEventListener('DOMContentLoaded', () => {
         formPhone.addEventListener('input', (e) => {
             if (!whatsappModified) {
                 let v = e.target.value.replace(/[^0-9]/g, '');
-                formWhatsApp.value = v ? '+52 ' + v : '';
+                const formWhatsAppLada = document.getElementById('form-whatsapp-lada');
+                if (formWhatsAppLada) formWhatsAppLada.value = '+52';
+                formWhatsApp.value = v;
             }
         });
         formWhatsApp.addEventListener('input', () => {
             whatsappModified = true;
         });
+        const formWhatsAppLada = document.getElementById('form-whatsapp-lada');
+        if (formWhatsAppLada) {
+            formWhatsAppLada.addEventListener('change', () => {
+                whatsappModified = true;
+            });
+        }
 
         window.renderImagePreviews = function () {
             const container = document.getElementById('image-preview-container');
@@ -3550,6 +3558,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let phone = listing.whatsapp || listing.phone || "5512345678";
             if (phone) {
                 let cleanPhone = String(phone).replace(/[^0-9]/g, '');
+                let waClean = cleanPhone;
+                if (waClean.length === 10) waClean = '52' + waClean;
                 if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
                 const formattedPhone = cleanPhone.length === 10 ? `(${cleanPhone.substring(0, 3)})${cleanPhone.substring(3, 6)}-${cleanPhone.substring(6)}` : cleanPhone;
                 const message = encodeURIComponent(`Hola, vi tu anuncio "${listing.title}" en RevistAuto. Me interesa y quisiera más información.`);
@@ -3571,7 +3581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 btnWhatsApp.onclick = () => {
-                    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+                    window.open(`https://wa.me/${waClean}?text=${message}`, '_blank');
                     document.getElementById('contact-modal').classList.remove('active');
                 };
 
@@ -4270,9 +4280,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         formPhone.value = listing.phone || '';
         let wa = listing.whatsapp || '';
-        let waV = wa.replace(/[^0-9]/g, '');
-        if (waV.startsWith('52') && waV.length > 10) waV = waV.substring(2);
-        formWhatsApp.value = waV ? '+52 ' + waV : '';
+        let waDigits = wa.replace(/[^0-9]/g, '');
+        const formWaLada = document.getElementById('form-whatsapp-lada');
+        if (waDigits.startsWith('1') && waDigits.length === 11) {
+            if (formWaLada) formWaLada.value = '+1';
+            formWhatsApp.value = waDigits.substring(1);
+        } else if (waDigits.startsWith('52') && waDigits.length >= 12) {
+            if (formWaLada) formWaLada.value = '+52';
+            formWhatsApp.value = waDigits.substring(2);
+        } else {
+            if (formWaLada) formWaLada.value = '+52';
+            formWhatsApp.value = waDigits.slice(-10);
+        }
         formEngine.value = listing.engine || '';
         formTransmission.value = listing.transmission || '';
         if (window.customTransmissionSelect) window.customTransmissionSelect.update();
@@ -4527,7 +4546,11 @@ document.addEventListener('DOMContentLoaded', () => {
             state: formState.value,
             city: formCity.value,
             phone: formPhone.value,
-            whatsapp: formWhatsApp.value,
+            whatsapp: (() => {
+                const lada = document.getElementById('form-whatsapp-lada') ? document.getElementById('form-whatsapp-lada').value : '+52';
+                const waDigits = formWhatsApp ? formWhatsApp.value.replace(/[^0-9]/g, '') : '';
+                return waDigits ? `${lada} ${waDigits}` : '';
+            })(),
             engine: engine,
             transmission: transmission,
             ac: ac,
