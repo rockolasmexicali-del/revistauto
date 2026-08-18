@@ -1895,69 +1895,97 @@ input:checked+.slider:before {
     }
 }
 
-/* Card Transition Animations */
+/* Contenedores con Perspectiva 3D para Transición de Revista */
+#view-detalle,
+#ad-fullscreen-modal,
+.detalle-wrapper,
+.detalle-container,
+#detalle-content,
+#ad-detalle-content {
+    perspective: 1200px !important;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+}
+
+/* Card Transition Animations - Transición 3D "Hojeada de Revista" */
 @keyframes slideOutLeft {
     0% {
-        transform: translateX(0);
+        transform-origin: left center;
+        transform: rotateY(0deg) translateX(0) scale(1);
         opacity: 1;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
     }
-
     100% {
-        transform: translateX(-100%);
-        opacity: 0;
+        transform-origin: left center;
+        transform: rotateY(-75deg) translateX(-25%) scale(0.92);
+        opacity: 0.05;
+        box-shadow: -25px 0 45px rgba(0,0,0,0.8);
     }
 }
 
 @keyframes slideOutRight {
     0% {
-        transform: translateX(0);
+        transform-origin: right center;
+        transform: rotateY(0deg) translateX(0) scale(1);
         opacity: 1;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
     }
-
     100% {
-        transform: translateX(100%);
-        opacity: 0;
+        transform-origin: right center;
+        transform: rotateY(75deg) translateX(25%) scale(0.92);
+        opacity: 0.05;
+        box-shadow: 25px 0 45px rgba(0,0,0,0.8);
     }
 }
 
 @keyframes slideInFromRight {
     0% {
-        transform: translateX(100%);
-        opacity: 0;
+        transform-origin: right center;
+        transform: rotateY(75deg) translateX(25%) scale(0.92);
+        opacity: 0.05;
+        box-shadow: 25px 0 45px rgba(0,0,0,0.8);
     }
-
     100% {
-        transform: translateX(0);
+        transform-origin: right center;
+        transform: rotateY(0deg) translateX(0) scale(1);
         opacity: 1;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
     }
 }
 
 @keyframes slideInLeft {
     0% {
-        transform: translateX(-100%);
-        opacity: 0;
+        transform-origin: left center;
+        transform: rotateY(-75deg) translateX(-25%) scale(0.92);
+        opacity: 0.05;
+        box-shadow: -25px 0 45px rgba(0,0,0,0.8);
     }
-
     100% {
-        transform: translateX(0);
+        transform-origin: left center;
+        transform: rotateY(0deg) translateX(0) scale(1);
         opacity: 1;
+        box-shadow: 0 0 0 rgba(0,0,0,0);
     }
 }
 
 .slide-out-left {
-    animation: slideOutLeft 0.25s forwards ease-in-out;
+    animation: slideOutLeft 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    backface-visibility: hidden;
 }
 
 .slide-out-right {
-    animation: slideOutRight 0.25s forwards ease-in-out;
+    animation: slideOutRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    backface-visibility: hidden;
 }
 
 .slide-in-right {
-    animation: slideInFromRight 0.25s forwards ease-in-out;
+    animation: slideInFromRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    backface-visibility: hidden;
 }
 
 .slide-in-left {
-    animation: slideInLeft 0.25s forwards ease-in-out;
+    animation: slideInLeft 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    backface-visibility: hidden;
 }
 
 /* ==========================================================================
