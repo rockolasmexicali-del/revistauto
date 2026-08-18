@@ -2395,7 +2395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (type !== 'Todos') {
                     emptyRowsHTML += `
                     <div class="netflix-row" data-category="${type}" style="display: none;">
-                        <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 15px; padding-left: 5px; margin-bottom: 8px;">
+                        <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding-left: 5px; margin-bottom: 8px;">
                             <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer; margin-bottom: 0; padding-left: 0;">
                                 ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
                             </h3>
@@ -2478,8 +2478,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const ctaContainer = existingRow.querySelector('.netflix-row-cta-container');
                         if (ctaContainer) {
                             ctaContainer.innerHTML = `
-                                <button class="btn btn-sm" data-action="open-new-listing" style="background-color: var(--primary-color); color: white; border: none; border-radius: 20px; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; padding: 4px 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); text-transform: uppercase; cursor: pointer;">
-                                    <span class="material-symbols-rounded" style="font-size: 16px; color: white;">add_circle</span>
+                                <button class="btn btn-sm" data-action="open-new-listing" style="background-color: var(--primary-color); color: white; border: none; border-radius: 20px; display: flex; align-items: center; gap: 4px; font-size: 0.65rem; padding: 3px 8px; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); text-transform: uppercase; cursor: pointer; white-space: nowrap;">
+                                    <span class="material-symbols-rounded" style="font-size: 14px; color: white;">add_circle</span>
                                     ${ctaLogicCarousel.mainHTML} <span style="opacity: 0.6; margin: 0 2px;">|</span> <span style="text-transform: none;">${ctaLogicCarousel.messageHTML}</span>
                                 </button>
                             `;
