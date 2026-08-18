@@ -1,0 +1,16 @@
+{
+  "name": "RevistAuto - Catálogo y Venta de Autos",
+  "short_name": "RevistAuto",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#e50914",
+  "description": "La plataforma líder en catálogo, compra y venta de autos, camionetas y vehículos.",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
