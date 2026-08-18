@@ -4387,20 +4387,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const formTrim = document.getElementById('form-trim');
         if (formTrim) formTrim.value = listing.trim || '';
 
-        formPhone.value = listing.phone || '';
-        let wa = listing.whatsapp || '';
-        let waDigits = wa.replace(/[^0-9]/g, '');
-        const formWaLada = document.getElementById('form-whatsapp-lada');
-        if (waDigits.startsWith('1') && waDigits.length === 11) {
-            if (formWaLada) formWaLada.value = '+1';
-            formWhatsApp.value = waDigits.substring(1);
-        } else if (waDigits.startsWith('52') && waDigits.length >= 12) {
-            if (formWaLada) formWaLada.value = '+52';
-            formWhatsApp.value = waDigits.substring(2);
-        } else {
-            if (formWaLada) formWaLada.value = '+52';
-            formWhatsApp.value = waDigits.slice(-10);
+        const phoneData = parseAndFormatPhone(listing.phone, listing);
+        const waData = parseAndFormatPhone(listing.whatsapp, listing);
+
+        const formPhoneLada = document.getElementById('form-phone-lada');
+        if (formPhoneLada) {
+            formPhoneLada.value = phoneData.prefix === '+1' ? '+1' : '+52';
         }
+
+        formPhone.value = phoneData.nationalDigits || (listing.phone ? String(listing.phone).replace(/[^0-9]/g, '').slice(-10) : '');
+        formWhatsApp.value = waData.nationalDigits || (listing.whatsapp ? String(listing.whatsapp).replace(/[^0-9]/g, '').slice(-10) : '');
         formEngine.value = listing.engine || '';
         formTransmission.value = listing.transmission || '';
         if (window.customTransmissionSelect) window.customTransmissionSelect.update();
@@ -4657,12 +4653,14 @@ document.addEventListener('DOMContentLoaded', () => {
             phone: (() => {
                 const lada = document.getElementById('form-phone-lada') ? document.getElementById('form-phone-lada').value : '+52';
                 const phoneDigits = formPhone ? formPhone.value.replace(/[^0-9]/g, '') : '';
-                return phoneDigits ? `${lada} ${phoneDigits}` : (formPhone ? formPhone.value.trim() : '');
+                const clean10 = phoneDigits.slice(-10);
+                return clean10 ? `${lada} ${clean10}` : '';
             })(),
             whatsapp: (() => {
                 const lada = document.getElementById('form-phone-lada') ? document.getElementById('form-phone-lada').value : '+52';
                 const waDigits = formWhatsApp ? formWhatsApp.value.replace(/[^0-9]/g, '') : '';
-                return waDigits ? `${lada} ${waDigits}` : '';
+                const clean10 = waDigits.slice(-10);
+                return clean10 ? `${lada} ${clean10}` : '';
             })(),
             engine: engine,
             transmission: transmission,
@@ -7193,13 +7191,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const model = document.getElementById('edit-model').value.trim();
             const rawPhone = document.getElementById('edit-phone').value.trim();
             const phoneLada = document.getElementById('edit-phone-lada') ? document.getElementById('edit-phone-lada').value : '+52';
-            const phoneDigits = rawPhone.replace(/[^0-9]/g, '');
-            const phone = phoneDigits ? `${phoneLada} ${phoneDigits}` : rawPhone;
+            const phoneDigits = rawPhone.replace(/[^0-9]/g, '').slice(-10);
+            const phone = phoneDigits ? `${phoneLada} ${phoneDigits}` : '';
 
             const rawWa = document.getElementById('edit-whatsapp').value.trim();
-            const waLada = document.getElementById('edit-whatsapp-lada') ? document.getElementById('edit-whatsapp-lada').value : '+52';
-            const waDigits = rawWa.replace(/[^0-9]/g, '');
-            const wa = waDigits ? `${waLada} ${waDigits}` : rawWa;
+            const waDigits = rawWa.replace(/[^0-9]/g, '').slice(-10);
+            const wa = waDigits ? `${phoneLada} ${waDigits}` : '';
 
             if (isNaN(price) || !price || isNaN(year) || !year || !make || !model || !phone) {
                 showAlert('Por favor llena los campos requeridos (Precio, Año, Marca, Modelo, Teléfono).', 'Faltan datos', 'warning');
@@ -7278,8 +7275,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('edit-ad-description').value = ad.description || '';
         document.getElementById('edit-ad-state').value = ad.state || '';
         document.getElementById('edit-ad-city').value = ad.city || '';
-        document.getElementById('edit-ad-phone').value = ad.phone || '';
-        document.getElementById('edit-ad-whatsapp').value = ad.whatsapp || '';
+        const phoneData = parseAndFormatPhone(ad.phone, ad);
+        const waData = parseAndFormatPhone(ad.whatsapp, ad);
+
+        document.getElementById('edit-ad-phone').value = phoneData.nationalDigits || (ad.phone ? String(ad.phone).replace(/[^0-9]/g, '').slice(-10) : '');
+        document.getElementById('edit-ad-whatsapp').value = waData.nationalDigits || (ad.whatsapp ? String(ad.whatsapp).replace(/[^0-9]/g, '').slice(-10) : '');
         document.getElementById('edit-ad-address').value = ad.address || '';
         document.getElementById('edit-ad-schedule-mf').value = ad.scheduleMF || '';
         document.getElementById('edit-ad-schedule-sat').value = ad.scheduleSat || '';
@@ -7319,14 +7319,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const adIndex = ads.findIndex(a => String(a.id) === String(adminEditAdTargetId));
 
             if (adIndex > -1) {
+                const existingAd = ads[adIndex];
+                const adPhoneData = parseAndFormatPhone(existingAd.phone, existingAd);
+                const adLada = adPhoneData.prefix || '+52';
+
+                const rawPhone = document.getElementById('edit-ad-phone').value.trim();
+                const phoneDigits = rawPhone.replace(/[^0-9]/g, '').slice(-10);
+                const rawWa = document.getElementById('edit-ad-whatsapp').value.trim();
+                const waDigits = rawWa.replace(/[^0-9]/g, '').slice(-10);
+
                 const updatedAd = {
-                    ...ads[adIndex],
+                    ...existingAd,
                     title: title,
                     description: desc,
                     state: document.getElementById('edit-ad-state').value.trim(),
                     city: document.getElementById('edit-ad-city').value.trim(),
-                    phone: document.getElementById('edit-ad-phone').value.trim(),
-                    whatsapp: document.getElementById('edit-ad-whatsapp').value.trim(),
+                    phone: phoneDigits ? `${adLada} ${phoneDigits}` : '',
+                    whatsapp: waDigits ? `${adLada} ${waDigits}` : '',
                     address: document.getElementById('edit-ad-address').value.trim(),
                     scheduleMF: document.getElementById('edit-ad-schedule-mf').value.trim(),
                     scheduleSat: document.getElementById('edit-ad-schedule-sat').value.trim(),
