@@ -2384,9 +2384,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (type !== 'Todos') {
                     emptyRowsHTML += `
                     <div class="netflix-row" data-category="${type}" style="display: none;">
-                        <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer;">
-                            ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
-                        </h3>
+                        <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 15px; padding-left: 5px; margin-bottom: 8px;">
+                            <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer; margin-bottom: 0; padding-left: 0;">
+                                ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
+                            </h3>
+                            <div class="netflix-row-cta-container"></div>
+                        </div>
                         <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
                             <span class="material-symbols-rounded">chevron_left</span>
                         </button>
@@ -2427,26 +2430,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Append to Grid
             const freq = db.adFrequencyScroll || 10;
             let finalHTML = '';
-            let ctaLogicGrid = null;
-            let targetCtaIndexGrid = -1;
-            if (window.activeFeedListings.length === newItems.length) {
-                ctaLogicGrid = getSmartCTALogic(newItems);
-                if (ctaLogicGrid.show) {
-                    targetCtaIndexGrid = Math.floor(Math.random() * Math.min(3, newItems.length + 1));
-                }
-            }
+            
             for (let i = 0; i < newItems.length; i++) {
-                if (i === targetCtaIndexGrid) {
-                    finalHTML += createSellCarCardHTML(ctaLogicGrid.mainHTML, ctaLogicGrid.messageHTML);
-                }
                 finalHTML += createListingCardHTML(newItems[i], true);
                 if ((window.activeFeedListings.length - newItems.length + i + 1) % freq === 0 && db.adsEnabled) {
                     const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
                     finalHTML += createAdCardHTML(ad, newItems[i].id, newItems[i].id);
                 }
-            }
-            if (targetCtaIndexGrid === newItems.length) {
-                finalHTML += createSellCarCardHTML(ctaLogicGrid.mainHTML, ctaLogicGrid.messageHTML);
             }
             feedContainer.insertAdjacentHTML('beforeend', finalHTML);
         } else {
@@ -2469,18 +2459,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingCountForType = typeListings.length - grouped[type].length;
 
                 let rowCardsHTML = '';
-                let ctaLogicCarousel = null;
-                let targetCtaIndexCarousel = -1;
-                if (existingCountForType === 0) {
-                    ctaLogicCarousel = getSmartCTALogic(grouped[type]);
+                
+                // Smart CTA Logic para la fila (Botón flotante)
+                if (existingCountForType === 0 && existingRow) {
+                    let ctaLogicCarousel = getSmartCTALogic(grouped[type]);
                     if (ctaLogicCarousel.show) {
-                        targetCtaIndexCarousel = Math.floor(Math.random() * Math.min(3, grouped[type].length + 1));
+                        const ctaContainer = existingRow.querySelector('.netflix-row-cta-container');
+                        if (ctaContainer) {
+                            ctaContainer.innerHTML = `
+                                <button class="btn btn-sm" data-action="open-new-listing" style="background-color: var(--primary-color); color: white; border: none; border-radius: 20px; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; padding: 4px 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); text-transform: uppercase; cursor: pointer;">
+                                    <span class="material-symbols-rounded" style="font-size: 16px; color: white;">add_circle</span>
+                                    ${ctaLogicCarousel.mainHTML} <span style="opacity: 0.6; margin: 0 2px;">|</span> <span style="text-transform: none;">${ctaLogicCarousel.messageHTML}</span>
+                                </button>
+                            `;
+                        }
                     }
                 }
+
                 for (let i = 0; i < grouped[type].length; i++) {
-                    if (i === targetCtaIndexCarousel) {
-                        rowCardsHTML += createSellCarCardHTML(ctaLogicCarousel.mainHTML, ctaLogicCarousel.messageHTML);
-                    }
                     const item = grouped[type][i];
                     rowCardsHTML += createListingCardHTML(item, true);
 
@@ -2488,9 +2484,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const ad = adPool.length > 0 ? adPool[Math.floor(Math.random() * adPool.length)] : null;
                         rowCardsHTML += createAdCardHTML(ad, item.id, item.id);
                     }
-                }
-                if (targetCtaIndexCarousel === grouped[type].length) {
-                    rowCardsHTML += createSellCarCardHTML(ctaLogicCarousel.mainHTML, ctaLogicCarousel.messageHTML);
                 }
 
                 if (existingRow) {
@@ -10696,27 +10689,51 @@ function getSmartCTALogic(itemsList) {
         return { show: false };
     }
 
-    // 2. Regla de Fatiga Visual: > 5 minutos navegando -> Ocultar
+    // 2. Regla de Fatiga Visual: > 40 segundos navegando -> Ocultar
     if (window.sessionStartTime) {
-        const elapsedMins = (Date.now() - window.sessionStartTime) / (1000 * 60);
-        if (elapsedMins > 5) {
-            console.log("Hiding due to Rule 2: Fatigue > 5 mins");
+        const elapsedSecs = (Date.now() - window.sessionStartTime) / 1000;
+        if (elapsedSecs > 40) {
+            console.log("Hiding due to Rule 2: Fatigue > 40 secs");
             return { show: false };
         }
     }
 
     const count = itemsList ? itemsList.length : 0;
     
-    // 3. Textos por defecto (Bajo Inventario)
-    let mainHTML = 'Publica<br>tu auto';
-    let messageHTML = '<span>🚀</span> Alta demanda en tu zona';
+    let mainHTML = '';
+    let messageHTML = '';
     let show = false;
 
+    // Bolsas de frases aleatorias
+    const emptyPhrases = [
+        { main: "Gana dinero hoy", msg: "🔥 ¡Anúnciate primero!" },
+        { main: "Sube tu vehículo", msg: "✨ Sé el pionero" },
+        { main: "Publica Gratis", msg: "🔥 Mercado solo para ti" }
+    ];
+    const lowInvPhrases = [
+        { main: "Véndelo rápido", msg: "🚀 Alta demanda aquí" },
+        { main: "Únete a la venta", msg: "🚀 Faltan autos aquí" },
+        { main: "Publica tu auto", msg: "🚀 Se venden rápido" }
+    ];
+    const stagnantPhrases = [
+        { main: "Llama la atención", msg: "👀 Te están buscando" },
+        { main: "Pon tu auto aquí", msg: "🌟 Atrae más miradas" },
+        { main: "Vende más rápido", msg: "👀 Compradores listos" }
+    ];
+    const weekendPhrases = [
+        { main: "Tiempo de vender", msg: "📸 Aprovecha el fin de semana" },
+        { main: "Muestra tu auto", msg: "📸 Tu auto en vitrina" },
+        { main: "Súbelo ahora", msg: "📸 Hay más tráfico hoy" }
+    ];
+
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    let picked = null;
+
     if (count === 0) {
-        mainHTML = 'Vende<br>tu vehículo';
-        messageHTML = '<span>🔥</span> ¡Sé el primero!';
+        picked = pickRandom(emptyPhrases);
         show = true;
     } else if (count < 10) {
+        picked = pickRandom(lowInvPhrases);
         show = true;
     } else {
         // >= 10 items. Check newest.
@@ -10731,21 +10748,24 @@ function getSmartCTALogic(itemsList) {
         const daysSinceNewest = (Date.now() - newestTime) / (1000 * 60 * 60 * 24);
         
         if (daysSinceNewest >= 2) {
-            mainHTML = 'Destaca<br>tu auto';
-            messageHTML = '<span>👀</span> Compradores buscando';
+            picked = pickRandom(stagnantPhrases);
             show = true;
         } else {
             const day = new Date().getDay();
             if (day === 5 || day === 6 || day === 0) { // 5=Fri, 6=Sat, 0=Sun
                 if (Math.random() < 0.5) {
-                    mainHTML = 'Publica<br>tu auto';
-                    messageHTML = '<span>📸</span> Aprovecha el fin de semana ';
+                    picked = pickRandom(weekendPhrases);
                     show = true;
                 }
             } else {
                 console.log("Hiding because >= 10 items, <2 days old, and NOT weekend.");
             }
         }
+    }
+
+    if (picked) {
+        mainHTML = picked.main;
+        messageHTML = picked.msg;
     }
 
     return { show, mainHTML, messageHTML };
