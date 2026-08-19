@@ -765,20 +765,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.getListingPaymentInfo = function (listing, isRenewalTab = false) {
-        // Rolling billing: siempre se cobra 1 mes completo al precio configurado.
+        // Rolling billing: siempre se cobra 1 mes completo al precio configurado por ciudad.
         // La fecha de vencimiento es exactamente 1 mes después del pago (ej: 27/julio → 27/agosto).
         // No hay prorrateo por días del mes.
+        
+        let targetPrice = globalMonthlyPrice;
+        if (window.useCityPricingHook && listing) {
+            targetPrice = window.useCityPricingHook.getCityPrice(listing.city || '', listing.state || '');
+        }
+
         let calculatedPrice = 0;
         let textDesc = '';
 
-        if (globalMonthlyPrice === 0) {
+        if (Number(targetPrice) === 0) {
             textDesc = 'Total a pagar: Gratis';
         } else if (isRenewalTab) {
-            calculatedPrice = globalMonthlyPrice;
+            calculatedPrice = targetPrice;
             const formattedPrice = calculatedPrice.toFixed(2);
             textDesc = `Total a pagar por renovación: $${formattedPrice} MXN`;
         } else {
-            calculatedPrice = globalMonthlyPrice;
+            calculatedPrice = targetPrice;
             const formattedPrice = calculatedPrice.toFixed(2);
             textDesc = `Total a pagar: $${formattedPrice} MXN (1 mes)`;
         }
