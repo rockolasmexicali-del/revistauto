@@ -770,7 +770,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // No hay prorrateo por días del mes.
         
         let targetPrice = globalMonthlyPrice;
-        if (window.useCityPricingHook && listing) {
+        
+        // 1. Si el vehículo tiene un precio de checkout sellado, respetarlo siempre
+        if (listing && listing.checkout_price !== undefined) {
+            targetPrice = Number(listing.checkout_price);
+        } 
+        // 2. Si ya está marcado como gratis históricamente, respetar 0
+        else if (listing && listing.paymentStatus === 'free') {
+            targetPrice = 0;
+        }
+        // 3. De lo contrario (ej. autos pre-actualización), usar el hook en vivo
+        else if (window.useCityPricingHook && listing) {
             targetPrice = window.useCityPricingHook.getCityPrice(listing.city || '', listing.state || '');
         }
 
@@ -4807,12 +4817,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 finishWizardSubmit();
             } else {
                 updatedData.paymentStatus = 'pending';
-                const newListing = await db.saveListing(updatedData);
 
-                finishWizardSubmit(); // Call instantly so it renders in the background
-
-                const cityVal = updatedData.city || existingListing?.city || '';
-                const stateVal = updatedData.state || existingListing?.state || '';
+                const cityVal = updatedData.city || '';
+                const stateVal = updatedData.state || '';
                 
                 // Si la ciudad no existe en la configuración, la registramos automáticamente como Gratis ($0)
                 if (window.useCityPricingHook && window.useCityPricingHook.isCityMissing(cityVal)) {
@@ -4820,6 +4827,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const finalCityPrice = window.useCityPricingHook ? window.useCityPricingHook.getCityPrice(cityVal, stateVal) : globalMonthlyPrice;
+                updatedData.checkout_price = finalCityPrice; // <--- Sella el precio original con el que se publicó
+
+                const newListing = await db.saveListing(updatedData);
+
+                finishWizardSubmit(); // Call instantly so it renders in the background
+
+
 
                 if (Number(finalCityPrice) === 0) {
                     // Flujo Gratuito: Ocultar Mercado Pago y mostrar modal de revisión
@@ -9213,11 +9227,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const bricksBuilder = mp.bricks();
 
             let amountToCharge = Number(globalMonthlyPrice) || 500;
-            if (window.useCityPricingHook && listingId) {
+            if (listingId) {
                 const allL = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
                 const targetListing = allL.find(l => String(l.id) === String(listingId));
                 if (targetListing) {
-                    amountToCharge = window.useCityPricingHook.getCityPrice(targetListing.city, targetListing.state);
+                    if (targetListing.checkout_price !== undefined) {
+                        amountToCharge = Number(targetListing.checkout_price);
+                    } else if (targetListing.paymentStatus === 'free') {
+                        amountToCharge = 0;
+                    } else if (window.useCityPricingHook) {
+                        amountToCharge = window.useCityPricingHook.getCityPrice(targetListing.city || '', targetListing.state || '');
+                    }
                 }
             }
 
