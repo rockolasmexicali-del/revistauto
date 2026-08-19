@@ -18,6 +18,10 @@ uploads/
 # Backups y versiones anteriores
 backup_*/
 
+# Scripts temporales y de inyección
+inject_*.js
+reapply_all.js
+
 # Archivos del sistema y SO
 .DS_Store
 Thumbs.db
