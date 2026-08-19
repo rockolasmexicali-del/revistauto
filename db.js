@@ -1,4 +1,4 @@
-const APP_VERSION = "2.4.7"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.4.9"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -786,12 +786,10 @@ class Database {
     }
 
     async deleteAd(id) {
-        // Eliminar del estado local INMEDIATAMENTE para reflejar el cambio en UI
+        // 1. Obtener la lista actual para buscar fotos a eliminar
         const currentAds = this.getAllAds();
-        const updatedAds = currentAds.filter(a => String(a.id) !== String(id));
-        localStorage.setItem('revista_autos_ads', JSON.stringify(updatedAds));
-
-        // Continuar con la eliminación en la base de datos
+        
+        // 2. Eliminar en la base de datos (Supabase) primero
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             const adToDelete = currentAds.find(a => String(a.id) === String(id));
 
@@ -816,6 +814,11 @@ class Database {
             const { error } = await supabaseClient.from('ads').delete().eq('id', id);
             if (error) console.error('⚠️ Error al eliminar Ad en Supabase:', error);
         }
+
+        // 3. Eliminar localmente SIEMPRE AL FINAL para que desaparezca de la UI y no haya race condition
+        const currentAdsFinal = this.getAllAds(); // Volvemos a leer por si hubo sincronización en medio
+        const updatedAds = currentAdsFinal.filter(a => String(a.id) !== String(id));
+        localStorage.setItem('revista_autos_ads', JSON.stringify(updatedAds));
     }
 
     async uploadImageToSupabase(file, customPath = null) {

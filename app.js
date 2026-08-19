@@ -3957,7 +3957,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${paymentBtnHTML}
                             <div style="display: flex; gap: 8px; width: 100%; flex-wrap: wrap;">
                                 <button class="primary-btn" onclick="window.openEditAd(${ad.id})" style="background:var(--surface-light); padding: 8px; flex: 1; min-width: 60px;">Editar</button>
-                                <button class="danger-btn" onclick="window.appConfirm('¿Eliminar este anuncio permanentemente?', async () => { await db.deleteAd(${ad.id}); const container = document.getElementById('my-listings-container'); if(container) delete container.dataset.lastState; if(typeof renderMyListings === 'function') renderMyListings(); showAlert('Anuncio eliminado correctamente.', 'Eliminado', 'check_circle'); })" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
+                                <button class="danger-btn" onclick="window.deleteMyAd(${ad.id})" style="padding: 8px; flex: 1; min-width: 60px;">Eliminar</button>
                             </div>
                         </div>
                     </div>
@@ -4059,6 +4059,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Eliminación de Publicidad del usuario (Mis Anuncios Publicitarios)
+    // Patrón idéntico al de deleteListing para garantizar eliminación en vivo
+    window.deleteMyAd = function (id) {
+        window.appConfirm('¿Eliminar este anuncio permanentemente?', async () => {
+            await db.deleteAd(id);
+
+            // Invalidar caché de renderizado para forzar actualización inmediata
+            const container = document.getElementById('my-listings-container');
+            if (container) delete container.dataset.lastState;
+
+            renderMyListings();
+            showAlert('Anuncio eliminado correctamente.', 'Eliminado', 'check_circle');
+        });
+    };
 
     // Modal behavior & Wizard
     let currentWizardStep = 1;
