@@ -9207,10 +9207,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const mp = new MercadoPago(globalMpPublicKey, { locale: 'es-MX' });
             const bricksBuilder = mp.bricks();
 
+            let amountToCharge = Number(globalMonthlyPrice) || 500;
+            if (window.useCityPricingHook && listingId) {
+                const allL = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+                const targetListing = allL.find(l => String(l.id) === String(listingId));
+                if (targetListing) {
+                    amountToCharge = window.useCityPricingHook.getCityPrice(targetListing.city, targetListing.state);
+                }
+            }
+
             const renderPaymentBrick = async (bricksBuilder) => {
                 const settings = {
                     initialization: {
-                        amount: (globalMonthlyPrice !== undefined && globalMonthlyPrice !== null && !isNaN(Number(globalMonthlyPrice))) ? Number(globalMonthlyPrice) : 350
+                        amount: amountToCharge
                     },
                     customization: {
                         visual: {
