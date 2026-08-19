@@ -4284,6 +4284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     formCity.value = selectedCities[0];
                     if (window.customCitySelect) window.customCitySelect.update();
+                    formCity.dispatchEvent(new Event('change')); // Actualiza el precio basado en la ciudad GPS
                 }, 50);
             }
         }
@@ -4515,8 +4516,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const stateEvent = new Event('change');
         document.getElementById('form-state').dispatchEvent(stateEvent);
         setTimeout(() => {
-            document.getElementById('form-city').value = listing.city;
+            const fCity = document.getElementById('form-city');
+            fCity.value = listing.city;
             if (window.customCitySelect) window.customCitySelect.update();
+            fCity.dispatchEvent(new Event('change')); // Actualiza el precio dinámico si es edición
         }, 50);
 
         newListingModal.querySelector('h3').textContent = 'Editar Vehículo';
