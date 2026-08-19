@@ -2885,6 +2885,12 @@ input:checked+.slider:before {
 }
 
 /* --- Mobile Swipe Hint Toast (Solo Primera Vista en Pantalla Completa en Móvil) --- */
+@media (min-width: 769px) {
+    .mobile-swipe-hint-toast {
+        display: none !important;
+    }
+}
+
 .mobile-swipe-hint-toast {
     position: fixed;
     bottom: calc(200px + env(safe-area-inset-bottom, 0px));

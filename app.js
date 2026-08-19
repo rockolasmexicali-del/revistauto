@@ -3361,9 +3361,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Solo mostrar una vez por sesión en la primera tarjeta fullscreen abierta
         if (sessionStorage.getItem('revistauto_swipe_hint_seen')) return;
 
-        // Solo para móviles / pantalla pequeña o táctil
-        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
-        if (!isMobile) return;
+        // Estrictamente solo para pantallas de móvil (ancho <= 768px). Nunca en PC.
+        if (window.innerWidth > 768) return;
 
         // Marcar como visto inmediatamente para que NUNCA vuelva a salir en la sesión
         sessionStorage.setItem('revistauto_swipe_hint_seen', 'true');
@@ -10983,19 +10982,19 @@ function getSmartCTALogic(itemsList) {
 
     // Bolsas de frases aleatorias
     const emptyPhrases = [
-        { main: "Gana dinero hoy", msg: "🔥 ¡Anúnciate primero!" },
+        { main: "Anuncia tu auto hoy", msg: "🔥 ¡Sé el primero en publicar!" },
         { main: "Sube tu vehículo", msg: "✨ Sé el pionero" },
         { main: "Publica Gratis", msg: "🔥 Mercado solo para ti" }
     ];
     const lowInvPhrases = [
-        { main: "Véndelo rápido", msg: "🚀 Alta demanda aquí" },
+        { main: "Vende tu auto aquí", msg: "🚀 Alta demanda de compradores" },
         { main: "Únete a la venta", msg: "🚀 Faltan autos aquí" },
         { main: "Publica tu auto", msg: "🚀 Se venden rápido" }
     ];
     const stagnantPhrases = [
-        { main: "Llama la atención", msg: "👀 Te están buscando" },
+        { main: "Anuncia tu auto aquí", msg: "👀 Miles de compradores buscando" },
         { main: "Pon tu auto aquí", msg: "🌟 Atrae más miradas" },
-        { main: "Vende más rápido", msg: "👀 Compradores listos" }
+        { main: "Publica tu auto ahora", msg: "👀 Conecta con compradores listos" }
     ];
     const weekendPhrases = [
         { main: "Tiempo de vender", msg: "📸 Aprovecha el fin de semana" },
