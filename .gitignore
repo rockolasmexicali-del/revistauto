@@ -1,4 +1,31 @@
-backup_*/
+# Archivos y carpetas de dependencias
 node_modules/
+
+# Archivos de entorno y configuración sensible
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Carpetas generadas y datos locales
+data/
+uploads/
+
+# Backups y versiones anteriores
+backup_*/
+
+# Archivos del sistema y SO
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Herramientas de IA / Agentes
 .agents/
+.gemini/
+
+# Otros archivos locales
 TODO.md
