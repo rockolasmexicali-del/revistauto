@@ -175,6 +175,37 @@ setTimeout(() => {
     }, 800);
     console.log("40 seconds elapsed, CTAs fading out smoothly.");
 }, 40000);
+// --- HOOK: Precios y Promociones por Ciudad ---
+window.useCityPricingHook = (function() {
+    let settingsRef = null;
+
+    function init(settings) {
+        settingsRef = settings;
+    }
+
+    function getCityPrice(cityName, stateName = '') {
+        if (!settingsRef) return 500; // Fallback extremo
+        const cityPrices = settingsRef.cityPrices || {};
+        // Intentar match con Ciudad (o Estado - Ciudad)
+        const key = cityName;
+        if (cityPrices[key] !== undefined) {
+            return Number(cityPrices[key]);
+        }
+        // Si no hay regla específica, retorna el precio global mensual
+        return Number(settingsRef.monthlyPrice) || 500;
+    }
+
+    function isCityFree(cityName, stateName = '') {
+        return getCityPrice(cityName, stateName) === 0;
+    }
+
+    return {
+        init,
+        getCityPrice,
+        isCityFree
+    };
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
@@ -280,6 +311,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const formCustomColor = document.getElementById('form-custom-color');
     let whatsappModified = false;
     let selectedImageFiles = [];
+
+    // Lógica dinámica para mostrar el precio al usuario si regresa al Paso 1 después de elegir ciudad
+    if (formCity) {
+        formCity.addEventListener('change', () => {
+            const vehiclePriceNote = document.getElementById('vehicle-dynamic-price');
+            if (vehiclePriceNote && window.useCityPricingHook) {
+                const finalCityPrice = window.useCityPricingHook.getCityPrice(formCity.value, formState.value);
+                if (finalCityPrice === 0) {
+                    vehiclePriceNote.textContent = 'Gratis';
+                    vehiclePriceNote.style.color = '#10b981';
+                } else {
+                    vehiclePriceNote.textContent = `$${Number(finalCityPrice).toFixed(2)} MXN`;
+                    vehiclePriceNote.style.color = '#f59e0b';
+                }
+            }
+        });
+    }
 
     // Filter Selects
     const filterState = document.getElementById('filter-state');
@@ -596,6 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = await db.getSettings();
             if (data.success && data.settings) {
+                if (window.useCityPricingHook) {
+                    window.useCityPricingHook.init(data.settings);
+                }
                 globalMonthlyPrice = data.settings.monthlyPrice;
                 globalMpEnabled = data.settings.mercadoPagoEnabled;
                 globalMpPublicKey = data.settings.mpPublicKey;
@@ -4733,7 +4784,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 finishWizardSubmit(); // Call instantly so it renders in the background
 
-                if (Number(globalMonthlyPrice) === 0) {
+                const cityVal = updatedData.city || existingListing?.city || '';
+                const stateVal = updatedData.state || existingListing?.state || '';
+                const finalCityPrice = window.useCityPricingHook ? window.useCityPricingHook.getCityPrice(cityVal, stateVal) : globalMonthlyPrice;
+
+                if (Number(finalCityPrice) === 0) {
                     // Flujo Gratuito: Ocultar Mercado Pago y mostrar modal de revisión
                     const optionsModal = document.getElementById('publish-options-modal');
                     if (optionsModal) {
@@ -4757,7 +4812,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Mostrar modal de opciones normal
                     const optionsModal = document.getElementById('publish-options-modal');
                     const priceText = document.getElementById('publish-price-text');
-                    if (priceText) priceText.textContent = `$${Number(globalMonthlyPrice).toFixed(2)} MXN`;
+                    if (priceText) priceText.textContent = `$${Number(finalCityPrice).toFixed(2)} MXN`;
 
                     if (optionsModal) {
                         document.getElementById('publish-modal-title').textContent = '¡Casi listo!';
@@ -8169,7 +8224,82 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target.value.length > 4) e.target.value = e.target.value.slice(0, 4);
         });
     }
-    // Logica para Configuración del Costo Mensual Base
+    // --- Logica para Configuración del Costo Mensual Base y Precios por Ciudad ---
+    let localAdminCityPrices = {};
+
+    function renderAdminCityPrices() {
+        const tbody = document.getElementById('city-prices-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        const keys = Object.keys(localAdminCityPrices).sort();
+        if (keys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay excepciones por ciudad configuradas. Todas usan el Precio Mensual Base.</td></tr>`;
+            return;
+        }
+
+        keys.forEach(cityKey => {
+            const price = Number(localAdminCityPrices[cityKey]);
+            const isFree = price === 0;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div style="font-weight: 600; color: var(--text-main);">${escapeHTML(cityKey)}</div>
+                </td>
+                <td style="text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        $ <input type="number" class="admin-city-price-input" data-city="${escapeHTML(cityKey)}" value="${price}" style="width: 70px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); text-align: right;"> MXN
+                    </div>
+                    ${isFree ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 4px; font-weight: bold;">(Promoción Gratis)</div>` : ''}
+                </td>
+                <td style="text-align: center;">
+                    <button class="icon-btn danger btn-remove-city-price" data-city="${escapeHTML(cityKey)}" title="Eliminar regla"><span class="material-symbols-rounded">delete</span></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Listeners for inputs and delete buttons
+        document.querySelectorAll('.admin-city-price-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const city = e.target.getAttribute('data-city');
+                localAdminCityPrices[city] = Number(e.target.value);
+                renderAdminCityPrices();
+            });
+        });
+        document.querySelectorAll('.btn-remove-city-price').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const city = e.currentTarget.getAttribute('data-city');
+                delete localAdminCityPrices[city];
+                renderAdminCityPrices();
+            });
+        });
+    }
+
+    const btnAddCityPrice = document.getElementById('btn-admin-add-city-price');
+    if (btnAddCityPrice) {
+        btnAddCityPrice.addEventListener('click', () => {
+            const cityName = prompt('Ingresa el nombre de la ciudad (Ej. Mexicali, Tijuana):');
+            if (cityName && cityName.trim()) {
+                const cleanName = cityName.trim();
+                localAdminCityPrices[cleanName] = 0; // Default a Gratis
+                renderAdminCityPrices();
+            }
+        });
+    }
+
+    // Load initial city prices when settings are loaded
+    async function loadAdminCityPricesInit() {
+        const data = await db.getSettings();
+        if (data.success && data.settings) {
+            localAdminCityPrices = data.settings.cityPrices || {};
+            renderAdminCityPrices();
+        }
+    }
+    document.getElementById('sidebar-tab-pagos')?.addEventListener('click', () => {
+        loadAdminCityPricesInit();
+    });
+
     const btnSavePrice = document.getElementById('btn-save-price');
     const btnSaveAdConfig = document.getElementById('btn-save-ad-config');
 
@@ -8195,7 +8325,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpAccessToken: mpAccToken,
                 ads_enabled: adsEnabled,
                 ad_frequency_scroll: adFreq,
-                ad_fallback_limit: adFallbackLimit
+                ad_fallback_limit: adFallbackLimit,
+                cityPrices: localAdminCityPrices
             };
             const data = await db.saveSettings(settingsPayload);
             if (data.success) {

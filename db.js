@@ -1,4 +1,4 @@
-const APP_VERSION = "2.5.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.5.2"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1505,7 +1505,7 @@ class Database {
 
     // --- Nuevos métodos para Supabase (Settings, Auth, Locations) ---
     async getSettings() {
-        const defaultSettings = { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21 };
+        const defaultSettings = { monthlyPrice: 500, adMonthlyPrice: 500, mercadoPagoEnabled: false, mpPublicKey: '', mpAccessToken: '', ads_enabled: true, ad_frequency_scroll: 10, ad_fallback_limit: 21, cityPrices: {} };
         const local = localStorage.getItem('revista_settings');
         const parsedLocal = local ? JSON.parse(local) : defaultSettings;
 
@@ -1521,7 +1521,8 @@ class Database {
                     mpAccessToken: data.mpaccesstoken !== undefined ? data.mpaccesstoken : (data.mpAccessToken || ''),
                     ads_enabled: data.ads_enabled !== undefined ? data.ads_enabled : true,
                     ad_frequency_scroll: data.ad_frequency_scroll !== undefined ? Number(data.ad_frequency_scroll) : 10,
-                    ad_fallback_limit: data.ad_fallback_limit !== undefined ? Number(data.ad_fallback_limit) : (data.adfallbacklimit !== undefined ? Number(data.adfallbacklimit) : fallbackVal)
+                    ad_fallback_limit: data.ad_fallback_limit !== undefined ? Number(data.ad_fallback_limit) : (data.adfallbacklimit !== undefined ? Number(data.adfallbacklimit) : fallbackVal),
+                    cityPrices: data.cityprices !== undefined ? data.cityprices : (data.cityPrices || {})
                 };
                 this.adsEnabled = s.ads_enabled;
                 this.adFrequencyScroll = s.ad_frequency_scroll;
@@ -1553,7 +1554,8 @@ class Database {
                     mpaccesstoken: settings.mpAccessToken,
                     ads_enabled: settings.ads_enabled,
                     ad_frequency_scroll: settings.ad_frequency_scroll,
-                    ad_fallback_limit: settings.ad_fallback_limit
+                    ad_fallback_limit: settings.ad_fallback_limit,
+                    cityprices: settings.cityPrices || {}
                 };
                 let { error } = await supabaseClient.from('settings').upsert([payload]);
                 if (error) {
