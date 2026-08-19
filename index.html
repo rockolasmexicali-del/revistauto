@@ -1356,19 +1356,19 @@
                         </div>
                         
                         <div class="form-row" style="display: flex; gap: 12px;">
-                            <div class="form-group half" style="flex:1;">
+                            <div class="form-group half" style="flex: 1.35; min-width: 0;">
                                 <label>Teléfono (Llamadas) *</label>
                                 <div style="display: flex; gap: 4px;">
-                                    <select id="client-ad-phone-lada" style="width: 80px; flex-shrink: 0; padding: 10px 2px; font-size: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
+                                    <select id="client-ad-phone-lada" style="width: 75px; flex-shrink: 0; padding: 10px 2px; font-size: 0.78rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
                                         <option value="+52" selected>MEX +52</option>
                                         <option value="+1">USA +1</option>
                                     </select>
-                                    <input type="tel" id="client-ad-phone" required placeholder="10 dígitos" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                                    <input type="tel" id="client-ad-phone" required placeholder="10 dígitos" style="flex: 1; min-width: 0; padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
                                 </div>
                             </div>
-                            <div class="form-group half" style="flex:1;">
+                            <div class="form-group half" style="flex: 0.85; min-width: 0;">
                                 <label>WhatsApp *</label>
-                                <input type="tel" id="client-ad-whatsapp" required placeholder="10 dígitos" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.9rem; outline: none;">
+                                <input type="tel" id="client-ad-whatsapp" required placeholder="10 dígitos" style="width: 100%; padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
                             </div>
                         </div>
                     </form>
@@ -1797,19 +1797,19 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group" style="flex: 1; min-width: 0;">
+                        <div class="form-group" style="flex: 1.35; min-width: 0;">
                             <label>Teléfono (Llamadas)</label>
                             <div style="display: flex; gap: 4px;">
-                                <select id="form-phone-lada" style="width: 80px; flex-shrink: 0; padding: 10px 2px; font-size: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
+                                <select id="form-phone-lada" style="width: 75px; flex-shrink: 0; padding: 10px 2px; font-size: 0.78rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
                                     <option value="+52" selected>MEX +52</option>
                                     <option value="+1">USA +1</option>
                                 </select>
-                                <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" style="flex: 1; min-width: 0; padding: 10px 6px; font-size: 0.88rem;">
+                                <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" style="flex: 1; min-width: 0; padding: 10px 4px; font-size: 0.85rem;">
                             </div>
                         </div>
-                        <div class="form-group" style="flex: 1; min-width: 0;">
+                        <div class="form-group" style="flex: 0.85; min-width: 0;">
                             <label>WhatsApp</label>
-                            <input type="tel" id="form-whatsapp" required placeholder="Ej. 5512345678" style="width: 100%; padding: 10px 6px; font-size: 0.88rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); outline: none;">
+                            <input type="tel" id="form-whatsapp" required placeholder="Ej. 5512345678" style="width: 100%; padding: 10px 4px; font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); outline: none;">
                         </div>
                     </div>
                 </div>
@@ -1882,17 +1882,17 @@
                 <div class="form-step" data-step="5" style="display: none;">
                     <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ficha Técnica</h4>
                     <div class="form-row">
-                        <div class="form-group half">
+                        <div class="form-group half" style="flex: 1.15; min-width: 0;">
                             <label>Kilometraje / Millaje</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" id="form-mileage" required placeholder="Ej. 120,000" inputmode="numeric" maxlength="10" style="flex: 2;">
-                                <select id="form-mileage-unit" required style="flex: 1; padding: 0 8px; text-align: center;">
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="form-mileage" required placeholder="Ej. 120,000" inputmode="numeric" maxlength="10" style="flex: 1; min-width: 0;">
+                                <select id="form-mileage-unit" required style="width: 65px; flex-shrink: 0; padding: 0 2px; text-align: center; font-size: 0.85rem;">
                                     <option value="km">km</option>
                                     <option value="mi">mi</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group half">
+                        <div class="form-group half" style="flex: 0.85; min-width: 0;">
                             <label>Situación Legal</label>
                             <select id="form-legal" required>
                                 <option value="" disabled selected>Selecciona una opción</option>
@@ -1904,15 +1904,15 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group half">
+                        <div class="form-group half" style="flex: 0.75; min-width: 0;">
                             <label>Año</label>
                             <input type="number" id="form-year" required min="1950" max="2025" placeholder="Ej. 2021">
                         </div>
-                        <div class="form-group half">
+                        <div class="form-group half" style="flex: 1.25; min-width: 0;">
                             <label>Precio de Venta</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 2;">
-                                <select id="form-currency" required style="flex: 1; padding: 0 8px; text-align: center;">
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 1; min-width: 0;">
+                                <select id="form-currency" required style="width: 68px; flex-shrink: 0; padding: 0 2px; text-align: center; font-size: 0.85rem;">
                                     <option value="MXN">MXN</option>
                                     <option value="USD" disabled>USD</option>
                                 </select>
