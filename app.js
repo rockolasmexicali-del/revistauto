@@ -2655,7 +2655,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ctaContainer.innerHTML = `
                                 <button class="btn btn-sm" data-action="open-new-listing" style="background-color: var(--primary-color); color: white; border: none; border-radius: 20px; display: flex; align-items: center; gap: 4px; font-size: 0.65rem; padding: 3px 8px; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); text-transform: uppercase; cursor: pointer; white-space: nowrap;">
                                     <span class="material-symbols-rounded" style="font-size: 14px; color: white;">add_circle</span>
-                                    ${ctaLogicCarousel.mainHTML} <span style="opacity: 0.6; margin: 0 2px;">|</span> <span style="text-transform: none;">${ctaLogicCarousel.messageHTML}</span>
+                                    ${ctaLogicCarousel.mainHTML} <span class="smart-cta-secondary"><span style="opacity: 0.6; margin: 0 2px;">|</span> <span style="text-transform: none;">${ctaLogicCarousel.messageHTML}</span></span>
                                 </button>
                             `;
                         }
