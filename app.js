@@ -8317,7 +8317,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await db.getSettings();
         if (data.success && data.settings) {
             localAdminCityPrices = data.settings.cityPrices || {};
+            
+            // Auto-detect cities from inventory
+            const allL = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : (window.listingsData || []);
+            let needsRender = false;
+            
+            allL.forEach(l => {
+                if (l.city && localAdminCityPrices[l.city] === undefined) {
+                    localAdminCityPrices[l.city] = 0; 
+                    needsRender = true;
+                }
+            });
+            
             renderAdminCityPrices();
+            
+            if (needsRender) {
+                // Auto-save so they persist immediately
+                data.settings.cityPrices = localAdminCityPrices;
+                await db.saveSettings(data.settings);
+            }
         }
     }
     document.getElementById('sidebar-tab-pagos')?.addEventListener('click', () => {
