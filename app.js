@@ -8258,7 +8258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const keys = Object.keys(localAdminCityPrices).sort();
         if (keys.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay excepciones por ciudad configuradas. Todas usan el Precio Mensual Base.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay ciudades configuradas aún.</td></tr>`;
             return;
         }
 
@@ -8276,39 +8276,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${isFree ? `<div style="font-size: 0.75rem; color: #10b981; margin-top: 4px; font-weight: bold;">(Promoción Gratis)</div>` : ''}
                 </td>
-                <td style="text-align: center;">
-                    <button class="icon-btn danger btn-remove-city-price" data-city="${escapeHTML(cityKey)}" title="Eliminar regla"><span class="material-symbols-rounded">delete</span></button>
-                </td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Listeners for inputs and delete buttons
+        // Listeners for inputs
         document.querySelectorAll('.admin-city-price-input').forEach(input => {
             input.addEventListener('change', (e) => {
                 const city = e.target.getAttribute('data-city');
                 localAdminCityPrices[city] = Number(e.target.value);
                 renderAdminCityPrices();
             });
-        });
-        document.querySelectorAll('.btn-remove-city-price').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const city = e.currentTarget.getAttribute('data-city');
-                delete localAdminCityPrices[city];
-                renderAdminCityPrices();
-            });
-        });
-    }
-
-    const btnAddCityPrice = document.getElementById('btn-admin-add-city-price');
-    if (btnAddCityPrice) {
-        btnAddCityPrice.addEventListener('click', () => {
-            const cityName = prompt('Ingresa el nombre de la ciudad (Ej. Mexicali, Tijuana):');
-            if (cityName && cityName.trim()) {
-                const cleanName = cityName.trim();
-                localAdminCityPrices[cleanName] = 0; // Default a Gratis
-                renderAdminCityPrices();
-            }
         });
     }
 
