@@ -186,13 +186,29 @@ window.useCityPricingHook = (function() {
     function getCityPrice(cityName, stateName = '') {
         if (!settingsRef) return 500; // Fallback extremo
         const cityPrices = settingsRef.cityPrices || {};
-        // Intentar match con Ciudad (o Estado - Ciudad)
         const key = cityName;
         if (cityPrices[key] !== undefined) {
             return Number(cityPrices[key]);
         }
-        // Si no hay regla específica, retorna el precio global mensual
-        return Number(settingsRef.monthlyPrice) || 500;
+        // Si no hay regla específica para la ciudad, por default es Gratis ($0)
+        return 0;
+    }
+
+    function isCityMissing(cityName) {
+        if (!settingsRef) return false;
+        const cityPrices = settingsRef.cityPrices || {};
+        return cityPrices[cityName] === undefined;
+    }
+
+    async function registerNewCityAsFree(cityName) {
+        if (!settingsRef || !cityName) return;
+        if (isCityMissing(cityName)) {
+            settingsRef.cityPrices = settingsRef.cityPrices || {};
+            settingsRef.cityPrices[cityName] = 0; // Gratis por defecto
+            if (typeof db !== 'undefined' && db.saveSettings) {
+                await db.saveSettings(settingsRef);
+            }
+        }
     }
 
     function isCityFree(cityName, stateName = '') {
@@ -202,6 +218,8 @@ window.useCityPricingHook = (function() {
     return {
         init,
         getCityPrice,
+        isCityMissing,
+        registerNewCityAsFree,
         isCityFree
     };
 })();
@@ -4786,6 +4804,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const cityVal = updatedData.city || existingListing?.city || '';
                 const stateVal = updatedData.state || existingListing?.state || '';
+                
+                // Si la ciudad no existe en la configuración, la registramos automáticamente como Gratis ($0)
+                if (window.useCityPricingHook && window.useCityPricingHook.isCityMissing(cityVal)) {
+                    await window.useCityPricingHook.registerNewCityAsFree(cityVal);
+                }
+
                 const finalCityPrice = window.useCityPricingHook ? window.useCityPricingHook.getCityPrice(cityVal, stateVal) : globalMonthlyPrice;
 
                 if (Number(finalCityPrice) === 0) {
