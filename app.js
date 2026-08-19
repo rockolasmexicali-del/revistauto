@@ -7130,7 +7130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Eliminación local y en la nube manejada internamente por db.js
-        db.deleteListing(id);
+        await db.deleteListing(id);
 
         const modal = document.getElementById('reject-confirm-modal');
         if (modal) modal.classList.remove('active');
