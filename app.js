@@ -1986,7 +1986,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ad) {
             // Fallback ad if no ads are available for this city
             return `
-            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="document.getElementById('btn-advertise').click()">
+            <div class="card ad-card" style="cursor: pointer; border: 2px solid #f59e0b; border-radius: 16px; display: flex; flex-direction: column; position: relative; overflow: hidden; z-index: 10; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);" onclick="if(window.openClientAdModal) window.openClientAdModal();">
                 <div class="card-img-wrapper" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.04) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; border-top: none;">
                     <span class="material-symbols-rounded" style="font-size: 50px; color: #f59e0b; filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5)); margin-bottom: 6px;">storefront</span>
                     <strong style="color: #fbbf24; font-size: 1.1rem; text-align: center; line-height: 1.2; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Anúnciate Aquí</strong>
@@ -4152,7 +4152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="pub-col pub-col-ads">
                     <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-main);">Mis Anuncios Publicitarios</h3>
-                    ${(window.db && window.db.adsEnabled === false) ? '' : `<button class="primary-btn desktop-only-btn" onclick="document.getElementById('btn-advertise').click()" style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-symbols-rounded">add</span> Nueva Publicidad</button>`}
+                    ${(window.db && window.db.adsEnabled === false) ? '' : `<button class="primary-btn desktop-only-btn" onclick="if(window.openClientAdModal) window.openClientAdModal();" style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span class="material-symbols-rounded">add</span> Nueva Publicidad</button>`}
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                         ${adsHTML}
                     </div>
@@ -9487,47 +9487,53 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        window.openClientAdModal = function () {
+            if (!clientAdModal) return;
+            document.getElementById('client-ad-form-step2').reset();
+            window.clientAdImages = [];
+            window.editingAdId = null;
+            document.getElementById('client-ad-image-preview-container').innerHTML = '';
+            document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
+            document.getElementById('desc-char-counter').textContent = '0/220';
+
+            // Auto-fill State and City
+            const uState = document.getElementById('user-state').value;
+            let uCity = 'Todas';
+            if (window.selectedCities && window.selectedCities.length > 0) {
+                uCity = window.selectedCities[0];
+            }
+
+            const stateEl = document.getElementById('client-ad-state');
+            const cityEl = document.getElementById('client-ad-city');
+            if (stateEl) {
+                stateEl.value = (uState && uState !== 'Todos') ? uState : 'Baja California';
+                stateEl.dispatchEvent(new Event('change'));
+            }
+            if (cityEl) {
+                cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
+            }
+
+            // Reset Progress Bar
+            document.getElementById('client-ad-progress-container').style.display = 'none';
+            document.getElementById('client-ad-progress-bar').style.width = '0%';
+            document.getElementById('client-ad-progress-text').textContent = '0%';
+
+            const btnSubmit = document.getElementById('btn-submit-client-ad');
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Confirmar y Publicar';
+            }
+
+            window.nextAdStep(1);
+            clientAdModal.classList.add('active');
+        };
+
         if (btnAdvertise) {
             btnAdvertise.addEventListener('click', () => {
-                document.getElementById('client-ad-form-step2').reset();
-                window.clientAdImages = [];
-                window.editingAdId = null;
-                document.getElementById('client-ad-image-preview-container').innerHTML = '';
-                document.getElementById('client-ad-file-chosen-text').textContent = 'Ninguna foto. ¡Recuerda la portada!';
-                document.getElementById('desc-char-counter').textContent = '0/220';
-
-                // Auto-fill State and City
-                const uState = document.getElementById('user-state').value;
-                let uCity = 'Todas';
-                const activeCityBtn = document.querySelector('#home-categories .category-chip.active'); // Might be used later, but wait...
-                // the city is usually selected via checkboxes or we just put the generic one:
-                if (window.selectedCities && window.selectedCities.length > 0) {
-                    uCity = window.selectedCities[0];
+                const btnNewListing = document.getElementById('btn-new-listing');
+                if (btnNewListing) {
+                    btnNewListing.click();
                 }
-
-                const stateEl = document.getElementById('client-ad-state');
-                const cityEl = document.getElementById('client-ad-city');
-                if (stateEl) {
-                    stateEl.value = (uState && uState !== 'Todos') ? uState : 'Baja California';
-                    stateEl.dispatchEvent(new Event('change'));
-                }
-                if (cityEl) {
-                    cityEl.value = (uCity && uCity !== 'Todas') ? uCity : 'Mexicali';
-                }
-
-                // Reset Progress Bar
-                document.getElementById('client-ad-progress-container').style.display = 'none';
-                document.getElementById('client-ad-progress-bar').style.width = '0%';
-                document.getElementById('client-ad-progress-text').textContent = '0%';
-
-                const btnSubmit = document.getElementById('btn-submit-client-ad');
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.textContent = 'Confirmar y Publicar';
-                }
-
-                window.nextAdStep(1);
-                clientAdModal.classList.add('active');
             });
         }
 
