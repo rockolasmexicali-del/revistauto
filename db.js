@@ -756,7 +756,8 @@ class Database {
                 ref_number: ad.ref_number,
                 views: ad.views || 0,
                 clicks: ad.clicks || 0,
-                created_at: ad.created_at
+                created_at: ad.created_at,
+                checkout_price: ad.checkout_price !== undefined ? Number(ad.checkout_price) : null
             };
 
             try {

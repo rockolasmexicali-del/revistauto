@@ -224,6 +224,27 @@ window.useCityPricingHook = (function() {
     };
 })();
 
+// --- HOOK: Precios de Publicidad (Ads) ---
+window.useAdPricingHook = (function() {
+    let settingsRef = null;
+
+    function init(settings) {
+        settingsRef = settings;
+    }
+
+    function getAdPrice(ad = null) {
+        if (ad && ad.checkout_price !== undefined && ad.checkout_price !== null) {
+            return Number(ad.checkout_price);
+        }
+        if (settingsRef && settingsRef.adMonthlyPrice !== undefined) {
+            return Number(settingsRef.adMonthlyPrice);
+        }
+        return typeof globalAdMonthlyPrice !== 'undefined' ? Number(globalAdMonthlyPrice) : 500;
+    }
+
+    return { init, getAdPrice };
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
@@ -673,6 +694,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success && data.settings) {
                 if (window.useCityPricingHook) {
                     window.useCityPricingHook.init(data.settings);
+                }
+                if (window.useAdPricingHook) {
+                    window.useAdPricingHook.init(data.settings);
                 }
                 globalMonthlyPrice = data.settings.monthlyPrice;
                 globalMpEnabled = data.settings.mercadoPagoEnabled;
@@ -4032,6 +4056,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     publishedDateHTML = `<p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;"><span class="material-symbols-rounded" style="font-size:13px; vertical-align: middle;">calendar_today</span> Vence el ${expDateStr}</p>`;
                 }
 
+                let priceTextHTML = '';
+                if (displayStatus === 'PENDIENTE PAGO' || displayStatus === 'CADUCADO') {
+                    const priceToPay = window.useAdPricingHook ? window.useAdPricingHook.getAdPrice(ad) : (typeof globalAdMonthlyPrice !== 'undefined' ? globalAdMonthlyPrice : 500);
+                    priceTextHTML = `<p style="font-size: 0.78rem; color: var(--danger-color); margin-top: 4px; font-weight: 500;">Total a pagar: $${Number(priceToPay).toFixed(2)} MXN (1 mes)</p>`;
+                }
+
                 return `
                     <div class="my-listing-card" style="cursor: pointer;" onclick="if(!event.target.closest('button')) window.openAdDetails('${ad.id}')">
                         <div class="card-img-carousel" style="width:100px; height:100px; flex-shrink:0; background:#000;">
@@ -4045,6 +4075,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="display: flex; align-items: center; gap: 4px; color: var(--primary-color);"><span class="material-symbols-rounded" style="font-size: 16px;">ads_click</span> ${ad.clicks || 0} clics</span>
                             </div>
                             <span class="status-badge ${statusColorClass}" style="${statusColorClass === 'status-caducado' ? 'background: var(--danger-color);' : (statusColorClass === 'status-pendiente' ? 'background: #f59e0b; color: white;' : '')}">${displayStatus}</span>
+                            ${priceTextHTML}
                             ${publishedDateHTML}
                         </div>
                         <div class="my-listing-actions" style="flex-direction: column;">
@@ -6430,7 +6461,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     await db.saveAd(ad);
 
-                    const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                    const amount = window.useAdPricingHook ? window.useAdPricingHook.getAdPrice(ad) : (globalAdMonthlyPrice || 500);
                     db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
                     db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
 
@@ -7771,7 +7802,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     payment_status: 'pagado',
                     views: 0,
                     clicks: 0,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString(),
+                    checkout_price: window.useAdPricingHook ? window.useAdPricingHook.getAdPrice() : (globalAdMonthlyPrice || 500)
                 };
 
                 await db.saveAd(newAd);
@@ -9250,6 +9282,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            const priceHeader = document.getElementById('mp-modal-price-header');
+            if (priceHeader) {
+                priceHeader.style.display = 'block';
+                priceHeader.innerHTML = `<h2 style="margin:0; font-size: 1.8rem; font-weight: normal; color: var(--text-main);">Total a pagar <span style="color: var(--primary-color); font-weight: bold;">$${Number(amountToCharge).toFixed(2)}</span> MXN</h2>`;
+            }
+
             const renderPaymentBrick = async (bricksBuilder) => {
                 const settings = {
                     initialization: {
@@ -9764,7 +9802,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             social_links: socialLinks,
                             images: uploadedImages,
                             payment_status: 'pendiente',
-                            is_active: false
+                            is_active: false,
+                            checkout_price: window.useAdPricingHook ? window.useAdPricingHook.getAdPrice() : (globalAdMonthlyPrice || 500)
                         };
 
                         const savedAd = await db.saveAd(newAd);
@@ -9891,10 +9930,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const mp = new MercadoPago(globalMpPublicKey, { locale: 'es-MX' });
                 const bricksBuilder = mp.bricks();
 
+                let amountToCharge = (typeof globalAdMonthlyPrice !== 'undefined') ? Number(globalAdMonthlyPrice) : 500;
+                if (adId && window.useAdPricingHook) {
+                    const allAds = (typeof db !== 'undefined' && db.getAllAds) ? db.getAllAds() : [];
+                    const targetAd = allAds.find(a => String(a.id) === String(adId));
+                    if (targetAd) amountToCharge = window.useAdPricingHook.getAdPrice(targetAd);
+                }
+
+                const priceHeader = document.getElementById('mp-modal-price-header');
+                if (priceHeader) {
+                    priceHeader.style.display = 'block';
+                    priceHeader.innerHTML = `<h2 style="margin:0; font-size: 1.8rem; font-weight: normal; color: var(--text-main);">Total a pagar <span style="color: var(--primary-color); font-weight: bold;">$${Number(amountToCharge).toFixed(2)}</span> MXN</h2>`;
+                }
+
                 const renderPaymentBrick = async (bricksBuilder) => {
                     const settings = {
                         initialization: {
-                            amount: (globalAdMonthlyPrice !== undefined && globalAdMonthlyPrice !== null && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500
+                            amount: amountToCharge
                         },
                         customization: {
                             visual: { style: { theme: 'default' } },
@@ -10356,7 +10408,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     await db.saveAd(ad);
 
-                    const amount = (typeof globalAdMonthlyPrice !== 'undefined' && !isNaN(Number(globalAdMonthlyPrice))) ? Number(globalAdMonthlyPrice) : 500;
+                    const amount = window.useAdPricingHook ? window.useAdPricingHook.getAdPrice(ad) : (globalAdMonthlyPrice || 500);
                     db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
                     db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
 
