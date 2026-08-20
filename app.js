@@ -2534,16 +2534,23 @@ document.addEventListener('DOMContentLoaded', () => {
             prefetchTimer = setTimeout(async () => {
                 if (isLoadingFeed || !hasMoreFeedItems) return;
                 const state = userStateSelect ? userStateSelect.value : null;
+                const reqCities = [...selectedCities]; // clonamos
+                const reqCategory = currentFeedCategory;
+                const reqPage = currentFeedPage;
+
                 try {
                     const res = await db.fetchFeedPaginated({
-                        page: currentFeedPage,
+                        page: reqPage,
                         pageSize: PAGE_SIZE,
                         state: state,
-                        cities: selectedCities,
-                        filters: { category: currentFeedCategory }
+                        cities: reqCities,
+                        filters: { category: reqCategory }
                     });
                     if (res && res.data && res.data.length > 0) {
-                        window.prefetchedFeedData = res;
+                        window.prefetchedFeedData = {
+                            res: res,
+                            context: { state, cities: reqCities.join(','), category: reqCategory, page: reqPage }
+                        };
                     }
                 } catch (e) { }
             }, 600);
@@ -2561,23 +2568,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const sentinel = document.getElementById('feed-infinite-scroll-sentinel');
         if (sentinel) sentinel.style.display = 'block';
 
+        const state = userStateSelect ? userStateSelect.value : null;
+        const currentContextHash = { state, cities: selectedCities.join(','), category: currentFeedCategory, page: currentFeedPage };
+
         let res = null;
-        if (window.prefetchedFeedData && window.prefetchedFeedData.data && window.prefetchedFeedData.data.length > 0) {
-            // Consumir datos pre-cargados al instante sin esperar red
-            res = window.prefetchedFeedData;
+        if (window.prefetchedFeedData && window.prefetchedFeedData.context &&
+            window.prefetchedFeedData.context.state === currentContextHash.state &&
+            window.prefetchedFeedData.context.cities === currentContextHash.cities &&
+            window.prefetchedFeedData.context.category === currentContextHash.category &&
+            window.prefetchedFeedData.context.page === currentContextHash.page) {
+            
+            // Consumir datos pre-cargados porque son 100% compatibles
+            res = window.prefetchedFeedData.res;
             window.prefetchedFeedData = null;
         } else {
-            const state = userStateSelect.value;
+            window.prefetchedFeedData = null; // Descartar datos obsoletos si los hay
             res = await db.fetchFeedPaginated({
                 page: currentFeedPage,
                 pageSize: PAGE_SIZE,
                 state: state,
                 cities: selectedCities,
-                filters: { category: currentFeedCategory }
+                filters: { category: currentFeedCategory },
+                forceRefresh: currentFeedPage === 1 // Renovar barajado al cambiar ciudad o en la página 1
             });
         }
 
-        if (res.data.length > 0) {
+        if (res && res.data && res.data.length > 0) {
             // Eliminar duplicados por id
             const newItems = res.data.filter(newItem => !window.activeFeedListings.some(existing => existing.id === newItem.id));
             window.activeFeedListings = [...window.activeFeedListings, ...newItems];
