@@ -343,6 +343,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     vehiclePriceNote.textContent = `$${Number(finalCityPrice).toFixed(2)} MXN`;
                     vehiclePriceNote.style.color = '#f59e0b';
                 }
+
+                // Novedad: Si el usuario ya avanzó al Paso 2 (o más) y cambia la ciudad,
+                // lo regresamos automáticamente al Paso 1 para que vea el nuevo costo.
+                if (typeof currentWizardStep !== 'undefined' && currentWizardStep >= 2) {
+                    currentWizardStep = 1;
+                    if (typeof updateWizardUI === 'function') {
+                        updateWizardUI();
+                    }
+                }
             }
         });
     }

@@ -926,7 +926,8 @@ class Database {
                 payment_status: listing.paymentStatus || listing.payment_status || null,
                 sold_at: listing.soldAt || listing.sold_at || null,
                 ref_number: listing.ref_number,
-                old_price: listing.old_price !== undefined ? listing.old_price : null
+                old_price: listing.old_price !== undefined ? listing.old_price : null,
+                checkout_price: listing.checkout_price !== undefined ? Number(listing.checkout_price) : null
             };
 
             try {
