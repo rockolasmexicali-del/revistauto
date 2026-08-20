@@ -148,9 +148,14 @@ window.appConfirm = function (message, onConfirm, title = '¿Estás seguro?') {
         modal.classList.remove('active');
     };
 
-    btnAccept.onclick = () => {
-        modal.classList.remove('active');
-        onConfirm();
+    btnAccept.onclick = async () => {
+        btnAccept.disabled = true;
+        try {
+            await onConfirm();
+        } finally {
+            modal.classList.remove('active');
+            btnAccept.disabled = false;
+        }
     };
 
     modal.classList.add('active');
@@ -873,6 +878,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.onAdsSynced = function () {
         if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
         if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+        
+        // Invalidar caché de Mis Publicaciones para asegurar redibujado
+        const myListingsContainer = document.getElementById('my-listings-container');
+        if (myListingsContainer) delete myListingsContainer.dataset.lastState;
+        if (typeof renderMyListings === 'function') renderMyListings();
+
         // Opcional: si queremos que los anuncios se refresquen en el feed
         const viewInicio = document.getElementById('view-inicio');
         if (viewInicio && !viewInicio.classList.contains('active')) {
@@ -7052,6 +7063,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Invalidar caché del historial de cobros
         const billingBody = document.getElementById('billing-table-body');
         if (billingBody) delete billingBody.dataset.lastState;
+
+        // Invalidar caché de "Mis Publicaciones" para asegurar actualización en tiempo real
+        const myListingsContainer = document.getElementById('my-listings-container');
+        if (myListingsContainer) delete myListingsContainer.dataset.lastState;
 
         if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
         if (typeof updateAdminRenewals === 'function') updateAdminRenewals();
