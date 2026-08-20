@@ -1683,25 +1683,49 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const stateCities = window.activeLocations.citiesByState[state] || [];
+            const isAll = selectedCities.length === 0 || selectedCities.length === stateCities.length;
+
             // Generar opción "Todas" + checkboxes de ciudades
             citiesCheckboxesContainer.innerHTML = `
                 <label class="custom-checkbox">
-                    <input type="checkbox" value="__todas__" ${selectedCities.length === stateCities.length ? 'checked' : ''} id="cb-todas-ciudades">
-                    <span><strong>Todos los estados</strong></span>
+                    <input type="checkbox" value="__todas__" ${isAll ? 'checked' : ''} id="cb-todas-ciudades">
+                    <span><strong>Todas las ciudades</strong></span>
                 </label>
             ` + stateCities.map(city => `
                 <label class="custom-checkbox">
-                    <input type="checkbox" value="${city}" ${selectedCities.includes(city) ? 'checked' : ''}>
+                    <input type="checkbox" value="${city}" class="cb-city-item" ${isAll || selectedCities.includes(city) ? 'checked' : ''}>
                     <span>${city}</span>
                 </label>
             `).join('');
 
-            // Lógica del checkbox "Todas"
+            // Lógica de selección
             const cbTodas = citiesCheckboxesContainer.querySelector('#cb-todas-ciudades');
+            const cbCities = Array.from(citiesCheckboxesContainer.querySelectorAll('.cb-city-item'));
+
+            function evalCityCheckboxes() {
+                const checkedCount = cbCities.filter(c => c.checked).length;
+                if (checkedCount === 0) {
+                    // Si no está tildada ninguna, se tildan automático todas
+                    cbTodas.checked = true;
+                    cbCities.forEach(c => c.checked = true);
+                } else if (checkedCount === cbCities.length) {
+                    // Si se tildan todas manualmente, se tilda la principal
+                    cbTodas.checked = true;
+                } else {
+                    // Si se tilda solo una (o algunas), se destilda la principal
+                    cbTodas.checked = false;
+                }
+            }
+
             cbTodas.addEventListener('change', () => {
-                citiesCheckboxesContainer.querySelectorAll('input[type="checkbox"]:not(#cb-todas-ciudades)').forEach(cb => {
-                    cb.checked = cbTodas.checked;
-                });
+                // Si la presionan para tildar, marcamos todas. 
+                // Si la presionan para destildar, desmarcamos todas (lo que activa la regla de 0 y vuelve a marcar todas)
+                cbCities.forEach(cb => cb.checked = cbTodas.checked);
+                evalCityCheckboxes();
+            });
+
+            cbCities.forEach(cb => {
+                cb.addEventListener('change', evalCityCheckboxes);
             });
 
             citiesModal.classList.add('active');
