@@ -8370,24 +8370,73 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Logica para Configuración del Costo Mensual Base y Precios por Ciudad ---
     let localAdminCityPrices = {};
 
+    function resolveAdminCityState(cityName) {
+        if (!cityName) return 'Baja California';
+        const clean = cityName.trim();
+        const cData = (typeof catalogData !== 'undefined') ? catalogData : ((typeof db !== 'undefined' && db.catalogData) ? db.catalogData : (typeof defaultCatalogData !== 'undefined' ? defaultCatalogData : null));
+        if (cData && cData.citiesByState) {
+            for (const [st, cities] of Object.entries(cData.citiesByState)) {
+                if (Array.isArray(cities) && cities.includes(clean)) {
+                    return st;
+                }
+            }
+        }
+        if (['Mexicali', 'Tijuana', 'Ensenada', 'Tecate', 'Rosarito', 'San Quintín'].includes(clean)) return 'Baja California';
+        if (['Hermosillo', 'Ciudad Obregón', 'Nogales', 'San Luis Río Colorado', 'Guaymas', 'Navojoa'].includes(clean)) return 'Sonora';
+        if (['Culiacán', 'Mazatlán', 'Los Mochis', 'Guasave', 'Navolato'].includes(clean)) return 'Sinaloa';
+        if (['La Paz', 'Los Cabos', 'Cabo San Lucas', 'San José del Cabo'].includes(clean)) return 'Baja California Sur';
+        if (['Chihuahua', 'Ciudad Juárez', 'Delicias', 'Cuauhtémoc'].includes(clean)) return 'Chihuahua';
+        return 'Baja California';
+    }
+
     function renderAdminCityPrices() {
         const tbody = document.getElementById('city-prices-body');
         if (!tbody) return;
         tbody.innerHTML = '';
         
-        const keys = Object.keys(localAdminCityPrices).sort();
+        const keys = Object.keys(localAdminCityPrices);
         if (keys.length === 0) {
             tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay ciudades configuradas aún.</td></tr>`;
             return;
         }
 
-        keys.forEach(cityKey => {
+        // Mapear ciudades con su estado correspondiente
+        const cityList = keys.map(cityKey => {
+            const state = resolveAdminCityState(cityKey);
+            return {
+                cityKey: cityKey,
+                state: state,
+                displayLabel: `${cityKey} - ${state}`
+            };
+        });
+
+        // Ordenar alfabéticamente por Estado y secundariamente por Ciudad
+        cityList.sort((a, b) => {
+            const stateCompare = a.state.localeCompare(b.state, 'es', { sensitivity: 'base' });
+            if (stateCompare !== 0) return stateCompare;
+            return a.cityKey.localeCompare(b.cityKey, 'es', { sensitivity: 'base' });
+        });
+
+        let lastState = null;
+        cityList.forEach(item => {
+            if (lastState !== null && item.state !== lastState) {
+                const sepTr = document.createElement('tr');
+                sepTr.innerHTML = `
+                    <td colspan="2" style="padding: 2px 12px; background: rgba(255, 255, 255, 0.02);">
+                        <div style="border-top: 1px dashed rgba(255, 255, 255, 0.25); width: 100%; margin: 6px 0;"></div>
+                    </td>
+                `;
+                tbody.appendChild(sepTr);
+            }
+            lastState = item.state;
+
+            const cityKey = item.cityKey;
             const price = Number(localAdminCityPrices[cityKey]);
             const isFree = price === 0;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <div style="font-weight: 600; color: var(--text-main);">${escapeHTML(cityKey)}</div>
+                    <div style="font-weight: 600; color: var(--text-main);">${escapeHTML(item.displayLabel)}</div>
                 </td>
                 <td style="text-align: center;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
