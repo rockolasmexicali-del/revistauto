@@ -11195,6 +11195,10 @@ window.LEGAL_CONTENT = {
 
             <h4>3. Protección y No Transferencia a Terceros</h4>
             <p>RevistAuto <strong>no vende, alquila ni comparte</strong> datos personales o números de contacto con empresas terceras de telemercadeo o publicidad no solicitada (SPAM). Sus datos están protegidos conforme a las mejores prácticas de seguridad digital.</p>
+
+            <div style="margin-top: 16px; text-align: center;">
+                <a href="privacidad.html" target="_blank" class="primary-btn" style="display: inline-block; padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; text-decoration: none; color: white;">Ver documento de privacidad completo ↗</a>
+            </div>
         </div>
     `,
     contact: `
