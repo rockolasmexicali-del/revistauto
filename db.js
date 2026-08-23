@@ -1,4 +1,4 @@
-const APP_VERSION = "2.6.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "2.9.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     makes: [
@@ -1170,8 +1170,17 @@ class Database {
             let query = supabaseClient.from('listings').select('*').eq('status', 'autorizado');
 
             if (criteria.query) {
-                const q = criteria.query.toLowerCase();
-                query = query.or(`title.ilike.%${q}%,make.ilike.%${q}%,model.ilike.%${q}%,type.ilike.%${q}%`);
+                const q = criteria.query.toLowerCase().trim();
+                const cleanQ = q.replace(/[-_\s]+/g, '');
+                const hyphenatedQ = q.replace(/([a-zA-Z]+)(\d+)/g, '$1-$2').replace(/(\d+)([a-zA-Z]+)/g, '$1-$2');
+                const spacedQ = q.replace(/([a-zA-Z]+)(\d+)/g, '$1 $2').replace(/(\d+)([a-zA-Z]+)/g, '$1 $2');
+
+                const variants = Array.from(new Set([q, cleanQ, hyphenatedQ, spacedQ].filter(t => t && t.length > 0)));
+                const orParts = [];
+                variants.forEach(v => {
+                    orParts.push(`title.ilike.%${v}%,make.ilike.%${v}%,model.ilike.%${v}%,type.ilike.%${v}%`);
+                });
+                query = query.or(orParts.join(','));
             }
             if (criteria.cities && criteria.cities.length > 0) {
                 query = query.in('city', criteria.cities);
@@ -1185,10 +1194,10 @@ class Database {
             if (criteria.maxYear) {
                 query = query.lte('year', criteria.maxYear);
             }
-            if (criteria.transmission && criteria.transmission !== 'Todas') {
+            if (criteria.transmission && criteria.transmission !== 'Todas' && criteria.transmission !== 'Cualquiera') {
                 query = query.eq('transmission', criteria.transmission);
             }
-            if (criteria.legal && criteria.legal !== 'Todas') {
+            if (criteria.legal && criteria.legal !== 'Todas' && criteria.legal !== 'Cualquiera') {
                 if (criteria.legal === 'Nacional') {
                     query = query.in('legal', ['Nacional', 'Nacional A1', 'Nacional VU']);
                 } else {
@@ -1212,13 +1221,22 @@ class Database {
         let results = this.getAllListings().filter(l => this.isListingActive(l));
 
         if (criteria.query) {
-            const q = criteria.query.toLowerCase();
-            results = results.filter(l =>
-                (l.title && l.title.toLowerCase().includes(q)) ||
-                (l.make && l.make.toLowerCase().includes(q)) ||
-                (l.model && l.model.toLowerCase().includes(q)) ||
-                (l.type && l.type.toLowerCase().includes(q))
-            );
+            const normQ = criteria.query.toLowerCase().replace(/[-_\s]+/g, '');
+            const rawQ = criteria.query.toLowerCase();
+            results = results.filter(l => {
+                const titleNorm = (l.title || '').toLowerCase().replace(/[-_\s]+/g, '');
+                const makeNorm = (l.make || '').toLowerCase().replace(/[-_\s]+/g, '');
+                const modelNorm = (l.model || '').toLowerCase().replace(/[-_\s]+/g, '');
+                const typeNorm = (l.type || '').toLowerCase().replace(/[-_\s]+/g, '');
+
+                const titleRaw = (l.title || '').toLowerCase();
+                const makeRaw = (l.make || '').toLowerCase();
+                const modelRaw = (l.model || '').toLowerCase();
+                const typeRaw = (l.type || '').toLowerCase();
+
+                return titleNorm.includes(normQ) || makeNorm.includes(normQ) || modelNorm.includes(normQ) || typeNorm.includes(normQ) ||
+                       titleRaw.includes(rawQ) || makeRaw.includes(rawQ) || modelRaw.includes(rawQ) || typeRaw.includes(rawQ);
+            });
         }
 
         if (criteria.cities && criteria.cities.length > 0) {
@@ -1233,10 +1251,10 @@ class Database {
         if (criteria.maxYear) {
             results = results.filter(l => Number(l.year) <= criteria.maxYear);
         }
-        if (criteria.transmission && criteria.transmission !== 'Todas') {
+        if (criteria.transmission && criteria.transmission !== 'Todas' && criteria.transmission !== 'Cualquiera') {
             results = results.filter(l => l.transmission === criteria.transmission);
         }
-        if (criteria.legal && criteria.legal !== 'Todas') {
+        if (criteria.legal && criteria.legal !== 'Todas' && criteria.legal !== 'Cualquiera') {
             if (criteria.legal === 'Nacional') {
                 results = results.filter(l => ['Nacional', 'Nacional A1', 'Nacional VU'].includes(l.legal));
             } else {

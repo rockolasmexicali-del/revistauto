@@ -145,9 +145,10 @@
                     <div class="section-header">
                         <h2>Búsqueda Avanzada</h2>
                     </div>
-                    <div class="search-bar-container">
+                    <div class="search-bar-container" style="position: relative;">
                         <span class="material-symbols-rounded search-icon">search</span>
-                        <input type="text" id="search-input" placeholder="Busca por Marca o Modelo (Ej. Honda, Nissan, Jetta...)">
+                        <input type="text" id="search-input" placeholder="Busca por Marca o Modelo (Ej. Honda, Nissan, Jetta...)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <div id="search-suggestions-dropdown" class="search-suggestions-dropdown" style="display: none;"></div>
                     </div>
                     <div id="search-filters-container" style="transition: all 0.3s ease;">
                         <h4 style="margin-bottom: 12px; color: var(--text-main);">Ubicación</h4>
@@ -1995,8 +1996,8 @@
 
     <!-- Supabase Cloud SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabaseClient.js?v=91"></script>
-    <script src="db.js?v=91"></script>
-    <script src="app.js?v=91"></script>
+    <script src="supabaseClient.js?v=95"></script>
+    <script src="db.js?v=95"></script>
+    <script src="app.js?v=95"></script>
 </body>
 </html>

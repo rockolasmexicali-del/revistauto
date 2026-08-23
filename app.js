@@ -3070,6 +3070,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Search ---
     const searchInput = document.getElementById('search-input');
     const searchFiltersContainer = document.getElementById('search-filters-container');
+    const searchDropdown = document.getElementById('search-suggestions-dropdown');
+
+    if (searchInput && searchDropdown) {
+        useSearchAutocompleteHook(searchInput, searchDropdown);
+    }
 
     searchInput.addEventListener('focus', () => {
         if (searchFiltersContainer.style.height === '0px') {
@@ -3117,9 +3122,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnSearch.addEventListener('click', async () => {
         const queryText = searchInput.value.trim();
+        const filterColor = document.getElementById('filter-color');
 
-        if (!queryText) {
-            showAlert('Por favor, escribe la Marca o Modelo que buscas (Ej. Nissan, Civic) antes de buscar.', 'Búsqueda Vacía', 'warning');
+        const yearRaw = filterYear ? filterYear.value.trim() : '';
+        const colorVal = filterColor ? filterColor.value : 'Todos';
+        const transmissionVal = filterTransmission ? filterTransmission.value : 'Cualquiera';
+        const legalVal = filterLegal ? filterLegal.value : 'Cualquiera';
+
+        // Validation Hook: permite buscar si hay texto O si se seleccionó al menos un detalle (Año, Color, Transmisión, Situación Legal)
+        const validation = useAdvancedSearchValidationHook(queryText, yearRaw, colorVal, transmissionVal, legalVal);
+
+        if (!validation.isValid) {
+            showAlert('Por favor, escribe la Marca o Modelo que buscas o selecciona al menos un detalle (Año, Color, Transmisión o Situación Legal).', 'Búsqueda Vacía', 'warning');
             return;
         }
 
@@ -3137,15 +3151,13 @@ document.addEventListener('DOMContentLoaded', () => {
             searchCities = [cityVal];
         }
 
-        const filterColor = document.getElementById('filter-color');
-
         const criteria = {
             query: queryText,
             cities: searchCities,
-            year: filterYear ? (Number(filterYear.value) || null) : null,
-            transmission: filterTransmission.value,
-            legal: filterLegal.value,
-            color: filterColor ? filterColor.value : 'Todos'
+            year: yearRaw ? (Number(yearRaw) || null) : null,
+            transmission: transmissionVal,
+            legal: legalVal,
+            color: colorVal
         };
 
         // Mostrar spinner
@@ -11453,5 +11465,210 @@ function useDirectBrowserRedirect() {
         }
     }
 }
+
+/* ==========================================================================
+   HOOK: Validaciones y lógica de Búsqueda Avanzada
+   ========================================================================== */
+function useAdvancedSearchValidationHook(queryText, yearVal, colorVal, transmissionVal, legalVal) {
+    const hasQuery = Boolean(queryText && queryText.length > 0);
+    const hasYear = Boolean(yearVal && String(yearVal).trim().length > 0 && Number(yearVal) > 0);
+    const hasColor = Boolean(colorVal && colorVal !== 'Todos');
+    const hasTransmission = Boolean(transmissionVal && transmissionVal !== 'Cualquiera' && transmissionVal !== 'Todas');
+    const hasLegal = Boolean(legalVal && legalVal !== 'Cualquiera' && legalVal !== 'Todas');
+
+    const isValid = hasQuery || hasYear || hasColor || hasTransmission || hasLegal;
+
+    return {
+        isValid,
+        hasQuery,
+        hasYear,
+        hasColor,
+        hasTransmission,
+        hasLegal
+    };
+}
+
+/* ==========================================================================
+   HOOK: Autocompletado de Marcas y Modelos (Catálogo + Publicaciones Reales)
+   ========================================================================== */
+function useSearchAutocompleteHook(inputEl, dropdownEl) {
+    if (!inputEl || !dropdownEl) return;
+
+    let activeIndex = -1;
+
+    function getSuggestions(queryText) {
+        const q = queryText.toLowerCase().trim();
+        if (!q || q.length < 1) return [];
+
+        const normQ = q.replace(/[-_\s]+/g, '');
+        const suggestionsSet = new Set();
+        const results = [];
+
+        const norm = (str) => String(str || '').toLowerCase().replace(/[-_\s]+/g, '');
+
+        // 1. Obtener Marcas y Modelos del Catálogo Oficial
+        const makes = (typeof catalogData !== 'undefined' && catalogData.makes) ? catalogData.makes : (typeof defaultCatalogData !== 'undefined' ? defaultCatalogData.makes : []);
+        const modelsMap = (typeof catalogData !== 'undefined' && catalogData.modelsByMake) ? catalogData.modelsByMake : (typeof defaultCatalogData !== 'undefined' ? defaultCatalogData.modelsByMake : {});
+
+        // Buscar en Marcas del Catálogo
+        makes.forEach(make => {
+            if (make.toLowerCase().includes(q) || (normQ.length > 0 && norm(make).includes(normQ))) {
+                const key = `make_${make.toLowerCase()}`;
+                if (!suggestionsSet.has(key)) {
+                    suggestionsSet.add(key);
+                    results.push({ type: 'marca', label: make, textToFill: make, icon: 'directions_car' });
+                }
+            }
+        });
+
+        // Buscar en Modelos del Catálogo
+        Object.keys(modelsMap).forEach(make => {
+            const models = modelsMap[make] || [];
+            models.forEach(model => {
+                const fullText = `${make} ${model}`;
+                if (model.toLowerCase().includes(q) || fullText.toLowerCase().includes(q) || (normQ.length > 0 && (norm(model).includes(normQ) || norm(fullText).includes(normQ)))) {
+                    const key = `model_${fullText.toLowerCase()}`;
+                    if (!suggestionsSet.has(key)) {
+                        suggestionsSet.add(key);
+                        results.push({ type: 'modelo', label: fullText, textToFill: fullText, icon: 'minor_crash' });
+                    }
+                }
+            });
+        });
+
+        // 2. Buscar en Publicaciones Reales de la Base de Datos (Agregados por Clientes)
+        try {
+            const allListings = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
+            allListings.forEach(item => {
+                if (item.make && (item.make.toLowerCase().includes(q) || (normQ.length > 0 && norm(item.make).includes(normQ)))) {
+                    const key = `make_${item.make.toLowerCase()}`;
+                    if (!suggestionsSet.has(key)) {
+                        suggestionsSet.add(key);
+                        results.push({ type: 'marca', label: item.make, textToFill: item.make, icon: 'directions_car' });
+                    }
+                }
+                if (item.model && (item.model.toLowerCase().includes(q) || (normQ.length > 0 && norm(item.model).includes(normQ)))) {
+                    const makeStr = item.make ? `${item.make} ` : '';
+                    const fullText = `${makeStr}${item.model}`.trim();
+                    const key = `model_${fullText.toLowerCase()}`;
+                    if (!suggestionsSet.has(key)) {
+                        suggestionsSet.add(key);
+                        results.push({ type: 'modelo', label: fullText, textToFill: fullText, icon: 'minor_crash' });
+                    }
+                }
+            });
+        } catch (e) {
+            console.warn('Error reading dynamic listings for autocomplete:', e);
+        }
+
+        // Ordenar por relevancia (si empieza con el texto ingresado va primero)
+        results.sort((a, b) => {
+            const aStartsWith = (a.label.toLowerCase().startsWith(q) || (normQ.length > 0 && norm(a.label).startsWith(normQ))) ? -1 : 1;
+            const bStartsWith = (b.label.toLowerCase().startsWith(q) || (normQ.length > 0 && norm(b.label).startsWith(normQ))) ? -1 : 1;
+            return aStartsWith - bStartsWith;
+        });
+
+        return results.slice(0, 8);
+    }
+
+    function renderDropdown(items) {
+        if (!items || items.length === 0) {
+            dropdownEl.style.display = 'none';
+            dropdownEl.innerHTML = '';
+            activeIndex = -1;
+            return;
+        }
+
+        dropdownEl.innerHTML = items.map((item, index) => `
+            <div class="suggestion-item ${index === activeIndex ? 'active' : ''}" data-index="${index}" data-text="${item.textToFill}">
+                <div class="suggestion-main">
+                    <span class="material-symbols-rounded" style="font-size:20px; color:#38bdf8;">${item.icon}</span>
+                    <span>${item.label}</span>
+                </div>
+                <span class="suggestion-type-tag ${item.type}">${item.type}</span>
+            </div>
+        `).join('');
+
+        dropdownEl.style.display = 'block';
+
+        // Eventos al hacer clic en cada ítem
+        const suggestionItems = dropdownEl.querySelectorAll('.suggestion-item');
+        suggestionItems.forEach(el => {
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Previene perder el foco del input antes del clic
+                const text = el.getAttribute('data-text');
+                inputEl.value = text;
+                dropdownEl.style.display = 'none';
+                dropdownEl.innerHTML = '';
+                activeIndex = -1;
+                inputEl.focus();
+            });
+        });
+    }
+
+    // Escuchar entrada de teclado en el input
+    inputEl.addEventListener('input', () => {
+        const text = inputEl.value;
+        const suggestions = getSuggestions(text);
+        renderDropdown(suggestions);
+    });
+
+    inputEl.addEventListener('focus', () => {
+        const text = inputEl.value;
+        if (text && text.trim().length > 0) {
+            const suggestions = getSuggestions(text);
+            renderDropdown(suggestions);
+        }
+    });
+
+    // Ocultar si hace clic fuera
+    document.addEventListener('click', (e) => {
+        if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+            dropdownEl.style.display = 'none';
+            activeIndex = -1;
+        }
+    });
+
+    // Navegación por teclado (Flecha abajo, Flecha arriba, Escape)
+    inputEl.addEventListener('keydown', (e) => {
+        const items = dropdownEl.querySelectorAll('.suggestion-item');
+        if (!items || items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = (activeIndex + 1) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } else if (e.key === 'Escape') {
+            dropdownEl.style.display = 'none';
+            activeIndex = -1;
+        } else if (e.key === 'Enter' && activeIndex >= 0 && activeIndex < items.length) {
+            e.preventDefault();
+            e.stopPropagation();
+            const selectedText = items[activeIndex].getAttribute('data-text');
+            inputEl.value = selectedText;
+            dropdownEl.style.display = 'none';
+            activeIndex = -1;
+        }
+    });
+
+    function updateActiveItem(items) {
+        items.forEach((item, idx) => {
+            if (idx === activeIndex) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+}
+
+
+
+
 
 
