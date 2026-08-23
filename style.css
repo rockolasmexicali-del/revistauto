@@ -545,6 +545,36 @@ select {
 
 .search-bar-container input {
     padding-left: 48px;
+    padding-right: 44px;
+}
+
+.btn-clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    color: #94a3b8;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    padding: 0;
+    z-index: 10;
+}
+
+.btn-clear-search:hover {
+    background: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
+.btn-clear-search span {
+    font-size: 16px;
 }
 
 select option {

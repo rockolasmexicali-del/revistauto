@@ -3071,9 +3071,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const searchFiltersContainer = document.getElementById('search-filters-container');
     const searchDropdown = document.getElementById('search-suggestions-dropdown');
+    const btnClearSearch = document.getElementById('btn-clear-search');
 
     if (searchInput && searchDropdown) {
         useSearchAutocompleteHook(searchInput, searchDropdown);
+    }
+    if (searchInput && btnClearSearch) {
+        useClearSearchInputHook(searchInput, btnClearSearch, searchDropdown);
     }
 
     searchInput.addEventListener('focus', () => {
@@ -11666,6 +11670,37 @@ function useSearchAutocompleteHook(inputEl, dropdownEl) {
         });
     }
 }
+
+/* ==========================================================================
+   HOOK: Borrado Rápido de Búsqueda ("X" Button)
+   ========================================================================== */
+function useClearSearchInputHook(inputEl, btnClearEl, dropdownEl) {
+    if (!inputEl || !btnClearEl) return;
+
+    function toggleClearBtn() {
+        if (inputEl.value && inputEl.value.trim().length > 0) {
+            btnClearEl.style.display = 'flex';
+        } else {
+            btnClearEl.style.display = 'none';
+        }
+    }
+
+    inputEl.addEventListener('input', toggleClearBtn);
+    inputEl.addEventListener('focus', toggleClearBtn);
+
+    btnClearEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        inputEl.value = '';
+        btnClearEl.style.display = 'none';
+        if (dropdownEl) {
+            dropdownEl.style.display = 'none';
+            dropdownEl.innerHTML = '';
+        }
+        inputEl.focus();
+    });
+}
+
 
 
 
