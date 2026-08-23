@@ -11679,8 +11679,10 @@ function useClearSearchInputHook(inputEl, btnClearEl, dropdownEl) {
 
     function toggleClearBtn() {
         if (inputEl.value && inputEl.value.trim().length > 0) {
+            btnClearEl.classList.add('active');
             btnClearEl.style.display = 'flex';
         } else {
+            btnClearEl.classList.remove('active');
             btnClearEl.style.display = 'none';
         }
     }
@@ -11692,6 +11694,7 @@ function useClearSearchInputHook(inputEl, btnClearEl, dropdownEl) {
         e.preventDefault();
         e.stopPropagation();
         inputEl.value = '';
+        btnClearEl.classList.remove('active');
         btnClearEl.style.display = 'none';
         if (dropdownEl) {
             dropdownEl.style.display = 'none';
