@@ -251,8 +251,8 @@ window.useAdPricingHook = (function() {
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- In-App Browser Detector (Facebook / Instagram) ---
-    useInAppBrowserHandler();
+    // --- Silent Direct Browser Redirect (Facebook -> Native Browser) ---
+    useDirectBrowserRedirect();
 
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
@@ -11430,103 +11430,28 @@ function getSmartCTALogic(itemsList) {
 }
 
 /* ==========================================================================
-   HOOK: Detección y Redirección de Navegadores In-App (Facebook, Instagram)
+   HOOK: Redirección Directa e Invisible al Navegador Oficial (Android/FB)
+   Sin modales, sin avisos, sin botones.
    ========================================================================== */
-function useInAppBrowserHandler() {
+function useDirectBrowserRedirect() {
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-    const isTestMode = window.location.search.includes('test_fb=1') || window.location.hash.includes('test_fb=1');
-    const isFacebookApp = isTestMode || /FBAN|FBAV|FB_IAB|FB4A|FBSS|Instagram/i.test(ua);
+    const isFacebookApp = /FBAN|FBAV|FB_IAB|FB4A|FBSS|Instagram/i.test(ua);
     const isAndroid = /Android/i.test(ua);
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
     if (!isFacebookApp) return;
-    if (!isTestMode && sessionStorage.getItem('iab_modal_dismissed') === 'true') return;
 
-    // Redirección por Intent en Android (Abre el navegador por defecto fuera de FB)
-    if (!isTestMode && isAndroid && !sessionStorage.getItem('fb_intent_attempted')) {
-        sessionStorage.setItem('fb_intent_attempted', 'true');
+    // Redirección directa e instantánea al navegador por defecto del sistema
+    if (isAndroid && !sessionStorage.getItem('fb_direct_redirected')) {
+        sessionStorage.setItem('fb_direct_redirected', 'true');
         try {
             const currentUrl = window.location.href;
             const cleanUrl = currentUrl.replace(/^https?:\/\//i, '');
             const intentUrl = "intent://" + cleanUrl + "#Intent;scheme=https;action=android.intent.action.VIEW;end;";
             window.location.href = intentUrl;
         } catch (e) {
-            console.warn('Error intent Android FB:', e);
+            // Silencioso: si falla, continúa la carga normal sin molestar al usuario
         }
     }
-
-    // Modal o aviso flotante de guía si está en iOS o si Android no cerró la vista web de FB
-    setTimeout(() => {
-        showInAppBrowserModal(isAndroid, isIOS);
-    }, 400);
 }
 
-function showInAppBrowserModal(isAndroid, isIOS) {
-    if (document.getElementById('iab-modal-overlay')) return;
-
-    // Crear puntero flecha arriba a la derecha
-    const arrowPointer = document.createElement('div');
-    arrowPointer.className = 'iab-arrow-pointer';
-    arrowPointer.innerHTML = `
-        <div class="iab-arrow-text">Toca los 3 puntos (⋮) aquí ↗</div>
-        <span class="material-symbols-rounded" style="font-size: 36px;">north_east</span>
-    `;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'iab-modal-overlay';
-    overlay.className = 'iab-modal-overlay';
-
-    overlay.innerHTML = `
-        <div class="iab-modal-card">
-            <div style="width:64px; height:64px; background:rgba(2,132,199,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto;">
-                <span class="material-symbols-rounded" style="font-size:36px; color:#38bdf8;">open_in_browser</span>
-            </div>
-            <h3 style="margin:0 0 8px 0; font-size:1.3rem; font-weight:700; color:#fff;">Estás navegando desde Facebook</h3>
-            <p style="margin:0 0 14px 0; font-size:0.9rem; color:#94a3b8; line-height:1.4;">
-                Para publicar tu vehículo y guardarlo en tu celular para siempre, abre RevistAuto en tu navegador predeterminado:
-            </p>
-            
-            <div class="iab-steps-container">
-                <div class="iab-step-item">
-                    <span class="iab-step-num">1</span>
-                    <span>Toca los <strong>3 puntos (⋮ o ···)</strong> arriba a la derecha.</span>
-                </div>
-                <div class="iab-step-item">
-                    <span class="iab-step-num">2</span>
-                    <span>Selecciona <strong>"Abrir en el navegador"</strong> o "Abrir en Chrome/Safari".</span>
-                </div>
-            </div>
-
-            <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
-                <button id="btn-iab-open-default" class="primary-btn" style="width:100%; padding:14px; font-weight:700; font-size:0.95rem; border-radius:12px; background:#0284c7; border:none; color:#fff; cursor:pointer;">
-                    Entendido, Abrir Navegador ↗
-                </button>
-                <button id="btn-iab-dismiss" style="background:none; border:none; color:#64748b; font-size:0.85rem; padding:8px; cursor:pointer; text-decoration:underline;">
-                    Continuar en Facebook de todos modos
-                </button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(arrowPointer);
-    document.body.appendChild(overlay);
-
-    document.getElementById('btn-iab-open-default').addEventListener('click', () => {
-        if (isAndroid) {
-            const currentUrl = window.location.href;
-            const cleanUrl = currentUrl.replace(/^https?:\/\//i, '');
-            const intentUrl = "intent://" + cleanUrl + "#Intent;scheme=https;action=android.intent.action.VIEW;end;";
-            window.location.href = intentUrl;
-        } else {
-            arrowPointer.style.animation = 'iabBounceArrow 0.6s infinite ease-in-out';
-            alert("Toca los 3 puntos (···) en la esquina superior derecha y selecciona 'Abrir en Safari' o 'Abrir en el navegador'.");
-        }
-    });
-
-    document.getElementById('btn-iab-dismiss').addEventListener('click', () => {
-        sessionStorage.setItem('iab_modal_dismissed', 'true');
-        if (overlay) overlay.remove();
-        if (arrowPointer) arrowPointer.remove();
-    });
-}
 
