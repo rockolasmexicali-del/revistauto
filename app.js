@@ -11434,15 +11434,16 @@ function getSmartCTALogic(itemsList) {
    ========================================================================== */
 function useInAppBrowserHandler() {
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-    const isFacebookApp = /FBAN|FBAV|FB_IAB|FB4A|FBSS|Instagram/i.test(ua);
+    const isTestMode = window.location.search.includes('test_fb=1') || window.location.hash.includes('test_fb=1');
+    const isFacebookApp = isTestMode || /FBAN|FBAV|FB_IAB|FB4A|FBSS|Instagram/i.test(ua);
     const isAndroid = /Android/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
     if (!isFacebookApp) return;
-    if (sessionStorage.getItem('iab_modal_dismissed') === 'true') return;
+    if (!isTestMode && sessionStorage.getItem('iab_modal_dismissed') === 'true') return;
 
     // Redirección por Intent en Android (Abre el navegador por defecto fuera de FB)
-    if (isAndroid && !sessionStorage.getItem('fb_intent_attempted')) {
+    if (!isTestMode && isAndroid && !sessionStorage.getItem('fb_intent_attempted')) {
         sessionStorage.setItem('fb_intent_attempted', 'true');
         try {
             const currentUrl = window.location.href;
