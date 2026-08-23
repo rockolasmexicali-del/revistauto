@@ -3080,6 +3080,11 @@ document.addEventListener('DOMContentLoaded', () => {
         useClearSearchInputHook(searchInput, btnClearSearch, searchDropdown);
     }
 
+    const filterYearEl = document.getElementById('filter-year');
+    if (filterYearEl) {
+        useAutoBlurYearHook(filterYearEl);
+    }
+
     searchInput.addEventListener('focus', () => {
         if (searchFiltersContainer.style.height === '0px') {
             searchFiltersContainer.style.height = searchFiltersContainer.scrollHeight + 'px';
@@ -11605,7 +11610,7 @@ function useSearchAutocompleteHook(inputEl, dropdownEl) {
                 dropdownEl.style.display = 'none';
                 dropdownEl.innerHTML = '';
                 activeIndex = -1;
-                inputEl.focus();
+                inputEl.blur(); // Oculta el teclado virtual en celulares
             });
         });
     }
@@ -11656,6 +11661,7 @@ function useSearchAutocompleteHook(inputEl, dropdownEl) {
             inputEl.value = selectedText;
             dropdownEl.style.display = 'none';
             activeIndex = -1;
+            inputEl.blur(); // Oculta el teclado virtual en celulares
         }
     });
 
@@ -11703,6 +11709,21 @@ function useClearSearchInputHook(inputEl, btnClearEl, dropdownEl) {
         inputEl.focus();
     });
 }
+
+/* ==========================================================================
+   HOOK: Ocultar Teclado al ingresar Año de 4 dígitos
+   ========================================================================== */
+function useAutoBlurYearHook(yearInputEl) {
+    if (!yearInputEl) return;
+
+    yearInputEl.addEventListener('input', () => {
+        const val = String(yearInputEl.value).trim();
+        if (val.length === 4) {
+            yearInputEl.blur();
+        }
+    });
+}
+
 
 
 
