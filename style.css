@@ -1472,7 +1472,8 @@ select:focus {
 
 .detalle-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, auto));
+    justify-content: space-between;
     gap: 12px;
     background: var(--surface-color);
     padding: 16px;
