@@ -283,16 +283,44 @@ textarea,
     border: 1px solid var(--glass-border);
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s;
     position: relative;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
-    border-color: var(--primary-color);
+/* Efecto hover y elevación únicamente para computadoras / laptops con mouse físico */
+@media (hover: hover) and (pointer: fine) {
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
+        border-color: var(--primary-color);
+    }
+
+    .card:active {
+        transform: scale(0.98);
+    }
 }
 
-.card:active {
-    transform: scale(0.98);
+/* En dispositivos móviles y táctiles: cero recuadros pegados al tocar/mantener el dedo y scroll ultra-fluido */
+@media (max-width: 768px), (hover: none) {
+    .card {
+        transition: none !important;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .card:hover,
+    .card:focus,
+    .card:focus-within {
+        transform: none !important;
+        box-shadow: none !important;
+        border-color: var(--glass-border) !important;
+        outline: none !important;
+    }
+
+    .card:active {
+        transform: scale(0.98);
+        transition: transform 0.08s ease !important;
+    }
 }
 
 .card-img-wrapper {
