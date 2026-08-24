@@ -3501,7 +3501,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="detalle-item">
                         <span class="detalle-label">Kilometraje</span>
-                        <span class="detalle-value">${listing.mileage || '-'}</span>
+                        <span class="detalle-value">${useMileageFormatterHook(listing.mileage)}</span>
                     </div>
                     <div class="detalle-item">
                         <span class="detalle-label">Situación</span>
@@ -6483,7 +6483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>Tipo:</strong> ${listing.type || '-'}</div>
                         <div><strong>Motor:</strong> ${listing.engine || '-'}</div>
                         <div><strong>Transmisión:</strong> ${listing.transmission || '-'}</div>
-                        <div><strong>KM/Millas:</strong> ${listing.mileage || '-'}</div>
+                        <div><strong>KM/Millas:</strong> ${useMileageFormatterHook(listing.mileage)}</div>
                         <div><strong>Situación:</strong> ${listing.legal || '-'}</div>
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
                         <div><strong>Ubicación:</strong> ${listing.state ? listing.state + ', ' : ''}${listing.city}</div>
@@ -6739,7 +6739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>Tipo:</strong> ${listing.type || '-'}</div>
                         <div><strong>Motor:</strong> ${listing.engine || '-'}</div>
                         <div><strong>Transmisión:</strong> ${listing.transmission || '-'}</div>
-                        <div><strong>KM/Millas:</strong> ${listing.mileage || '-'}</div>
+                        <div><strong>KM/Millas:</strong> ${useMileageFormatterHook(listing.mileage)}</div>
                         <div><strong>Situación:</strong> ${listing.legal || '-'}</div>
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
                         <div><strong>Ubicación:</strong> ${listing.state ? listing.state + ', ' : ''}${listing.city}</div>
@@ -11723,6 +11723,20 @@ function useAutoBlurYearHook(yearInputEl) {
         }
     });
 }
+
+/* ==========================================================================
+   HOOK: Formateador de Kilometraje / Millaje (Cero -> "S/N")
+   ========================================================================== */
+function useMileageFormatterHook(mileage) {
+    if (mileage === null || mileage === undefined) return 'S/N';
+    const str = String(mileage).trim();
+    if (!str || str === '-' || str === '0' || /^0+(\s*(km|mi|millas|kilometros))?$/i.test(str)) {
+        return 'S/N';
+    }
+    return str;
+}
+window.useMileageFormatterHook = useMileageFormatterHook;
+
 
 
 
