@@ -348,8 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const formCity = document.getElementById('form-city');
     const formPhone = document.getElementById('form-phone');
     const formWhatsApp = document.getElementById('form-whatsapp');
-    const formEngine = document.getElementById('form-engine');
+    const formEngineText = document.getElementById('form-engine-text');
+    const formEngineSelectContainer = document.getElementById('form-engine-select-container');
+    const formEngineSelect = document.getElementById('form-engine-select');
+    const formCustomEngine = document.getElementById('form-custom-engine');
     const formTransmission = document.getElementById('form-transmission');
+    const formBoxContainer = document.getElementById('form-box-container');
+    const formBoxSelect = document.getElementById('form-box-select');
+    const formCustomBox = document.getElementById('form-custom-box');
     const formAc = document.getElementById('form-ac');
     const formMileage = document.getElementById('form-mileage');
     const formLegal = document.getElementById('form-legal');
@@ -1396,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formMake.dispatchEvent(new Event('change'));
             }
             updateLegalOptions();
+            window.updateTruckMechanicsUI();
         });
 
         if (formCustomType) {
@@ -1433,6 +1440,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 formModel.innerHTML += `<option value="Otros">Otros...</option>`;
             }
             if (window.customModelSelect) window.customModelSelect.update();
+            window.updateTruckMechanicsUI();
         });
 
         formModel.addEventListener('change', (e) => {
@@ -1446,12 +1454,97 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        window.updateTruckMechanicsUI = function() {
+            if (!formType) return;
+            const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
+            const isTruck = truckTypes.includes(formType.value);
+            const make = formMake ? formMake.value : '';
+            
+            // Logica de Motor
+            if (isTruck && make && make !== 'Otros') {
+                formEngineText.style.display = 'none';
+                formEngineText.required = false;
+                if (formEngineSelectContainer) formEngineSelectContainer.style.display = 'block';
+                formEngineSelect.required = true;
+                
+                // Populate Engine Select
+                const engines = (typeof catalogData !== 'undefined' ? catalogData.truckEngines[make] : []) || [];
+                formEngineSelect.innerHTML = '<option value="" disabled selected>Selecciona un motor</option>';
+                engines.forEach(eng => {
+                    formEngineSelect.innerHTML += `<option value="${eng}">${eng}</option>`;
+                });
+                formEngineSelect.innerHTML += '<option value="Otros">Otro...</option>';
+            } else {
+                formEngineText.style.display = 'block';
+                formEngineText.required = true;
+                if (formEngineSelectContainer) formEngineSelectContainer.style.display = 'none';
+                formEngineSelect.required = false;
+                formCustomEngine.style.display = 'none';
+                formCustomEngine.required = false;
+                formCustomEngine.value = '';
+            }
+            if (window.customEngineSelect) window.customEngineSelect.update();
+
+            // Logica de Transmision (Caja)
+            if (isTruck && formTransmission && formTransmission.value === 'Manual') {
+                formBoxContainer.style.display = 'block';
+                formBoxSelect.required = true;
+                formAc.parentElement.style.width = '100%'; // Re-flow AC if needed
+                
+                const boxes = (typeof catalogData !== 'undefined' ? catalogData.truckBoxes[make] : []) || [];
+                formBoxSelect.innerHTML = '<option value="" disabled selected>Selecciona una caja</option>';
+                boxes.forEach(box => {
+                    formBoxSelect.innerHTML += `<option value="${box}">${box} velocidades</option>`;
+                });
+                formBoxSelect.innerHTML += '<option value="Otros">Otra...</option>';
+            } else {
+                formBoxContainer.style.display = 'none';
+                formBoxSelect.required = false;
+                formCustomBox.style.display = 'none';
+                formCustomBox.required = false;
+                formCustomBox.value = '';
+            }
+            if (window.customBoxSelect) window.customBoxSelect.update();
+        };
+
+        if (formEngineSelect) {
+            formEngineSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'Otros') {
+                    formCustomEngine.style.display = 'block';
+                    formCustomEngine.required = true;
+                } else {
+                    formCustomEngine.style.display = 'none';
+                    formCustomEngine.required = false;
+                    formCustomEngine.value = '';
+                }
+            });
+        }
+        
+        if (formTransmission) {
+            formTransmission.addEventListener('change', () => {
+                window.updateTruckMechanicsUI();
+            });
+        }
+        
+        if (formBoxSelect) {
+            formBoxSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'Otros') {
+                    formCustomBox.style.display = 'block';
+                    formCustomBox.required = true;
+                } else {
+                    formCustomBox.style.display = 'none';
+                    formCustomBox.required = false;
+                    formCustomBox.value = '';
+                }
+            });
+        }
+
         // Trigger change to set initial models if make is pre-selected (but not placeholder)
         if (formMake.value && formMake.value !== "") formMake.dispatchEvent(new Event('change'));
 
         // === INICIALIZACIÓN DE CUSTOM SELECTS ===
-        window.customStateSelect = new CustomSelectWrapper(formState);
-        window.customCitySelect = new CustomSelectWrapper(formCity);
+        window.customStateSelect = new CustomSelectWrapper(formState, { isLocation: true });
+        window.customCitySelect = new CustomSelectWrapper(formCity, { isLocation: true });
         window.customMakeSelect = new CustomSelectWrapper(formMake);
         window.customModelSelect = new CustomSelectWrapper(formModel);
         window.customTypeSelect = new CustomSelectWrapper(formType);
@@ -1464,8 +1557,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customFilterTransmissionSelect = new CustomSelectWrapper(filterTransmission);
         window.customFilterLegalSelect = new CustomSelectWrapper(filterLegal);
 
+
         const formColorEl = document.getElementById('form-color');
         if (formColorEl) window.customColorSelect = new CustomSelectWrapper(formColorEl, { dropUp: true });
+        if (formEngineSelect) window.customEngineSelect = new CustomSelectWrapper(formEngineSelect);
+        if (formBoxSelect) window.customBoxSelect = new CustomSelectWrapper(formBoxSelect);
 
         const filterColorEl = document.getElementById('filter-color');
         if (filterColorEl) window.customFilterColorSelect = new CustomSelectWrapper(filterColorEl);
@@ -3488,10 +3584,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="detalle-value">${listing.year}</span>
                     </div>
                     <div class="detalle-item">
-                        <span class="detalle-label">Tipo</span>
-                        <span class="detalle-value">${listing.type}</span>
-                    </div>
-                    <div class="detalle-item">
                         <span class="detalle-label">Motor</span>
                         <span class="detalle-value">${listing.engine || '-'}</span>
                     </div>
@@ -3499,6 +3591,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="detalle-label">Transmisión</span>
                         <span class="detalle-value">${listing.transmission || '-'}</span>
                     </div>
+                    ${listing.box ? `
+                    <div class="detalle-item">
+                        <span class="detalle-label">Caja</span>
+                        <span class="detalle-value">${listing.box} ${listing.box.includes('velocidades') ? '' : 'velocidades'}</span>
+                    </div>` : ''}
                     <div class="detalle-item">
                         <span class="detalle-label">Kilometraje</span>
                         <span class="detalle-value">${useMileageFormatterHook(listing.mileage)}</span>
@@ -4612,8 +4709,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         formPhone.value = phoneData.nationalDigits || (listing.phone ? String(listing.phone).replace(/[^0-9]/g, '').slice(-10) : '');
         formWhatsApp.value = waData.nationalDigits || (listing.whatsapp ? String(listing.whatsapp).replace(/[^0-9]/g, '').slice(-10) : '');
-        formEngine.value = listing.engine || '';
+        const engineVal = listing.engine || '';
+        formEngineText.value = engineVal;
+        if (formEngineSelect) {
+            let engineOptions = Array.from(formEngineSelect.options).map(o => o.value);
+            if (engineOptions.includes(engineVal)) {
+                formEngineSelect.value = engineVal;
+            } else if (engineVal) {
+                formEngineSelect.value = 'Otros';
+                formCustomEngine.value = engineVal;
+            }
+        }
         formTransmission.value = listing.transmission || '';
+        if (listing.box) {
+            let boxOptions = Array.from(formBoxSelect.options).map(o => o.value);
+            if (boxOptions.includes(listing.box)) {
+                formBoxSelect.value = listing.box;
+            } else {
+                formBoxSelect.value = 'Otros';
+                formCustomBox.value = listing.box;
+            }
+        }
         if (window.customTransmissionSelect) window.customTransmissionSelect.update();
         formAc.value = listing.ac || '';
         if (window.customAcSelect) window.customAcSelect.update();
@@ -4698,8 +4814,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = document.getElementById('form-year').value;
         const trimVal = document.getElementById('form-trim') ? document.getElementById('form-trim').value.trim() : '';
         const title = `${make} ${model} ${trimVal ? trimVal + ' ' : ''}${year}`;
-        const engine = formEngine.value;
+        const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
+        const isTruck = formType && truckTypes.includes(formType.value);
+        let engine = formEngineText.value;
+        if (isTruck) {
+            engine = formEngineSelect.value === 'Otros' ? formCustomEngine.value : formEngineSelect.value;
+        }
         const transmission = formTransmission.value;
+        let box = '';
+        if (isTruck && transmission === 'Manual') {
+            box = formBoxSelect.value === 'Otros' ? formCustomBox.value : formBoxSelect.value;
+        }
         const ac = formAc.value;
         const mileageUnit = document.getElementById('form-mileage-unit') ? document.getElementById('form-mileage-unit').value : '';
         const mileage = formMileage.value + (mileageUnit ? ' ' + mileageUnit : '');
@@ -4880,6 +5005,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return clean10 ? `${lada} ${clean10}` : '';
             })(),
             engine: engine,
+            box: box,
             transmission: transmission,
             ac: ac,
             mileage: mileage,
@@ -6483,6 +6609,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>Tipo:</strong> ${listing.type || '-'}</div>
                         <div><strong>Motor:</strong> ${listing.engine || '-'}</div>
                         <div><strong>Transmisión:</strong> ${listing.transmission || '-'}</div>
+                        ${listing.box ? `<div><strong>Caja:</strong> ${listing.box}</div>` : ''}
                         <div><strong>KM/Millas:</strong> ${useMileageFormatterHook(listing.mileage)}</div>
                         <div><strong>Situación:</strong> ${listing.legal || '-'}</div>
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>
@@ -6739,6 +6866,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>Tipo:</strong> ${listing.type || '-'}</div>
                         <div><strong>Motor:</strong> ${listing.engine || '-'}</div>
                         <div><strong>Transmisión:</strong> ${listing.transmission || '-'}</div>
+                        ${listing.box ? `<div><strong>Caja:</strong> ${listing.box}</div>` : ''}
                         <div><strong>KM/Millas:</strong> ${useMileageFormatterHook(listing.mileage)}</div>
                         <div><strong>Situación:</strong> ${listing.legal || '-'}</div>
                         <div><strong>A/C:</strong> ${listing.ac || '-'}</div>

@@ -1,6 +1,24 @@
-const APP_VERSION = "3.3.1"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.4.0"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
+    truckEngines: {
+        'Freightliner': ['Detroit DD15', 'Detroit DD13', 'Cummins ISX', 'Cummins ISX15', 'Mercedes-Benz MBE 4000'],
+        'Kenworth': ['Paccar MX-13', 'Cummins ISX', 'Cummins ISX15', 'Cummins X15', 'Cummins N14'],
+        'International': ['Navistar N13', 'MaxxForce 13', 'Cummins ISX', 'Cummins ISX15'],
+        'Volvo': ['Volvo D13', 'Volvo D11', 'Cummins ISX', 'Cummins ISX15'],
+        'Mack': ['Mack MP8', 'Mack MP7', 'Cummins ISX'],
+        'Peterbilt': ['Paccar MX-13', 'Cummins ISX', 'Cummins ISX15', 'Cummins X15'],
+        'Scania': ['Scania 13L', 'Scania V8', 'Scania 9L']
+    },
+    truckBoxes: {
+        'Freightliner': ['9', '10', '13', '15', '18'],
+        'Kenworth': ['9', '10', '13', '15', '18'],
+        'International': ['9', '10', '13', '15', '18'],
+        'Volvo': ['9', '10', '12 (I-Shift)', '13', '18'],
+        'Mack': ['9', '10', '12 (mDRIVE)', '13', '18'],
+        'Peterbilt': ['9', '10', '13', '15', '18'],
+        'Scania': ['8', '12 (Opticruise)', '14']
+    },
     makes: [
         'Acura', 'Alfa Romeo', 'Aprilia', 'Aston Martin', 'Audi', 'BAIC', 'Bajaj', 'Bentley',
         'BMW', 'Buick', 'BYD', 'Cadillac', 'Can-Am', 'CFMoto', 'Changan', 'Chevrolet', 'Chirey',
@@ -348,6 +366,10 @@ if (!catalogData.types) {
     });
 }
 catalogData.modelsByTypeAndMake = defaultCatalogData.modelsByTypeAndMake;
+
+if (!catalogData.truckEngines) catalogData.truckEngines = JSON.parse(JSON.stringify(defaultCatalogData.truckEngines));
+if (!catalogData.truckBoxes) catalogData.truckBoxes = JSON.parse(JSON.stringify(defaultCatalogData.truckBoxes));
+
 localStorage.setItem('revista_autos_catalog', JSON.stringify(catalogData));
 
 const initialListings = [];
@@ -526,6 +548,7 @@ class Database {
                                 currency: mergedFields.currency || item.currency || (localListing ? localListing.currency : null) || 'MXN',
                                 publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
                                 publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
+                                box: mergedFields.box || item.box || item.caja || (localListing ? localListing.box : ''),
                                 isMyListing: isMine
                             };
                         });
@@ -547,6 +570,9 @@ class Database {
                         });
                         normalizedMap.forEach(item => finalListings.push(item));
                     }
+
+                    // Aprendizaje automático para camiones
+                    this.updateTruckCatalogs(finalListings);
 
                     const newListingsStr = JSON.stringify(finalListings);
                     const oldListingsStr = localStorage.getItem(this.listingsKey);
@@ -2336,6 +2362,49 @@ class Database {
         // Fallback to local
         const logs = JSON.parse(localStorage.getItem('revista_activity_logs') || '[]');
         return { success: true, logs: logs };
+    }
+
+
+    updateTruckCatalogs(listings) {
+        if (!listings || !listings.length) return;
+        let changed = false;
+        const catalog = JSON.parse(localStorage.getItem('revista_autos_catalog')) || catalogData;
+        const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
+        
+        const engineCounts = {};
+        const boxCounts = {};
+
+        listings.forEach(listing => {
+            if (truckTypes.includes(listing.type)) {
+                if (listing.engine && listing.make) {
+                    if (!catalog.truckEngines[listing.make]) catalog.truckEngines[listing.make] = [];
+                    if (!catalog.truckEngines[listing.make].includes(listing.engine)) {
+                        const key = `${listing.make}_${listing.engine}`;
+                        engineCounts[key] = (engineCounts[key] || 0) + 1;
+                        if (engineCounts[key] >= 2) {
+                            catalog.truckEngines[listing.make].push(listing.engine);
+                            changed = true;
+                        }
+                    }
+                }
+                if (listing.box && listing.make) {
+                    if (!catalog.truckBoxes[listing.make]) catalog.truckBoxes[listing.make] = [];
+                    if (!catalog.truckBoxes[listing.make].includes(listing.box)) {
+                        const key = `${listing.make}_${listing.box}`;
+                        boxCounts[key] = (boxCounts[key] || 0) + 1;
+                        if (boxCounts[key] >= 2) {
+                            catalog.truckBoxes[listing.make].push(listing.box);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        });
+
+        if (changed) {
+            Object.assign(catalogData, catalog); // update in-memory
+            localStorage.setItem('revista_autos_catalog', JSON.stringify(catalog));
+        }
     }
 }
 

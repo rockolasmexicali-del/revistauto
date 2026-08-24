@@ -1886,7 +1886,13 @@
                     <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Mecánica</h4>
                     <div class="form-group">
                         <label>Motor</label>
-                        <input type="text" id="form-engine" required placeholder="Ej. 4 cilindros, 5.0L, V6..." maxlength="18">
+                        <input type="text" id="form-engine-text" required placeholder="Ej. 4 cilindros, 5.0L, V6..." maxlength="25">
+                        <div id="form-engine-select-container" style="display: none;">
+                            <select id="form-engine-select">
+                                <option value="" disabled selected>Selecciona un motor</option>
+                            </select>
+                        </div>
+                        <input type="text" id="form-custom-engine" placeholder="Escribe el motor..." style="display: none; margin-top: 8px;" maxlength="25">
                     </div>
                     <div class="form-row">
                         <div class="form-group half">
@@ -1897,7 +1903,14 @@
                                 <option value="Manual">Manual</option>
                             </select>
                         </div>
-                        <div class="form-group half">
+                        <div class="form-group half" id="form-box-container" style="display: none;">
+                            <label>Caja</label>
+                            <select id="form-box-select">
+                                <option value="" disabled selected>Selecciona una caja</option>
+                            </select>
+                            <input type="text" id="form-custom-box" placeholder="Ej. 15 velocidades..." style="display: none; margin-top: 8px;" maxlength="20">
+                        </div>
+                        <div class="form-group half" id="form-ac-container">
                             <label>A/C</label>
                             <select id="form-ac" required>
                                 <option value="" disabled selected>Selecciona una opción</option>
