@@ -11077,12 +11077,12 @@ window.shareListing = function (event, id, title, price, city) {
         formattedPrice = !isNaN(numPrice) ? `$${numPrice.toLocaleString('es-MX')} MXN` : `$${price} MXN`;
     }
 
-    let shareText = `🚗 Te comparto el auto "${title}"`;
+    let shareText = `Te comparto el auto "${title}"`;
     if (formattedPrice) {
-        shareText += ` en 💰 ${formattedPrice}`;
+        shareText += ` en ${formattedPrice}`;
     }
     if (city && city.trim() !== '') {
-        shareText += `. Está en 📍 "${city} a la venta".`;
+        shareText += `. Está en "${city} a la venta".`;
     } else {
         shareText += `. En venta en RevistAuto.`;
     }
