@@ -352,6 +352,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const formEngineSelectContainer = document.getElementById('form-engine-select-container');
     const formEngineSelect = document.getElementById('form-engine-select');
     const formCustomEngine = document.getElementById('form-custom-engine');
+    const formCarEngineContainer = document.getElementById('form-car-engine-container');
+    const formCylindersSelect = document.getElementById('form-cylinders-select');
+    const formCustomCylinders = document.getElementById('form-custom-cylinders');
+    const formEngineDisplacement = document.getElementById('form-engine-displacement');
+    const formFreeEngineContainer = document.getElementById('form-free-engine-container');
+    const formFreeEngineLabel = document.getElementById('form-free-engine-label');
+    const formTruckEngineContainer = document.getElementById('form-truck-engine-container');
     const formTransmission = document.getElementById('form-transmission');
     const formBoxContainer = document.getElementById('form-box-container');
     const formBoxSelect = document.getElementById('form-box-select');
@@ -1406,8 +1413,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (formCustomType) {
-            formCustomType.addEventListener('input', updateLegalOptions);
-            formCustomType.addEventListener('change', updateLegalOptions);
+            formCustomType.addEventListener('input', () => {
+                updateLegalOptions();
+                window.updateTruckMechanicsUI();
+            });
+            formCustomType.addEventListener('change', () => {
+                updateLegalOptions();
+                window.updateTruckMechanicsUI();
+            });
         }
 
         // Dynamic models based on make and type (for form)
@@ -1457,62 +1470,147 @@ document.addEventListener('DOMContentLoaded', () => {
         window.updateTruckMechanicsUI = function() {
             if (!formType) return;
             const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
-            const isTruck = truckTypes.includes(formType.value);
+            const freeEngineTypes = ['Motocicleta', 'Cuatrimoto / ATV', 'Barco'];
+            
+            const selectedType = formType.value || '';
+            const customTypeVal = formCustomType ? formCustomType.value.trim().toLowerCase() : '';
+            const isTruck = truckTypes.includes(selectedType);
+            const isFreeEngine = freeEngineTypes.includes(selectedType) || selectedType === 'Otros' || customTypeVal.length > 0;
             const make = formMake ? formMake.value : '';
             
+            const currentCylinders = formCylindersSelect ? formCylindersSelect.value : '';
             const currentEngine = formEngineSelect ? formEngineSelect.value : '';
             const currentBox = formBoxSelect ? formBoxSelect.value : '';
             
-            // Logica de Motor
             if (isTruck && make && make !== 'Otros') {
-                formEngineText.style.display = 'none';
-                formEngineText.required = false;
-                if (formEngineSelectContainer) formEngineSelectContainer.style.display = 'block';
-                formEngineSelect.required = true;
+                // 1. MODO CAMIÓN / TRACTOCAMIÓN
+                if (formCarEngineContainer) formCarEngineContainer.style.display = 'none';
+                if (formCylindersSelect) formCylindersSelect.required = false;
+                if (formCustomCylinders) { formCustomCylinders.required = false; formCustomCylinders.style.display = 'none'; }
                 
-                // Populate Engine Select
-                const engines = (typeof catalogData !== 'undefined' ? catalogData.truckEngines[make] : []) || [];
-                formEngineSelect.innerHTML = '<option value="" disabled selected>Selecciona un motor</option>';
-                engines.forEach(eng => {
-                    formEngineSelect.innerHTML += `<option value="${eng}">${eng}</option>`;
-                });
-                formEngineSelect.innerHTML += '<option value="Otros">Otro...</option>';
+                if (formFreeEngineContainer) formFreeEngineContainer.style.display = 'none';
+                if (formEngineText) formEngineText.required = false;
                 
-                if (currentEngine) formEngineSelect.value = currentEngine;
-            } else {
-                formEngineText.style.display = 'block';
-                formEngineText.required = true;
-                if (formEngineSelectContainer) formEngineSelectContainer.style.display = 'none';
-                formEngineSelect.required = false;
-                formCustomEngine.style.display = 'none';
-                formCustomEngine.required = false;
-                formCustomEngine.value = '';
-            }
-            if (window.customEngineSelect) window.customEngineSelect.update();
-
-            // Logica de Transmision (Caja)
-            if (isTruck && formTransmission && formTransmission.value === 'Manual') {
-                formBoxContainer.style.display = 'block';
-                formBoxSelect.required = true;
-                formAc.parentElement.style.width = '100%'; // Re-flow AC if needed
+                if (formTruckEngineContainer) formTruckEngineContainer.style.display = 'block';
+                if (formEngineSelect) {
+                    formEngineSelect.required = true;
+                    const engines = (typeof catalogData !== 'undefined' ? catalogData.truckEngines[make] : []) || [];
+                    formEngineSelect.innerHTML = '<option value="" disabled selected>Selecciona un motor</option>';
+                    engines.forEach(eng => {
+                        formEngineSelect.innerHTML += `<option value="${eng}">${eng}</option>`;
+                    });
+                    formEngineSelect.innerHTML += '<option value="Otros">Otro...</option>';
+                    if (currentEngine) formEngineSelect.value = currentEngine;
+                }
+                if (window.customEngineSelect) window.customEngineSelect.update();
                 
-                const boxes = (typeof catalogData !== 'undefined' ? catalogData.truckBoxes[make] : []) || [];
-                formBoxSelect.innerHTML = '<option value="" disabled selected>Selecciona una caja</option>';
-                boxes.forEach(box => {
-                    formBoxSelect.innerHTML += `<option value="${box}">${box}</option>`;
-                });
-                formBoxSelect.innerHTML += '<option value="Otros">Otra...</option>';
+                // Caja para Camiones Manuales
+                if (formTransmission && formTransmission.value === 'Manual') {
+                    formBoxContainer.style.display = 'block';
+                    formBoxSelect.required = true;
+                    formAc.parentElement.style.width = '100%';
+                    const boxes = (typeof catalogData !== 'undefined' ? catalogData.truckBoxes[make] : []) || [];
+                    formBoxSelect.innerHTML = '<option value="" disabled selected>Selecciona una caja</option>';
+                    boxes.forEach(box => {
+                        formBoxSelect.innerHTML += `<option value="${box}">${box}</option>`;
+                    });
+                    formBoxSelect.innerHTML += '<option value="Otros">Otra...</option>';
+                    if (currentBox) formBoxSelect.value = currentBox;
+                } else {
+                    formBoxContainer.style.display = 'none';
+                    formBoxSelect.required = false;
+                    formCustomBox.style.display = 'none';
+                    formCustomBox.required = false;
+                    formCustomBox.value = '';
+                }
+                if (window.customBoxSelect) window.customBoxSelect.update();
+            } else if (isFreeEngine) {
+                // 2. MODO TEXTO LIBRE (Motos, Barcos, Can-Am, Razor, Cuatrimoto/ATV, Otros)
+                if (formCarEngineContainer) formCarEngineContainer.style.display = 'none';
+                if (formCylindersSelect) formCylindersSelect.required = false;
+                if (formCustomCylinders) { formCustomCylinders.required = false; formCustomCylinders.style.display = 'none'; }
                 
-                if (currentBox) formBoxSelect.value = currentBox;
-            } else {
+                if (formTruckEngineContainer) formTruckEngineContainer.style.display = 'none';
+                if (formEngineSelect) formEngineSelect.required = false;
+                if (formCustomEngine) { formCustomEngine.required = false; formCustomEngine.style.display = 'none'; }
+                
+                if (formFreeEngineContainer) formFreeEngineContainer.style.display = 'block';
+                if (formEngineText) formEngineText.required = true;
+                
+                // Adaptar placeholder y label según el tipo
+                if (formFreeEngineLabel && formEngineText) {
+                    if (selectedType === 'Motocicleta') {
+                        formFreeEngineLabel.textContent = 'Motor / Cilindrada';
+                        formEngineText.placeholder = 'Ej. 250cc, 600cc, 1200cc...';
+                    } else if (selectedType === 'Cuatrimoto / ATV') {
+                        formFreeEngineLabel.textContent = 'Motor';
+                        formEngineText.placeholder = 'Ej. 1000cc Turbo, Rotax 900, 450cc...';
+                    } else if (selectedType === 'Barco') {
+                        formFreeEngineLabel.textContent = 'Motor / Potencia';
+                        formEngineText.placeholder = 'Ej. 150 HP Fuera de borda, 300 HP Yamaha...';
+                    } else {
+                        formFreeEngineLabel.textContent = 'Motor';
+                        formEngineText.placeholder = 'Ej. 250cc, 1000cc Turbo, 150 HP, V8...';
+                    }
+                }
+                
                 formBoxContainer.style.display = 'none';
                 formBoxSelect.required = false;
                 formCustomBox.style.display = 'none';
                 formCustomBox.required = false;
                 formCustomBox.value = '';
+                if (window.customBoxSelect) window.customBoxSelect.update();
+            } else {
+                // 3. MODO AUTOS / CAMIONETAS (2 columnas: Cilindros + Detalle opcional)
+                if (formTruckEngineContainer) formTruckEngineContainer.style.display = 'none';
+                if (formEngineSelect) formEngineSelect.required = false;
+                if (formCustomEngine) { formCustomEngine.required = false; formCustomEngine.style.display = 'none'; }
+                
+                if (formFreeEngineContainer) formFreeEngineContainer.style.display = 'none';
+                if (formEngineText) formEngineText.required = false;
+                
+                if (formCarEngineContainer) formCarEngineContainer.style.display = 'block';
+                if (formCylindersSelect) formCylindersSelect.required = true;
+                
+                if (formCylindersSelect && formCylindersSelect.value === 'Otros') {
+                    if (formCustomCylinders) {
+                        formCustomCylinders.style.display = 'block';
+                        formCustomCylinders.required = true;
+                    }
+                } else {
+                    if (formCustomCylinders) {
+                        formCustomCylinders.style.display = 'none';
+                        formCustomCylinders.required = false;
+                    }
+                }
+                if (window.customCylindersSelect) window.customCylindersSelect.update();
+                
+                formBoxContainer.style.display = 'none';
+                formBoxSelect.required = false;
+                formCustomBox.style.display = 'none';
+                formCustomBox.required = false;
+                formCustomBox.value = '';
+                if (window.customBoxSelect) window.customBoxSelect.update();
             }
-            if (window.customBoxSelect) window.customBoxSelect.update();
         };
+        window.updateMechanicsUI = window.updateTruckMechanicsUI;
+
+        if (formCylindersSelect) {
+            formCylindersSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'Otros') {
+                    if (formCustomCylinders) {
+                        formCustomCylinders.style.display = 'block';
+                        formCustomCylinders.required = true;
+                    }
+                } else {
+                    if (formCustomCylinders) {
+                        formCustomCylinders.style.display = 'none';
+                        formCustomCylinders.required = false;
+                        formCustomCylinders.value = '';
+                    }
+                }
+            });
+        }
 
         if (formEngineSelect) {
             formEngineSelect.addEventListener('change', (e) => {
@@ -1567,6 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formColorEl = document.getElementById('form-color');
         if (formColorEl) window.customColorSelect = new CustomSelectWrapper(formColorEl, { dropUp: true });
+        if (formCylindersSelect) window.customCylindersSelect = new CustomSelectWrapper(formCylindersSelect);
         if (formEngineSelect) window.customEngineSelect = new CustomSelectWrapper(formEngineSelect);
         if (formBoxSelect) window.customBoxSelect = new CustomSelectWrapper(formBoxSelect);
 
@@ -4416,6 +4515,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnNext) btnNext.style.display = 'block';
             if (btnSubmit) btnSubmit.style.display = 'none';
         }
+
+        if (currentWizardStep === 4 && typeof window.updateTruckMechanicsUI === 'function') {
+            window.updateTruckMechanicsUI();
+        }
     }
 
     function checkStepValidity() {
@@ -4502,6 +4605,27 @@ document.addEventListener('DOMContentLoaded', () => {
             formCustomColor.required = false;
             formCustomColor.value = '';
         }
+        if (formCylindersSelect) {
+            formCylindersSelect.value = '';
+            if (window.customCylindersSelect) window.customCylindersSelect.update();
+        }
+        if (formCustomCylinders) {
+            formCustomCylinders.style.display = 'none';
+            formCustomCylinders.required = false;
+            formCustomCylinders.value = '';
+        }
+        if (formEngineDisplacement) formEngineDisplacement.value = '';
+        if (formEngineText) formEngineText.value = '';
+        if (formEngineSelect) {
+            formEngineSelect.value = '';
+            if (window.customEngineSelect) window.customEngineSelect.update();
+        }
+        if (formCustomEngine) {
+            formCustomEngine.style.display = 'none';
+            formCustomEngine.required = false;
+            formCustomEngine.value = '';
+        }
+        if (typeof window.updateTruckMechanicsUI === 'function') window.updateTruckMechanicsUI();
         whatsappModified = false;
         selectedImageFiles = [];
         if (typeof renderImagePreviews === 'function') renderImagePreviews();
@@ -4718,14 +4842,78 @@ document.addEventListener('DOMContentLoaded', () => {
         formWhatsApp.value = waData.nationalDigits || (listing.whatsapp ? String(listing.whatsapp).replace(/[^0-9]/g, '').slice(-10) : '');
         const engineVal = listing.engine || '';
         formEngineText.value = engineVal;
-        if (formEngineSelect) {
+
+        const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
+        const freeEngineTypes = ['Motocicleta', 'Cuatrimoto / ATV', 'Barco'];
+        const isTruck = truckTypes.includes(listing.type);
+        const isFreeEngine = freeEngineTypes.includes(listing.type) || listing.type === 'Otros';
+
+        if (typeof window.updateTruckMechanicsUI === 'function') window.updateTruckMechanicsUI();
+
+        if (isTruck && formEngineSelect) {
             let engineOptions = Array.from(formEngineSelect.options).map(o => o.value);
             if (engineOptions.includes(engineVal)) {
                 formEngineSelect.value = engineVal;
+                if (formCustomEngine) { formCustomEngine.style.display = 'none'; formCustomEngine.value = ''; }
             } else if (engineVal) {
                 formEngineSelect.value = 'Otros';
-                formCustomEngine.value = engineVal;
+                if (formCustomEngine) { formCustomEngine.style.display = 'block'; formCustomEngine.value = engineVal; }
             }
+            if (window.customEngineSelect) window.customEngineSelect.update();
+        } else if (!isFreeEngine && formCylindersSelect) {
+            const standardCyls = [
+                { opt: '3 cil', aliases: ['3 cil', '3 cilindros', '3cil', '3-cil'] },
+                { opt: '4 cil', aliases: ['4 cil', '4 cilindros', '4cil', '4-cil'] },
+                { opt: '5 cil', aliases: ['5 cil', '5 cilindros', '5cil', '5-cil'] },
+                { opt: '6 cil', aliases: ['6 cil', '6 cilindros', '6cil', '6-cil', 'v6', 'l6'] },
+                { opt: '8 cil', aliases: ['8 cil', '8 cilindros', '8cil', '8-cil', 'v8'] },
+                { opt: '10 cil', aliases: ['10 cil', '10 cilindros', '10cil', '10-cil', 'v10'] },
+                { opt: '12 cil', aliases: ['12 cil', '12 cilindros', '12cil', '12-cil', 'v12', 'w12'] },
+                { opt: 'Eléctrico', aliases: ['eléctrico', 'electrico', 'electric', 'ev'] },
+                { opt: 'Híbrido', aliases: ['híbrido', 'hibrido', 'hybrid'] }
+            ];
+
+            let matchedOpt = null;
+            let remainingText = engineVal;
+            const lowerEng = engineVal.toLowerCase().trim();
+
+            for (const item of standardCyls) {
+                for (const alias of item.aliases) {
+                    if (lowerEng === alias || lowerEng.startsWith(alias + ' ') || lowerEng.startsWith(alias + '.') || lowerEng.startsWith(alias + '•')) {
+                        matchedOpt = item.opt;
+                        remainingText = engineVal.slice(alias.length).replace(/^[•\s,\.\-]+/, '').trim();
+                        break;
+                    }
+                }
+                if (matchedOpt) break;
+            }
+
+            if (matchedOpt) {
+                formCylindersSelect.value = matchedOpt;
+                if (formEngineDisplacement) formEngineDisplacement.value = remainingText;
+                if (formCustomCylinders) {
+                    formCustomCylinders.style.display = 'none';
+                    formCustomCylinders.required = false;
+                    formCustomCylinders.value = '';
+                }
+            } else if (engineVal) {
+                formCylindersSelect.value = 'Otros';
+                if (formCustomCylinders) {
+                    formCustomCylinders.style.display = 'block';
+                    formCustomCylinders.required = true;
+                    formCustomCylinders.value = engineVal;
+                }
+                if (formEngineDisplacement) formEngineDisplacement.value = '';
+            } else {
+                formCylindersSelect.value = '';
+                if (formEngineDisplacement) formEngineDisplacement.value = '';
+                if (formCustomCylinders) {
+                    formCustomCylinders.style.display = 'none';
+                    formCustomCylinders.required = false;
+                    formCustomCylinders.value = '';
+                }
+            }
+            if (window.customCylindersSelect) window.customCylindersSelect.update();
         }
         formTransmission.value = listing.transmission || '';
         if (listing.box) {
@@ -4822,10 +5010,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const trimVal = document.getElementById('form-trim') ? document.getElementById('form-trim').value.trim() : '';
         const title = `${make} ${model} ${trimVal ? trimVal + ' ' : ''}${year}`;
         const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
+        const freeEngineTypes = ['Motocicleta', 'Cuatrimoto / ATV', 'Barco'];
         const isTruck = formType && truckTypes.includes(formType.value);
-        let engine = formEngineText.value;
+        const isFreeEngine = formType && (freeEngineTypes.includes(formType.value) || formType.value === 'Otros' || (formCustomType && formCustomType.value.trim() !== ''));
+        
+        let engine = '';
         if (isTruck) {
-            engine = formEngineSelect.value === 'Otros' ? formCustomEngine.value : formEngineSelect.value;
+            engine = formEngineSelect.value === 'Otros' ? (formCustomEngine ? formCustomEngine.value.trim() : '') : formEngineSelect.value;
+        } else if (isFreeEngine) {
+            engine = formEngineText ? formEngineText.value.trim() : '';
+        } else {
+            const cylVal = formCylindersSelect ? (formCylindersSelect.value === 'Otros' ? (formCustomCylinders ? formCustomCylinders.value.trim() : '') : formCylindersSelect.value) : '';
+            const dispVal = formEngineDisplacement ? formEngineDisplacement.value.trim() : '';
+            if (cylVal && dispVal) {
+                engine = `${cylVal} ${dispVal}`;
+            } else if (cylVal) {
+                engine = cylVal;
+            } else if (dispVal) {
+                engine = dispVal;
+            }
         }
         const transmission = formTransmission.value;
         let box = '';
@@ -4983,7 +5186,53 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const typeVal = formType.value === 'Otros' ? document.getElementById('form-custom-type').value.trim() : formType.value;
+        let typeVal = formType.value === 'Otros' ? document.getElementById('form-custom-type').value.trim() : formType.value;
+        
+        // Auto-clasificación inteligente únicamente cuando el usuario seleccionó "Sedán"
+        const autoHatchbackModels = [
+            'Golf', 'Golf GTI', 'Polo', 'Beetle',
+            'Ibiza', 'Leon',
+            'March', 'Note',
+            'Fit',
+            'Spark', 'Beat',
+            'Kwid', 'Clio', 'Sandero',
+            '208', '308',
+            'Cooper', 'Cooper S',
+            'Mobi', '500', 'Uno',
+            'Soul',
+            'Swift'
+        ];
+
+        const autoSportsModels = [
+            'Mustang',
+            'Camaro', 'Corvette',
+            'Challenger', 'Viper',
+            'Supra', 'GR86',
+            '370Z', 'GT-R', 'Z',
+            'MX-5 Miata',
+            '718 Boxster', '718 Cayman', '911', 'Taycan',
+            'TT', 'R8',
+            'AMG GT', 'SL',
+            '488', 'F8 Tributo', 'Roma', 'SF90 Stradale', 'Portofino', '812 Superfast', '296 GTB', '458 Italia', 'California',
+            'MC20', 'GranTurismo',
+            '720S', '750S', 'Artura', 'GT', '570S', 'Senna', '650S',
+            'Vantage', 'DB11', 'DBS', 'DB12', 'Rapide',
+            'BRZ',
+            'Roadster'
+        ];
+
+        if (typeVal === 'Sedán' && model) {
+            const lowerModel = model.toLowerCase().trim();
+            const isHatch = autoHatchbackModels.some(m => lowerModel === m.toLowerCase() || lowerModel.includes(m.toLowerCase()));
+            const isSport = autoSportsModels.some(m => lowerModel === m.toLowerCase() || lowerModel.includes(m.toLowerCase()));
+
+            if (isHatch) {
+                typeVal = 'Hatchback';
+            } else if (isSport) {
+                typeVal = 'Deportivo';
+            }
+        }
+
         const rawColorVal = formColor ? formColor.value : '';
         const colorVal = ((rawColorVal === 'Otro' || rawColorVal === 'Otros') && formCustomColor && formCustomColor.value.trim() !== '') 
             ? formCustomColor.value.trim() 

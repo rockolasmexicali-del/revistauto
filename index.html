@@ -1884,16 +1884,51 @@
                 <!-- PASO 4 -->
                 <div class="form-step" data-step="4" style="display: none;">
                     <h4 style="margin-bottom: 16px; color: var(--text-muted);">4. Mecánica</h4>
-                    <div class="form-group">
+                    
+                    <!-- Motor para Autos / Camionetas (2 columnas: Cilindros + Detalle opcional) -->
+                    <div id="form-car-engine-container">
+                        <div class="form-row">
+                            <div class="form-group half" style="flex: 1; min-width: 0;">
+                                <label>Cilindros</label>
+                                <select id="form-cylinders-select">
+                                    <option value="" disabled selected>Selecciona</option>
+                                    <option value="3 cil">3 cil</option>
+                                    <option value="4 cil">4 cil</option>
+                                    <option value="5 cil">5 cil</option>
+                                    <option value="6 cil">6 cil</option>
+                                    <option value="8 cil">8 cil</option>
+                                    <option value="10 cil">10 cil</option>
+                                    <option value="12 cil">12 cil</option>
+                                    <option value="Eléctrico">Eléctrico</option>
+                                    <option value="Híbrido">Híbrido</option>
+                                    <option value="Otros">Otro...</option>
+                                </select>
+                                <input type="text" id="form-custom-cylinders" placeholder="Escribe el motor..." style="display: none; margin-top: 8px;" maxlength="25">
+                            </div>
+                            <div class="form-group half" style="flex: 1; min-width: 0;">
+                                <label>Motor <span style="font-weight:normal; color:var(--text-muted); font-size:0.75rem;">(Opcional)</span></label>
+                                <input type="text" id="form-engine-displacement" placeholder="Ej. 1.4 turbo, 2.5L..." maxlength="25">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Motor para Motos, Barcos, Cuatrimotos/ATV, Can-Am, Razor y Otros (Texto libre) -->
+                    <div id="form-free-engine-container" class="form-group" style="display: none;">
+                        <label id="form-free-engine-label">Motor / Cilindrada</label>
+                        <input type="text" id="form-engine-text" placeholder="Ej. 250cc, 1000cc Turbo, 150 HP..." maxlength="35">
+                    </div>
+
+                    <!-- Motor para Camiones / Tractocamiones (Catálogo diésel) -->
+                    <div id="form-truck-engine-container" class="form-group" style="display: none;">
                         <label>Motor</label>
-                        <input type="text" id="form-engine-text" required placeholder="Ej. 4 cilindros, 5.0L, V6..." maxlength="25">
-                        <div id="form-engine-select-container" style="display: none;">
+                        <div id="form-engine-select-container">
                             <select id="form-engine-select">
                                 <option value="" disabled selected>Selecciona un motor</option>
                             </select>
                         </div>
                         <input type="text" id="form-custom-engine" placeholder="Escribe el motor..." style="display: none; margin-top: 8px;" maxlength="25">
                     </div>
+
                     <div class="form-row">
                         <div class="form-group half">
                             <label>Transmisión</label>
