@@ -546,6 +546,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 }
+                if (this.select.value && this.select.value !== '') {
+                    this.trigger.classList.remove('input-error');
+                    this.select.classList.remove('input-error');
+                }
             });
         }
 
@@ -569,6 +573,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.trigger.innerHTML = `<span>${option.text}</span><span class="material-symbols-rounded">expand_more</span>`;
                         this.dropdown.classList.remove('open');
                         this.trigger.classList.remove('open');
+                        this.trigger.classList.remove('input-error');
+                        this.select.classList.remove('input-error');
 
                         // Disparar change para el resto del sistema
                         this.select.dispatchEvent(new Event('change'));
@@ -595,6 +601,21 @@ document.addEventListener('DOMContentLoaded', () => {
             d.previousElementSibling.classList.remove('open');
         });
     });
+
+    // Limpieza dinámica de bordes rojos (.input-error) conforme el usuario interactúa
+    const clearInputError = (target) => {
+        if (!target) return;
+        const val = target.value ? String(target.value).trim() : '';
+        if (val !== '' || (target.checkValidity && target.checkValidity())) {
+            target.classList.remove('input-error');
+            if (target.tagName && target.tagName.toLowerCase() === 'select' && target.parentNode && target.parentNode.classList.contains('custom-select-wrapper')) {
+                const trigger = target.parentNode.querySelector('.custom-select-trigger');
+                if (trigger) trigger.classList.remove('input-error');
+            }
+        }
+    };
+    document.addEventListener('input', (e) => clearInputError(e.target));
+    document.addEventListener('change', (e) => clearInputError(e.target));
 
     // Global utility to compress image to base64
     window.compressImage = function (file, maxWidth = 800) {
@@ -4998,6 +5019,8 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
+        try {
+
         if (selectedImageFiles.length === 0 && !editingListingId) {
             showAlert('Por favor, selecciona al menos una foto del vehículo.', 'Faltan Fotos', 'warning');
             return;
@@ -5012,7 +5035,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const truckTypes = ['Camión', 'Tractocamión', 'Rabón', 'Torton', 'Chasis', 'Autobús', 'Camiones', 'Tractocamiones'];
         const freeEngineTypes = ['Motocicleta', 'Cuatrimoto / ATV', 'Barco'];
         const isTruck = formType && truckTypes.includes(formType.value);
-        const isFreeEngine = formType && (freeEngineTypes.includes(formType.value) || formType.value === 'Otros' || (formCustomType && formCustomType.value.trim() !== ''));
+        const _formCustomType = document.getElementById('form-custom-type');
+        const isFreeEngine = formType && (freeEngineTypes.includes(formType.value) || formType.value === 'Otros' || (_formCustomType && _formCustomType.value.trim() !== ''));
         
         let engine = '';
         if (isTruck) {
@@ -5037,10 +5061,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const ac = formAc.value;
         const mileageUnit = document.getElementById('form-mileage-unit') ? document.getElementById('form-mileage-unit').value : '';
-        const mileage = formMileage.value + (mileageUnit ? ' ' + mileageUnit : '');
+        const rawMileageText = formMileage ? formMileage.value.trim() : '';
+        const mileage = rawMileageText ? (rawMileageText + (mileageUnit ? ' ' + mileageUnit : '')) : 'S/N';
         const legal = formLegal.value;
 
-        const submitBtn = document.getElementById('btn-wizard-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Subiendo...';
@@ -5425,6 +5449,17 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.textContent = 'Publicar Vehículo';
             const pc = document.getElementById('upload-progress-container');
             if (pc) pc.style.display = 'none';
+        }
+
+        } catch (globalErr) {
+            console.error('❌ Error global en publicación:', globalErr);
+            showAlert('Error: ' + (globalErr.message || 'Ocurrió un problema al publicar. Revisa la consola del navegador (F12).'), 'Error al Publicar', 'error');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Publicar Vehículo';
+            }
+            const pc2 = document.getElementById('upload-progress-container');
+            if (pc2) pc2.style.display = 'none';
         }
     });
 
