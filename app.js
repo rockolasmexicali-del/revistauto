@@ -1460,6 +1460,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const isTruck = truckTypes.includes(formType.value);
             const make = formMake ? formMake.value : '';
             
+            const currentEngine = formEngineSelect ? formEngineSelect.value : '';
+            const currentBox = formBoxSelect ? formBoxSelect.value : '';
+            
             // Logica de Motor
             if (isTruck && make && make !== 'Otros') {
                 formEngineText.style.display = 'none';
@@ -1474,6 +1477,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     formEngineSelect.innerHTML += `<option value="${eng}">${eng}</option>`;
                 });
                 formEngineSelect.innerHTML += '<option value="Otros">Otro...</option>';
+                
+                if (currentEngine) formEngineSelect.value = currentEngine;
             } else {
                 formEngineText.style.display = 'block';
                 formEngineText.required = true;
@@ -1494,9 +1499,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const boxes = (typeof catalogData !== 'undefined' ? catalogData.truckBoxes[make] : []) || [];
                 formBoxSelect.innerHTML = '<option value="" disabled selected>Selecciona una caja</option>';
                 boxes.forEach(box => {
-                    formBoxSelect.innerHTML += `<option value="${box}">${box} velocidades</option>`;
+                    formBoxSelect.innerHTML += `<option value="${box}">${box}</option>`;
                 });
                 formBoxSelect.innerHTML += '<option value="Otros">Otra...</option>';
+                
+                if (currentBox) formBoxSelect.value = currentBox;
             } else {
                 formBoxContainer.style.display = 'none';
                 formBoxSelect.required = false;
@@ -3594,7 +3601,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${listing.box ? `
                     <div class="detalle-item">
                         <span class="detalle-label">Caja</span>
-                        <span class="detalle-value">${listing.box} ${listing.box.includes('velocidades') ? '' : 'velocidades'}</span>
+                        <span class="detalle-value">${listing.box}</span>
                     </div>` : ''}
                     <div class="detalle-item">
                         <span class="detalle-label">Kilometraje</span>
