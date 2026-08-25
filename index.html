@@ -228,9 +228,18 @@
 
             <!-- View: Favoritos -->
             <section id="view-biblioteca" class="view">
-                <div class="section-header">
-                    <h2>Favoritos</h2>
-                    <p>Vehículos guardados para después</p>
+                <div class="section-header" style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px; flex-wrap: wrap;">
+                    <div>
+                        <h2 style="margin: 0;">Favoritos</h2>
+                        <p style="margin: 4px 0 0 0;">Vehículos guardados para después</p>
+                    </div>
+                    <div id="compare-button-container" style="display: none; flex-shrink: 0;">
+                        <button id="btn-comparar-favoritos" class="btn-comparar-smart">
+                            <div class="progress-bg"></div>
+                            <span class="comparar-text-normal">Comparar autos</span>
+                            <span class="comparar-text-magic">Mantén presionado: Tu asesor elige el mejor</span>
+                        </button>
+                    </div>
                 </div>
                 <div id="saved-listings-container" class="listings-grid">
                     <div class="empty-state">
@@ -369,7 +378,14 @@
                 <main class="dashboard-main">
                     <!-- Tab: Vista General -->
                     <div id="tab-general" class="dashboard-view active">
-                        <h3>Vista General</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                            <h3 style="margin: 0;">Vista General</h3>
+                            <div style="display: flex; align-items: center; gap: 8px; background: var(--surface-light); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);">
+                                <span class="material-symbols-rounded" style="font-size: 18px; color: #10b981;">currency_exchange</span>
+                                <label for="admin-exchange-rate" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Tipo de cambio ($ USD/MXN):</label>
+                                <input type="number" id="admin-exchange-rate" value="17" step="0.5" min="1" style="width: 65px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 4px 6px; font-weight: bold; text-align: center; font-size: 0.9rem;">
+                            </div>
+                        </div>
                         <div class="stats-premium-grid" style="margin-bottom: 24px;">
                             <div class="stat-premium-card">
                                 <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;"><span class="material-symbols-rounded">visibility</span></div>
@@ -1984,7 +2000,7 @@
                     <div class="form-row">
                         <div class="form-group half" style="flex: 0.75; min-width: 0;">
                             <label>Año</label>
-                            <input type="number" id="form-year" required min="1950" max="2025" placeholder="Ej. 2021">
+                            <input type="number" id="form-year" required min="1950" placeholder="Ej. 2026">
                         </div>
                         <div class="form-group half" style="flex: 1.25; min-width: 0;">
                             <label>Precio de Venta</label>
@@ -2044,6 +2060,28 @@
         </div>
     </div>
     <!-- ===== FIN MODAL GLOBAL ===== -->
+
+    <!-- ===== MODAL COMPARADOR INTELIGENTE ===== -->
+    <div id="modal-comparador" class="modal" style="z-index: 10010;">
+        <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 0;">
+            <div style="position: sticky; top: 0; background: var(--surface-color); z-index: 10; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-rounded" style="color: var(--primary-color);">balance</span> 
+                    Comparativa
+                </h3>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button id="btn-cerrar-comparador" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 4px;">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="comparador-content" style="padding: 20px;">
+                <!-- Aquí se inyecta dinámicamente el contenido del Asesor y la tabla 50/50 -->
+            </div>
+        </div>
+    </div>
+    <!-- ===== FIN MODAL COMPARADOR INTELIGENTE ===== -->
 
     <!-- Supabase Cloud SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

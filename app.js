@@ -963,6 +963,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Core Functions ---
 
     window.switchView = function (viewId) {
+        // Cancelar comparativa si está activa
+        if (window.disableComparisonMode) window.disableComparisonMode();
+
         // Close any open modals
         document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
 
@@ -1001,6 +1004,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function initNavigation() {
         navItems.forEach(item => {
             item.addEventListener('click', () => {
+                // Cancelar comparativa si está activa
+                if (window.disableComparisonMode) window.disableComparisonMode();
+
                 // Close any open modals
                 document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
 
@@ -1400,12 +1406,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!formLegal) return;
             const typeVal = formType ? formType.value : '';
             const customTypeVal = formCustomType ? formCustomType.value : '';
-            const typeNormalized = (typeVal === 'Otros' ? customTypeVal : typeVal)
+            const rawType = (typeVal === 'Otros' ? customTypeVal : typeVal);
+            const typeNormalized = rawType
                 .toLowerCase()
                 .normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "");
 
             const isTruck = (typeNormalized.includes('camion') || typeNormalized.includes('tracto')) && !typeNormalized.includes('camioneta');
+            const isRecreational = typeNormalized.includes('barco') || 
+                                   typeNormalized.includes('lancha') || 
+                                   typeNormalized.includes('moto') || 
+                                   typeNormalized.includes('atv') || 
+                                   typeNormalized.includes('cuatrimoto') || 
+                                   typeNormalized.includes('rzr') || 
+                                   typeNormalized.includes('razor') || 
+                                   typeNormalized.includes('can-am') || 
+                                   typeNormalized.includes('canam') || 
+                                   typeNormalized.includes('jetski') || 
+                                   typeNormalized.includes('jet ski');
+
             const currentSelected = formLegal.value;
 
             let optionsHTML = '<option value="" disabled selected>Selecciona una opción</option>';
@@ -1413,6 +1432,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionsHTML += `
                     <option value="Nacional A1">Nacional A1</option>
                     <option value="Nacional VU">Nacional VU</option>
+                    <option value="Americano">Americano</option>
+                `;
+            } else if (isRecreational) {
+                optionsHTML += `
+                    <option value="Nacional">Nacional</option>
                     <option value="Americano">Americano</option>
                 `;
             } else {
@@ -3503,9 +3527,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>Aún no has guardado vehículos</p>
                 </div>
             `;
-            return;
+        } else {
+            savedListingsContainer.innerHTML = saved.map(l => createListingCardHTML(l, false)).join('');
         }
-        savedListingsContainer.innerHTML = saved.map(l => createListingCardHTML(l, false)).join('');
+        
+        if (typeof window.updateCompareButtonVisibility === 'function') {
+            window.updateCompareButtonVisibility();
+        }
     }
 
     // --- Modal de Publicación Vendida o No Disponible ---
@@ -8836,8 +8864,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formYearInput = document.getElementById('form-year');
     if (formYearInput) {
+        const currentYearLimit = new Date().getFullYear();
+        formYearInput.max = currentYearLimit;
         formYearInput.addEventListener('input', (e) => {
             if (e.target.value.length > 4) e.target.value = e.target.value.slice(0, 4);
+            const val = parseInt(e.target.value);
+            if (val > currentYearLimit) {
+                e.target.setCustomValidity(`El año no puede ser mayor al año en curso (${currentYearLimit})`);
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
+    }
+
+    const editYearInput = document.getElementById('edit-year');
+    if (editYearInput) {
+        const currentYearLimit = new Date().getFullYear();
+        editYearInput.max = currentYearLimit;
+        editYearInput.addEventListener('input', (e) => {
+            if (e.target.value.length > 4) e.target.value = e.target.value.slice(0, 4);
+            const val = parseInt(e.target.value);
+            if (val > currentYearLimit) {
+                e.target.setCustomValidity(`El año no puede ser mayor al año en curso (${currentYearLimit})`);
+            } else {
+                e.target.setCustomValidity('');
+            }
         });
     }
     // --- Logica para Configuración del Costo Mensual Base y Precios por Ciudad ---
@@ -12190,3 +12241,852 @@ window.useMileageFormatterHook = useMileageFormatterHook;
 
 
 
+function useSmartComparatorHook() {
+    const btnContainer = document.getElementById('compare-button-container');
+    const btnCompare = document.getElementById('btn-comparar-favoritos');
+    const savedContainer = document.getElementById('saved-listings-container');
+    if (!btnCompare || !savedContainer) return;
+
+    let longPressTimer;
+    let rotationInterval;
+    let isLongPress = false;
+
+    // Interceptar clics en la fase de captura para que NO abran el detalle cuando estamos comparando
+    savedContainer.addEventListener('click', (e) => {
+        if (!window.isComparisonMode) return;
+        
+        const card = e.target.closest('.card');
+        if (!card) return;
+
+        // Evitar que el onclick del HTML original se ejecute
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        // Extraer el ID de la tarjeta
+        const btnSave = card.querySelector('.card-save-btn');
+        const idMatch = btnSave ? btnSave.getAttribute('onclick')?.match(/toggleSave\((\d+)/) : null;
+        const id = idMatch ? idMatch[1] : null;
+
+        if (id) {
+            toggleCardSelection(id);
+        }
+    }, true);
+
+    function updateCompareButtonVisibility() {
+        const savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
+        const count = savedListingsIds.length;
+        if (count >= 2) {
+            btnContainer.style.display = 'block';
+            startTextRotation(count);
+        } else {
+            btnContainer.style.display = 'none';
+            stopTextRotation();
+            window.isComparisonMode = false;
+            window.selectedForComparison = [];
+        }
+    }
+    window.updateCompareButtonVisibility = updateCompareButtonVisibility;
+
+    function startTextRotation(count) {
+        stopTextRotation();
+        if (count >= 3 && !window.isComparisonMode) {
+            rotationInterval = setInterval(() => {
+                btnCompare.classList.toggle('show-magic');
+            }, 3500);
+        } else {
+            btnCompare.classList.remove('show-magic');
+        }
+    }
+
+    function stopTextRotation() {
+        if (rotationInterval) clearInterval(rotationInterval);
+    }
+
+    function updateButtonState() {
+        const savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
+        const textNormal = btnCompare.querySelector('.comparar-text-normal');
+        
+        if (!window.isComparisonMode) {
+            textNormal.innerHTML = 'Comparar autos';
+            btnCompare.classList.remove('active-mode');
+            btnCompare.style.background = '';
+            btnCompare.style.color = '';
+            startTextRotation(savedListingsIds.length);
+        } else {
+            stopTextRotation();
+            btnCompare.classList.remove('show-magic');
+            btnCompare.classList.add('active-mode');
+            
+            if (window.selectedForComparison.length === 0) {
+                textNormal.innerHTML = 'Toca el primer auto (0/2)';
+            } else if (window.selectedForComparison.length === 1) {
+                textNormal.innerHTML = 'Elige el 2do auto (1/2)';
+            }
+        }
+        
+        const cards = savedContainer.querySelectorAll('.card');
+        cards.forEach(card => {
+            const btnSave = card.querySelector('.card-save-btn');
+            const idMatch = btnSave ? btnSave.getAttribute('onclick')?.match(/toggleSave\((\d+)/) : null;
+            const id = idMatch ? idMatch[1] : null;
+
+            if (window.isComparisonMode) {
+                card.classList.add('card-selectable');
+                if (id && window.selectedForComparison.includes(String(id))) {
+                    card.classList.add('card-selected');
+                } else {
+                    card.classList.remove('card-selected');
+                }
+            } else {
+                card.classList.remove('card-selectable', 'card-selected');
+            }
+        });
+    }
+
+    window.disableComparisonMode = function() {
+        window.isComparisonMode = false;
+        window.selectedForComparison = [];
+        updateButtonState();
+    }
+
+    function toggleCardSelection(id) {
+        if (!id) return;
+        id = String(id);
+        const index = window.selectedForComparison.indexOf(id);
+        if (index > -1) {
+            window.selectedForComparison.splice(index, 1);
+        } else {
+            window.selectedForComparison.push(id);
+        }
+        
+        if (navigator.vibrate) navigator.vibrate(50);
+        updateButtonState();
+        
+        if (window.selectedForComparison.length === 2) {
+            setTimeout(() => {
+                openComparisonModal(window.selectedForComparison);
+                window.disableComparisonMode();
+            }, 150);
+        }
+    }
+
+    function handlePressStart(e) {
+        isLongPress = false;
+        const savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
+        if (window.isComparisonMode || savedListingsIds.length < 3) return;
+        
+        btnCompare.style.transform = 'scale(0.97)';
+        const progressBg = btnCompare.querySelector('.progress-bg');
+        if (progressBg) {
+            progressBg.style.transition = 'width 1s linear';
+            progressBg.style.width = '100%';
+        }
+        
+        longPressTimer = setTimeout(() => {
+            isLongPress = true;
+            if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            openComparisonModal(savedListingsIds, true);
+            if (progressBg) {
+                progressBg.style.transition = 'none';
+                progressBg.style.width = '0%';
+            }
+        }, 1000);
+    }
+
+    function handlePressEnd(e) {
+        btnCompare.style.transform = 'scale(1)';
+        const progressBg = btnCompare.querySelector('.progress-bg');
+        if (progressBg) {
+            progressBg.style.transition = 'none';
+            progressBg.style.width = '0%';
+        }
+        clearTimeout(longPressTimer);
+        
+        if (!isLongPress && e.type.indexOf('leave') === -1 && e.type.indexOf('cancel') === -1) {
+            if (!window.isComparisonMode) {
+                window.isComparisonMode = true;
+                window.selectedForComparison = [];
+                updateButtonState();
+            } else {
+                window.disableComparisonMode();
+            }
+        }
+    }
+
+    btnCompare.addEventListener('mousedown', handlePressStart);
+    btnCompare.addEventListener('touchstart', handlePressStart, {passive: true});
+    btnCompare.addEventListener('mouseup', handlePressEnd);
+    btnCompare.addEventListener('touchend', handlePressEnd);
+    btnCompare.addEventListener('mouseleave', handlePressEnd);
+    btnCompare.addEventListener('touchcancel', handlePressEnd);
+    
+    document.getElementById('btn-cerrar-comparador')?.addEventListener('click', () => {
+        document.getElementById('modal-comparador').classList.remove('active');
+    });
+}
+
+function openComparisonModal(ids, isMagicVerdict = false) {
+    if (!ids || ids.length < 2) return;
+    
+    const allListings = new Map();
+    if (window.db && window.db.getAllListings) {
+        window.db.getAllListings().forEach(l => allListings.set(String(l.id), l));
+    }
+    if (window.activeFeedListings) {
+        window.activeFeedListings.forEach(l => allListings.set(String(l.id), l));
+    }
+    
+    const cars = [];
+    ids.forEach(id => {
+        if (allListings.has(String(id))) cars.push(allListings.get(String(id)));
+    });
+    
+    if (cars.length < 2) return;
+
+    const getPhotoObj = (c) => {
+        let original = 'https://placehold.co/400x300/1e293b/38bdf8?text=Sin+Foto';
+        if (c.images && c.images.length > 0) original = c.images[0];
+        else if (c.image) original = c.image;
+        else if (c.photos && c.photos.length > 0) original = c.photos[0].thumbnailUrl || c.photos[0].url || c.photos[0];
+
+        let thumb = original;
+        if (typeof window.useImageOptimizerHook === 'function') {
+            const opt = window.useImageOptimizerHook();
+            if (opt && opt.getThumbnailUrl) {
+                const url = opt.getThumbnailUrl(c);
+                if (url) thumb = url;
+            }
+        }
+        return { thumb, original };
+    };
+
+    const verdictHTML = generateSmartVerdict(cars, isMagicVerdict);
+    let gridHTML = '';
+    
+    if (!isMagicVerdict) {
+        const c1 = cars[0];
+        const c2 = cars[1];
+        const p1 = getPhotoObj(c1);
+        const p2 = getPhotoObj(c2);
+        
+        const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+        const getPriceInMXN = (c) => {
+            const raw = parsePrice(c.price);
+            const curr = (c.currency || '').toLowerCase();
+            if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) return raw * rate;
+            return raw;
+        };
+
+        const getScore = (car) => {
+            let score = 0;
+            score += car.year * 10;
+            score -= (parseMileage(car.mileage) / 1000);
+            const m = (car.make || '').toLowerCase();
+            if (['honda', 'toyota'].includes(m)) score += 500;
+            const p = getPriceInMXN(car);
+            if (p > 0) score -= (p / 2000);
+            return score;
+        };
+
+        const isC1Winner = getScore(c1) >= getScore(c2);
+
+        const badgeHTML = `
+            <div style="position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4), 0 0 0 1.5px rgba(255, 255, 255, 0.4); z-index: 5;">
+                <span class="material-symbols-rounded" style="font-size: 16px;">check_circle</span> Recomendado
+            </div>
+        `;
+
+        const cat1 = getVehicleCategory(c1);
+        const cat2 = getVehicleCategory(c2);
+        const engineLabel1 = cat1 === 'tractocamión' ? '🚛 MOTOR / DIESEL' : (cat1 === 'embarcación' ? '⚓ MOTOR' : '⛽ MOTOR / GASOLINA');
+        const engineLabel2 = cat2 === 'tractocamión' ? '🚛 MOTOR / DIESEL' : (cat2 === 'embarcación' ? '⚓ MOTOR' : '⛽ MOTOR / GASOLINA');
+
+        gridHTML = `
+        <div class="comparador-grid">
+            <div class="comparador-col" style="${isC1Winner ? 'border: 2px solid #10b981; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.04);' : ''}">
+                <div style="position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 12px;">
+                    <img src="${p1.thumb}" alt="Foto" style="width:100%; height:180px; object-fit:cover; display:block;" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${p1.original}';}else{this.src='https://placehold.co/400x300/1e293b/38bdf8?text=Sin+Foto';}">
+                    ${isC1Winner ? badgeHTML : ''}
+                </div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; color: var(--text-main);">${c1.make} ${c1.model} ${c1.year}</div>
+                <div class="comparador-precio">${window.usePriceFormatterHook ? window.usePriceFormatterHook(c1) : c1.price}</div>
+                <div class="comparador-precio-original">📍 ${c1.city || ''} • ${getLegalText(c1) || (st1 === 'AMERICANO' ? 'Americano' : (st1 === 'FRONTERIZO' ? 'Fronterizo' : 'Nacional'))}</div>
+                
+                <div class="comparador-fila">
+                    <div class="comparador-label">Año</div>
+                    <div class="comparador-value ${c1.year > c2.year ? 'highlight' : ''}">${c1.year} ${c1.year > c2.year ? '⭐' : ''}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">Millas / KM</div>
+                    <div class="comparador-value ${parseMileage(c1.mileage) < parseMileage(c2.mileage) ? 'highlight' : ''}">${c1.mileage || 'S/N'} ${parseMileage(c1.mileage) < parseMileage(c2.mileage) ? '⭐' : ''}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">${engineLabel1}</div>
+                    <div class="comparador-value">${getEngineSummary(c1)}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">🛠️ Talleres y Piezas</div>
+                    <div class="comparador-value">${getMechanicSummary(c1)}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">⚙️ Transmisión</div>
+                    <div class="comparador-value">${getTransmissionSummary(c1)}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">A/C</div>
+                    <div class="comparador-value">${(c1.ac === 'Si' || c1.ac === 'Sí' || c1.ac === true) ? '❄️ Sí' : '❌ No'}</div>
+                </div>
+                
+                <button class="success-btn" style="width: 100%; margin-top: 16px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.95rem; font-weight: bold; border-radius: 20px;" onclick="document.getElementById('modal-comparador').classList.remove('active'); window.contactSeller('${c1.id}')">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">chat</span> Contactar
+                </button>
+            </div>
+            
+            <div class="comparador-col" style="${!isC1Winner ? 'border: 2px solid #10b981; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.04);' : ''}">
+                <div style="position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 12px;">
+                    <img src="${p2.thumb}" alt="Foto" style="width:100%; height:180px; object-fit:cover; display:block;" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${p2.original}';}else{this.src='https://placehold.co/400x300/1e293b/38bdf8?text=Sin+Foto';}">
+                    ${!isC1Winner ? badgeHTML : ''}
+                </div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; color: var(--text-main);">${c2.make} ${c2.model} ${c2.year}</div>
+                <div class="comparador-precio">${window.usePriceFormatterHook ? window.usePriceFormatterHook(c2) : c2.price}</div>
+                <div class="comparador-precio-original">📍 ${c2.city || ''} • ${getLegalText(c2) || (st2 === 'AMERICANO' ? 'Americano' : (st2 === 'FRONTERIZO' ? 'Fronterizo' : 'Nacional'))}</div>
+                
+                <div class="comparador-fila">
+                    <div class="comparador-label">Año</div>
+                    <div class="comparador-value ${c2.year > c1.year ? 'highlight' : ''}">${c2.year} ${c2.year > c1.year ? '⭐' : ''}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">Millas / KM</div>
+                    <div class="comparador-value ${parseMileage(c2.mileage) < parseMileage(c1.mileage) ? 'highlight' : ''}">${c2.mileage || 'S/N'} ${parseMileage(c2.mileage) < parseMileage(c1.mileage) ? '⭐' : ''}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">${engineLabel2}</div>
+                    <div class="comparador-value">${getEngineSummary(c2)}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">🛠️ Talleres y Piezas</div>
+                    <div class="comparador-value">${getMechanicSummary(c2)}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">⚙️ Transmisión</div>
+                    <div class="comparador-value">${getTransmissionSummary(c2)}</div>
+                </div>
+                <div class="comparador-fila">
+                    <div class="comparador-label">A/C</div>
+                    <div class="comparador-value">${(c2.ac === 'Si' || c2.ac === 'Sí' || c2.ac === true) ? '❄️ Sí' : '❌ No'}</div>
+                </div>
+                
+                <button class="success-btn" style="width: 100%; margin-top: 16px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.95rem; font-weight: bold; border-radius: 20px;" onclick="document.getElementById('modal-comparador').classList.remove('active'); window.contactSeller('${c2.id}')">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">chat</span> Contactar
+                </button>
+            </div>
+        </div>
+        `;
+    }
+
+    document.getElementById('comparador-content').innerHTML = verdictHTML + gridHTML;
+    document.getElementById('modal-comparador').classList.add('active');
+}
+
+function parseMileage(m) {
+    if (!m) return 999999;
+    const clean = String(m).replace(/[^0-9]/g, '');
+    return parseInt(clean) || 999999;
+}
+
+function parsePrice(p) {
+    if (!p) return 0;
+    const clean = String(p).replace(/[^0-9]/g, '');
+    return parseInt(clean) || 0;
+}
+
+function getEngineSummary(car) {
+    let parts = [];
+    if (car.engine && car.engine !== '-' && car.engine !== 'Motor estándar') {
+        parts.push(car.engine);
+    }
+    if (car.cylinders && car.cylinders !== '-' && !parts.some(p => p.toLowerCase().includes(String(car.cylinders).toLowerCase()))) {
+        parts.unshift(car.cylinders.includes('cil') || car.cylinders.includes('Cil') ? car.cylinders : `${car.cylinders} cil`);
+    }
+    
+    const fullText = ((car.title || '') + ' ' + (car.description || '')).toLowerCase();
+    if (fullText.includes('turbo') && !parts.some(p => p.toLowerCase().includes('turbo'))) {
+        parts.push('Turbo');
+    }
+
+    if (parts.length > 0) {
+        return parts.join(' ');
+    }
+
+    const cyl = car.cylinders ? String(car.cylinders).toLowerCase() : '';
+    if (cyl.includes('4')) return '4 Cil';
+    if (cyl.includes('6')) return '6 Cil';
+    if (cyl.includes('8')) return '8 Cil';
+    return 'Sin especificar';
+}
+
+function getMechanicSummary(car) {
+    const make = (car.make || '').toLowerCase();
+    if (['honda', 'toyota', 'nissan', 'chevrolet'].includes(make)) {
+        return '✅ Fácil de reparar / Refacciones económicas locales';
+    }
+    if (['bmw', 'mercedes', 'audi'].includes(make)) {
+        return '⚠️ Mantenimiento premium / Piezas por encargo';
+    }
+    return 'Mecánica tradicional';
+}
+
+function getTransmissionSummary(car) {
+    const rawTrans = car.transmission && car.transmission !== '-' ? car.transmission.trim() : '';
+    if (rawTrans) {
+        return rawTrans;
+    }
+    
+    const text = ((car.title || '') + ' ' + (car.description || '')).toLowerCase();
+    if (text.includes('estandar') || text.includes('estándar') || text.includes('manual')) {
+        return 'Manual / Estándar';
+    }
+    return 'Automática';
+}
+
+function getVehicleCategory(car) {
+    const rawText = ((car.category || '') + ' ' + (car.type || '') + ' ' + (car.truckType || '') + ' ' + (car.make || '') + ' ' + (car.model || '') + ' ' + (car.title || '') + ' ' + (car.engine || '')).toLowerCase();
+    
+    const isCamioneta = rawText.includes('camioneta') || rawText.includes('suv') || rawText.includes('pickup') || rawText.includes('pick-up');
+
+    if (!isCamioneta && (rawText.includes('kenworth') || rawText.includes('freightliner') || rawText.includes('peterbilt') || rawText.includes('mack') || rawText.includes('tracto') || rawText.includes('camion') || rawText.includes('camión') || rawText.includes('trailer') || rawText.includes('torton') || rawText.includes('rabon') || rawText.includes('rabón') || rawText.includes('chasis') || rawText.includes('autobus') || rawText.includes('autobús') || rawText.includes('dd15') || rawText.includes('dd13') || rawText.includes('isx') || rawText.includes('cummins'))) {
+        return 'tractocamión';
+    }
+    if (rawText.includes('moto') || rawText.includes('italika') || rawText.includes('ktm') || rawText.includes('kymco') || rawText.includes('harley') || rawText.includes('yamaha') || rawText.includes('honda cbr')) {
+        return 'motocicleta';
+    }
+    if (rawText.includes('rzr') || rawText.includes('razor') || rawText.includes('can-am') || rawText.includes('polaris') || rawText.includes('utv') || rawText.includes('cuatrimoto')) {
+        return 'vehículo recreativo/off-road';
+    }
+    if (rawText.includes('lancha') || rawText.includes('barco') || rawText.includes('yate') || rawText.includes('jet ski') || rawText.includes('jetski') || rawText.includes('sea-doo') || rawText.includes('waverunner')) {
+        return 'embarcación';
+    }
+    return 'vehículo';
+}
+
+function getLegalText(car) {
+    return car.legal || car.legalStatus || car.legal_status || car.situacion || car.legal_type || '';
+}
+
+function getImportQualificationText(car) {
+    const rawLegal = getLegalText(car);
+    const s = rawLegal.toLowerCase().trim();
+    
+    if (s.includes('nacional') || s.includes('decreto') || s.includes('regularizado') || s.includes('fronterizo')) {
+        return '';
+    }
+
+    const year = parseInt(car.year) || 0;
+    if (!year) return '';
+
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0 = Enero, 9 = Octubre, 10 = Noviembre
+    const currentYear = now.getFullYear();
+    
+    let baseYear = currentYear;
+    if (currentMonth >= 10) {
+        baseYear += 1;
+    }
+
+    // Regla Oficial:
+    // Fronterizo: 2016 al 2021 (baseYear - 10 a baseYear - 5)
+    // Nacional: 2017 y 2018 (baseYear - 9 a baseYear - 8)
+    const minFront = baseYear - 10;
+    const maxFront = baseYear - 5;
+    const minNac = baseYear - 9;
+    const maxNac = baseYear - 8;
+
+    const isNacional = year >= minNac && year <= maxNac;
+    const isFronterizo = year >= minFront && year <= maxFront;
+
+    // Alerta dinámica en Octubre (Mes 9)
+    let warningText = '';
+    if (currentMonth === 9 && (year === minFront || year === minNac)) {
+        const targetDate = new Date(currentYear, 10, 1);
+        const daysLeft = Math.max(1, Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24)));
+        if (daysLeft <= 15) {
+            warningText = `<br>🔴 🛑 <strong>¡ALERTA CRÍTICA DE TIEMPOS (Quedan solo ${daysLeft} días)!</strong> Si vas a comprar este modelo (${year}), toma en cuenta que el trámite de legalización tarda alrededor de 30 días y solo quedan ${daysLeft} días antes del 1 de Noviembre (fecha en que el año ${year} DEJA de calificar). <strong>Es muy probable que ya NO alcances a realizar el trámite a tiempo.</strong>`;
+        } else {
+            warningText = `<br>⏳ ⚠️ <strong>¡ALERTA URGENTE DE TIEMPOS (Quedan ${daysLeft} días)!</strong> Si compras este modelo (${year}), debes iniciar su trámite <strong>DE INMEDIATO</strong>. El 1 de Noviembre cambia el Decreto y el año ${year} DEJARÁ de calificar. Como el trámite tarda hasta 30 días, estás en el límite de tiempo.`;
+        }
+    }
+
+    const cat = getVehicleCategory(car);
+    const isTruck = cat === 'tractocamión';
+    const isRecreational = ['motocicleta', 'vehículo recreativo/off-road', 'embarcación'].includes(cat);
+
+    const nacLabel = isTruck ? 'Nacional VU y Nacional A1' : (isRecreational ? 'Nacional' : 'Nacional y Fronterizo');
+    const frontLabel = isTruck ? 'Nacional A1' : (isRecreational ? 'Nacional' : 'Fronterizo');
+
+    if (isNacional && isFronterizo) {
+        return `<br>🇲🇽 <strong>Califica para ${nacLabel}:</strong> Por su año (${year}).${warningText}`;
+    }
+    if (isFronterizo) {
+        return `<br>✅ <strong>Califica para ${frontLabel}:</strong> Por su año (${year}).${warningText}`;
+    }
+    if (!isNacional && !isFronterizo) {
+        if (currentMonth >= 10 && (year < minFront)) {
+            return `<br>❌ <strong>NO califica para Decreto/Importación Regular:</strong> Por su año (${year}), a partir del 1 de Noviembre este vehículo quedó fuera del Decreto vigente. Consultar con un Agente Aduanal si existe algún trámite especial.`;
+        }
+    }
+    return `<br>⚠️ <strong>Trámite de Importación:</strong> Por su año (${year}), consultar Decreto o Agente Aduanal.`;
+}
+
+function getLegalStatusAnalysis(c1, c2) {
+    const normalizeStatus = (car) => {
+        const raw = getLegalText(car);
+        const s = raw.toLowerCase().trim();
+        if (s.includes('nacional') || s.includes('decreto') || s.includes('regularizado')) return 'NACIONAL';
+        if (s.includes('fronterizo')) return 'FRONTERIZO';
+        if (s.includes('americano') || s.includes('titulo') || s.includes('título')) return 'AMERICANO';
+        
+        const curr = (car.currency || '').toLowerCase();
+        const fullText = ((car.title || '') + ' ' + (car.description || '')).toLowerCase();
+        if (curr.includes('dll') || curr.includes('usd') || fullText.includes('titulo') || fullText.includes('título')) {
+            return 'AMERICANO';
+        }
+        return 'AMERICANO';
+    };
+
+    const st1 = normalizeStatus(c1);
+    const st2 = normalizeStatus(c2);
+
+    const txt1 = getLegalText(c1) || (st1 === 'NACIONAL' ? 'Nacional' : (st1 === 'FRONTERIZO' ? 'Fronterizo' : 'Americano'));
+    const txt2 = getLegalText(c2) || (st2 === 'NACIONAL' ? 'Nacional' : (st2 === 'FRONTERIZO' ? 'Fronterizo' : 'Americano'));
+
+    const cat1 = getVehicleCategory(c1);
+    const cat2 = getVehicleCategory(c2);
+    const isRecreational = ['motocicleta', 'vehículo recreativo/off-road', 'embarcación'].includes(cat1) || ['motocicleta', 'vehículo recreativo/off-road', 'embarcación'].includes(cat2);
+
+    if (isRecreational) {
+        const amer1 = st1 === 'AMERICANO';
+        const amer2 = st2 === 'AMERICANO';
+
+        if (amer1 && amer2) {
+            const q1 = getImportQualificationText(c1);
+            const q2 = getImportQualificationText(c2);
+            return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra de entrada más accesible.<br>• <em>Desventaja:</em> Cuentan con Título Americano. En esta categoría solo existe estatus <strong>Nacional o Americano</strong> (no existe estatus Fronterizo), por lo que requerirás pedimento aduanal de nacionalización.${q1 ? `<br>• <strong>${c1.make}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${c2.make}:</strong> ${q2}` : ''}`;
+        }
+        if ((st1 === 'NACIONAL' && amer2) || (st2 === 'NACIONAL' && amer1)) {
+            const nacRec = st1 === 'NACIONAL' ? c1 : c2;
+            const amerRec = st1 === 'AMERICANO' ? c1 : c2;
+            const q = getImportQualificationText(amerRec);
+            return `<br><br>⚖️ <strong>Estatus Legal (${nacRec.make} Nacional vs ${amerRec.make} Americano):</strong><br>• <strong>${nacRec.make} (Nacional):</strong> <em>Ventaja:</em> 100% legalizado para usarse y transportarse por todo México. <em>Desventaja:</em> Inversión mayor.<br>• <strong>${amerRec.make} (Americano):</strong> <em>Ventaja:</em> Más económico de entrada. <em>Desventaja:</em> Requiere trámite y pago de pedimento de nacionalización (en esta categoría no existe estatus Fronterizo).${q}`;
+        }
+        if (st1 === 'NACIONAL' && st2 === 'NACIONAL') {
+            return `<br><br>🇲🇽 <strong>Situación Legal (Ambos Nacionales):</strong><br>• <em>Ventaja:</em> Libertad total para usarse y transportarse por cualquier carretera del país sin problemas fiscales ni de tránsito.`;
+        }
+    }
+
+    const isTruckC1 = getVehicleCategory(c1) === 'tractocamión' || txt1.includes('VU') || txt1.includes('A1');
+    const isTruckC2 = getVehicleCategory(c2) === 'tractocamión' || txt2.includes('VU') || txt2.includes('A1');
+
+    if (isTruckC1 || isTruckC2) {
+        const isVU1 = txt1.includes('VU') || txt1.toLowerCase().includes('vu');
+        const isA1_1 = txt1.includes('A1') || txt1.toLowerCase().includes('a1');
+        const isAmer1 = st1 === 'AMERICANO';
+
+        const isVU2 = txt2.includes('VU') || txt2.toLowerCase().includes('vu');
+        const isA1_2 = txt2.includes('A1') || txt2.toLowerCase().includes('a1');
+        const isAmer2 = st2 === 'AMERICANO';
+
+        if (isVU1 && isA1_2) {
+            return `<br><br>🚚 <strong>Estatus Legal de Tractocamiones (${c1.make} Nacional VU vs ${c2.make} Nacional A1):</strong><br>• <strong>${c1.make} (Nacional VU):</strong> <em>Ventaja:</em> Libertad total para fletear y transitar por todas las carreteras de México. <em>Desventaja:</em> Inversión inicial mayor.<br>• <strong>${c2.make} (Nacional A1):</strong> <em>Ventaja:</em> Precio más accesible. <em>Desventaja:</em> Restringido únicamente a fletes en la franja fronteriza.`;
+        }
+        if (isA1_1 && isVU2) {
+            return `<br><br>🚚 <strong>Estatus Legal de Tractocamiones (${c1.make} Nacional A1 vs ${c2.make} Nacional VU):</strong><br>• <strong>${c1.make} (Nacional A1):</strong> <em>Ventaja:</em> Precio más económico de entrada. <em>Desventaja:</em> Solo para rutas en la franja fronteriza.<br>• <strong>${c2.make} (Nacional VU):</strong> <em>Ventaja:</em> Puedes trabajar y fletear libremente por todo México. <em>Desventaja:</em> Inversión inicial más alta.`;
+        }
+        if (isVU1 && isVU2) {
+            return `<br><br>🇲🇽 <strong>Situación Legal (Ambos Nacional VU):</strong><br>• <em>Ventaja:</em> Ambos cuentan con pedimento VU libre para trabajar y recorrer todas las carreteras del país.<br>• <em>Desventaja:</em> Su precio inicial suele ser más elevado.`;
+        }
+        if (isA1_1 && isA1_2) {
+            return `<br><br>🚚 <strong>Situación Legal (Ambos Nacional A1):</strong><br>• <em>Ventaja:</em> Excelente opción de trabajo con pedimento A1 para la zona fronteriza.<br>• <em>Desventaja:</em> Ambos están restringidos a la franja fronteriza (no pueden internarse al interior).`;
+        }
+        if (isAmer1 || isAmer2) {
+            const amerTruck = isAmer1 ? c1 : c2;
+            const nacTruck = isAmer1 ? c2 : c1;
+            const nacTxt = getLegalText(nacTruck) || 'Nacional';
+            return `<br><br>🚚 <strong>Estatus Legal (${amerTruck.make} Americano vs ${nacTruck.make} ${nacTxt}):</strong><br>• <strong>${amerTruck.make} (Americano):</strong> <em>Ventaja:</em> Precio inicial más bajo. <em>Desventaja:</em> No está importado aún; le falta todo el trámite de pedimento aduanal.<br>• <strong>${nacTruck.make} (${nacTxt}):</strong> <em>Ventaja:</em> Ya cuenta con pedimento legal listo para trabajar. <em>Desventaja:</em> Inversión inicial mayor.`;
+        }
+    }
+
+    if (st1 === 'AMERICANO' && st2 === 'AMERICANO') {
+        const q1 = getImportQualificationText(c1);
+        const q2 = getImportQualificationText(c2);
+        return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra inicial más accesible.<br>• <em>Desventaja:</em> Toma en cuenta que ambos cuentan con Título Americano, por lo que aún tendrías que considerar el costo extra y trámite de <strong>legalización/regularización en el país</strong>.${q1 ? `<br>• <strong>${c1.make}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${c2.make}:</strong> ${q2}` : ''}`;
+    }
+    if (st1 === 'FRONTERIZO' && st2 === 'FRONTERIZO') {
+        return `<br><br>📑 <strong>Situación Legal (Ambos Fronterizos):</strong><br>• <em>Ventaja:</em> Circulan 100% legal en la ciudad fronteriza con sus placas locales sin pagar costo de Nacional.<br>• <em>Desventaja:</em> No pueden viajar al interior del país sin permiso temporal de aduana.`;
+    }
+    if (st1 === 'NACIONAL' && st2 === 'NACIONAL') {
+        return `<br><br>🇲🇽 <strong>Situación Legal (Ambos Nacionales/Decreto):</strong><br>• <em>Ventaja:</em> Libertad total para circular por todo México sin restricciones ni riesgos de tránsito.<br>• <em>Desventaja:</em> Su precio inicial suele ser más elevado.`;
+    }
+
+    const city = ((c1.city || c2.city || '')).toLowerCase();
+    const borderCities = ['mexicali', 'tijuana', 'ensenada', 'rosarito', 'tecate', 'san luis r.c.', 'san luis rio colorado', 'nogales', 'ciudad juarez', 'juarez', 'reynosa', 'matamoros', 'nuevo laredo', 'piedras negras'];
+    const isBorderCity = borderCities.some(b => city.includes(b));
+
+    const nac = st1 === 'NACIONAL' ? c1 : (st2 === 'NACIONAL' ? c2 : null);
+    const front = st1 === 'FRONTERIZO' ? c1 : (st2 === 'FRONTERIZO' ? c2 : null);
+    const amer = st1 === 'AMERICANO' ? c1 : (st2 === 'AMERICANO' ? c2 : null);
+
+    if (isBorderCity) {
+        if (nac && front) {
+            return `<br><br>⚖️ <strong>Estatus Legal (${nac.make} vs ${front.make}):</strong><br>• <strong>${nac.make} (${txt1}):</strong> <em>Ventaja:</em> Libertad de viajar a cualquier estado de México. <em>Desventaja:</em> Inversión mayor.<br>• <strong>${front.make} (Fronterizo):</strong> <em>Ventaja:</em> Más económico para el diario local. <em>Desventaja:</em> Solo para la frontera.`;
+        }
+        if (nac && amer) {
+            const q = getImportQualificationText(amer);
+            return `<br><br>⚖️ <strong>Estatus Legal (${nac.make} vs ${amer.make}):</strong><br>• <strong>${nac.make} (${txt1}):</strong> <em>Ventaja:</em> Listo para andar sin trámites ni multas. <em>Desventaja:</em> Cuesta más dinero.<br>• <strong>${amer.make} (Americano):</strong> <em>Ventaja:</em> Precio de compra más accesible. <em>Desventaja:</em> Trámite de legalización/regularización en el país pendiente.${q}`;
+        }
+        if (front && amer) {
+            const q = getImportQualificationText(amer);
+            return `<br><br>⚖️ <strong>Estatus Legal (${front.make} vs ${amer.make}):</strong><br>• <strong>${front.make} (Fronterizo):</strong> <em>Ventaja:</em> Trae placas de la zona listos para circular. <em>Desventaja:</em> Cuesta algo más.<br>• <strong>${amer.make} (Americano):</strong> <em>Ventaja:</em> Más barato de entrada. <em>Desventaja:</em> Faltan papeles de legalización.${q}`;
+        }
+    } else {
+        if (nac && (front || amer)) {
+            const otro = front || amer;
+            const otroTxt = getLegalText(otro) || (front ? 'Fronterizo' : 'Americano');
+            return `<br><br>⚠️ <strong>Situación Legal en el Interior:</strong> El <strong>${nac.make} (${txt1})</strong> es la compra segura para viajar libremente sin riesgo de decomiso frente al <strong>${otro.make} (${otroTxt})</strong>.`;
+        }
+    }
+    return '';
+}
+
+function getEngineComparison(c1, c2) {
+    const text1 = ((c1.title || '') + ' ' + (c1.engine || '') + ' ' + (c1.cylinders || '') + ' ' + (c1.description || '')).toLowerCase();
+    const text2 = ((c2.title || '') + ' ' + (c2.engine || '') + ' ' + (c2.cylinders || '') + ' ' + (c2.description || '')).toLowerCase();
+
+    const isTurbo1 = text1.includes('turbo');
+    const isTurbo2 = text2.includes('turbo');
+
+    const getCyl = (car, text) => {
+        if (text.includes('4 cil') || text.includes('4-cil') || String(car.cylinders).includes('4')) return 4;
+        if (text.includes('6 cil') || text.includes('6-cil') || String(car.cylinders).includes('6')) return 6;
+        if (text.includes('8 cil') || text.includes('8-cil') || String(car.cylinders).includes('8')) return 8;
+        return 0;
+    };
+
+    const cyl1 = getCyl(c1, text1);
+    const cyl2 = getCyl(c2, text2);
+
+    if (cyl1 === 4 && isTurbo1 && cyl2 === 6 && !isTurbo2) {
+        return ` En el motor: el <strong>${c1.make}</strong> tiene motor Turbo, dándote la potencia de un 6 cilindros pero gastando menos gasolina.`;
+    }
+    if (cyl2 === 4 && isTurbo2 && cyl1 === 6 && !isTurbo1) {
+        return ` En el motor: el <strong>${c2.make}</strong> tiene motor Turbo, dándote el empuje de un 6 cilindros pero consumiendo menos gasolina.`;
+    }
+    if (cyl1 === 4 && cyl2 === 6) {
+        return ` En el motor: el <strong>${c1.make}</strong> (4 cilindros) destaca en ahorro de gasolina diario, mientras que el <strong>${c2.make}</strong> (6 cilindros) responderá con más fuerza en carretera.`;
+    }
+    if (cyl2 === 4 && cyl1 === 6) {
+        return ` En el motor: el <strong>${c2.make}</strong> (4 cilindros) ayuda a economizar combustible diario, mientras que el <strong>${c1.make}</strong> (6 cilindros) dará mayor respuesta en carretera.`;
+    }
+    if ((cyl1 === 6 && cyl2 === 8) || (cyl1 === 8 && cyl2 === 6)) {
+        const c6 = cyl1 === 6 ? c1 : c2;
+        const c8 = cyl1 === 8 ? c1 : c2;
+        return ` En motorización: el <strong>${c6.make}</strong> (6 cilindros) es más equilibrado, mientras que el <strong>${c8.make}</strong> (8 cilindros) destaca en fuerza de trabajo/arrastre a costa de mayor consumo.`;
+    }
+
+    return '';
+}
+
+function getPriceComparison(c1, c2) {
+    const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+
+    const getPriceInMXN = (car) => {
+        const raw = parsePrice(car.price);
+        const curr = (car.currency || '').toLowerCase();
+        if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) {
+            return raw * rate;
+        }
+        return raw;
+    };
+
+    if (c1.currency && c2.currency && c1.currency === c2.currency) {
+        const p1 = parsePrice(c1.price);
+        const p2 = parsePrice(c2.price);
+        if (p1 > 0 && p2 > 0 && p1 !== p2) {
+            const diff = Math.abs(p1 - p2);
+            const cheaper = p1 < p2 ? c1 : c2;
+            return ` Hablando de dinero, el <strong>${cheaper.make}</strong> te ahorra directo <strong>$${diff.toLocaleString()} ${c1.currency}</strong> de entrada.`;
+        }
+    } else if (c1.currency && c2.currency && c1.currency !== c2.currency) {
+        const mxn1 = getPriceInMXN(c1);
+        const mxn2 = getPriceInMXN(c2);
+        if (mxn1 > 0 && mxn2 > 0) {
+            const diffPct = Math.abs(mxn1 - mxn2) / Math.max(mxn1, mxn2);
+            if (diffPct <= 0.12) {
+                return ` Tomando el tipo de cambio ($${rate} MXN/USD), ambos andan más o menos parejos en precio (en un rango de presupuesto muy similar).`;
+            } else {
+                const cheaper = mxn1 < mxn2 ? c1 : c2;
+                const expensive = mxn1 < mxn2 ? c2 : c1;
+                return ` Tomando el tipo de cambio ($${rate} MXN/USD), el <strong>${cheaper.make}</strong> resulta ser una opción más económica de entrada que el <strong>${expensive.make}</strong>.`;
+            }
+        }
+    }
+    return '';
+}
+
+function generateSmartVerdict(cars, isMagicVerdict) {
+    const getPhotoObj = (c) => {
+        let original = 'https://placehold.co/400x300/1e293b/38bdf8?text=Sin+Foto';
+        if (c.images && c.images.length > 0) original = c.images[0];
+        else if (c.image) original = c.image;
+        else if (c.photos && c.photos.length > 0) original = c.photos[0].thumbnailUrl || c.photos[0].url || c.photos[0];
+
+        let thumb = original;
+        if (typeof window.useImageOptimizerHook === 'function') {
+            const opt = window.useImageOptimizerHook();
+            if (opt && opt.getThumbnailUrl) {
+                const url = opt.getThumbnailUrl(c);
+                if (url) thumb = url;
+            }
+        }
+        return { thumb, original };
+    };
+
+    let winner = cars[0];
+    let runnerUp = cars[1] || cars[0];
+    
+    let bestScore = -1;
+    cars.forEach(car => {
+        let score = 0;
+        score += car.year * 10;
+        score -= (parseMileage(car.mileage) / 1000);
+        
+        const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+        const getPriceInMXN = (c) => {
+            const raw = parsePrice(c.price);
+            const curr = (c.currency || '').toLowerCase();
+            if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) {
+                return raw * rate;
+            }
+            return raw;
+        };
+
+        const mxnPrice = getPriceInMXN(car);
+        if (mxnPrice > 0) {
+            score -= (mxnPrice / 2000); // Considerar precio relativo en MXN
+        }
+        
+        if (score > bestScore) {
+            runnerUp = winner;
+            winner = car;
+            bestScore = score;
+        }
+    });
+
+    if (winner.id === runnerUp.id && cars.length > 1) {
+        runnerUp = cars.find(c => c.id !== winner.id);
+    }
+
+    if (isMagicVerdict) {
+        const pWin = getPhotoObj(winner);
+        return `
+        <div class="asesor-box" style="margin-bottom: 24px; padding: 20px; background: rgba(2, 132, 199, 0.1); border: 1px solid var(--primary-color); border-radius: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--primary-color); font-weight: bold; font-size: 0.95rem;">
+                <span class="material-symbols-rounded">psychology</span>
+                EL VEREDICTO DE TU ASESOR REVISTAUTO
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <h4 style="color: #f59e0b; margin-bottom: 12px; font-size: 1rem; text-transform: uppercase;">🥇 GANADOR DEFINITIVO DE TUS FAVORITOS</h4>
+                <img src="${pWin.thumb}" style="width: 100%; max-width: 300px; height: 180px; object-fit: cover; border-radius: 12px; border: 2px solid #f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);" onerror="if(!this.dataset.fb){this.dataset.fb='1';this.src='${pWin.original}';}else{this.src='https://placehold.co/400x300/1e293b/38bdf8?text=Sin+Foto';}">
+                <h3 style="margin-top: 12px; font-size: 1.4rem;">${winner.make} ${winner.model} ${winner.year}</h3>
+                <div style="font-size: 1.6rem; font-weight: bold; color: var(--primary-color);">${window.usePriceFormatterHook ? window.usePriceFormatterHook(winner) : winner.price}</div>
+            </div>
+            
+            <div class="asesor-text" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px;">
+                <p style="margin-bottom: 10px;"><strong>💡 ¿Por qué es tu mejor opción?</strong></p>
+                <p>De las opciones que guardaste, este <strong>${winner.make} ${winner.model}</strong> es la compra más inteligente. Destaca por ser del año <strong>${winner.year}</strong> y ${getMechanicSummary(winner).includes('Fácil') ? 'sobre todo por sus piezas baratas y mantenimiento económico.' : 'por su excelente configuración y estado general.'}</p>
+                <p style="margin-top: 8px;">👉 <em>Es la opción más equilibrada y la que mejor valor de reventa mantendrá de tus guardados.</em></p>
+            </div>
+            
+            <button class="success-btn" style="width: 100%; margin-top: 20px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.1rem; font-weight: bold; border-radius: 20px;" onclick="document.getElementById('modal-comparador').classList.remove('active'); window.contactSeller('${winner.id}')">
+                <span class="material-symbols-rounded" style="font-size: 24px;">chat</span> Mandar WhatsApp al Vendedor
+            </button>
+            
+            <hr style="border-color: rgba(255,255,255,0.05); margin: 24px 0;">
+            <div style="display: flex; align-items: center; gap: 12px; opacity: 0.8;">
+                <div style="font-size: 2rem;">🥈</div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">2do Lugar (Opción Alternativa)</div>
+                    <div style="font-weight: 700;">${runnerUp.make} ${runnerUp.model} ${runnerUp.year} • <span style="color: var(--primary-color);">${window.usePriceFormatterHook ? window.usePriceFormatterHook(runnerUp) : runnerUp.price}</span></div>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    const cat1 = getVehicleCategory(winner);
+    const cat2 = getVehicleCategory(runnerUp);
+
+    let categoryAdvice = '';
+    if (cat1 !== cat2) {
+        categoryAdvice = ` ⚠️ <em>Nota del Asesor: Estás comparando dos tipos de vehículos distintos (${cat1} vs ${cat2}). Recuerda que cumplen propósitos diferentes.</em>`;
+    }
+
+function getMechanicAdvice(c1, c2) {
+    const m1 = getMechanicSummary(c1);
+    const m2 = getMechanicSummary(c2);
+
+    if (m1.includes('Fácil') && !m2.includes('Fácil')) {
+        return ` En la parte mecánica: el <strong>${c1.make}</strong> lleva clara ventaja porque cualquier taller le mete mano fácilmente y sus piezas/refacciones son muy económicas en las refaccionarias locales.`;
+    }
+    if (!m1.includes('Fácil') && m2.includes('Fácil')) {
+        return ` En la parte mecánica: ojo con el taller, el <strong>${c2.make}</strong> será mucho más económico y sencillo de mantener a largo plazo que el <strong>${c1.make}</strong>.`;
+    }
+    if (m1.includes('premium') || m2.includes('premium')) {
+        const prem = m1.includes('premium') ? c1 : c2;
+        return ` Mantenimiento y taller: ten en cuenta que el <strong>${prem.make}</strong> es de gama premium, lo que implica mano de obra especializada y refacciones más costosas o por encargo.`;
+    }
+    return ` En la parte mecánica: ambos cuentan con motores conocidos y refacciones comerciales accesibles.`;
+}
+
+    const priceAdvantage = getPriceComparison(winner, runnerUp);
+    const legalAdvantage = getLegalStatusAnalysis(winner, runnerUp);
+    const engineAdvantage = getEngineComparison(winner, runnerUp);
+    const mechAdvantage = getMechanicAdvice(winner, runnerUp);
+
+    const term = cat1 === cat2 ? (cat1 === 'vehículo' ? 'vehículos' : (cat1 === 'tractocamión' ? 'tractocamiones' : `${cat1}s`)) : 'opciones';
+
+    const introPrefix = cat1 === cat2 ? (cat1 === 'vehículo' ? 'ambos vehículos' : (cat1 === 'tractocamión' ? 'ambos tractocamiones' : `ambos ${cat1}s`)) : 'ambas opciones';
+
+    return `
+    <div class="asesor-box" style="margin-bottom: 24px; padding: 16px; background: rgba(2, 132, 199, 0.1); border: 1px solid var(--primary-color); border-radius: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--primary-color); font-weight: bold; font-size: 0.95rem;">
+            <span class="material-symbols-rounded">psychology</span>
+            CONSEJO DEL ASESOR AMIGO
+        </div>
+        <div class="asesor-text" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-main);">
+            Analizando ${introPrefix} a fondo para ayudarte a decidir:${categoryAdvice}${priceAdvantage}${legalAdvantage}${engineAdvantage}${mechAdvantage}
+        </div>
+    </div>
+    `;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof useSmartComparatorHook === 'function') {
+            useSmartComparatorHook();
+        }
+        
+        const rateInput = document.getElementById('admin-exchange-rate');
+        if (rateInput) {
+            const savedRate = localStorage.getItem('revista_exchange_rate') || '17';
+            rateInput.value = savedRate;
+            rateInput.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (val > 0) {
+                    localStorage.setItem('revista_exchange_rate', val);
+                }
+            });
+        }
+    }, 500);
+});

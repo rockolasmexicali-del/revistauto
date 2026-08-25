@@ -1,4 +1,4 @@
-const APP_VERSION = "3.5.5"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.9.4"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     truckEngines: {
@@ -376,9 +376,7 @@ if (currentLocalVersion !== APP_VERSION) {
         'revista_autos_listings',
         'revista_autos_ads',
         'revista_autos_pending',
-        'revista_autos_saved',
-        'revista_autos_daily_visits',
-        'user_reactions'
+        'revista_autos_daily_visits'
     ];
     keysToPurge.forEach(k => localStorage.removeItem(k));
     // Actualizamos la versión local
