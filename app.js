@@ -715,13 +715,11 @@ document.addEventListener('DOMContentLoaded', () => {
         function getThumbnailUrl(listing) {
             if (!listing) return 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
             if (listing.thumbnail) return listing.thumbnail;
+            if (listing.thumb) return listing.thumb;
 
             const images = listing.images || (listing.image ? [listing.image] : []);
             const firstImage = images[0] || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80';
 
-            if (firstImage && firstImage.includes('/cars/auto_')) {
-                return firstImage.replace('/cars/auto_', '/cars/thumb_auto_');
-            }
             return firstImage;
         }
 
@@ -2228,7 +2226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let navArrows = '';
 
         return `
-            <div class="card" style="cursor: pointer;" onclick="if(!event.target.closest('.card-save-btn')) openListingDetails(${listing.id})">
+            <div class="card" data-id="${listing.id}" style="cursor: pointer;" onclick="if(!event.target.closest('.card-save-btn')) openListingDetails(${listing.id})">
                 <div class="card-img-wrapper">
                     <div class="card-img-carousel" style="overflow-x: hidden;">
                         ${imageElements}
@@ -11856,11 +11854,9 @@ document.addEventListener('click', (e) => {
 // SMART CTA: LOGIC
 // ==========================================
 function getSmartCTALogic(itemsList) {
-    console.log("getSmartCTALogic called with", itemsList ? itemsList.length : 0, "items");
     // 1. Regla de Perfil: Si el usuario ya tiene al menos 1 vehículo activo -> Ocultar
     const myActiveListings = typeof db !== 'undefined' && db.getMyListings ? db.getMyListings().filter(l => l.status === 'autorizado' || l.status === 'pendiente') : [];
     if (myActiveListings.length > 0) {
-        console.log("Hiding due to Rule 1: Profile has listings", myActiveListings.length);
         return { show: false };
     }
 
@@ -11868,7 +11864,6 @@ function getSmartCTALogic(itemsList) {
     if (window.sessionStartTime) {
         const elapsedSecs = (Date.now() - window.sessionStartTime) / 1000;
         if (elapsedSecs > 40) {
-            console.log("Hiding due to Rule 2: Fatigue > 40 secs");
             return { show: false };
         }
     }
@@ -12250,6 +12245,16 @@ function useSmartComparatorHook() {
     let longPressTimer;
     let rotationInterval;
     let isLongPress = false;
+    let lastTouchTime = 0;
+
+    // Helper to get card ID
+    function getCardId(card) {
+        if (!card) return null;
+        if (card.dataset && card.dataset.id) return card.dataset.id;
+        const btnSave = card.querySelector('.card-save-btn');
+        const idMatch = btnSave ? btnSave.getAttribute('onclick')?.match(/toggleSave\((\d+)/) : null;
+        return idMatch ? idMatch[1] : null;
+    }
 
     // Interceptar clics en la fase de captura para que NO abran el detalle cuando estamos comparando
     savedContainer.addEventListener('click', (e) => {
@@ -12263,11 +12268,7 @@ function useSmartComparatorHook() {
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        // Extraer el ID de la tarjeta
-        const btnSave = card.querySelector('.card-save-btn');
-        const idMatch = btnSave ? btnSave.getAttribute('onclick')?.match(/toggleSave\((\d+)/) : null;
-        const id = idMatch ? idMatch[1] : null;
-
+        const id = getCardId(card);
         if (id) {
             toggleCardSelection(id);
         }
@@ -12327,10 +12328,7 @@ function useSmartComparatorHook() {
         
         const cards = savedContainer.querySelectorAll('.card');
         cards.forEach(card => {
-            const btnSave = card.querySelector('.card-save-btn');
-            const idMatch = btnSave ? btnSave.getAttribute('onclick')?.match(/toggleSave\((\d+)/) : null;
-            const id = idMatch ? idMatch[1] : null;
-
+            const id = getCardId(card);
             if (window.isComparisonMode) {
                 card.classList.add('card-selectable');
                 if (id && window.selectedForComparison.includes(String(id))) {
@@ -12372,9 +12370,15 @@ function useSmartComparatorHook() {
     }
 
     function handlePressStart(e) {
+        if (e.type.startsWith('touch')) {
+            lastTouchTime = Date.now();
+        } else if (Date.now() - lastTouchTime < 600) {
+            return;
+        }
+
         isLongPress = false;
         const savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
-        if (window.isComparisonMode || savedListingsIds.length < 3) return;
+        if (window.isComparisonMode) return;
         
         btnCompare.style.transform = 'scale(0.97)';
         const progressBg = btnCompare.querySelector('.progress-bg');
@@ -12383,18 +12387,24 @@ function useSmartComparatorHook() {
             progressBg.style.width = '100%';
         }
         
-        longPressTimer = setTimeout(() => {
-            isLongPress = true;
-            if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-            openComparisonModal(savedListingsIds, true);
-            if (progressBg) {
-                progressBg.style.transition = 'none';
-                progressBg.style.width = '0%';
-            }
-        }, 1000);
+        if (savedListingsIds.length >= 3) {
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+                openComparisonModal(savedListingsIds, true);
+                if (progressBg) {
+                    progressBg.style.transition = 'none';
+                    progressBg.style.width = '0%';
+                }
+            }, 1000);
+        }
     }
 
     function handlePressEnd(e) {
+        if (!e.type.startsWith('touch') && Date.now() - lastTouchTime < 600) {
+            return;
+        }
+
         btnCompare.style.transform = 'scale(1)';
         const progressBg = btnCompare.querySelector('.progress-bg');
         if (progressBg) {
