@@ -449,6 +449,14 @@ textarea,
     gap: 4px;
 }
 
+.card-price:has(.price-negotiable) {
+    justify-content: center;
+}
+
+.card-price .price-negotiable {
+    margin: 0 auto;
+}
+
 .price-currency {
     font-size: 0.75em;
     font-weight: 600;
