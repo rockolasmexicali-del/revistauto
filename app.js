@@ -3715,7 +3715,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="detalle-price" style="margin-bottom: 0;">
                             ${usePriceFormatterHook(listing)}
                         </div>
-                        <div class="detalle-city-pulsing">${listing.city}</div>
+                        <div class="detalle-city-pulsing"><span class="material-symbols-rounded">location_on</span> ${listing.city}</div>
                     </div>
                     <button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
                         <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar

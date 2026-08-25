@@ -1495,13 +1495,23 @@ select:focus {
 }
 
 .detalle-city-pulsing {
-    font-size: 1.15rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: var(--text-color, #ffffff);
-    margin-top: 2px;
-    animation: cityPulse 1.8s infinite ease-in-out;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 4px 12px;
+    border-radius: 8px;
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    animation: cityPulse 2s infinite ease-in-out;
     transform-origin: left center;
-    display: inline-block;
+}
+
+.detalle-city-pulsing .material-symbols-rounded {
+    font-size: 1.1rem;
 }
 
 @keyframes cityPulse {
