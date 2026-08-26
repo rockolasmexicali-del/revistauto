@@ -12291,7 +12291,7 @@ function useSmartComparatorHook() {
 
     function startTextRotation(count) {
         stopTextRotation();
-        if (count >= 3 && !window.isComparisonMode) {
+        if (count >= 2 && !window.isComparisonMode) {
             rotationInterval = setInterval(() => {
                 btnCompare.classList.toggle('show-magic');
             }, 3500);
@@ -12390,7 +12390,7 @@ function useSmartComparatorHook() {
             progressBg.style.width = '100%';
         }
         
-        if (savedListingsIds.length >= 3) {
+        if (savedListingsIds.length >= 2) {
             longPressTimer = setTimeout(() => {
                 isLongPress = true;
                 if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
