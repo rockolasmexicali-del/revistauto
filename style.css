@@ -3323,9 +3323,9 @@ input:checked+.slider:before {
 /* ===== COMPARADOR INTELIGENTE & FAVORITOS ===== */
 .favoritos-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 24px;
     margin-bottom: 24px;
     flex-wrap: wrap;
 }

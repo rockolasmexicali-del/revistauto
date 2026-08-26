@@ -12309,7 +12309,7 @@ function useSmartComparatorHook() {
         const textNormal = btnCompare.querySelector('.comparar-text-normal');
         
         if (!window.isComparisonMode) {
-            textNormal.innerHTML = 'Comparar autos';
+            textNormal.innerHTML = 'Comparativa de autos';
             btnCompare.classList.remove('active-mode');
             btnCompare.style.background = '';
             btnCompare.style.color = '';
@@ -12708,6 +12708,16 @@ function parsePrice(p) {
     return parseInt(clean) || 0;
 }
 
+function isPriceATratar(car) {
+    if (!car) return true;
+    const p = typeof car === 'object' ? car.price : car;
+    if (!p) return true;
+    const str = String(p).toLowerCase();
+    if (str.includes('tratar') || str.includes('negociable') || str.includes('conveniar') || str.includes('acordar') || str.includes('pregunta') || str.includes('s/n')) return true;
+    const clean = str.replace(/[^0-9]/g, '');
+    return !clean || parseInt(clean) <= 0;
+}
+
 function getEngineSummary(car) {
     let parts = [];
     if (car.engine && car.engine !== '-' && car.engine !== 'Motor estándar') {
@@ -12930,7 +12940,7 @@ function useSmartVehicleScorerHook(car) {
     } else {
         // Autos y Camionetas (4 Niveles + Contexto de Ciudad)
         const city = (car.city || '').toLowerCase();
-        const borderCities = ['mexicali', 'tijuana', 'ensenada', 'rosarito', 'tecate', 'san luis r.c.', 'san luis rio colorado', 'nogales', 'ciudad juarez', 'juarez', 'reynosa', 'matamoros', 'nuevo laredo', 'piedras negras'];
+        const borderCities = ['mexicali', 'tijuana', 'ensenada', 'rosarito', 'tecate', 'san luis r.c.', 'san luis rio colorado', 'nogales', 'ciudad juarez', 'juarez', 'reynosa', 'matamoros', 'nuevo laredo', 'piedras negras', 'baja california sur', 'bcs', 'la paz', 'los cabos', 'cabo san lucas', 'san jose del cabo', 'loreto', 'mulege', 'santa rosalia', 'comondu'];
         const isBorderCity = borderCities.some(b => city.includes(b));
 
         if (isBorderCity || !city) {
@@ -13148,7 +13158,26 @@ function getLegalStatusAnalysis(c1, c2) {
     if (st1 === 'AMERICANO' && st2 === 'AMERICANO') {
         const q1 = getImportQualificationText(c1);
         const q2 = getImportQualificationText(c2);
-        return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra inicial más accesible.<br>• <em>Desventaja:</em> Toma en cuenta que ambos cuentan con Título Americano, por lo que aún tendrías que considerar el costo extra y trámite de <strong>legalización/regularización en el país</strong>.${q1 ? `<br>• <strong>${name1}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${name2}:</strong> ${q2}` : ''}`;
+
+        const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+        const getPriceMXN = (car) => {
+            const raw = parsePrice(car.price);
+            const curr = (car.currency || '').toLowerCase();
+            if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) return raw * rate;
+            return raw;
+        };
+        const p1 = getPriceMXN(c1);
+        const p2 = getPriceMXN(c2);
+
+        let ventajaText = 'Precio de compra inicial más accesible que un auto ya legalizado.';
+        if (p1 > 0 && p2 > 0 && p1 !== p2) {
+            const cheaper = p1 < p2 ? c1 : c2;
+            const expensive = p1 < p2 ? c2 : c1;
+            const cheapName = getCarDisplayName(cheaper, expensive);
+            ventajaText = `El <strong>${cheapName}</strong> ofrece el precio de compra más accesible de los dos.`;
+        }
+
+        return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> ${ventajaText}<br>• <em>Desventaja:</em> Se entregan con Título Americano únicamente (sin placas mexicanas ni pedimento registrado).${q1 ? `<br>• <strong>${name1}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${name2}:</strong> ${q2}` : ''}`;
     }
     if (st1 === 'FRONTERIZO' && st2 === 'FRONTERIZO') {
         return `<br><br>📑 <strong>Situación Legal (Ambos Fronterizos):</strong><br>• <em>Ventaja:</em> Circulan 100% legal en la ciudad fronteriza con sus placas locales sin pagar costo de Nacional.<br>• <em>Desventaja:</em> No pueden viajar al interior del país sin permiso temporal de aduana.`;
@@ -13158,7 +13187,7 @@ function getLegalStatusAnalysis(c1, c2) {
     }
 
     const city = ((c1.city || c2.city || '')).toLowerCase();
-    const borderCities = ['mexicali', 'tijuana', 'ensenada', 'rosarito', 'tecate', 'san luis r.c.', 'san luis rio colorado', 'nogales', 'ciudad juarez', 'juarez', 'reynosa', 'matamoros', 'nuevo laredo', 'piedras negras'];
+    const borderCities = ['mexicali', 'tijuana', 'ensenada', 'rosarito', 'tecate', 'san luis r.c.', 'san luis rio colorado', 'nogales', 'ciudad juarez', 'juarez', 'reynosa', 'matamoros', 'nuevo laredo', 'piedras negras', 'baja california sur', 'bcs', 'la paz', 'los cabos', 'cabo san lucas', 'san jose del cabo', 'loreto', 'mulege', 'santa rosalia', 'comondu'];
     const isBorderCity = borderCities.some(b => city.includes(b));
 
     const nac = st1 === 'NACIONAL' ? c1 : (st2 === 'NACIONAL' ? c2 : null);
@@ -13291,6 +13320,16 @@ function getEngineComparison(c1, c2) {
 }
 
 function getPriceComparison(c1, c2) {
+    if (isPriceATratar(c1) || isPriceATratar(c2)) {
+        if (isPriceATratar(c1) && isPriceATratar(c2)) {
+            return ` Toma en cuenta que ambos vehículos tienen su <strong>precio a tratar</strong> (requieren negociación directa con el vendedor).`;
+        }
+        const tratarCar = isPriceATratar(c1) ? c1 : c2;
+        const otherCar = isPriceATratar(c1) ? c2 : c1;
+        const tName = getCarDisplayName(tratarCar, otherCar);
+        return ` Toma en cuenta que el <strong>${tName}</strong> tiene su precio marcado como <strong>a tratar</strong>, por lo que requiere negociación directa con el vendedor.`;
+    }
+
     const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
 
     const getPriceInMXN = (car) => {
@@ -13310,21 +13349,45 @@ function getPriceComparison(c1, c2) {
             const cheaper = p1 < p2 ? c1 : c2;
             const expensive = p1 < p2 ? c2 : c1;
             const cheapName = getCarDisplayName(cheaper, expensive);
-            return ` Hablando de dinero, el <strong>${cheapName}</strong> te ahorra directo <strong>$${diff.toLocaleString()} ${c1.currency}</strong> de entrada.`;
+            const expName = getCarDisplayName(expensive, cheaper);
+
+            const yCheap = parseInt(cheaper.year) || 0;
+            const yExp = parseInt(expensive.year) || 0;
+            let yearText = '';
+            if (yCheap > 0 && yExp > 0) {
+                if (yCheap > yExp) {
+                    const diffY = yCheap - yExp;
+                    yearText = ` y además es <strong>${diffY} año${diffY > 1 ? 's' : ''} más nuevo</strong> (${yCheap} vs ${yExp})`;
+                } else if (yCheap < yExp) {
+                    const diffY = yExp - yCheap;
+                    yearText = `, aunque el <strong>${expName}</strong> es ${diffY} año${diffY > 1 ? 's' : ''} más reciente`;
+                }
+            }
+
+            return ` Hablando de dinero y modelo, el <strong>${cheapName}</strong> te ahorra directo <strong>$${diff.toLocaleString()} ${c1.currency}</strong> de entrada${yearText}.`;
         }
     } else if (c1.currency && c2.currency && c1.currency !== c2.currency) {
         const mxn1 = getPriceInMXN(c1);
         const mxn2 = getPriceInMXN(c2);
         if (mxn1 > 0 && mxn2 > 0) {
             const diffPct = Math.abs(mxn1 - mxn2) / Math.max(mxn1, mxn2);
+            const cheaper = mxn1 < mxn2 ? c1 : c2;
+            const expensive = mxn1 < mxn2 ? c2 : c1;
+            const cheapName = getCarDisplayName(cheaper, expensive);
+            const expName = getCarDisplayName(expensive, cheaper);
+
+            const yCheap = parseInt(cheaper.year) || 0;
+            const yExp = parseInt(expensive.year) || 0;
+            let yearText = '';
+            if (yCheap > 0 && yExp > 0 && yCheap > yExp) {
+                const diffY = yCheap - yExp;
+                yearText = ` y además es <strong>${diffY} año${diffY > 1 ? 's' : ''} más nuevo</strong> (${yCheap} vs ${yExp})`;
+            }
+
             if (diffPct <= 0.12) {
-                return ` Tomando el tipo de cambio ($${rate} MXN/USD), ambos andan más o menos parejos en precio (en un rango de presupuesto muy similar).`;
+                return ` Tomando el tipo de cambio ($${rate} MXN/USD), ambos andan más o menos parejos en precio${yearText}.`;
             } else {
-                const cheaper = mxn1 < mxn2 ? c1 : c2;
-                const expensive = mxn1 < mxn2 ? c2 : c1;
-                const cheapName = getCarDisplayName(cheaper, expensive);
-                const expName = getCarDisplayName(expensive, cheaper);
-                return ` Tomando el tipo de cambio ($${rate} MXN/USD), el <strong>${cheapName}</strong> resulta ser una opción más económica de entrada que el <strong>${expName}</strong>.`;
+                return ` Tomando el tipo de cambio ($${rate} MXN/USD), el <strong>${cheapName}</strong> resulta ser una opción más económica de entrada que el <strong>${expName}</strong>${yearText}.`;
             }
         }
     }
@@ -13401,22 +13464,26 @@ function generateSmartVerdict(cars, isMagicVerdict) {
         }
 
         // 3. Ahorro de Precio
-        const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
-        const getPriceMXN = (c) => {
-            const raw = parsePrice(c.price);
-            const curr = (c.currency || '').toLowerCase();
-            if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) return raw * rate;
-            return raw;
-        };
+        if (!isPriceATratar(winner) && !isPriceATratar(runnerUp)) {
+            const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+            const getPriceMXN = (c) => {
+                const raw = parsePrice(c.price);
+                const curr = (c.currency || '').toLowerCase();
+                if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) return raw * rate;
+                return raw;
+            };
 
-        const winPriceMXN = getPriceMXN(winner);
-        const runPriceMXN = getPriceMXN(runnerUp);
+            const winPriceMXN = getPriceMXN(winner);
+            const runPriceMXN = getPriceMXN(runnerUp);
 
-        if (winPriceMXN < runPriceMXN) {
-            const diffUSD = Math.round((runPriceMXN - winPriceMXN) / rate);
-            if (diffUSD > 100) {
-                reasons.push(`💵 <strong>Ahorro Directo:</strong> Te ahorra aproximadamente $${diffUSD.toLocaleString('en-US')} USD directo en el precio de compra frente a las otras opciones.`);
+            if (winPriceMXN > 0 && runPriceMXN > 0 && winPriceMXN < runPriceMXN) {
+                const diffUSD = Math.round((runPriceMXN - winPriceMXN) / rate);
+                if (diffUSD > 100) {
+                    reasons.push(`💵 <strong>Ahorro Directo:</strong> Te ahorra aproximadamente $${diffUSD.toLocaleString('en-US')} USD directo en el precio de compra frente a las otras opciones.`);
+                }
             }
+        } else if (isPriceATratar(winner)) {
+            reasons.push(`💬 <strong>Precio a Tratar:</strong> Su precio requiere negociación directa con el vendedor.`);
         }
 
         // 4. Mecánica y Refacciones
@@ -13488,19 +13555,21 @@ function getMechanicAdvice(c1, c2) {
     const name1 = getCarDisplayName(c1, c2);
     const name2 = getCarDisplayName(c2, c1);
 
+    let text = '';
     if (m1.includes('Fácil') && !m2.includes('Fácil')) {
-        return ` En la parte mecánica: el <strong>${name1}</strong> lleva clara ventaja porque cualquier taller le mete mano fácilmente y sus piezas/refacciones son muy económicas en las refaccionarias locales.`;
-    }
-    if (!m1.includes('Fácil') && m2.includes('Fácil')) {
-        return ` En la parte mecánica: ojo con el taller, el <strong>${name2}</strong> será mucho más económico y sencillo de mantener a largo plazo que el <strong>${name1}</strong>.`;
-    }
-    if (m1.includes('premium') || m2.includes('premium')) {
+        text = `El <strong>${name1}</strong> lleva clara ventaja porque cualquier taller le mete mano fácilmente y sus piezas/refacciones son muy económicas en las refaccionarias locales.`;
+    } else if (!m1.includes('Fácil') && m2.includes('Fácil')) {
+        text = `Ojo con el taller, el <strong>${name2}</strong> será mucho más económico y sencillo de mantener a largo plazo que el <strong>${name1}</strong>.`;
+    } else if (m1.includes('premium') || m2.includes('premium')) {
         const prem = m1.includes('premium') ? c1 : c2;
         const other = m1.includes('premium') ? c2 : c1;
         const premName = getCarDisplayName(prem, other);
-        return ` Mantenimiento y taller: ten en cuenta que el <strong>${premName}</strong> es de gama premium, lo que implica mano de obra especializada y refacciones más costosas o por encargo.`;
+        text = `Ten en cuenta que el <strong>${premName}</strong> es de gama premium, lo que implica mano de obra especializada y refacciones más costosas o por encargo.`;
+    } else {
+        text = `Ambos cuentan con motores conocidos y refacciones comerciales accesibles.`;
     }
-    return ` En la parte mecánica: ambos cuentan con motores conocidos y refacciones comerciales accesibles.`;
+
+    return `<br><br>🛠️ <strong>Mantenimiento y Piezas Mecánicas:</strong><br>• ${text}`;
 }
 
     const priceAdvantage = getPriceComparison(winner, runnerUp);
