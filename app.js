@@ -12369,6 +12369,8 @@ function useSmartComparatorHook() {
         }
     }
 
+    let pressStartTime = 0;
+
     function handlePressStart(e) {
         if (e.type.startsWith('touch')) {
             lastTouchTime = Date.now();
@@ -12377,13 +12379,14 @@ function useSmartComparatorHook() {
         }
 
         isLongPress = false;
+        pressStartTime = Date.now();
         const savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
         if (window.isComparisonMode) return;
         
         btnCompare.style.transform = 'scale(0.97)';
         const progressBg = btnCompare.querySelector('.progress-bg');
         if (progressBg) {
-            progressBg.style.transition = 'width 1s linear';
+            progressBg.style.transition = 'width 0.8s linear';
             progressBg.style.width = '100%';
         }
         
@@ -12396,7 +12399,7 @@ function useSmartComparatorHook() {
                     progressBg.style.transition = 'none';
                     progressBg.style.width = '0%';
                 }
-            }, 1000);
+            }, 800);
         }
     }
 
@@ -12405,6 +12408,7 @@ function useSmartComparatorHook() {
             return;
         }
 
+        const pressDuration = Date.now() - pressStartTime;
         btnCompare.style.transform = 'scale(1)';
         const progressBg = btnCompare.querySelector('.progress-bg');
         if (progressBg) {
@@ -12413,7 +12417,8 @@ function useSmartComparatorHook() {
         }
         clearTimeout(longPressTimer);
         
-        if (!isLongPress && e.type.indexOf('leave') === -1 && e.type.indexOf('cancel') === -1) {
+        // Solo cambiar a modo manual 'Toca el primer auto' en un CLIC RÁPIDO (< 400ms) y NO en toque prolongado
+        if (!isLongPress && pressDuration < 400 && e.type.indexOf('leave') === -1 && e.type.indexOf('cancel') === -1) {
             if (!window.isComparisonMode) {
                 window.isComparisonMode = true;
                 window.selectedForComparison = [];
@@ -12489,14 +12494,10 @@ function openComparisonModal(ids, isMagicVerdict = false) {
         };
 
         const getScore = (car) => {
-            let score = 0;
-            score += car.year * 10;
-            score -= (parseMileage(car.mileage) / 1000);
-            const m = (car.make || '').toLowerCase();
-            if (['honda', 'toyota'].includes(m)) score += 500;
-            const p = getPriceInMXN(car);
-            if (p > 0) score -= (p / 2000);
-            return score;
+            if (typeof window.useSmartVehicleScorerHook === 'function') {
+                return window.useSmartVehicleScorerHook(car);
+            }
+            return useSmartVehicleScorerHook(car);
         };
 
         const isC1Winner = getScore(c1) >= getScore(c2);
@@ -12511,6 +12512,14 @@ function openComparisonModal(ids, isMagicVerdict = false) {
         const cat2 = getVehicleCategory(c2);
         const engineLabel1 = cat1 === 'tractocamión' ? '🚛 MOTOR / DIESEL' : (cat1 === 'embarcación' ? '⚓ MOTOR' : '⛽ MOTOR / GASOLINA');
         const engineLabel2 = cat2 === 'tractocamión' ? '🚛 MOTOR / DIESEL' : (cat2 === 'embarcación' ? '⚓ MOTOR' : '⛽ MOTOR / GASOLINA');
+
+        const m1Val = parseMileage(c1.mileage);
+        const m2Val = parseMileage(c2.mileage);
+        const m1Display = typeof window.useMileageFormatterHook === 'function' ? window.useMileageFormatterHook(c1.mileage) : (c1.mileage || 'S/N');
+        const m2Display = typeof window.useMileageFormatterHook === 'function' ? window.useMileageFormatterHook(c2.mileage) : (c2.mileage || 'S/N');
+
+        const isM1Better = m1Val !== 999999 && (m2Val === 999999 || m1Val < m2Val);
+        const isM2Better = m2Val !== 999999 && (m1Val === 999999 || m2Val < m1Val);
 
         gridHTML = `
         <div class="comparador-grid">
@@ -12529,7 +12538,7 @@ function openComparisonModal(ids, isMagicVerdict = false) {
                 </div>
                 <div class="comparador-fila">
                     <div class="comparador-label">Millas / KM</div>
-                    <div class="comparador-value ${parseMileage(c1.mileage) < parseMileage(c2.mileage) ? 'highlight' : ''}">${c1.mileage || 'S/N'} ${parseMileage(c1.mileage) < parseMileage(c2.mileage) ? '⭐' : ''}</div>
+                    <div class="comparador-value ${isM1Better ? 'highlight' : ''}">${m1Display} ${isM1Better ? '⭐' : ''}</div>
                 </div>
                 <div class="comparador-fila">
                     <div class="comparador-label">${engineLabel1}</div>
@@ -12568,7 +12577,7 @@ function openComparisonModal(ids, isMagicVerdict = false) {
                 </div>
                 <div class="comparador-fila">
                     <div class="comparador-label">Millas / KM</div>
-                    <div class="comparador-value ${parseMileage(c2.mileage) < parseMileage(c1.mileage) ? 'highlight' : ''}">${c2.mileage || 'S/N'} ${parseMileage(c2.mileage) < parseMileage(c1.mileage) ? '⭐' : ''}</div>
+                    <div class="comparador-value ${isM2Better ? 'highlight' : ''}">${m2Display} ${isM2Better ? '⭐' : ''}</div>
                 </div>
                 <div class="comparador-fila">
                     <div class="comparador-label">${engineLabel2}</div>
@@ -12595,8 +12604,96 @@ function openComparisonModal(ids, isMagicVerdict = false) {
         `;
     }
 
-    document.getElementById('comparador-content').innerHTML = verdictHTML + gridHTML;
+    const advisorTitle = isMagicVerdict ? 'EL VEREDICTO DE TU ASESOR REVISTAUTO' : 'CONSEJO DEL ASESOR AMIGO';
+    const initialMsg = isMagicVerdict ? '🧠 Tu Asesor RevistaAuto está analizando todos tus vehículos elegidos' : '🧠 El Asesor Amigo está revisando ambos vehículos a fondo';
+
+    const thinkingHTML = `
+    <style>
+    @keyframes advisorSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes typingPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    @keyframes fadeInVerdict { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes fillProgress { 0% { width: 0%; } 100% { width: 100%; } }
+    @keyframes stepFade { 0% { opacity: 0; transform: translateY(3px); } 100% { opacity: 1; transform: translateY(0); } }
+    
+    .advisor-spin-anim { animation: advisorSpin 2.5s linear infinite; display: inline-block; }
+    .typing-dot-1 { animation: typingPulse 1.2s infinite 0s; }
+    .typing-dot-2 { animation: typingPulse 1.2s infinite 0.2s; }
+    .typing-dot-3 { animation: typingPulse 1.2s infinite 0.4s; }
+    .fade-in-verdict { animation: fadeInVerdict 0.4s ease-out forwards; }
+    .advisor-step-anim { animation: stepFade 0.35s ease-out forwards; }
+    .advisor-bar-fill { animation: fillProgress 3.2s linear forwards; height: 4px; background: linear-gradient(90deg, #38bdf8, #10b981); border-radius: 4px; }
+    </style>
+    <div id="asesor-thinking-container">
+        <div class="asesor-box" style="margin-bottom: 24px; padding: 20px; background: rgba(2, 132, 199, 0.12); border: 1.5px dashed var(--primary-color); border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 0 25px rgba(2, 132, 199, 0.15);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--primary-color); font-weight: bold; font-size: 0.95rem;">
+                    <span class="material-symbols-rounded advisor-spin-anim">psychology</span>
+                    ${advisorTitle}
+                </div>
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary-color); background: rgba(2, 132, 199, 0.2); padding: 2px 10px; border-radius: 12px;">
+                    Analizando opciones...
+                </div>
+            </div>
+            
+            <div id="asesor-thinking-msg" class="advisor-step-anim" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-main); font-weight: 500; display: flex; align-items: center; gap: 6px; min-height: 48px;">
+                <span>${initialMsg}</span>
+                <span style="display: inline-flex; font-weight: 800; color: var(--primary-color);">
+                    <span class="typing-dot-1">.</span><span class="typing-dot-2">.</span><span class="typing-dot-3">.</span>
+                </span>
+            </div>
+            
+            <div style="margin-top: 14px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; height: 4px;">
+                <div class="advisor-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+    `;
+
+    document.getElementById('comparador-content').innerHTML = thinkingHTML + gridHTML;
     document.getElementById('modal-comparador').classList.add('active');
+
+    if (window._asesorTimers) {
+        window._asesorTimers.forEach(t => clearTimeout(t));
+    }
+    window._asesorTimers = [];
+
+    const dots = `<span style="display: inline-flex; font-weight: 800; color: var(--primary-color);"><span class="typing-dot-1">.</span><span class="typing-dot-2">.</span><span class="typing-dot-3">.</span></span>`;
+
+    // Paso 1 (0.9s): Motores y refacciones
+    window._asesorTimers.push(setTimeout(() => {
+        const msgEl = document.getElementById('asesor-thinking-msg');
+        if (msgEl) {
+            msgEl.className = 'advisor-step-anim';
+            msgEl.innerHTML = `<span>📊 Comparando motores, cilindros y facilidad de piezas</span>${dots}`;
+        }
+    }, 900));
+
+    // Paso 2 (1.8s): Año, millaje y estatus legal
+    window._asesorTimers.push(setTimeout(() => {
+        const msgEl = document.getElementById('asesor-thinking-msg');
+        if (msgEl) {
+            msgEl.className = 'advisor-step-anim';
+            msgEl.innerHTML = `<span>⚖️ Evaluando año, kilometraje y estatus legal de importación</span>${dots}`;
+        }
+    }, 1800));
+
+    // Paso 3 (2.6s): Formulando mejor recomendación
+    window._asesorTimers.push(setTimeout(() => {
+        const msgEl = document.getElementById('asesor-thinking-msg');
+        if (msgEl) {
+            msgEl.className = 'advisor-step-anim';
+            msgEl.innerHTML = `<span>💡 Formulando la mejor recomendación para cuidar tu inversión</span>${dots}`;
+        }
+    }, 2600));
+
+    // Paso Final (3.2s): Revelar veredicto completo
+    window._asesorTimers.push(setTimeout(() => {
+        const container = document.getElementById('asesor-thinking-container');
+        if (container) {
+            container.className = 'fade-in-verdict';
+            container.innerHTML = verdictHTML;
+        }
+    }, 3200));
 }
 
 function parseMileage(m) {
@@ -12660,28 +12757,87 @@ function getTransmissionSummary(car) {
     return 'Automática';
 }
 
-function getVehicleCategory(car) {
-    const rawText = ((car.category || '') + ' ' + (car.type || '') + ' ' + (car.truckType || '') + ' ' + (car.make || '') + ' ' + (car.model || '') + ' ' + (car.title || '') + ' ' + (car.engine || '')).toLowerCase();
-    
-    const isCamioneta = rawText.includes('camioneta') || rawText.includes('suv') || rawText.includes('pickup') || rawText.includes('pick-up');
+function useVehicleCategoryHook(car) {
+    if (!car) return 'vehículo';
 
-    if (!isCamioneta && (rawText.includes('kenworth') || rawText.includes('freightliner') || rawText.includes('peterbilt') || rawText.includes('mack') || rawText.includes('tracto') || rawText.includes('camion') || rawText.includes('camión') || rawText.includes('trailer') || rawText.includes('torton') || rawText.includes('rabon') || rawText.includes('rabón') || rawText.includes('chasis') || rawText.includes('autobus') || rawText.includes('autobús') || rawText.includes('dd15') || rawText.includes('dd13') || rawText.includes('isx') || rawText.includes('cummins'))) {
+    // Prioridad 1: Normalizar tipo / categoría oficial de la ficha del catálogo
+    const rawType = (car.type || car.category || car.truckType || '').trim().toLowerCase();
+
+    if (['camión', 'camion', 'camiones', 'tractocamión', 'tractocamion', 'tractocamiones', 'rabón', 'rabon', 'torton', 'chasis', 'autobús', 'autobus'].includes(rawType)) {
         return 'tractocamión';
     }
-    if (rawText.includes('moto') || rawText.includes('italika') || rawText.includes('ktm') || rawText.includes('kymco') || rawText.includes('harley') || rawText.includes('yamaha') || rawText.includes('honda cbr')) {
+    if (['camioneta', 'camionetas', 'pickup', 'pick-up', 'suv', 'van / furgoneta', 'van', 'furgoneta'].includes(rawType)) {
+        return 'camioneta';
+    }
+    if (['motocicleta', 'moto', 'motos'].includes(rawType)) {
         return 'motocicleta';
     }
-    if (rawText.includes('rzr') || rawText.includes('razor') || rawText.includes('can-am') || rawText.includes('polaris') || rawText.includes('utv') || rawText.includes('cuatrimoto')) {
+    if (['cuatrimoto / atv', 'cuatrimoto', 'atv', 'utv', 'rzr', 'razor', 'can-am', 'canam', 'polaris'].includes(rawType)) {
         return 'vehículo recreativo/off-road';
     }
-    if (rawText.includes('lancha') || rawText.includes('barco') || rawText.includes('yate') || rawText.includes('jet ski') || rawText.includes('jetski') || rawText.includes('sea-doo') || rawText.includes('waverunner')) {
+    if (['barco', 'lancha', 'embarcación', 'embarcacion', 'yate', 'jet ski', 'jetski'].includes(rawType)) {
         return 'embarcación';
     }
+    if (['sedán', 'sedan', 'hatchback', 'deportivo', 'auto', 'automóvil', 'automovil'].includes(rawType)) {
+        return 'vehículo';
+    }
+
+    // Prioridad 2: Fallback por marca/modelo o palabras clave con límites de palabra estricto (\b)
+    const makeModel = ((car.make || '') + ' ' + (car.model || '') + ' ' + (car.title || '')).toLowerCase();
+
+    if (/\b(kenworth|freightliner|peterbilt|mack|cascadia|prostar|lt series|w900|t680|t880|m2 106)\b/i.test(makeModel)) {
+        return 'tractocamión';
+    }
+    if (/\b(ktm|kymco|harley|yamaha|italika|ducati|triumph|bajaj|cbr600rr|cbr1000rr|ninja|gixxer|pulsar)\b/i.test(makeModel)) {
+        return 'motocicleta';
+    }
+    if (/\b(sea-doo|seadoo|waverunner|aquatrax)\b/i.test(makeModel)) {
+        return 'embarcación';
+    }
+    if (/\b(camioneta|suv|pickup|pick-up)\b/i.test(makeModel)) {
+        return 'camioneta';
+    }
+    if (/\b(tractocamion|tractocamión|torton|rabon|rabón)\b/i.test(makeModel)) {
+        return 'tractocamión';
+    }
+    if (/\b(motocicleta|cuatrimoto)\b/i.test(makeModel)) {
+        return 'motocicleta';
+    }
+
     return 'vehículo';
+}
+window.useVehicleCategoryHook = useVehicleCategoryHook;
+
+function getVehicleCategory(car) {
+    if (typeof window.useVehicleCategoryHook === 'function') {
+        return window.useVehicleCategoryHook(car);
+    }
+    return useVehicleCategoryHook(car);
 }
 
 function getLegalText(car) {
     return car.legal || car.legalStatus || car.legal_status || car.situacion || car.legal_type || '';
+}
+
+function getImportCostRange(car) {
+    const cat = getVehicleCategory(car);
+    const textMotor = ((car.title || '') + ' ' + (car.make || '') + ' ' + (car.model || '') + ' ' + (car.engine || '') + ' ' + (car.cylinders || '') + ' ' + (car.description || '')).toLowerCase();
+    
+    const isSUVOrTruck = cat === 'camioneta' || cat === 'suv' || cat === 'pick-up' || cat === 'tractocamión' || textMotor.includes('suv') || textMotor.includes('truck') || textMotor.includes('pick') || textMotor.includes('8 cil') || textMotor.includes('v8');
+
+    if (isSUVOrTruck) {
+        return {
+            frontUSD: [1450, 1600],
+            nacUSD: [1700, 1950],
+            isSUV: true
+        };
+    } else {
+        return {
+            frontUSD: [1250, 1450],
+            nacUSD: [1650, 1800],
+            isSUV: false
+        };
+    }
 }
 
 function getImportQualificationText(car) {
@@ -12696,7 +12852,7 @@ function getImportQualificationText(car) {
     if (!year) return '';
 
     const now = new Date();
-    const currentMonth = now.getMonth(); // 0 = Enero, 9 = Octubre, 10 = Noviembre
+    const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
     let baseYear = currentYear;
@@ -12704,9 +12860,6 @@ function getImportQualificationText(car) {
         baseYear += 1;
     }
 
-    // Regla Oficial:
-    // Fronterizo: 2016 al 2021 (baseYear - 10 a baseYear - 5)
-    // Nacional: 2017 y 2018 (baseYear - 9 a baseYear - 8)
     const minFront = baseYear - 10;
     const maxFront = baseYear - 5;
     const minNac = baseYear - 9;
@@ -12715,7 +12868,6 @@ function getImportQualificationText(car) {
     const isNacional = year >= minNac && year <= maxNac;
     const isFronterizo = year >= minFront && year <= maxFront;
 
-    // Alerta dinámica en Octubre (Mes 9)
     let warningText = '';
     if (currentMonth === 9 && (year === minFront || year === minNac)) {
         const targetDate = new Date(currentYear, 10, 1);
@@ -12734,18 +12886,178 @@ function getImportQualificationText(car) {
     const nacLabel = isTruck ? 'Nacional VU y Nacional A1' : (isRecreational ? 'Nacional' : 'Nacional y Fronterizo');
     const frontLabel = isTruck ? 'Nacional A1' : (isRecreational ? 'Nacional' : 'Fronterizo');
 
+    const aduanaNote = `<br>📋 <em>Nota de importación:</em> Para conocer impuestos y honorarios exactos, te recomendamos consultar directamente con un <strong>Agente Aduanal</strong>.`;
+
     if (isNacional && isFronterizo) {
-        return `<br>🇲🇽 <strong>Califica para ${nacLabel}:</strong> Por su año (${year}).${warningText}`;
+        return `<strong>Califica para ${nacLabel} por su año (${year}).</strong>${aduanaNote}${warningText}`;
     }
     if (isFronterizo) {
-        return `<br>✅ <strong>Califica para ${frontLabel}:</strong> Por su año (${year}).${warningText}`;
+        return `✅ <strong>Califica para ${frontLabel} por su año (${year}).</strong>${aduanaNote}${warningText}`;
     }
     if (!isNacional && !isFronterizo) {
-        if (currentMonth >= 10 && (year < minFront)) {
-            return `<br>❌ <strong>NO califica para Decreto/Importación Regular:</strong> Por su año (${year}), a partir del 1 de Noviembre este vehículo quedó fuera del Decreto vigente. Consultar con un Agente Aduanal si existe algún trámite especial.`;
+        return `❌ <strong>Este auto ya NO pasa importación</strong> (por su año ${year} no califica para nacional ni Fronterizo). Consultar con una Agencia Aduanal para ver si existe algún trámite especial o solución.`;
+    }
+    return `⚠️ <strong>Trámite de Importación:</strong> Por su año (${year}), consultar Decreto o Agente Aduanal.`;
+}
+
+function useSmartVehicleScorerHook(car) {
+    if (!car) return 0;
+    let score = 0;
+
+    const cat = typeof window.useVehicleCategoryHook === 'function' 
+        ? window.useVehicleCategoryHook(car) 
+        : getVehicleCategory(car);
+
+    // 1. ESTATUS LEGAL (Jerarquía de 4 niveles para Autos, Tractos y Recreativos)
+    const rawLegal = (getLegalText(car) || '').toLowerCase().trim();
+    const isTruck = cat === 'tractocamión';
+    const isRecreational = ['motocicleta', 'vehículo recreativo/off-road', 'embarcación'].includes(cat);
+
+    if (isTruck) {
+        if (rawLegal.includes('vu') || rawLegal.includes('libre')) {
+            score += 500; // Nacional VU (Libre todo México)
+        } else if (rawLegal.includes('a1') || rawLegal.includes('fronterizo')) {
+            score += 200; // Nacional A1 (Solo Frontera)
+        } else {
+            score += 50;  // Americano
+        }
+    } else if (isRecreational) {
+        if (rawLegal.includes('nacional') || rawLegal.includes('decreto') || rawLegal.includes('regularizado')) {
+            score += 400; // Nacional
+        } else {
+            score += 50;  // Americano
+        }
+    } else {
+        // Autos y Camionetas (4 Niveles + Contexto de Ciudad)
+        const city = (car.city || '').toLowerCase();
+        const borderCities = ['mexicali', 'tijuana', 'ensenada', 'rosarito', 'tecate', 'san luis r.c.', 'san luis rio colorado', 'nogales', 'ciudad juarez', 'juarez', 'reynosa', 'matamoros', 'nuevo laredo', 'piedras negras'];
+        const isBorderCity = borderCities.some(b => city.includes(b));
+
+        if (isBorderCity || !city) {
+            // EN ZONA FRONTERIZA:
+            // 1. Decreto (+500 pts): El rey en la frontera (circula en todo México y su costo de trámite fue económico)
+            // 2. Fronterizo (+400 pts): Excelente para uso diario local por costo de importación accesible
+            // 3. Nacional (+320 pts): Menos conveniente en frontera por ser más caro de comprar o nacionalizar
+            if (rawLegal.includes('decreto') || rawLegal.includes('regularizado')) {
+                score += 500; // Decreto (Máximo valor en frontera)
+            } else if (rawLegal.includes('fronterizo')) {
+                score += 400; // Fronterizo (Muy conveniente y accesible para la frontera)
+            } else if (rawLegal.includes('agencia') || rawLegal.includes('nacional')) {
+                score += 320; // Nacional (Menos atractivo en frontera por costo elevado de nacionalización)
+            } else {
+                // Americano: Verificar si califica por su año
+                const carYr = parseInt(car.year) || 0;
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+                let baseYear = currentYear;
+                if (currentMonth >= 10) baseYear += 1;
+                const minFront = baseYear - 10;
+                const maxFront = baseYear - 5;
+                const minNac = baseYear - 9;
+                const maxNac = baseYear - 8;
+                const qualifies = (carYr >= minFront && carYr <= maxFront) || (carYr >= minNac && carYr <= maxNac);
+
+                if (!qualifies) {
+                    score -= 1000; // Penalización máxima porque YA NO SE PUEDE IMPORTAR por su año
+                } else {
+                    score -= 100; // Americano que sí califica para trámite
+                }
+            }
+        } else {
+            // EN EL INTERIOR DE LA REPÚBLICA:
+            if (rawLegal.includes('agencia') || (rawLegal.includes('nacional') && !rawLegal.includes('decreto'))) {
+                score += 500; // Nacional de Agencia (Máximo puntaje en el interior)
+            } else if (rawLegal.includes('decreto') || rawLegal.includes('regularizado')) {
+                score += 400; // Decreto (Circula libre por todo el país)
+            } else {
+                // Tanto Fronterizo como Americano sufren penalización severa (-1000 pts) en el interior
+                score -= 1000;
+            }
         }
     }
-    return `<br>⚠️ <strong>Trámite de Importación:</strong> Por su año (${year}), consultar Decreto o Agente Aduanal.`;
+
+    // 2. MOTOR Y CILINDROS (Ahorro de Gasolina)
+    const textMotor = ((car.title || '') + ' ' + (car.engine || '') + ' ' + (car.cylinders || '') + ' ' + (car.description || '')).toLowerCase();
+    let cyl = 0;
+    if (textMotor.includes('3 cil') || textMotor.includes('3-cil') || String(car.cylinders).includes('3')) cyl = 3;
+    else if (textMotor.includes('4 cil') || textMotor.includes('4-cil') || String(car.cylinders).includes('4')) cyl = 4;
+    else if (textMotor.includes('6 cil') || textMotor.includes('6-cil') || String(car.cylinders).includes('6')) cyl = 6;
+    else if (textMotor.includes('8 cil') || textMotor.includes('8-cil') || String(car.cylinders).includes('8')) cyl = 8;
+
+    if (cyl === 3 || cyl === 4 || textMotor.includes('turbo')) {
+        score += 300; // Ahorro máximo / Eficiencia
+    } else if (cyl === 6) {
+        score += 150; // Equilibrio
+    } else if (cyl === 8) {
+        score += 50;  // Consumo elevado
+    } else {
+        score += 150; // Neutral
+    }
+
+    // 3. LUJO Y GAMA ALTA
+    const make = (car.make || '').toLowerCase();
+    const premiumMakes = ['bmw', 'mercedes-benz', 'mercedes', 'audi', 'porsche', 'lexus', 'cadillac', 'lincoln', 'infiniti', 'acura', 'cupra', 'jaguar', 'land rover', 'mustang'];
+    if (premiumMakes.includes(make) || textMotor.includes('lujo') || textMotor.includes('equipada') || textMotor.includes('equipped')) {
+        score += 250;
+    }
+
+    // 4. AIRE ACONDICIONADO (A/C)
+    if (car.ac === 'Si' || car.ac === 'Sí' || car.ac === true || textMotor.includes('a/c') || textMotor.includes('aire')) {
+        score += 150;
+    }
+
+    // 5. AÑO DEL VEHÍCULO
+    const year = parseInt(car.year) || 2000;
+    if (year > 2000) {
+        score += (year - 2000) * 50; // +50 pts por año reciente
+    }
+
+    // 6. KILOMETRAJE / MILLAS (- Puntos por desgaste o por ocultar kilometraje S/N)
+    const mileage = parseMileage(car.mileage);
+    if (mileage > 0 && mileage !== 999999) {
+        score -= Math.floor(mileage / 1000);
+    } else {
+        score -= 200; // Penalización severa por no publicar kilometraje (S/N)
+    }
+
+    // 7. PRECIO REAL EN MXN (- Puntos por costo de compra)
+    const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+    const rawPrice = parsePrice(car.price);
+    const curr = (car.currency || '').toLowerCase();
+    let priceMXN = rawPrice;
+    if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) {
+        priceMXN = rawPrice * rate;
+    }
+    if (rawLegal.includes('americano') || (!rawLegal.includes('nacional') && !rawLegal.includes('decreto') && !rawLegal.includes('fronterizo'))) {
+        const costs = getImportCostRange(car);
+        const avgImportUSD = Math.round((costs.frontUSD[0] + costs.frontUSD[1]) / 2);
+        priceMXN += (avgImportUSD * rate);
+    }
+    if (priceMXN > 0) {
+        score -= Math.floor(priceMXN / 2000);
+    }
+
+    return score;
+}
+window.useSmartVehicleScorerHook = useSmartVehicleScorerHook;
+
+function useCarDisplayNameHook(car, otherCar = null) {
+    if (!car) return 'Vehículo';
+    const model = (car.model || '').trim();
+    const make = (car.make || '').trim();
+    if (model) {
+        return model;
+    }
+    return make || 'Vehículo';
+}
+window.useCarDisplayNameHook = useCarDisplayNameHook;
+
+function getCarDisplayName(car, otherCar = null) {
+    if (typeof window.useCarDisplayNameHook === 'function') {
+        return window.useCarDisplayNameHook(car, otherCar);
+    }
+    return useCarDisplayNameHook(car, otherCar);
 }
 
 function getLegalStatusAnalysis(c1, c2) {
@@ -12767,6 +13079,9 @@ function getLegalStatusAnalysis(c1, c2) {
     const st1 = normalizeStatus(c1);
     const st2 = normalizeStatus(c2);
 
+    const name1 = getCarDisplayName(c1, c2);
+    const name2 = getCarDisplayName(c2, c1);
+
     const txt1 = getLegalText(c1) || (st1 === 'NACIONAL' ? 'Nacional' : (st1 === 'FRONTERIZO' ? 'Fronterizo' : 'Americano'));
     const txt2 = getLegalText(c2) || (st2 === 'NACIONAL' ? 'Nacional' : (st2 === 'FRONTERIZO' ? 'Fronterizo' : 'Americano'));
 
@@ -12781,16 +13096,18 @@ function getLegalStatusAnalysis(c1, c2) {
         if (amer1 && amer2) {
             const q1 = getImportQualificationText(c1);
             const q2 = getImportQualificationText(c2);
-            return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra de entrada más accesible.<br>• <em>Desventaja:</em> Cuentan con Título Americano. En esta categoría solo existe estatus <strong>Nacional o Americano</strong> (no existe estatus Fronterizo), por lo que requerirás pedimento aduanal de nacionalización.${q1 ? `<br>• <strong>${c1.make}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${c2.make}:</strong> ${q2}` : ''}`;
+            return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra de entrada más accesible.<br>• <em>Desventaja:</em> Cuentan con Título Americano. En esta categoría solo existe estatus <strong>Nacional o Americano</strong> (no existe estatus Fronterizo), por lo que requerirás pedimento aduanal de nacionalización.${q1 ? `<br>• <strong>${name1}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${name2}:</strong> ${q2}` : ''}`;
         }
         if ((st1 === 'NACIONAL' && amer2) || (st2 === 'NACIONAL' && amer1)) {
             const nacRec = st1 === 'NACIONAL' ? c1 : c2;
             const amerRec = st1 === 'AMERICANO' ? c1 : c2;
+            const nacName = getCarDisplayName(nacRec, amerRec);
+            const amerName = getCarDisplayName(amerRec, nacRec);
             const q = getImportQualificationText(amerRec);
-            return `<br><br>⚖️ <strong>Estatus Legal (${nacRec.make} Nacional vs ${amerRec.make} Americano):</strong><br>• <strong>${nacRec.make} (Nacional):</strong> <em>Ventaja:</em> 100% legalizado para usarse y transportarse por todo México. <em>Desventaja:</em> Inversión mayor.<br>• <strong>${amerRec.make} (Americano):</strong> <em>Ventaja:</em> Más económico de entrada. <em>Desventaja:</em> Requiere trámite y pago de pedimento de nacionalización (en esta categoría no existe estatus Fronterizo).${q}`;
+            return `<br><br>⚖️ <strong>Estatus Legal (${nacName} Nacional vs ${amerName} Americano):</strong><br>• <strong>${nacName} (Nacional):</strong> <em>Ventaja:</em> 100% legalizado para usarse y transportarse por todo México. <em>Desventaja:</em> Inversión mayor.<br>• <strong>${amerName} (Americano):</strong> <em>Ventaja:</em> Más económico de entrada. <em>Desventaja:</em> Requiere trámite y pago de pedimento de nacionalización (en esta categoría no existe estatus Fronterizo).${q}`;
         }
         if (st1 === 'NACIONAL' && st2 === 'NACIONAL') {
-            return `<br><br>🇲🇽 <strong>Situación Legal (Ambos Nacionales):</strong><br>• <em>Ventaja:</em> Libertad total para usarse y transportarse por cualquier carretera del país sin problemas fiscales ni de tránsito.`;
+            return `<br><br>📋 <strong>Situación Legal (Ambos Nacionales):</strong><br>• <em>Ventaja:</em> Libertad total para usarse y transportarse por cualquier carretera del país sin problemas fiscales ni de tránsito.`;
         }
     }
 
@@ -12807,13 +13124,13 @@ function getLegalStatusAnalysis(c1, c2) {
         const isAmer2 = st2 === 'AMERICANO';
 
         if (isVU1 && isA1_2) {
-            return `<br><br>🚚 <strong>Estatus Legal de Tractocamiones (${c1.make} Nacional VU vs ${c2.make} Nacional A1):</strong><br>• <strong>${c1.make} (Nacional VU):</strong> <em>Ventaja:</em> Libertad total para fletear y transitar por todas las carreteras de México. <em>Desventaja:</em> Inversión inicial mayor.<br>• <strong>${c2.make} (Nacional A1):</strong> <em>Ventaja:</em> Precio más accesible. <em>Desventaja:</em> Restringido únicamente a fletes en la franja fronteriza.`;
+            return `<br><br>🚚 <strong>Estatus Legal de Tractocamiones (${name1} Nacional VU vs ${name2} Nacional A1):</strong><br>• <strong>${name1} (Nacional VU):</strong> <em>Ventaja:</em> Libertad total para fletear y transitar por todas las carreteras de México. <em>Desventaja:</em> Inversión inicial mayor.<br>• <strong>${name2} (Nacional A1):</strong> <em>Ventaja:</em> Precio más accesible. <em>Desventaja:</em> Restringido únicamente a fletes en la franja fronteriza.`;
         }
         if (isA1_1 && isVU2) {
-            return `<br><br>🚚 <strong>Estatus Legal de Tractocamiones (${c1.make} Nacional A1 vs ${c2.make} Nacional VU):</strong><br>• <strong>${c1.make} (Nacional A1):</strong> <em>Ventaja:</em> Precio más económico de entrada. <em>Desventaja:</em> Solo para rutas en la franja fronteriza.<br>• <strong>${c2.make} (Nacional VU):</strong> <em>Ventaja:</em> Puedes trabajar y fletear libremente por todo México. <em>Desventaja:</em> Inversión inicial más alta.`;
+            return `<br><br>🚚 <strong>Estatus Legal de Tractocamiones (${name1} Nacional A1 vs ${name2} Nacional VU):</strong><br>• <strong>${name1} (Nacional A1):</strong> <em>Ventaja:</em> Precio más económico de entrada. <em>Desventaja:</em> Solo para rutas en la franja fronteriza.<br>• <strong>${name2} (Nacional VU):</strong> <em>Ventaja:</em> Puedes trabajar y fletear libremente por todo México. <em>Desventaja:</em> Inversión inicial más alta.`;
         }
         if (isVU1 && isVU2) {
-            return `<br><br>🇲🇽 <strong>Situación Legal (Ambos Nacional VU):</strong><br>• <em>Ventaja:</em> Ambos cuentan con pedimento VU libre para trabajar y recorrer todas las carreteras del país.<br>• <em>Desventaja:</em> Su precio inicial suele ser más elevado.`;
+            return `<br><br>📋 <strong>Situación Legal (Ambos Nacional VU):</strong><br>• <em>Ventaja:</em> Ambos cuentan con pedimento VU libre para trabajar y recorrer todas las carreteras del país.<br>• <em>Desventaja:</em> Su precio inicial suele ser más elevado.`;
         }
         if (isA1_1 && isA1_2) {
             return `<br><br>🚚 <strong>Situación Legal (Ambos Nacional A1):</strong><br>• <em>Ventaja:</em> Excelente opción de trabajo con pedimento A1 para la zona fronteriza.<br>• <em>Desventaja:</em> Ambos están restringidos a la franja fronteriza (no pueden internarse al interior).`;
@@ -12821,21 +13138,23 @@ function getLegalStatusAnalysis(c1, c2) {
         if (isAmer1 || isAmer2) {
             const amerTruck = isAmer1 ? c1 : c2;
             const nacTruck = isAmer1 ? c2 : c1;
+            const amerName = getCarDisplayName(amerTruck, nacTruck);
+            const nacName = getCarDisplayName(nacTruck, amerTruck);
             const nacTxt = getLegalText(nacTruck) || 'Nacional';
-            return `<br><br>🚚 <strong>Estatus Legal (${amerTruck.make} Americano vs ${nacTruck.make} ${nacTxt}):</strong><br>• <strong>${amerTruck.make} (Americano):</strong> <em>Ventaja:</em> Precio inicial más bajo. <em>Desventaja:</em> No está importado aún; le falta todo el trámite de pedimento aduanal.<br>• <strong>${nacTruck.make} (${nacTxt}):</strong> <em>Ventaja:</em> Ya cuenta con pedimento legal listo para trabajar. <em>Desventaja:</em> Inversión inicial mayor.`;
+            return `<br><br>🚚 <strong>Estatus Legal (${amerName} Americano vs ${nacName} ${nacTxt}):</strong><br>• <strong>${amerName} (Americano):</strong> <em>Ventaja:</em> Precio inicial más bajo. <em>Desventaja:</em> No está importado aún; le falta todo el trámite de pedimento aduanal.<br>• <strong>${nacName} (${nacTxt}):</strong> <em>Ventaja:</em> Ya cuenta con pedimento legal listo para trabajar. <em>Desventaja:</em> Inversión inicial mayor.`;
         }
     }
 
     if (st1 === 'AMERICANO' && st2 === 'AMERICANO') {
         const q1 = getImportQualificationText(c1);
         const q2 = getImportQualificationText(c2);
-        return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra inicial más accesible.<br>• <em>Desventaja:</em> Toma en cuenta que ambos cuentan con Título Americano, por lo que aún tendrías que considerar el costo extra y trámite de <strong>legalización/regularización en el país</strong>.${q1 ? `<br>• <strong>${c1.make}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${c2.make}:</strong> ${q2}` : ''}`;
+        return `<br><br>📋 <strong>Situación Legal (Ambos Americanos):</strong><br>• <em>Ventaja:</em> Precio de compra inicial más accesible.<br>• <em>Desventaja:</em> Toma en cuenta que ambos cuentan con Título Americano, por lo que aún tendrías que considerar el costo extra y trámite de <strong>legalización/regularización en el país</strong>.${q1 ? `<br>• <strong>${name1}:</strong> ${q1}` : ''}${q2 ? `<br>• <strong>${name2}:</strong> ${q2}` : ''}`;
     }
     if (st1 === 'FRONTERIZO' && st2 === 'FRONTERIZO') {
         return `<br><br>📑 <strong>Situación Legal (Ambos Fronterizos):</strong><br>• <em>Ventaja:</em> Circulan 100% legal en la ciudad fronteriza con sus placas locales sin pagar costo de Nacional.<br>• <em>Desventaja:</em> No pueden viajar al interior del país sin permiso temporal de aduana.`;
     }
     if (st1 === 'NACIONAL' && st2 === 'NACIONAL') {
-        return `<br><br>🇲🇽 <strong>Situación Legal (Ambos Nacionales/Decreto):</strong><br>• <em>Ventaja:</em> Libertad total para circular por todo México sin restricciones ni riesgos de tránsito.<br>• <em>Desventaja:</em> Su precio inicial suele ser más elevado.`;
+        return `<br><br>📋 <strong>Situación Legal (Ambos Nacionales/Decreto):</strong><br>• <em>Ventaja:</em> Libertad total para circular por todo México sin restricciones ni riesgos de tránsito.<br>• <em>Desventaja:</em> Su precio inicial suele ser más elevado.`;
     }
 
     const city = ((c1.city || c2.city || '')).toLowerCase();
@@ -12848,21 +13167,81 @@ function getLegalStatusAnalysis(c1, c2) {
 
     if (isBorderCity) {
         if (nac && front) {
-            return `<br><br>⚖️ <strong>Estatus Legal (${nac.make} vs ${front.make}):</strong><br>• <strong>${nac.make} (${txt1}):</strong> <em>Ventaja:</em> Libertad de viajar a cualquier estado de México. <em>Desventaja:</em> Inversión mayor.<br>• <strong>${front.make} (Fronterizo):</strong> <em>Ventaja:</em> Más económico para el diario local. <em>Desventaja:</em> Solo para la frontera.`;
+            const nacName = getCarDisplayName(nac, front);
+            const frontName = getCarDisplayName(front, nac);
+            const nacTxt = getLegalText(nac) || 'Nacional';
+            const isDecreto = nacTxt.toLowerCase().includes('decreto') || nacTxt.toLowerCase().includes('regularizado');
+            
+            if (isDecreto) {
+                return `<br><br>⚖️ <strong>Estatus Legal (${nacName} Decreto vs ${frontName} Fronterizo):</strong><br>• <strong>${nacName} (Decreto):</strong> <em>Ventaja:</em> Es la mejor relación costo-beneficio en la frontera. Su trámite fue económico y te da libertad total para viajar por todo México sin permisos.<br>• <strong>${frontName} (Fronterizo):</strong> <em>Ventaja:</em> Excelente opción para uso diario local. <em>Desventaja:</em> Restringido únicamente a la franja fronteriza.`;
+            } else {
+                return `<br><br>⚖️ <strong>Estatus Legal (${nacName} Nacional vs ${frontName} Fronterizo):</strong><br>• <strong>${nacName} (Nacional):</strong> <em>Ventaja:</em> Libertad total para transitar por todo México. <em>Desventaja:</em> Costo de compra o nacionalización aduanal más elevado.<br>• <strong>${frontName} (Fronterizo):</strong> <em>Ventaja:</em> Trámite de importación más accesible para el diario en la frontera. <em>Desventaja:</em> No puede internarse al interior sin permiso aduanal.`;
+            }
         }
         if (nac && amer) {
+            const nacName = getCarDisplayName(nac, amer);
+            const amerName = getCarDisplayName(amer, nac);
+            const nacTxt = getLegalText(nac) || 'Nacional';
             const q = getImportQualificationText(amer);
-            return `<br><br>⚖️ <strong>Estatus Legal (${nac.make} vs ${amer.make}):</strong><br>• <strong>${nac.make} (${txt1}):</strong> <em>Ventaja:</em> Listo para andar sin trámites ni multas. <em>Desventaja:</em> Cuesta más dinero.<br>• <strong>${amer.make} (Americano):</strong> <em>Ventaja:</em> Precio de compra más accesible. <em>Desventaja:</em> Trámite de legalización/regularización en el país pendiente.${q}`;
+            return `<br><br>⚖️ <strong>Estatus Legal (${nacName} vs ${amerName}):</strong><br>• <strong>${nacName} (${nacTxt}):</strong> <em>Ventaja:</em> Listo para andar sin trámites ni multas. <em>Desventaja:</em> Cuesta más dinero.<br>• <strong>${amerName} (Americano):</strong> <em>Ventaja:</em> Precio de compra más accesible. <em>Desventaja:</em> Trámite de legalización/regularización en el país pendiente.${q}`;
         }
         if (front && amer) {
+            const frontName = getCarDisplayName(front, amer);
+            const amerName = getCarDisplayName(amer, front);
             const q = getImportQualificationText(amer);
-            return `<br><br>⚖️ <strong>Estatus Legal (${front.make} vs ${amer.make}):</strong><br>• <strong>${front.make} (Fronterizo):</strong> <em>Ventaja:</em> Trae placas de la zona listos para circular. <em>Desventaja:</em> Cuesta algo más.<br>• <strong>${amer.make} (Americano):</strong> <em>Ventaja:</em> Más barato de entrada. <em>Desventaja:</em> Faltan papeles de legalización.${q}`;
+
+            const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+            const getPriceMXN = (c) => {
+                const raw = parsePrice(c.price);
+                const curr = (c.currency || '').toLowerCase();
+                if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) return raw * rate;
+                return raw;
+            };
+
+            const costs = getImportCostRange(amer);
+            const avgImportUSD = Math.round((costs.frontUSD[0] + costs.frontUSD[1]) / 2);
+            const avgImportMXN = avgImportUSD * rate;
+
+            const pFrontMXN = getPriceMXN(front);
+            const pAmerMXN = getPriceMXN(amer);
+            const pAmerTotalMXN = pAmerMXN + avgImportMXN;
+
+            // Verificar si el auto Americano realmente califica por año para importación o nacionalización
+            const amerYear = parseInt(amer.year) || 0;
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            let baseYear = currentYear;
+            if (currentMonth >= 10) baseYear += 1;
+
+            const minFront = baseYear - 10;
+            const maxFront = baseYear - 5;
+            const qualifiesForImport = amerYear >= minFront && amerYear <= maxFront;
+
+            let advNote = '';
+            if (!qualifiesForImport) {
+                advNote = `<br><br>💡 <strong>¿Vale la pena comprar el Americano en este caso?</strong><br>❌ <strong>NO SE PUEDE IMPORTAR POR SU AÑO:</strong> El <strong>${amerName} (${amerYear})</strong> ya NO califica para importación por su modelo (${amerYear}). Consultar directamente con un <strong>Agente Aduanal</strong> antes de realizar cualquier oferta.`;
+            } else if (pAmerTotalMXN < pFrontMXN * 0.85) {
+                advNote = `<br><br>💡 <strong>¿Vale la pena comprar el Americano en este caso?</strong><br>🔥 <strong>SÍ, ¡ES UN REMATE ATRACTIVO!</strong> El <strong>${amerName} (${amerYear})</strong> califica para importación por su año y su precio inicial es significativamente más bajo. Te recomendamos verificar el costo exacto del pedimento y trámite con un <strong>Agente Aduanal</strong> para confirmar tu ahorro total.`;
+            } else {
+                advNote = `<br><br>💡 <strong>¿Vale la pena comprar el Americano en este caso?</strong><br>🛑 <strong>NO conviene tanto.</strong> Al considerar los costos de trámite aduanal, vueltas y tiempo de espera, el <strong>${amerName}</strong> termina costando casi lo mismo que el <strong>${frontName}</strong>. El <strong>${frontName}</strong> ya viene listo con sus placas locales sin sorpresas. Consulta costos exactos con un <strong>Agente Aduanal</strong>.`;
+            }
+
+            return `<br><br>⚖️ <strong>Estatus Legal (${frontName} vs ${amerName}):</strong><br>• <strong>${frontName} (Fronterizo):</strong> <em>Ventaja:</em> Trae placas locales listo para circular sin trámites.<br>• <strong>${amerName} (Americano):</strong> <em>Ventaja:</em> Precio de compra más bajo en papel. <em>Desventaja:</em> Requiere trámite de importación.${q}${advNote}`;
         }
     } else {
-        if (nac && (front || amer)) {
-            const otro = front || amer;
-            const otroTxt = getLegalText(otro) || (front ? 'Fronterizo' : 'Americano');
-            return `<br><br>⚠️ <strong>Situación Legal en el Interior:</strong> El <strong>${nac.make} (${txt1})</strong> es la compra segura para viajar libremente sin riesgo de decomiso frente al <strong>${otro.make} (${otroTxt})</strong>.`;
+        if (nac && front) {
+            const nacName = getCarDisplayName(nac, front);
+            const frontName = getCarDisplayName(front, nac);
+            const nacTxt = getLegalText(nac) || 'Nacional';
+            return `<br><br>⚠️ <strong>Situación Legal en el Interior:</strong> El <strong>${nacName} (${nacTxt})</strong> es la compra segura para circular libremente por todo México. El <strong>${frontName} (Fronterizo)</strong> NO sirve para el interior de la República ya que no puede internarse sin riesgo de decomiso fiscal.`;
+        }
+        if (nac && amer) {
+            const nacName = getCarDisplayName(nac, amer);
+            const amerName = getCarDisplayName(amer, nac);
+            const nacTxt = getLegalText(nac) || 'Nacional';
+            const q = getImportQualificationText(amer);
+            return `<br><br>⚠️ <strong>Situación Legal en el Interior:</strong> El <strong>${nacName} (${nacTxt})</strong> está listo para circular libremente por todo el país frente al <strong>${amerName} (Americano)</strong>.${q}`;
         }
     }
     return '';
@@ -12871,6 +13250,9 @@ function getLegalStatusAnalysis(c1, c2) {
 function getEngineComparison(c1, c2) {
     const text1 = ((c1.title || '') + ' ' + (c1.engine || '') + ' ' + (c1.cylinders || '') + ' ' + (c1.description || '')).toLowerCase();
     const text2 = ((c2.title || '') + ' ' + (c2.engine || '') + ' ' + (c2.cylinders || '') + ' ' + (c2.description || '')).toLowerCase();
+
+    const name1 = getCarDisplayName(c1, c2);
+    const name2 = getCarDisplayName(c2, c1);
 
     const isTurbo1 = text1.includes('turbo');
     const isTurbo2 = text2.includes('turbo');
@@ -12886,21 +13268,23 @@ function getEngineComparison(c1, c2) {
     const cyl2 = getCyl(c2, text2);
 
     if (cyl1 === 4 && isTurbo1 && cyl2 === 6 && !isTurbo2) {
-        return ` En el motor: el <strong>${c1.make}</strong> tiene motor Turbo, dándote la potencia de un 6 cilindros pero gastando menos gasolina.`;
+        return ` En el motor: el <strong>${name1}</strong> tiene motor Turbo, dándote la potencia de un 6 cilindros pero gastando menos gasolina.`;
     }
     if (cyl2 === 4 && isTurbo2 && cyl1 === 6 && !isTurbo1) {
-        return ` En el motor: el <strong>${c2.make}</strong> tiene motor Turbo, dándote el empuje de un 6 cilindros pero consumiendo menos gasolina.`;
+        return ` En el motor: el <strong>${name2}</strong> tiene motor Turbo, dándote el empuje de un 6 cilindros pero consumiendo menos gasolina.`;
     }
     if (cyl1 === 4 && cyl2 === 6) {
-        return ` En el motor: el <strong>${c1.make}</strong> (4 cilindros) destaca en ahorro de gasolina diario, mientras que el <strong>${c2.make}</strong> (6 cilindros) responderá con más fuerza en carretera.`;
+        return ` En el motor: el <strong>${name1}</strong> (4 cilindros) destaca en ahorro de gasolina diario, mientras que el <strong>${name2}</strong> (6 cilindros) responderá con más fuerza en carretera pero gasta más gasolina en la ciudad.`;
     }
     if (cyl2 === 4 && cyl1 === 6) {
-        return ` En el motor: el <strong>${c2.make}</strong> (4 cilindros) ayuda a economizar combustible diario, mientras que el <strong>${c1.make}</strong> (6 cilindros) dará mayor respuesta en carretera.`;
+        return ` En el motor: el <strong>${name2}</strong> (4 cilindros) destaca en ahorro de gasolina diario, mientras que el <strong>${name1}</strong> (6 cilindros) responderá con más fuerza en carretera pero gasta más gasolina en la ciudad.`;
     }
     if ((cyl1 === 6 && cyl2 === 8) || (cyl1 === 8 && cyl2 === 6)) {
         const c6 = cyl1 === 6 ? c1 : c2;
         const c8 = cyl1 === 8 ? c1 : c2;
-        return ` En motorización: el <strong>${c6.make}</strong> (6 cilindros) es más equilibrado, mientras que el <strong>${c8.make}</strong> (8 cilindros) destaca en fuerza de trabajo/arrastre a costa de mayor consumo.`;
+        const name6 = getCarDisplayName(c6, c8);
+        const name8 = getCarDisplayName(c8, c6);
+        return ` En motorización: el <strong>${name6}</strong> (6 cilindros) es más equilibrado, mientras que el <strong>${name8}</strong> (8 cilindros) destaca en fuerza de trabajo/arrastre a costa de mayor consumo.`;
     }
 
     return '';
@@ -12924,7 +13308,9 @@ function getPriceComparison(c1, c2) {
         if (p1 > 0 && p2 > 0 && p1 !== p2) {
             const diff = Math.abs(p1 - p2);
             const cheaper = p1 < p2 ? c1 : c2;
-            return ` Hablando de dinero, el <strong>${cheaper.make}</strong> te ahorra directo <strong>$${diff.toLocaleString()} ${c1.currency}</strong> de entrada.`;
+            const expensive = p1 < p2 ? c2 : c1;
+            const cheapName = getCarDisplayName(cheaper, expensive);
+            return ` Hablando de dinero, el <strong>${cheapName}</strong> te ahorra directo <strong>$${diff.toLocaleString()} ${c1.currency}</strong> de entrada.`;
         }
     } else if (c1.currency && c2.currency && c1.currency !== c2.currency) {
         const mxn1 = getPriceInMXN(c1);
@@ -12936,7 +13322,9 @@ function getPriceComparison(c1, c2) {
             } else {
                 const cheaper = mxn1 < mxn2 ? c1 : c2;
                 const expensive = mxn1 < mxn2 ? c2 : c1;
-                return ` Tomando el tipo de cambio ($${rate} MXN/USD), el <strong>${cheaper.make}</strong> resulta ser una opción más económica de entrada que el <strong>${expensive.make}</strong>.`;
+                const cheapName = getCarDisplayName(cheaper, expensive);
+                const expName = getCarDisplayName(expensive, cheaper);
+                return ` Tomando el tipo de cambio ($${rate} MXN/USD), el <strong>${cheapName}</strong> resulta ser una opción más económica de entrada que el <strong>${expName}</strong>.`;
             }
         }
     }
@@ -12964,26 +13352,11 @@ function generateSmartVerdict(cars, isMagicVerdict) {
     let winner = cars[0];
     let runnerUp = cars[1] || cars[0];
     
-    let bestScore = -1;
+    let bestScore = -Infinity;
     cars.forEach(car => {
-        let score = 0;
-        score += car.year * 10;
-        score -= (parseMileage(car.mileage) / 1000);
-        
-        const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
-        const getPriceInMXN = (c) => {
-            const raw = parsePrice(c.price);
-            const curr = (c.currency || '').toLowerCase();
-            if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) {
-                return raw * rate;
-            }
-            return raw;
-        };
-
-        const mxnPrice = getPriceInMXN(car);
-        if (mxnPrice > 0) {
-            score -= (mxnPrice / 2000); // Considerar precio relativo en MXN
-        }
+        const score = typeof window.useSmartVehicleScorerHook === 'function'
+            ? window.useSmartVehicleScorerHook(car)
+            : useSmartVehicleScorerHook(car);
         
         if (score > bestScore) {
             runnerUp = winner;
@@ -12998,6 +13371,72 @@ function generateSmartVerdict(cars, isMagicVerdict) {
 
     if (isMagicVerdict) {
         const pWin = getPhotoObj(winner);
+        const winName = `${winner.make} ${winner.model}`;
+
+        // Construir las razones transparentes y reales por las que ganó
+        const reasons = [];
+
+        // 1. Estatus Legal
+        const winLegal = (getLegalText(winner) || '').toLowerCase();
+        const runLegal = (getLegalText(runnerUp) || '').toLowerCase();
+
+        if (winLegal.includes('decreto') || winLegal.includes('regularizado')) {
+            reasons.push(`📜 <strong>Estatus Legal Decreto:</strong> Te ofrece libertad total para circular por todo México sin requerir trámites aduanales pendientes ni permisos.`);
+        } else if (winLegal.includes('agencia') || winLegal.includes('nacional')) {
+            reasons.push(`📜 <strong>Estatus Nacional Libre:</strong> Cuenta con pedimento o factura nacional lista para usarse en cualquier carretera del país sin restricciones.`);
+        } else if (winLegal.includes('fronterizo') && !runLegal.includes('decreto') && !runLegal.includes('nacional')) {
+            reasons.push(`📑 <strong>Estatus Fronterizo:</strong> Circula 100% legal con sus placas locales sin haber tenido que pagar la diferencia de una nacionalización completa.`);
+        }
+
+        // 2. Kilometraje Transparente
+        const winMil = parseMileage(winner.mileage);
+        const runMil = parseMileage(runnerUp.mileage);
+
+        if (winMil !== 999999 && runMil === 999999) {
+            const milDisp = typeof window.useMileageFormatterHook === 'function' ? window.useMileageFormatterHook(winner.mileage) : winner.mileage;
+            reasons.push(`🚗 <strong>Kilometraje Registrado:</strong> Publica de forma transparente su millaje real (${milDisp}), a diferencia de otras opciones que ocultan sus millas (S/N).`);
+        } else if (winMil !== 999999 && runMil !== 999999 && winMil < runMil) {
+            const milDisp = typeof window.useMileageFormatterHook === 'function' ? window.useMileageFormatterHook(winner.mileage) : winner.mileage;
+            reasons.push(`⏱️ <strong>Menor Desgaste:</strong> Cuenta con un kilometraje mejor conservado (${milDisp}) frente a las alternativas guardadas.`);
+        }
+
+        // 3. Ahorro de Precio
+        const rate = parseFloat(localStorage.getItem('revista_exchange_rate')) || 17;
+        const getPriceMXN = (c) => {
+            const raw = parsePrice(c.price);
+            const curr = (c.currency || '').toLowerCase();
+            if (curr.includes('dll') || curr.includes('usd') || curr.includes('dls')) return raw * rate;
+            return raw;
+        };
+
+        const winPriceMXN = getPriceMXN(winner);
+        const runPriceMXN = getPriceMXN(runnerUp);
+
+        if (winPriceMXN < runPriceMXN) {
+            const diffUSD = Math.round((runPriceMXN - winPriceMXN) / rate);
+            if (diffUSD > 100) {
+                reasons.push(`💵 <strong>Ahorro Directo:</strong> Te ahorra aproximadamente $${diffUSD.toLocaleString('en-US')} USD directo en el precio de compra frente a las otras opciones.`);
+            }
+        }
+
+        // 4. Mecánica y Refacciones
+        const winMech = getMechanicSummary(winner);
+        if (winMech.includes('Fácil') || winMech.includes('económicas')) {
+            reasons.push(`🛠️ <strong>Mantenimiento Económico:</strong> Sus refacciones y piezas se consiguen fácil en refaccionarias locales y cualquier mecánico lo repara sin cobrar caro.`);
+        }
+
+        // 5. Año del Modelo
+        if (winner.year > runnerUp.year) {
+            reasons.push(`📅 <strong>Modelo Más Reciente:</strong> Destaca por ser año ${winner.year}, lo que le otorga mayor vida útil y mejor valor de reventa.`);
+        }
+
+        // Si no hubo suficientes razones específicas, agregar balance general
+        if (reasons.length === 0) {
+            reasons.push(`⭐ <strong>Excelente Configuración:</strong> Destaca por ser la opción más equilibrada entre precio, año y conservación general.`);
+        }
+
+        const reasonsHTML = reasons.map(r => `<div style="margin-bottom: 8px; font-size: 0.93rem; line-height: 1.45; color: var(--text-main);">${r}</div>`).join('');
+
         return `
         <div class="asesor-box" style="margin-bottom: 24px; padding: 20px; background: rgba(2, 132, 199, 0.1); border: 1px solid var(--primary-color); border-radius: 16px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--primary-color); font-weight: bold; font-size: 0.95rem;">
@@ -13013,9 +13452,9 @@ function generateSmartVerdict(cars, isMagicVerdict) {
             </div>
             
             <div class="asesor-text" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px;">
-                <p style="margin-bottom: 10px;"><strong>💡 ¿Por qué es tu mejor opción?</strong></p>
-                <p>De las opciones que guardaste, este <strong>${winner.make} ${winner.model}</strong> es la compra más inteligente. Destaca por ser del año <strong>${winner.year}</strong> y ${getMechanicSummary(winner).includes('Fácil') ? 'sobre todo por sus piezas baratas y mantenimiento económico.' : 'por su excelente configuración y estado general.'}</p>
-                <p style="margin-top: 8px;">👉 <em>Es la opción más equilibrada y la que mejor valor de reventa mantendrá de tus guardados.</em></p>
+                <p style="margin-bottom: 12px; font-size: 1rem;"><strong>💡 ¿Por qué es tu mejor opción?</strong></p>
+                ${reasonsHTML}
+                <p style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">👉 <em>Es la opción más equilibrada y la que mejor cuidará tu inversión de todas las guardadas.</em></p>
             </div>
             
             <button class="success-btn" style="width: 100%; margin-top: 20px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.1rem; font-weight: bold; border-radius: 20px;" onclick="document.getElementById('modal-comparador').classList.remove('active'); window.contactSeller('${winner.id}')">
@@ -13046,15 +13485,20 @@ function getMechanicAdvice(c1, c2) {
     const m1 = getMechanicSummary(c1);
     const m2 = getMechanicSummary(c2);
 
+    const name1 = getCarDisplayName(c1, c2);
+    const name2 = getCarDisplayName(c2, c1);
+
     if (m1.includes('Fácil') && !m2.includes('Fácil')) {
-        return ` En la parte mecánica: el <strong>${c1.make}</strong> lleva clara ventaja porque cualquier taller le mete mano fácilmente y sus piezas/refacciones son muy económicas en las refaccionarias locales.`;
+        return ` En la parte mecánica: el <strong>${name1}</strong> lleva clara ventaja porque cualquier taller le mete mano fácilmente y sus piezas/refacciones son muy económicas en las refaccionarias locales.`;
     }
     if (!m1.includes('Fácil') && m2.includes('Fácil')) {
-        return ` En la parte mecánica: ojo con el taller, el <strong>${c2.make}</strong> será mucho más económico y sencillo de mantener a largo plazo que el <strong>${c1.make}</strong>.`;
+        return ` En la parte mecánica: ojo con el taller, el <strong>${name2}</strong> será mucho más económico y sencillo de mantener a largo plazo que el <strong>${name1}</strong>.`;
     }
     if (m1.includes('premium') || m2.includes('premium')) {
         const prem = m1.includes('premium') ? c1 : c2;
-        return ` Mantenimiento y taller: ten en cuenta que el <strong>${prem.make}</strong> es de gama premium, lo que implica mano de obra especializada y refacciones más costosas o por encargo.`;
+        const other = m1.includes('premium') ? c2 : c1;
+        const premName = getCarDisplayName(prem, other);
+        return ` Mantenimiento y taller: ten en cuenta que el <strong>${premName}</strong> es de gama premium, lo que implica mano de obra especializada y refacciones más costosas o por encargo.`;
     }
     return ` En la parte mecánica: ambos cuentan con motores conocidos y refacciones comerciales accesibles.`;
 }
@@ -13064,9 +13508,34 @@ function getMechanicAdvice(c1, c2) {
     const engineAdvantage = getEngineComparison(winner, runnerUp);
     const mechAdvantage = getMechanicAdvice(winner, runnerUp);
 
-    const term = cat1 === cat2 ? (cat1 === 'vehículo' ? 'vehículos' : (cat1 === 'tractocamión' ? 'tractocamiones' : `${cat1}s`)) : 'opciones';
+    const getIntroPrefix = (c) => {
+        if (c === 'vehículo') return 'ambos vehículos';
+        if (c === 'tractocamión') return 'ambos tractocamiones';
+        if (c === 'camioneta') return 'ambas camionetas';
+        if (c === 'motocicleta') return 'ambas motocicletas';
+        if (c === 'embarcación') return 'ambas embarcaciones';
+        return `ambos ${c}s`;
+    };
+    const introPrefix = cat1 === cat2 ? getIntroPrefix(cat1) : 'ambas opciones';
 
-    const introPrefix = cat1 === cat2 ? (cat1 === 'vehículo' ? 'ambos vehículos' : (cat1 === 'tractocamión' ? 'ambos tractocamiones' : `ambos ${cat1}s`)) : 'ambas opciones';
+    const getHumanIntroPhrase = (prefix, w, r) => {
+        const phrases = [
+            `Revisando ${prefix} detalladamente para darte la mejor recomendación:`,
+            `Poniendo ${prefix} sobre la balanza para ver cuál cuida mejor tu inversión:`,
+            `Examinando número por número ${prefix} para ayudarte a tomar la mejor decisión:`,
+            `Analizando a fondo los pros y contras de ${prefix}:`,
+            `Evaluando año, precio y estatus legal de ${prefix} para guiar tu compra:`,
+            `Haciendo un diagnóstico completo de ${prefix} para que hagas la mejor elección:`
+        ];
+        const strKey = (w.id || w.model || '') + (r.id || r.model || '');
+        let hash = 0;
+        for (let i = 0; i < strKey.length; i++) {
+            hash = (hash + strKey.charCodeAt(i));
+        }
+        return phrases[hash % phrases.length];
+    };
+
+    const humanIntro = getHumanIntroPhrase(introPrefix, winner, runnerUp);
 
     return `
     <div class="asesor-box" style="margin-bottom: 24px; padding: 16px; background: rgba(2, 132, 199, 0.1); border: 1px solid var(--primary-color); border-radius: 16px;">
@@ -13075,7 +13544,7 @@ function getMechanicAdvice(c1, c2) {
             CONSEJO DEL ASESOR AMIGO
         </div>
         <div class="asesor-text" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-main);">
-            Analizando ${introPrefix} a fondo para ayudarte a decidir:${categoryAdvice}${priceAdvantage}${legalAdvantage}${engineAdvantage}${mechAdvantage}
+            ${humanIntro}${categoryAdvice}${priceAdvantage}${legalAdvantage}${engineAdvantage}${mechAdvantage}
         </div>
     </div>
     `;
