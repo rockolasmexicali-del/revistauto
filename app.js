@@ -6780,6 +6780,10 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = activeListings.map(listing => {
             const img = listing.images && listing.images.length > 0 ? listing.images[0] : (listing.image || 'https://via.placeholder.com/50');
             const refNum = listing.ref_number || listing.id;
+            const isExtension = listing.publisher_id === 'extension' || 
+                                listing.publisher_id === 'admin_fb_importer' || 
+                                (listing.notes && JSON.stringify(listing.notes).includes('Extensión')) ||
+                                (listing.source && listing.source.includes('extension'));
             return `
             <tr>
                 <td style="text-align:center; padding: 6px 4px;">
@@ -6789,7 +6793,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <img src="${img}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
                 </td>
                 <td>
-                    <strong>${listing.title}</strong><br>
+                    <strong>${listing.title}</strong>
+                    ${isExtension ? '<span style="display:inline-block; margin-left:6px; background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.4); border-radius:4px; padding:1px 6px; font-size:0.7rem; font-weight:700; vertical-align:middle;">(Extensión)</span>' : ''}<br>
                     <small style="color:var(--text-muted)">${listing.year} • ${listing.city}</small>
                 </td>
                 <td style="white-space: nowrap;">${usePriceFormatterHook(listing)}</td>
