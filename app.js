@@ -298,6 +298,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return hash;
     };
 
+    // ====================================================================
+    // HOOK: isAdminLoggedIn — Protección de carga Admin para usuarios normales
+    // Solo ejecuta código del panel de administración si hay sesión de admin activa.
+    // Esto evita peticiones de red, procesamiento DOM y datos innecesarios
+    // para el 99% de los usuarios que nunca verán el panel de admin.
+    // ====================================================================
+    function isAdminLoggedIn() {
+        return !!(window.adminToken || localStorage.getItem('admin_token'));
+    }
+    window.isAdminLoggedIn = isAdminLoggedIn;
+
     let savedListingsIds = JSON.parse(localStorage.getItem('revista_autos_saved') || '[]');
     let currentFeedCategory = 'Todos';
 
@@ -912,8 +923,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.isWaitingForInitialGps = true;
     populateHomeCategories();
     renderFeed();
-    if (typeof updateAdminStats === 'function') updateAdminStats();
-    if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+    // Solo cargar datos administrativos si hay sesión de admin activa
+    if (isAdminLoggedIn()) {
+        if (typeof updateAdminStats === 'function') updateAdminStats();
+        if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+    }
 
     // Background server load
     (async () => {
@@ -936,14 +950,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (typeof renderMyListings === 'function') renderMyListings();
-        if (typeof updateAdminStats === 'function') updateAdminStats();
-        if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
-        if (typeof renderAdminInventory === 'function') renderAdminInventory();
+        // Solo actualizar panel admin si hay sesión de admin activa
+        if (isAdminLoggedIn()) {
+            if (typeof updateAdminStats === 'function') updateAdminStats();
+            if (typeof updateAdminApprovals === 'function') updateAdminApprovals();
+            if (typeof renderAdminInventory === 'function') renderAdminInventory();
+        }
     };
 
     window.onAdsSynced = function () {
-        if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
-        if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+        // Solo actualizar tablas de admin de publicidad si hay sesión de admin activa
+        if (isAdminLoggedIn()) {
+            if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
+            if (typeof renderAdminAdsTable === 'function') renderAdminAdsTable();
+        }
         
         // Invalidar caché de Mis Publicaciones para asegurar redibujado
         const myListingsContainer = document.getElementById('my-listings-container');
@@ -2823,7 +2843,11 @@ document.addEventListener('DOMContentLoaded', () => {
     var isLoadingFeed = false;
     var hasMoreFeedItems = true;
     window.activeFeedListings = [];
-    var PAGE_SIZE = 20;
+    // PAGE_SIZE responsivo: en PC las filas horizontales son más anchas y necesitan
+    // más tarjetas por categoría para verse llenas. En móvil, menos tarjetas bastan.
+    // PC (≥768px): ~100 autos → ~10+ por cada categoría
+    // Móvil (<768px): ~40 autos → ~4-5 por cada categoría
+    var PAGE_SIZE = window.innerWidth >= 768 ? 100 : 40;
 
     // ==========================================
     // HOOK DE PRE-CARGA EN SEGUNDO PLANO (PREFETCHING)
@@ -5495,10 +5519,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateAdminStats();
             } else {
                 renderMyListings();
-                if (typeof forceInstantAdminRefresh === 'function') {
-                    forceInstantAdminRefresh();
-                } else if (typeof loadAdminData === 'function') {
-                    loadAdminData();
+                // Solo refrescar panel admin si hay sesión de admin activa
+                if (isAdminLoggedIn()) {
+                    if (typeof forceInstantAdminRefresh === 'function') {
+                        forceInstantAdminRefresh();
+                    } else if (typeof loadAdminData === 'function') {
+                        loadAdminData();
+                    }
                 }
             }
             submitBtn.disabled = false;
@@ -9850,13 +9877,13 @@ document.addEventListener('DOMContentLoaded', () => {
         modalPublishOptions.classList.remove('active');
         showAlert('Anuncio guardado. Podrás pagarlo después.', 'Pendiente de Pago', 'info');
         if (typeof renderMyListings === 'function') renderMyListings();
-        if (typeof loadAdminData === 'function') loadAdminData();
+        if (isAdminLoggedIn() && typeof loadAdminData === 'function') loadAdminData();
     });
 
     if (btnOptionPayLater) btnOptionPayLater.addEventListener('click', () => {
         modalPublishOptions.classList.remove('active');
         showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación. Nos contactaremos contigo.', 'Publicado', 'check_circle');
-        if (typeof loadAdminData === 'function') loadAdminData();
+        if (isAdminLoggedIn() && typeof loadAdminData === 'function') loadAdminData();
     });
 
     if (btnCloseMp) btnCloseMp.addEventListener('click', () => {
@@ -9963,7 +9990,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         showAlert('¡Pago realizado con éxito! Tu anuncio ya está activo.', 'Pago Exitoso', 'check_circle');
                                         await db.syncWithServer(); // Sincronizar para descargar el nuevo estado 'autorizado'
                                         renderMyListings();
-                                        if (typeof loadAdminData === 'function') loadAdminData();
+                                        if (isAdminLoggedIn() && typeof loadAdminData === 'function') loadAdminData();
                                     } else {
                                         reject();
                                         const errorMsg = response.error || response.status_detail || 'Rechazado';
