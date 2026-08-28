@@ -1968,6 +1968,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 btnUserCities.innerHTML = `Ciudades ${arrow}`;
             }
+            // Sincronizar con el módulo UpNext para asegurar que la cápsula solo muestre autos de esta zona
+            window.selectedCitiesForUpNext = [...selectedCities];
         }
         window.updateCitiesBtn = updateCitiesBtn;
 
@@ -1997,7 +1999,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </label>
             `).join('');
 
-            // Lógica de selección
+            // Lógica de selección con cambio rápido en el primer clic
+            let isFirstCityClick = true;
             const cbTodas = citiesCheckboxesContainer.querySelector('#cb-todas-ciudades');
             const cbCities = Array.from(citiesCheckboxesContainer.querySelectorAll('.cb-city-item'));
 
@@ -2017,6 +2020,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             cbTodas.addEventListener('change', () => {
+                isFirstCityClick = false;
                 // Si la presionan para tildar, marcamos todas. 
                 // Si la presionan para destildar, desmarcamos todas (lo que activa la regla de 0 y vuelve a marcar todas)
                 cbCities.forEach(cb => cb.checked = cbTodas.checked);
@@ -2024,7 +2028,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             cbCities.forEach(cb => {
-                cb.addEventListener('change', evalCityCheckboxes);
+                cb.addEventListener('change', () => {
+                    if (isFirstCityClick) {
+                        isFirstCityClick = false;
+                        // Intención de cambio rápido: en el 1er clic, desmarcamos las demás ciudades
+                        // y dejamos únicamente seleccionada la que el usuario acaba de tocar
+                        cbCities.forEach(c => {
+                            if (c !== cb) c.checked = false;
+                        });
+                        cb.checked = true;
+                        cbTodas.checked = false;
+                        evalCityCheckboxes();
+                        return;
+                    }
+                    evalCityCheckboxes();
+                });
             });
 
             citiesModal.classList.add('active');
@@ -2260,7 +2278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-content">
                     <h4 class="card-title">${(listing.title || `${listing.make} ${listing.model} ${listing.year}`).replace(listing.year, '').replace(/\s+/g, ' ').trim()}</h4>
                     <p class="card-price">
-                        ${usePriceFormatterHook(listing)}
+                        ${usePriceFormatterHook(listing, { skipOldPrice: true })}
                     </p>
                     <div class="card-meta">
                         <span>${listing.year}</span>
@@ -11609,31 +11627,53 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     let currentUpNextTimer = null;
     let viewedUpNextIds = [];
 
-    async function getActiveListingsForUpNext(userCity) {
-        let allListings = [];
+    async function getActiveListingsForUpNext() {
+        // FUENTE 1: Usar los autos ya cargados en el feed activo del usuario
+        // (ya están filtrados por su ciudad seleccionada)
+        const feedListings = Array.isArray(window.activeFeedListings) ? window.activeFeedListings : [];
+
+        if (feedListings.length > 0) {
+            const cities = Array.isArray(window.selectedCitiesForUpNext) && window.selectedCitiesForUpNext.length > 0
+                ? window.selectedCitiesForUpNext
+                : null;
+
+            const active = feedListings.filter(l => {
+                const st = String(l.status || '').toLowerCase();
+                const isActive = st === 'autorizado' || st === 'destacado' || st === 'activo' || st === '';
+                if (!isActive) return false;
+                // Filtro estricto de ciudad: SOLO autos de la zona del usuario, sin fallback global
+                if (cities && cities.length > 0) {
+                    return l.city && cities.some(c => c.toLowerCase() === (l.city || '').toLowerCase());
+                }
+                return true;
+            });
+
+            if (active.length > 0) return active;
+        }
+
+        // FUENTE 2: Si el feed aún no cargó (primeros segundos), intentar con db local
+        // También aplicamos filtro estricto de ciudad, sin fallback global
         try {
             if (window.db && typeof window.db.getAllListings === 'function') {
-                allListings = await window.db.getAllListings();
+                const cities = Array.isArray(window.selectedCitiesForUpNext) && window.selectedCitiesForUpNext.length > 0
+                    ? window.selectedCitiesForUpNext
+                    : null;
+
+                const all = window.db.getAllListings();
+                const active = all.filter(l => {
+                    const st = String(l.status || '').toLowerCase();
+                    const isActive = st === 'autorizado' || st === 'destacado' || st === 'activo';
+                    if (!isActive) return false;
+                    if (cities && cities.length > 0) {
+                        return l.city && cities.some(c => c.toLowerCase() === (l.city || '').toLowerCase());
+                    }
+                    return true;
+                });
+                return active;
             }
-        } catch (e) {
-            allListings = window.listingsData || [];
-        }
+        } catch (e) { /* silencioso */ }
 
-        if (!Array.isArray(allListings) || allListings.length === 0) return [];
-
-        // Filtrar solo autos activos (excluyendo vendidos y no autorizados)
-        let active = allListings.filter(l => {
-            const st = String(l.status || '').toLowerCase();
-            return st === 'autorizado' || st === 'destacado' || st === 'activo' || st === '';
-        });
-
-        // Filtrar por ciudad si no es 'Todos'
-        if (userCity && userCity !== 'Todos') {
-            const local = active.filter(l => l.city && l.city.toLowerCase() === userCity.toLowerCase());
-            if (local.length > 0) active = local;
-        }
-
-        return active;
+        return [];
     }
 
     function buildUpNextCandidates(listings) {
@@ -11690,14 +11730,7 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
         const advertiseBtn = document.getElementById('btn-advertise');
         if (!pill) return;
 
-        // Leer la ciudad seleccionada del usuario
-        let userCity = 'Todos';
-        const userCityBtn = document.getElementById('btn-user-cities');
-        if (userCityBtn && userCityBtn.textContent) {
-            userCity = userCityBtn.textContent.trim().replace(/▾|▼/g, '').trim();
-        }
-
-        const listings = await getActiveListingsForUpNext(userCity);
+        const listings = await getActiveListingsForUpNext();
         if (listings.length === 0) return;
 
         const candidates = buildUpNextCandidates(listings);
