@@ -6861,9 +6861,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (start && end && (d < start || d > end)) return;
 
                     const visits = row.visits || 1;
-                    const rawCity = row.city || 'Mexicali';
+                    const rawCity = row.city || 'Desconocida';
                     const city = rawCity.split(',')[0].trim();
-                    const state = resolveState(city, row.state);
+                    const state = resolveState(city, row.state || 'Desconocido');
                     const groupKey = `${city}|${state}`;
                     cityMap.set(groupKey, (cityMap.get(groupKey) || 0) + visits);
                 });

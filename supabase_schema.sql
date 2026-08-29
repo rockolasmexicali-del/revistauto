@@ -175,11 +175,20 @@ CREATE POLICY "Permitir subir fotos de autos" ON storage.objects FOR INSERT WITH
 DROP POLICY IF EXISTS "Permitir borrar fotos de autos" ON storage.objects;
 CREATE POLICY "Permitir borrar fotos de autos" ON storage.objects FOR DELETE USING (bucket_id = 'car-images');
 
--- 7. Tabla de Visitas Diarias (Para analíticas reales)
+-- 7. Tabla de Visitas Diarias (Para analíticas reales y desgloses por ubicación)
 CREATE TABLE IF NOT EXISTS public.daily_visits (
-    date DATE PRIMARY KEY,
-    visits INT DEFAULT 0
+    date DATE,
+    city TEXT DEFAULT 'Desconocida',
+    state TEXT DEFAULT 'Desconocido',
+    visits INT DEFAULT 0,
+    PRIMARY KEY (date, city, state)
 );
+
+-- Si la tabla ya existía con la llave primaria vieja, se necesita alterar:
+-- ALTER TABLE public.daily_visits ADD COLUMN IF NOT EXISTS city TEXT DEFAULT 'Desconocida';
+-- ALTER TABLE public.daily_visits ADD COLUMN IF NOT EXISTS state TEXT DEFAULT 'Desconocido';
+-- ALTER TABLE public.daily_visits DROP CONSTRAINT IF EXISTS daily_visits_pkey;
+-- ALTER TABLE public.daily_visits ADD PRIMARY KEY (date, city, state);
 
 ALTER TABLE public.daily_visits ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Permitir lectura publica de visitas" ON public.daily_visits;
@@ -187,14 +196,14 @@ CREATE POLICY "Permitir lectura publica de visitas" ON public.daily_visits FOR S
 DROP POLICY IF EXISTS "Permitir insercion publica de visitas" ON public.daily_visits;
 CREATE POLICY "Permitir insercion publica de visitas" ON public.daily_visits FOR ALL USING (true);
 
--- Función segura para incrementar vistas y visitas globales al mismo tiempo
-CREATE OR REPLACE FUNCTION increment_visit(listing_id BIGINT, visit_date DATE)
+-- Función segura para incrementar vistas y visitas globales al mismo tiempo (por ubicación)
+CREATE OR REPLACE FUNCTION increment_visit(listing_id BIGINT, visit_date DATE, visitor_city TEXT DEFAULT 'Desconocida', visitor_state TEXT DEFAULT 'Desconocido')
 RETURNS void AS $$
 BEGIN
-    -- Incrementar en la tabla de visitas globales
-    INSERT INTO public.daily_visits (date, visits)
-    VALUES (visit_date, 1)
-    ON CONFLICT (date)
+    -- Incrementar en la tabla de visitas (por ciudad y estado)
+    INSERT INTO public.daily_visits (date, city, state, visits)
+    VALUES (visit_date, visitor_city, visitor_state, 1)
+    ON CONFLICT (date, city, state)
     DO UPDATE SET visits = public.daily_visits.visits + 1;
 
     -- Incrementar en la tabla listings

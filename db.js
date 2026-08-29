@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.22"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.23"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     truckEngines: {
@@ -2002,9 +2002,24 @@ class Database {
                 const now = new Date();
                 const visit_date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
+                let vCity = 'Desconocida';
+                let vState = 'Desconocido';
+                try {
+                    const locStr = localStorage.getItem('revista_last_location');
+                    if (locStr) {
+                        const loc = JSON.parse(locStr);
+                        if (loc.city) vCity = loc.city;
+                        if (loc.state) vState = loc.state;
+                    }
+                } catch (e) {
+                    console.warn("Error leyendo revista_last_location", e);
+                }
+
                 const { error } = await supabaseClient.rpc('increment_visit', {
                     listing_id: id,
-                    visit_date: visit_date
+                    visit_date: visit_date,
+                    visitor_city: vCity,
+                    visitor_state: vState
                 });
 
                 if (error) {
