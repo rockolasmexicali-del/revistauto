@@ -4738,8 +4738,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isCurrentStepFullyComplete() {
-        // Solo aplica auto-avance para Paso 3 (El Vehículo) y Paso 4 (Mecánica)
-        if (currentWizardStep !== 3 && currentWizardStep !== 4) return false;
+        // Solo aplica auto-avance para Paso 3, 4 y 5
+        if (currentWizardStep !== 3 && currentWizardStep !== 4 && currentWizardStep !== 5) return false;
 
         const currentStepEl = newListingForm.querySelector(`.form-step[data-step="${currentWizardStep}"]`);
         if (!currentStepEl) return false;
@@ -4777,9 +4777,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let autoAdvanceTimeout = null;
-    tryAutoAdvanceWizardStep = function () {
+    tryAutoAdvanceWizardStep = function (isFromInput = false) {
         if (window._isPopulatingListingData) return;
-        if (currentWizardStep !== 3 && currentWizardStep !== 4) return;
+        if (currentWizardStep !== 3 && currentWizardStep !== 4 && currentWizardStep !== 5) return;
+        if (isFromInput && currentWizardStep === 5) return; // No auto-avanzar mientras teclea en el Paso 5
 
         if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
@@ -4899,7 +4900,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (e.target && (e.target.type === 'tel' || e.target.type === 'number')) {
-                tryAutoAdvanceWizardStep();
+                tryAutoAdvanceWizardStep(true);
             }
         });
 

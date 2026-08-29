@@ -859,7 +859,6 @@ select:focus {
 /* Wizard Animations & Layout */
 .form-step {
     animation: slideInRight 0.3s ease forwards;
-    min-height: 380px;
     /* Estabiliza los botones y da espacio a los dropdowns */
     display: flex;
     flex-direction: column;
