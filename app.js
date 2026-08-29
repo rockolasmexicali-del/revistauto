@@ -347,9 +347,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCloseModal = document.getElementById('btn-close-modal');
     const newListingForm = document.getElementById('new-listing-form');
     let editingListingId = null;
+    let populateMakesForType = function (selectedType) {};
+    let tryAutoAdvanceWizardStep = function () {};
 
-    // Ads
-    // (Old WhatsApp logic removed)
+    function buildAdminWhatsAppUrl(phone, listingTitle, context = null) {
+        if (!phone) return '#';
+        const waData = typeof parseAndFormatPhone === 'function' ? parseAndFormatPhone(phone, context) : { prefix: '+52', nationalDigits: phone.replace(/\D/g, '') };
+        const cleanPhone = (waData.prefix || '+52').replace('+', '') + (waData.nationalDigits || '');
+        const text = encodeURIComponent(`Hola, te contactamos de RevistAuto sobre tu publicación '${listingTitle || 'vehículo'}'. Te recordamos que tu anuncio está próximo a vencer. ¿Te gustaría renovarlo por 30 días más?`);
+        return `https://wa.me/${cleanPhone}?text=${text}`;
+    }
+    window.buildAdminWhatsAppUrl = buildAdminWhatsAppUrl;
 
     const adFullscreenModal = document.getElementById('ad-fullscreen-modal');
     const btnCloseAdModal = document.getElementById('btn-close-ad-modal');
@@ -388,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formColor = document.getElementById('form-color');
     const formState = document.getElementById('form-state');
     const formCity = document.getElementById('form-city');
+    const formPhoneLada = document.getElementById('form-phone-lada');
     const formPhone = document.getElementById('form-phone');
     const formWhatsApp = document.getElementById('form-whatsapp');
     const formEngineText = document.getElementById('form-engine-text');
@@ -412,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formCustomModel = document.getElementById('form-custom-model');
     const formCustomColor = document.getElementById('form-custom-color');
     let whatsappModified = false;
+    let phoneModified = false;
     let selectedImageFiles = [];
 
     // Lógica dinámica para mostrar el precio al usuario si regresa al Paso 1 después de elegir ciudad
@@ -618,12 +628,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.trigger.classList.remove('input-error');
                         this.select.classList.remove('input-error');
 
-                        // Disparar change para el resto del sistema
-                        this.select.dispatchEvent(new Event('change'));
+                        // Disparar change con bubbling para el resto del sistema
+                        this.select.dispatchEvent(new Event('change', { bubbles: true }));
 
                         // Actualizar selección visual
                         Array.from(this.dropdown.children).forEach(c => c.classList.remove('selected'));
                         optDiv.classList.add('selected');
+
+                        if (typeof tryAutoAdvanceWizardStep === 'function') {
+                            tryAutoAdvanceWizardStep();
+                        }
                     });
                 }
 
@@ -1340,7 +1354,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        function populateMakesForType(selectedType) {
+        populateMakesForType = function (selectedType) {
+            window.populateMakesForType = populateMakesForType;
+            if (!selectedType || selectedType === '') {
+                formMake.innerHTML = '<option value="" disabled selected>Selecciona un tipo primero</option>';
+                formModel.innerHTML = '<option value="" disabled selected>Selecciona una marca primero</option>';
+                if (formCustomMake) {
+                    formCustomMake.style.display = 'none';
+                    formCustomMake.required = false;
+                    formCustomMake.value = '';
+                }
+                if (formCustomModel) {
+                    formCustomModel.style.display = 'none';
+                    formCustomModel.required = false;
+                    formCustomModel.value = '';
+                }
+                if (window.customMakeSelect) window.customMakeSelect.update();
+                if (window.customModelSelect) window.customModelSelect.update();
+                return;
+            }
+
             formMake.innerHTML = '<option value="" disabled selected>Selecciona una marca</option>';
 
             const filteredMakes = db.getMakesForType(selectedType);
@@ -1351,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formMake.innerHTML += `<option value="Otros">Otros...</option>`;
 
             // Reset model
-            formModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
+            formModel.innerHTML = '<option value="" disabled selected>Selecciona una marca primero</option>';
             if (formCustomMake) {
                 formCustomMake.style.display = 'none';
                 formCustomMake.required = false;
@@ -1521,6 +1554,19 @@ document.addEventListener('DOMContentLoaded', () => {
         formMake.addEventListener('change', (e) => {
             const make = e.target.value;
             const selectedType = formType ? formType.value : null;
+
+            if (!selectedType || selectedType === '') {
+                formModel.innerHTML = '<option value="" disabled selected>Selecciona un tipo primero</option>';
+                if (window.customModelSelect) window.customModelSelect.update();
+                return;
+            }
+
+            if (!make || make === '') {
+                formModel.innerHTML = '<option value="" disabled selected>Selecciona una marca primero</option>';
+                if (window.customModelSelect) window.customModelSelect.update();
+                return;
+            }
+
             formModel.innerHTML = '<option value="" disabled selected>Selecciona un modelo</option>';
 
             if (make === 'Otros') {
@@ -1771,16 +1817,61 @@ document.addEventListener('DOMContentLoaded', () => {
         formMake.addEventListener('change', () => { if (window.customModelSelect) window.customModelSelect.update(); });
         filterState.addEventListener('change', () => { if (window.customFilterCitySelect) window.customFilterCitySelect.update(); });
 
-        // Phone to WhatsApp auto-fill logic
-        formPhone.addEventListener('input', (e) => {
-            if (!whatsappModified) {
-                let v = e.target.value.replace(/[^0-9]/g, '');
-                formWhatsApp.value = v;
-            }
-        });
-        formWhatsApp.addEventListener('input', () => {
-            whatsappModified = true;
-        });
+        // Phone and WhatsApp auto-fill logic
+        function extractCleanDigits(raw, lada) {
+            if (!raw) return '';
+            let digits = String(raw).trim();
+            if (digits.startsWith('+52')) digits = digits.substring(3);
+            else if (digits.startsWith('+1')) digits = digits.substring(2);
+            else if (lada && digits.startsWith(lada)) digits = digits.substring(lada.length);
+
+            digits = digits.replace(/[^0-9]/g, '');
+            if (digits.length === 12 && digits.startsWith('52')) digits = digits.substring(2);
+            else if (digits.length === 11 && digits.startsWith('1')) digits = digits.substring(1);
+            return digits.slice(0, 10);
+        }
+
+        if (formPhone) {
+            formPhone.addEventListener('input', (e) => {
+                phoneModified = true;
+                const lada = formPhoneLada ? formPhoneLada.value : '+52';
+                const digits = extractCleanDigits(e.target.value, lada);
+                formPhone.value = digits;
+                if (!whatsappModified && formWhatsApp) {
+                    formWhatsApp.value = digits ? `${lada} ${digits}` : '';
+                }
+            });
+        }
+
+        if (formWhatsApp) {
+            formWhatsApp.addEventListener('input', (e) => {
+                whatsappModified = true;
+                const lada = formPhoneLada ? formPhoneLada.value : '+52';
+                const digits = extractCleanDigits(e.target.value, lada);
+                
+                if (digits.length > 0) {
+                    formWhatsApp.value = `${lada} ${digits}`;
+                } else {
+                    formWhatsApp.value = '';
+                }
+
+                if (!phoneModified && formPhone) {
+                    formPhone.value = digits;
+                }
+            });
+        }
+
+        if (formPhoneLada) {
+            formPhoneLada.addEventListener('change', () => {
+                const newLada = formPhoneLada.value;
+                if (formWhatsApp && formWhatsApp.value.trim()) {
+                    const digits = extractCleanDigits(formWhatsApp.value, newLada);
+                    if (digits) {
+                        formWhatsApp.value = `${newLada} ${digits}`;
+                    }
+                }
+            });
+        }
 
         window.renderImagePreviews = function () {
             const container = document.getElementById('image-preview-container');
@@ -3119,8 +3210,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Append to Netflix Rows
             const grouped = {};
             newItems.forEach(l => {
-                if (!grouped[l.type]) grouped[l.type] = [];
-                grouped[l.type].push(l);
+                const normType = (l.type === 'Camioneta') ? 'SUV / Camioneta' : (l.type || 'Otros');
+                l.type = normType;
+                if (!grouped[normType]) grouped[normType] = [];
+                grouped[normType].push(l);
             });
             const freq = db.adFrequencyScroll || 10;
 
@@ -3131,7 +3224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let existingRow = feedContainer.querySelector(`.netflix-row[data-category="${type}"]`);
 
-                const typeListings = window.activeFeedListings.filter(l => l.type === type);
+                const typeListings = window.activeFeedListings.filter(l => l.type === type || (type === 'SUV / Camioneta' && l.type === 'Camioneta'));
                 const existingCountForType = typeListings.length - grouped[type].length;
 
                 let rowCardsHTML = '';
@@ -3972,7 +4065,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
 
-                    sameCategoryListings = allAvailable.filter(l => l.type === listing.type);
+                    const matchTargetType = (listing.type === 'Camioneta') ? 'SUV / Camioneta' : listing.type;
+                    sameCategoryListings = allAvailable.filter(l => {
+                        const lType = (l.type === 'Camioneta') ? 'SUV / Camioneta' : l.type;
+                        return lType === matchTargetType;
+                    });
                     if (typeof selectedCities !== 'undefined' && selectedCities.length > 0) {
                         sameCategoryListings = sameCategoryListings.filter(l => selectedCities.includes(l.city));
                     }
@@ -4640,6 +4737,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function isCurrentStepFullyComplete() {
+        // Solo aplica auto-avance para Paso 3 (El Vehículo) y Paso 4 (Mecánica)
+        if (currentWizardStep !== 3 && currentWizardStep !== 4) return false;
+
+        const currentStepEl = newListingForm.querySelector(`.form-step[data-step="${currentWizardStep}"]`);
+        if (!currentStepEl) return false;
+
+        // Si en el paso actual se seleccionó 'Otros', se desactiva el avance automático ÚNICAMENTE en este paso/modal
+        const visibleSelects = Array.from(currentStepEl.querySelectorAll('select'));
+        for (const s of visibleSelects) {
+            if (s.value === 'Otros' || s.value === 'Otro...') {
+                return false;
+            }
+        }
+
+        const requiredInputs = currentStepEl.querySelectorAll('input[required], select[required]');
+        for (const input of requiredInputs) {
+            // Ignorar inputs ocultos
+            if (input.style.display === 'none' && input.tagName.toLowerCase() !== 'select') continue;
+
+            if (input.tagName.toLowerCase() === 'select') {
+                if (!input.value || input.value === '' || input.value === 'null') return false;
+            } else if (input.type === 'tel') {
+                const digits = input.value.replace(/\D/g, '');
+                if (digits.length < 10) return false;
+            } else if (input.type === 'number') {
+                const val = parseInt(input.value, 10);
+                if (isNaN(val) || val < 1950) return false;
+            } else if (input.id === 'form-price') {
+                const num = parseInt(input.value.replace(/[^0-9]/g, ''), 10);
+                if (!num || num <= 0) return false;
+            } else {
+                if (!input.value || input.value.trim() === '') return false;
+            }
+        }
+
+        return true;
+    }
+
+    let autoAdvanceTimeout = null;
+    tryAutoAdvanceWizardStep = function () {
+        if (window._isPopulatingListingData) return;
+        if (currentWizardStep !== 3 && currentWizardStep !== 4) return;
+
+        if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+
+        if (isCurrentStepFullyComplete()) {
+            autoAdvanceTimeout = setTimeout(() => {
+                if (currentWizardStep < totalWizardSteps && isCurrentStepFullyComplete()) {
+                    const currentStepEl = newListingForm.querySelector(`.form-step[data-step="${currentWizardStep}"]`);
+                    if (currentStepEl) {
+                        currentStepEl.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+                    }
+                    currentWizardStep++;
+                    updateWizardUI();
+                }
+            }, 180);
+        }
+    }
+
     function checkStepValidity() {
         const currentStepEl = newListingForm.querySelector(`.form-step[data-step="${currentWizardStep}"]`);
         if (!currentStepEl) return true;
@@ -4689,6 +4846,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnWizardNext = document.getElementById('btn-wizard-next');
     if (btnWizardNext) {
         btnWizardNext.addEventListener('click', () => {
+            if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
             if (checkStepValidity() && currentWizardStep < totalWizardSteps) {
                 currentWizardStep++;
                 updateWizardUI();
@@ -4699,6 +4857,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnWizardBack = document.getElementById('btn-wizard-back');
     if (btnWizardBack) {
         btnWizardBack.addEventListener('click', () => {
+            if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
             if (currentWizardStep > 1) {
                 currentWizardStep--;
                 updateWizardUI();
@@ -4706,10 +4865,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Eventos para avance automático y limpieza de recuadros rojos
+    if (newListingForm) {
+        newListingForm.addEventListener('change', (e) => {
+            if (e.target) {
+                e.target.classList.remove('input-error');
+                if (e.target.parentNode && e.target.parentNode.classList.contains('custom-select-wrapper')) {
+                    const trigger = e.target.parentNode.querySelector('.custom-select-trigger');
+                    if (trigger) trigger.classList.remove('input-error');
+                }
+            }
+            tryAutoAdvanceWizardStep();
+        });
+
+        newListingForm.addEventListener('input', (e) => {
+            if (e.target) {
+                if (e.target.checkValidity() && e.target.value.trim() !== '') {
+                    e.target.classList.remove('input-error');
+                }
+            }
+            if (e.target && (e.target.type === 'tel' || e.target.type === 'number')) {
+                tryAutoAdvanceWizardStep();
+            }
+        });
+
+        newListingForm.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentWizardStep < totalWizardSteps) {
+                    if (btnWizardNext) btnWizardNext.click();
+                } else {
+                    const btnSubmit = document.getElementById('btn-wizard-submit');
+                    if (btnSubmit && btnSubmit.style.display !== 'none') btnSubmit.click();
+                }
+            }
+        });
+    }
+
     btnNewListing.addEventListener('click', () => {
+        window._isPopulatingListingData = true;
+        if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
         editingListingId = null;
         currentWizardStep = 1;
         newListingForm.reset();
+        populateMakesForType('');
+        setTimeout(() => { window._isPopulatingListingData = false; }, 300);
         if (window.customMakeSelect) window.customMakeSelect.update();
         if (window.customModelSelect) window.customModelSelect.update();
         if (window.customTypeSelect) window.customTypeSelect.update();
@@ -4746,10 +4946,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof window.updateTruckMechanicsUI === 'function') window.updateTruckMechanicsUI();
         whatsappModified = false;
+        phoneModified = false;
         selectedImageFiles = [];
         if (typeof renderImagePreviews === 'function') renderImagePreviews();
         newListingModal.querySelector('h3').textContent = 'Dar de Alta Vehículo';
         updateWizardUI();
+        const morePhotosModal = document.getElementById('more-photos-modal');
+        if (morePhotosModal) morePhotosModal.classList.remove('active');
         newListingModal.classList.add('active');
 
         // Autocompletar ubicación con el GPS ya detectado en la página principal
@@ -4769,6 +4972,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     btnCloseModal.addEventListener('click', () => {
         newListingModal.classList.remove('active');
+        const morePhotosModal = document.getElementById('more-photos-modal');
+        if (morePhotosModal) morePhotosModal.classList.remove('active');
         if (window._editFromAdmin === true) {
             window._editFromAdmin = false;
             editingListingId = null;
@@ -4864,11 +5069,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function _openEditListingWithData(listing) {
+        window._isPopulatingListingData = true;
+        if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+        setTimeout(() => { window._isPopulatingListingData = false; }, 600);
         const id = listing.id;
         editingListingId = id;
 
         let fType = document.getElementById('form-type');
-        fType.value = listing.type;
+        const normalizedType = (listing.type === 'Camioneta') ? 'SUV / Camioneta' : (listing.type || '');
+        fType.value = normalizedType;
         if (!fType.value) { fType.value = 'Otros'; document.getElementById('form-custom-type').value = listing.type; }
         document.getElementById('form-type').dispatchEvent(new Event('change'));
         if (window.customTypeSelect) window.customTypeSelect.update();
@@ -5061,6 +5270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formLegal.value = listing.legal || '';
         if (window.customLegalSelect) window.customLegalSelect.update();
         whatsappModified = true;
+        phoneModified = true;
 
         let stateFound = '';
         if (catalogData && catalogData.citiesByState) {
@@ -10175,27 +10385,73 @@ document.addEventListener('DOMContentLoaded', () => {
         const adPhoneLada = document.getElementById('client-ad-phone-lada');
         const adWaLada = document.getElementById('client-ad-whatsapp-lada');
         let waManuallyEdited = false;
+        let phoneManuallyEdited = false;
+
+        function extractCleanAdDigits(raw, lada) {
+            if (!raw) return '';
+            let digits = String(raw).trim();
+            if (digits.startsWith('+52')) digits = digits.substring(3);
+            else if (digits.startsWith('+1')) digits = digits.substring(2);
+            else if (lada && digits.startsWith(lada)) digits = digits.substring(lada.length);
+
+            digits = digits.replace(/[^0-9]/g, '');
+            if (digits.length === 12 && digits.startsWith('52')) digits = digits.substring(2);
+            else if (digits.length === 11 && digits.startsWith('1')) digits = digits.substring(1);
+            return digits.slice(0, 10);
+        }
 
         if (adPhoneLada && adWaLada) {
             adPhoneLada.addEventListener('change', (e) => {
-                adWaLada.value = e.target.value;
+                if (!waManuallyEdited) {
+                    adWaLada.value = e.target.value;
+                }
+            });
+            adWaLada.addEventListener('change', (e) => {
+                if (!phoneManuallyEdited) {
+                    adPhoneLada.value = e.target.value;
+                }
+            });
+        }
+
+        if (adPhone) {
+            adPhone.addEventListener('input', (e) => {
+                phoneManuallyEdited = true;
+                const lada = adPhoneLada ? adPhoneLada.value : '+52';
+                const digits = extractCleanAdDigits(e.target.value, lada);
+                adPhone.value = digits;
+                if (!waManuallyEdited && adWhatsapp) {
+                    adWhatsapp.value = digits ? `${lada} ${digits}` : '';
+                }
             });
         }
 
         if (adWhatsapp) {
-            adWhatsapp.addEventListener('input', () => { waManuallyEdited = true; });
+            adWhatsapp.addEventListener('input', (e) => { 
+                waManuallyEdited = true; 
+                const lada = adPhoneLada ? adPhoneLada.value : '+52';
+                const digits = extractCleanAdDigits(e.target.value, lada);
+                if (digits.length > 0) {
+                    adWhatsapp.value = `${lada} ${digits}`;
+                } else {
+                    adWhatsapp.value = '';
+                }
+                if (!phoneManuallyEdited && adPhone) {
+                    adPhone.value = digits;
+                }
+            });
         }
         if (adWaLada) {
             adWaLada.addEventListener('change', () => { waManuallyEdited = true; });
         }
-        if (adPhone) {
-            adPhone.addEventListener('input', (e) => {
-                if (!waManuallyEdited && adWhatsapp) {
-                    const val = e.target.value.replace(/\D/g, '');
-                    if (adPhoneLada && adWaLada) {
-                        adWaLada.value = adPhoneLada.value;
+        if (adPhoneLada) {
+            adPhoneLada.addEventListener('change', () => {
+                phoneManuallyEdited = true;
+                const newLada = adPhoneLada.value;
+                if (adWhatsapp && adWhatsapp.value.trim()) {
+                    const digits = extractCleanAdDigits(adWhatsapp.value, newLada);
+                    if (digits) {
+                        adWhatsapp.value = `${newLada} ${digits}`;
                     }
-                    adWhatsapp.value = val;
                 }
             });
         }

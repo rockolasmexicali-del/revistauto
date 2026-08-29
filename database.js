@@ -180,7 +180,7 @@ const defaultCatalogData = {
             'MINI': ['Cooper', 'Cooper S'],
             'Fiat': ['Mobi', 'Argo', '500', 'Uno']
         },
-        'Camioneta': {
+        'SUV / Camioneta': {
             'Ford': ['Explorer', 'Expedition', 'Edge', 'Escape', 'EcoSport', 'Bronco', 'Territory'],
             'Chevrolet': ['Trax', 'Captiva', 'Tracker', 'Suburban', 'Tahoe', 'Equinox', 'Blazer', 'Groove'],
             'Toyota': ['Avanza', 'Corolla Cross', 'RAV4', 'Highlander', 'Sienna', '4Runner', 'Sequoia', 'Land Cruiser', 'C-HR', 'Raize', 'Rush'],
@@ -309,7 +309,7 @@ const defaultCatalogData = {
             'Suzuki': ['Embarcación DF140', 'Embarcación DF200', 'Embarcación DF250', 'Embarcación DF300', 'Lancha Deportiva']
         }
     },
-    types: ['Sedán', 'Pickup', 'Camioneta', 'Van / Furgoneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
+    types: ['Sedán', 'Pickup', 'SUV / Camioneta', 'Van / Furgoneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
     colors: ['Blanco', 'Negro', 'Plata', 'Gris', 'Rojo', 'Azul', 'Guindo/Tinto', 'Beige', 'Amarillo', 'Verde', 'Otro'],
     states: ['Baja California', 'Sonora', 'Jalisco', 'Nuevo León', 'Puebla', 'Guanajuato', 'Querétaro', 'Yucatán', 'Quintana Roo', 'Ciudad de México'],
     citiesByState: {

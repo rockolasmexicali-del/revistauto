@@ -1,4 +1,4 @@
-const APP_VERSION = "3.16.3"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.10"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     truckEngines: {
@@ -193,7 +193,7 @@ const defaultCatalogData = {
             'MINI': ['Cooper', 'Cooper S'],
             'Fiat': ['Mobi', 'Argo', '500', 'Uno']
         },
-        'Camioneta': {
+        'SUV / Camioneta': {
             'Ford': ['Explorer', 'Expedition', 'Edge', 'Escape', 'EcoSport', 'Bronco', 'Territory'],
             'Chevrolet': ['Trax', 'Captiva', 'Tracker', 'Suburban', 'Tahoe', 'Equinox', 'Blazer', 'Groove'],
             'Toyota': ['Avanza', 'Corolla Cross', 'RAV4', 'Highlander', 'Sienna', '4Runner', 'Sequoia', 'Land Cruiser', 'C-HR', 'Raize', 'Rush'],
@@ -322,7 +322,7 @@ const defaultCatalogData = {
             'Suzuki': ['Embarcación DF140', 'Embarcación DF200', 'Embarcación DF250', 'Embarcación DF300', 'Lancha Deportiva']
         }
     },
-    types: ['Sedán', 'Pickup', 'Camioneta', 'Van / Furgoneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
+    types: ['Sedán', 'Pickup', 'SUV / Camioneta', 'Van / Furgoneta', 'Hatchback', 'Deportivo', 'Motocicleta', 'Cuatrimoto / ATV', 'Barco', 'Camión'],
     colors: ['Blanco', 'Negro', 'Plata', 'Gris', 'Rojo', 'Azul', 'Guindo/Tinto', 'Beige', 'Amarillo', 'Verde', 'Otro'],
     states: [
         'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Ciudad de México',
@@ -570,6 +570,7 @@ class Database {
 
                             return {
                                 ...mergedFields,
+                                type: (mergedFields.type === 'Camioneta' || item.type === 'Camioneta') ? 'SUV / Camioneta' : (mergedFields.type || item.type || ''),
                                 engine: mergedFields.engine || item.engine || item.motor || (localListing ? localListing.engine : ''),
                                 legal: mergedFields.legal || item.legal || item.situacion || (localListing ? localListing.legal : ''),
                                 ac: mergedFields.ac || item.ac || (localListing ? localListing.ac : ''),
@@ -638,6 +639,7 @@ class Database {
         const listings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
         return listings.map(l => ({
             ...l,
+            type: (l.type === 'Camioneta') ? 'SUV / Camioneta' : (l.type || ''),
             notes: Array.isArray(l.notes) ? l.notes : (typeof l.notes === 'string' ? JSON.parse(l.notes || '[]') : []),
             payments: Array.isArray(l.payments) ? l.payments : (typeof l.payments === 'string' ? JSON.parse(l.payments || '[]') : []),
             isMyListing: l.publisherId === this.uuid || l.publisher_id === this.uuid
@@ -670,7 +672,11 @@ class Database {
             }
 
             if (filters.category && filters.category !== 'Todos') {
-                query = query.eq('type', filters.category);
+                if (filters.category === 'SUV / Camioneta' || filters.category === 'Camioneta') {
+                    query = query.in('type', ['SUV / Camioneta', 'Camioneta']);
+                } else {
+                    query = query.eq('type', filters.category);
+                }
             }
             if (filters.searchQuery) {
                 query = query.or(`title.ilike.%${filters.searchQuery}%,make.ilike.%${filters.searchQuery}%,model.ilike.%${filters.searchQuery}%`);
@@ -714,6 +720,7 @@ class Database {
 
         const normalizedData = (data || []).map(item => ({
             ...item,
+            type: (item.type === 'Camioneta') ? 'SUV / Camioneta' : (item.type || ''),
             isMyListing: item.publisher_id === this.uuid || item.publisherId === this.uuid
         }));
 
@@ -743,7 +750,10 @@ class Database {
                 console.warn('Error fetching category stats:', error);
                 return [];
             }
-            return data || [];
+            return (data || []).map(item => ({
+                ...item,
+                type: (item.type === 'Camioneta') ? 'SUV / Camioneta' : (item.type || '')
+            }));
         } catch (e) {
             console.warn('Network error fetching category stats:', e);
             return [];
@@ -1136,7 +1146,8 @@ class Database {
             // Contar ocurrencias por campo
             const counts = { types: {}, makes: {}, models: {}, colors: {} };
             data.forEach(item => {
-                if (item.type) counts.types[item.type] = (counts.types[item.type] || 0) + 1;
+                const normType = (item.type === 'Camioneta') ? 'SUV / Camioneta' : (item.type || '');
+                if (normType) counts.types[normType] = (counts.types[normType] || 0) + 1;
                 if (item.make) counts.makes[item.make] = (counts.makes[item.make] || 0) + 1;
                 if (item.model) counts.models[item.model] = (counts.models[item.model] || 0) + 1;
                 if (item.color) counts.colors[item.color] = (counts.colors[item.color] || 0) + 1;
@@ -1190,7 +1201,7 @@ class Database {
             filtered = allMakes.filter(m => marineMakes.includes(m));
         } else if (type === 'Camión') {
             filtered = allMakes.filter(m => truckMakes.includes(m));
-        } else if (['Sedán', 'Pickup', 'Camioneta', 'Hatchback', 'Deportivo'].includes(type)) {
+        } else if (['Sedán', 'Pickup', 'Camioneta', 'SUV / Camioneta', 'Hatchback', 'Deportivo'].includes(type)) {
             filtered = allMakes.filter(m => !motoOnlyMakes.includes(m));
         } else {
             filtered = allMakes;
@@ -1209,9 +1220,15 @@ class Database {
             return this.sortByPopularity(allModels, 'models');
         }
 
-        const typeMap = (catalogData && catalogData.modelsByTypeAndMake)
+        let typeMap = (catalogData && catalogData.modelsByTypeAndMake)
             ? catalogData.modelsByTypeAndMake[type]
             : (defaultCatalogData.modelsByTypeAndMake ? defaultCatalogData.modelsByTypeAndMake[type] : null);
+
+        if (!typeMap && (type === 'Camioneta' || type === 'SUV / Camioneta')) {
+            typeMap = (catalogData && catalogData.modelsByTypeAndMake)
+                ? (catalogData.modelsByTypeAndMake['SUV / Camioneta'] || catalogData.modelsByTypeAndMake['Camioneta'])
+                : (defaultCatalogData.modelsByTypeAndMake ? (defaultCatalogData.modelsByTypeAndMake['SUV / Camioneta'] || defaultCatalogData.modelsByTypeAndMake['Camioneta']) : null);
+        }
 
         if (typeMap && typeMap[make] && Array.isArray(typeMap[make]) && typeMap[make].length > 0) {
             return this.sortByPopularity([...typeMap[make]], 'models');

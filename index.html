@@ -973,7 +973,7 @@
     </div>
 
     <!-- More Photos Confirmation Modal -->
-    <div id="more-photos-modal" class="modal" style="z-index: 9999;">
+    <div id="more-photos-modal" class="modal" style="z-index: 10005;">
         <div class="modal-content" style="max-width: 320px; text-align: center; padding: 24px;">
             <div class="modal-header" style="justify-content: center; margin-bottom: 16px;">
                 <h3 style="font-size: 1.2rem;">¡Foto guardada!</h3>
@@ -1400,20 +1400,20 @@
                             </div>
                         </div>
                         
-                        <div class="form-row" style="display: flex; gap: 12px;">
-                            <div class="form-group half" style="flex: 1.35; min-width: 0;">
+                        <div class="form-row form-row-contact" style="display: flex; gap: 12px;">
+                            <div class="form-group half form-group-phone" style="flex: 1.6; min-width: 0;">
                                 <label>Teléfono (Llamadas) *</label>
                                 <div style="display: flex; gap: 4px;">
-                                    <select id="client-ad-phone-lada" style="width: 75px; flex-shrink: 0; padding: 10px 2px; font-size: 0.78rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
+                                    <select id="client-ad-phone-lada" class="phone-lada-select" style="width: 86px; flex-shrink: 0; padding: 10px 4px; font-size: 0.82rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
                                         <option value="+52" selected>MEX +52</option>
                                         <option value="+1">USA +1</option>
                                     </select>
-                                    <input type="tel" id="client-ad-phone" required placeholder="10 dígitos" style="flex: 1; min-width: 0; padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
+                                    <input type="tel" id="client-ad-phone" required placeholder="10 dígitos" style="flex: 1; min-width: 0; padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.92rem; outline: none;">
                                 </div>
                             </div>
-                            <div class="form-group half" style="flex: 0.85; min-width: 0;">
+                            <div class="form-group half form-group-whatsapp" style="flex: 0.75; min-width: 0;">
                                 <label>WhatsApp *</label>
-                                <input type="tel" id="client-ad-whatsapp" required placeholder="10 dígitos" style="width: 100%; padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.85rem; outline: none;">
+                                <input type="tel" id="client-ad-whatsapp" required placeholder="10 dígitos" style="width: 100%; padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-size: 0.92rem; outline: none;">
                             </div>
                         </div>
                     </form>
@@ -1842,20 +1842,20 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 1.35; min-width: 0;">
+                    <div class="form-row form-row-contact">
+                        <div class="form-group form-group-phone" style="flex: 1.6; min-width: 0;">
                             <label>Teléfono (Llamadas)</label>
                             <div style="display: flex; gap: 4px;">
-                                <select id="form-phone-lada" style="width: 75px; flex-shrink: 0; padding: 10px 2px; font-size: 0.78rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
+                                <select id="form-phone-lada" class="phone-lada-select" style="width: 86px; flex-shrink: 0; padding: 10px 4px; font-size: 0.82rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); font-weight: 700; cursor: pointer; text-align: center;">
                                     <option value="+52" selected>MEX +52</option>
                                     <option value="+1">USA +1</option>
                                 </select>
-                                <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" style="flex: 1; min-width: 0; padding: 10px 4px; font-size: 0.85rem;">
+                                <input type="tel" id="form-phone" required placeholder="Ej. 5512345678" style="flex: 1; min-width: 0; padding: 10px 6px; font-size: 0.92rem;">
                             </div>
                         </div>
-                        <div class="form-group" style="flex: 0.85; min-width: 0;">
+                        <div class="form-group form-group-whatsapp" style="flex: 0.75; min-width: 0;">
                             <label>WhatsApp</label>
-                            <input type="tel" id="form-whatsapp" required placeholder="Ej. 5512345678" style="width: 100%; padding: 10px 4px; font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); outline: none;">
+                            <input type="tel" id="form-whatsapp" required placeholder="Ej. 5512345678" style="width: 100%; padding: 10px 6px; font-size: 0.92rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-light); color: var(--text-main); outline: none;">
                         </div>
                     </div>
                 </div>
@@ -1873,14 +1873,14 @@
                     <div class="form-group">
                         <label>Marca</label>
                         <select id="form-make" required>
-                            <option value="" disabled selected>Selecciona una marca</option>
+                            <option value="" disabled selected>Selecciona un tipo primero</option>
                         </select>
                         <input type="text" id="form-custom-make" placeholder="Escribe la marca..." style="display: none; margin-top: 8px;">
                     </div>
                     <div class="form-group">
                         <label>Modelo</label>
                         <select id="form-model" required>
-                            <option value="" disabled selected>Selecciona un modelo</option>
+                            <option value="" disabled selected>Selecciona una marca primero</option>
                         </select>
                         <input type="text" id="form-custom-model" placeholder="Escribe el modelo..." style="display: none; margin-top: 8px;">
                     </div>
@@ -2087,6 +2087,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js?v=104"></script>
     <script src="db.js?v=104"></script>
-    <script src="app.js?v=104"></script>
+    <script src="app.js?v=109"></script>
 </body>
 </html>

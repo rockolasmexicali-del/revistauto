@@ -3550,4 +3550,19 @@ input:checked+.slider:before {
         font-size: 0.85rem;
     }
 }
+
+/* Contact Phone & WhatsApp layout for Mobile */
+@media (max-width: 480px) {
+    .form-row-contact .form-group-phone {
+        flex: 1.35 !important;
+    }
+    .form-row-contact .form-group-whatsapp {
+        flex: 0.85 !important;
+    }
+    .form-row-contact .phone-lada-select {
+        width: 76px !important;
+        font-size: 0.76rem !important;
+        padding: 10px 2px !important;
+    }
+}
 
