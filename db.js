@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.23"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.26"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     truckEngines: {
@@ -1973,6 +1973,41 @@ class Database {
     }
 
 
+    async recordGlobalVisit(overrideCity, overrideState) {
+        const today = new Date().toISOString().split('T')[0];
+
+        let vCity = overrideCity || 'Desconocida';
+        let vState = overrideState || 'Desconocido';
+
+        if (vCity === 'Desconocida') {
+            try {
+                const locStr = localStorage.getItem('revista_last_location');
+                if (locStr) {
+                    const loc = JSON.parse(locStr);
+                    if (loc.city) vCity = loc.city;
+                    if (loc.state) vState = loc.state;
+                }
+            } catch (e) {}
+        }
+
+        const sessionKey = `revista_visit_recorded_${today}_${vCity}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+        sessionStorage.setItem(sessionKey, 'true');
+
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            try {
+                await supabaseClient.rpc('increment_visit', {
+                    listing_id: 0,
+                    visit_date: today,
+                    visitor_city: vCity,
+                    visitor_state: vState
+                });
+            } catch (err) {
+                console.warn("Error registrando visita global:", err);
+            }
+        }
+    }
+
     async incrementViews(id) {
         // Evitar múltiples conteos por sesión para el mismo anuncio
         let viewedThisSession = [];
@@ -1983,18 +2018,35 @@ class Database {
         if (viewedThisSession.includes(String(id))) {
             const listings = this.getAllListings();
             const listing = listings.find(l => String(l.id) === String(id));
-            return listing ? listing.views : 0;
+            if (listing) return listing.views;
+            if (typeof window !== 'undefined' && window.activeFeedListings) {
+                const live = window.activeFeedListings.find(l => String(l.id) === String(id));
+                if (live) return live.views;
+            }
+            return 0;
         }
 
         viewedThisSession.push(String(id));
         sessionStorage.setItem('revista_autos_viewed_session', JSON.stringify(viewedThisSession));
 
-        // Incrementamos localmente primero
+        let currentViews = 0;
+
+        // Incrementamos localmente primero si existe en localStorage
         const listings = this.getAllListings();
         const listing = listings.find(l => String(l.id) === String(id));
         if (listing) {
             listing.views = (listing.views || 0) + 1;
             localStorage.setItem(this.listingsKey, JSON.stringify(listings));
+            currentViews = listing.views;
+        }
+
+        // Actualizar en el feed vivo en memoria si existe
+        if (typeof window !== 'undefined' && window.activeFeedListings) {
+            const live = window.activeFeedListings.find(l => String(l.id) === String(id));
+            if (live) {
+                live.views = (live.views || 0) + 1;
+                if (!currentViews) currentViews = live.views;
+            }
         }
 
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
@@ -2015,8 +2067,9 @@ class Database {
                     console.warn("Error leyendo revista_last_location", e);
                 }
 
+                const numId = Number(id);
                 const { error } = await supabaseClient.rpc('increment_visit', {
-                    listing_id: id,
+                    listing_id: !isNaN(numId) ? numId : 0,
                     visit_date: visit_date,
                     visitor_city: vCity,
                     visitor_state: vState
@@ -2029,7 +2082,7 @@ class Database {
                 console.warn("Error de red incrementando vistas:", err);
             }
         }
-        return listing ? listing.views : 0;
+        return currentViews;
     }
 
     async updateReaction(id, reactionType, incrementVal) {

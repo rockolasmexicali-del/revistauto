@@ -281,9 +281,35 @@ window.useAdPricingHook = (function() {
     return { init, getAdPrice };
 })();
 
+// ====================================================================
+// HOOK: useAnalyticsHook — Manejo unificado de analíticas y visitas
+// Registra visitas globales y vistas por tarjeta de forma limpia y segura
+// ====================================================================
+function useAnalyticsHook() {
+    return {
+        recordGlobalVisit: (city, state) => {
+            if (typeof db !== 'undefined' && db && typeof db.recordGlobalVisit === 'function') {
+                db.recordGlobalVisit(city, state);
+            }
+        },
+        incrementListingView: async (listingId) => {
+            if (typeof db !== 'undefined' && db && typeof db.incrementViews === 'function') {
+                return await db.incrementViews(listingId);
+            }
+            return 0;
+        }
+    };
+}
+window.useAnalyticsHook = useAnalyticsHook;
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- Silent Direct Browser Redirect (Facebook -> Native Browser) ---
     useDirectBrowserRedirect();
+
+    // --- Registrar visita global del sitio (una vez por sesión) ---
+    if (typeof useAnalyticsHook === 'function') {
+        useAnalyticsHook().recordGlobalVisit();
+    }
 
     // --- State ---
     window.sessionSeed = Math.random(); // Semilla para mezcla aleatoria congelada por sesión
@@ -1203,6 +1229,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const option = Array.from(userStateSelect.options).find(opt => opt.value === state);
                 if (option) option.textContent = state;
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: state, city: selectedCities[0] || '' }));
+                if (typeof useAnalyticsHook === 'function') {
+                    useAnalyticsHook().recordGlobalVisit(selectedCities[0] || 'Desconocida', state);
+                }
             }
             // Al cambiar de estado, resetear el botón de ciudades
             if (window.updateCitiesBtn) window.updateCitiesBtn();
@@ -1248,6 +1277,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Guardar en caché local
                 localStorage.setItem('revista_last_location', JSON.stringify({ state: stateName, city: cityName }));
+
+                // Registrar visita asignada a la ciudad real detectada
+                if (typeof useAnalyticsHook === 'function') {
+                    useAnalyticsHook().recordGlobalVisit(matchedCity || cityName, matchedState || stateName);
+                }
 
                 // Cargar stats de popularidad para la ciudad detectada (dropdowns inteligentes)
                 if (db && db.fetchPopularityStats) {
@@ -3814,10 +3848,42 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Incrementar vistas usando la nueva función analítica en segundo plano
-        db.incrementViews(id).then(() => {
-            updateStats();
-        });
+        // Incremento optimista de vistas para reflejo inmediato en pantalla si es nueva sesión
+        let viewedThisSession = [];
+        try {
+            viewedThisSession = JSON.parse(sessionStorage.getItem('revista_autos_viewed_session') || '[]');
+        } catch (e) { }
+
+        if (!viewedThisSession.includes(strId)) {
+            listing.views = (listing.views || 0) + 1;
+            const liveItem = (typeof window.activeFeedListings !== 'undefined' && window.activeFeedListings.find(l => String(l.id) === strId))
+                          || (window.searchCascadeList && window.searchCascadeList.find(l => String(l.id) === strId))
+                          || (window.currentSearchContext && window.currentSearchContext.level1 && window.currentSearchContext.level1.find(l => String(l.id) === strId));
+            if (liveItem) {
+                liveItem.views = listing.views;
+            }
+        }
+
+        // Incrementar vistas usando hook analítico en segundo plano
+        if (typeof useAnalyticsHook === 'function') {
+            useAnalyticsHook().incrementListingView(id).then(updatedViews => {
+                if (updatedViews && updatedViews > listing.views) {
+                    listing.views = updatedViews;
+                    const viewEl = document.getElementById('detalle-views-count');
+                    if (viewEl) viewEl.textContent = updatedViews;
+                }
+                updateStats();
+            });
+        } else if (typeof db !== 'undefined' && db && typeof db.incrementViews === 'function') {
+            db.incrementViews(id).then(updatedViews => {
+                if (updatedViews && updatedViews > listing.views) {
+                    listing.views = updatedViews;
+                    const viewEl = document.getElementById('detalle-views-count');
+                    if (viewEl) viewEl.textContent = updatedViews;
+                }
+                updateStats();
+            });
+        }
 
         // Encontrar vista activa actual
         const activeView = Array.from(views).find(v => v.classList.contains('active') && v.id !== 'view-detalle');
@@ -3933,7 +3999,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="detalle-item" style="grid-column: 2 / span 2; display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;">
                         <span class="detalle-label" style="text-transform: uppercase;">Vistas</span>
                         <span class="detalle-value" style="font-size: 1.1rem; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-                            <span class="material-symbols-rounded" style="font-size:18px;">visibility</span> ${listing.views}
+                            <span class="material-symbols-rounded" style="font-size:18px;">visibility</span> <span id="detalle-views-count">${listing.views || 0}</span>
                         </span>
                     </div>
                 </div>

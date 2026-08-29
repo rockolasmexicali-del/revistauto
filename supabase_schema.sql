@@ -196,22 +196,26 @@ CREATE POLICY "Permitir lectura publica de visitas" ON public.daily_visits FOR S
 DROP POLICY IF EXISTS "Permitir insercion publica de visitas" ON public.daily_visits;
 CREATE POLICY "Permitir insercion publica de visitas" ON public.daily_visits FOR ALL USING (true);
 
--- Función segura para incrementar vistas y visitas globales al mismo tiempo (por ubicación)
+-- Función segura para incrementar vistas de autos o visitas globales (separadas por condición)
 CREATE OR REPLACE FUNCTION increment_visit(listing_id BIGINT, visit_date DATE, visitor_city TEXT DEFAULT 'Desconocida', visitor_state TEXT DEFAULT 'Desconocido')
 RETURNS void AS $$
 BEGIN
-    -- Incrementar en la tabla de visitas (por ciudad y estado)
-    INSERT INTO public.daily_visits (date, city, state, visits)
-    VALUES (visit_date, visitor_city, visitor_state, 1)
-    ON CONFLICT (date, city, state)
-    DO UPDATE SET visits = public.daily_visits.visits + 1;
-
-    -- Incrementar en la tabla listings
-    UPDATE public.listings 
-    SET views = COALESCE(views, 0) + 1 
-    WHERE id = listing_id;
+    -- Si viene un auto válido (> 0), SOLO incrementamos la tarjeta del auto
+    IF listing_id IS NOT NULL AND listing_id > 0 THEN
+        UPDATE public.listings 
+        SET views = COALESCE(views, 0) + 1 
+        WHERE id = listing_id;
+    -- Si listing_id es 0 o nulo, es una visita general a la plataforma web
+    ELSE
+        INSERT INTO public.daily_visits (date, city, state, visits)
+        VALUES (visit_date, visitor_city, visitor_state, 1)
+        ON CONFLICT (date, city, state)
+        DO UPDATE SET visits = public.daily_visits.visits + 1;
+    END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.increment_visit(BIGINT, DATE, TEXT, TEXT) TO anon, authenticated, service_role;
 
 -- Función segura para actualizar reacciones
 CREATE OR REPLACE FUNCTION update_reaction(listing_id BIGINT, reaction_type TEXT, increment_val INT)
