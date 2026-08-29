@@ -39,25 +39,32 @@
     <style>
         /* Prevenir que se muestren textos de ligaduras ('storefront', 'home', 'my_location', etc.) mientras descarga la fuente */
         html:not(.icons-loaded) .material-symbols-rounded {
-            opacity: 0 !important;
-            visibility: hidden !important;
-        }
-        html.icons-loaded .material-symbols-rounded {
-            visibility: visible;
+            color: transparent !important;
+            display: inline-block;
+            width: 1em;
+            overflow: hidden;
+            white-space: nowrap;
         }
     </style>
     <script>
         (function() {
-            function markIconsLoaded() { document.documentElement.classList.add('icons-loaded'); }
-            if (document.fonts && document.fonts.load) {
-                document.fonts.load('1em "Material Symbols Rounded"').then(markIconsLoaded).catch(markIconsLoaded);
-                setTimeout(markIconsLoaded, 1000);
+            function checkIcons() {
+                if (document.fonts.check('1em "Material Symbols Rounded"')) {
+                    document.documentElement.classList.add('icons-loaded');
+                }
+            }
+            if (document.fonts) {
+                document.fonts.ready.then(function() {
+                    document.documentElement.classList.add('icons-loaded');
+                });
+                // Check in case it's already loaded or takes time
+                setInterval(checkIcons, 100);
             } else {
-                markIconsLoaded();
+                setTimeout(function() { document.documentElement.classList.add('icons-loaded'); }, 2000);
             }
         })();
     </script>
-    <link rel="stylesheet" href="style.css?v=104">
+    <link rel="stylesheet" href="style.css?v=105">
     <!-- Mercado Pago SDK -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
