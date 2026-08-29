@@ -3328,15 +3328,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.updateNavFavoriteIcon = function () {
-        const hasFavorites = savedListingsIds.length > 0;
+        const hasFavorites = Array.isArray(savedListingsIds) && savedListingsIds.length > 0;
         const favNavBtns = document.querySelectorAll('.nav-item[data-target="view-biblioteca"] .material-symbols-rounded');
 
         favNavBtns.forEach(icon => {
             if (hasFavorites) {
-                icon.style.color = '#EF4444';
+                icon.style.setProperty('color', '#EF4444', 'important');
                 icon.style.fontVariationSettings = "'FILL' 1";
             } else {
-                icon.style.color = ''; // vuelve al color CSS normal (heredado)
+                icon.style.removeProperty('color');
                 icon.style.fontVariationSettings = "'FILL' 0";
             }
         });

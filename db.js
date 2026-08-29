@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.21"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.22"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     truckEngines: {
