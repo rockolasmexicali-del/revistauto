@@ -824,7 +824,7 @@ select:focus {
     max-width: 500px;
     border-radius: 20px;
     padding: 24px;
-    max-height: 90vh;
+    max-height: 90dvh; /* dvh se adapta automáticamente al teclado en móviles */
     overflow-y: auto;
     border: 1px solid var(--glass-border);
     -ms-overflow-style: none;
