@@ -54,20 +54,25 @@
             function checkIcons() {
                 if (document.fonts.check('1em "Material Symbols Rounded"')) {
                     document.documentElement.classList.add('icons-loaded');
+                    return true;
                 }
+                return false;
             }
             if (document.fonts) {
                 document.fonts.ready.then(function() {
                     document.documentElement.classList.add('icons-loaded');
                 });
-                // Check in case it's already loaded or takes time
-                setInterval(checkIcons, 100);
+                if (!checkIcons()) {
+                    var interval = setInterval(function() {
+                        if (checkIcons()) clearInterval(interval);
+                    }, 100);
+                }
             } else {
                 setTimeout(function() { document.documentElement.classList.add('icons-loaded'); }, 2000);
             }
         })();
     </script>
-    <link rel="stylesheet" href="style.css?v=108">
+    <link rel="stylesheet" href="style.css?v=109">
     <!-- Mercado Pago SDK -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -1986,6 +1991,22 @@
                 <div class="form-step" data-step="5" style="display: none;">
                     <h4 style="margin-bottom: 16px; color: var(--text-muted);">5. Ficha Técnica</h4>
                     <div class="form-row">
+                        <div class="form-group half" style="flex: 0.75; min-width: 0;">
+                            <label>Año</label>
+                            <input type="number" id="form-year" required min="1950" placeholder="Ej. 2026">
+                        </div>
+                        <div class="form-group half" style="flex: 1.25; min-width: 0;">
+                            <label>Precio de Venta</label>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 1; min-width: 0;">
+                                <select id="form-currency" required style="width: 68px; flex-shrink: 0; padding: 0 2px; text-align: center; font-size: 0.85rem;">
+                                    <option value="MXN">MXN</option>
+                                    <option value="USD" disabled>USD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group half" style="flex: 1.15; min-width: 0;">
                             <label>Kilometraje / Millaje <span style="font-weight:normal; color:var(--text-muted); font-size:0.75rem;">(Opcional)</span></label>
                             <div style="display: flex; gap: 6px;">
@@ -2005,22 +2026,6 @@
                                 <option value="Americano">Americano</option>
                                 <option value="Decreto">Decreto</option>
                             </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group half" style="flex: 0.75; min-width: 0;">
-                            <label>Año</label>
-                            <input type="number" id="form-year" required min="1950" placeholder="Ej. 2026">
-                        </div>
-                        <div class="form-group half" style="flex: 1.25; min-width: 0;">
-                            <label>Precio de Venta</label>
-                            <div style="display: flex; gap: 6px;">
-                                <input type="text" id="form-price" required inputmode="numeric" placeholder="Ej. 250,000" maxlength="11" style="flex: 1; min-width: 0;">
-                                <select id="form-currency" required style="width: 68px; flex-shrink: 0; padding: 0 2px; text-align: center; font-size: 0.85rem;">
-                                    <option value="MXN">MXN</option>
-                                    <option value="USD" disabled>USD</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2056,7 +2061,7 @@
                 </div>
             </form>
 
-                <div class="wizard-buttons" style="position: sticky; bottom: 0; padding: 16px 24px; margin: 24px -24px -24px -24px; background: var(--surface-color); border-top: 1px solid rgba(255,255,255,0.05); z-index: 20; display: flex; flex-direction: column; gap: 12px; border-radius: 0 0 20px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.3);">
+                <div class="wizard-buttons" style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
                     <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; width: 100%;">
                         <button type="button" id="btn-wizard-back" class="danger-btn" style="display: none; flex: 1; background: var(--surface-light);">Atrás</button>
                         <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
@@ -2096,7 +2101,7 @@
     <!-- Supabase Cloud SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js?v=104"></script>
-    <script src="db.js?v=108"></script>
-    <script src="app.js?v=112"></script>
+    <script src="db.js?v=109"></script>
+    <script src="app.js?v=114"></script>
 </body>
 </html>

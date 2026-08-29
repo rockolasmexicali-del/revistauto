@@ -1795,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customTypeSelect = new CustomSelectWrapper(formType);
         window.customTransmissionSelect = new CustomSelectWrapper(formTransmission);
         window.customAcSelect = new CustomSelectWrapper(formAc);
-        window.customLegalSelect = new CustomSelectWrapper(formLegal);
+        window.customLegalSelect = new CustomSelectWrapper(formLegal, { dropUp: true });
         window.customUserFilterStateSelect = new CustomSelectWrapper(userStateSelect);
         window.customFilterStateSelect = new CustomSelectWrapper(filterState);
         window.customFilterCitySelect = new CustomSelectWrapper(filterCity);
@@ -4861,6 +4861,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentWizardStep > 1) {
                 currentWizardStep--;
                 updateWizardUI();
+            }
+        });
+    }
+
+    // Smart scroll en móviles: asegurar que los botones sean visibles al abrir el teclado numérico
+    if (newListingForm) {
+        const wizardButtons = document.querySelector('.wizard-buttons');
+        newListingForm.addEventListener('focusin', (e) => {
+            if (window.innerWidth <= 768 && wizardButtons && e.target.tagName === 'INPUT') {
+                // Esperar a que el teclado se despliegue y haga el resize de ventana
+                setTimeout(() => {
+                    // Desplazar el modal-content internamente hacia los botones
+                    wizardButtons.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }, 400);
             }
         });
     }
