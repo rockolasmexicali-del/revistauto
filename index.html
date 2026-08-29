@@ -45,6 +45,9 @@
             overflow: hidden;
             white-space: nowrap;
         }
+        html.icons-loaded .material-symbols-rounded {
+            color: inherit !important;
+        }
     </style>
     <script>
         (function() {
@@ -64,7 +67,7 @@
             }
         })();
     </script>
-    <link rel="stylesheet" href="style.css?v=106">
+    <link rel="stylesheet" href="style.css?v=108">
     <!-- Mercado Pago SDK -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -2051,8 +2054,9 @@
                         </div>
                     </div>
                 </div>
+            </form>
 
-                <div class="wizard-buttons" style="position: sticky; bottom: -24px; padding: 16px 24px; margin: 24px -24px -24px -24px; background: var(--surface-color); border-top: 1px solid rgba(255,255,255,0.05); z-index: 20; display: flex; flex-direction: column; gap: 12px; border-radius: 0 0 20px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.3);">
+                <div class="wizard-buttons" style="position: sticky; bottom: 0; padding: 16px 24px; margin: 24px -24px -24px -24px; background: var(--surface-color); border-top: 1px solid rgba(255,255,255,0.05); z-index: 20; display: flex; flex-direction: column; gap: 12px; border-radius: 0 0 20px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.3);">
                     <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: center; width: 100%;">
                         <button type="button" id="btn-wizard-back" class="danger-btn" style="display: none; flex: 1; background: var(--surface-light);">Atrás</button>
                         <button type="button" id="btn-wizard-next" class="primary-btn" style="flex: 1;">Siguiente</button>
@@ -2063,7 +2067,6 @@
                         <a href="#" onclick="event.preventDefault(); window.openLegalModal('privacy');" style="color: var(--primary-color); text-decoration: underline;">Términos y Política de Privacidad</a>.
                     </p>
                 </div>
-            </form>
         </div>
     </div>
     <!-- ===== FIN MODAL GLOBAL ===== -->
@@ -2093,7 +2096,7 @@
     <!-- Supabase Cloud SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js?v=104"></script>
-    <script src="db.js?v=106"></script>
+    <script src="db.js?v=108"></script>
     <script src="app.js?v=112"></script>
 </body>
 </html>
