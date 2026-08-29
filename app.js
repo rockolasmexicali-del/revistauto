@@ -569,6 +569,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Eventos principales
             this.trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (this.select.disabled || this.dropdown.children.length === 0) {
+                    return;
+                }
                 const isOpen = this.dropdown.classList.contains('open');
                 // Cerrar todos los demás primero
                 document.querySelectorAll('.custom-select-dropdown.open').forEach(d => {
@@ -611,37 +614,38 @@ document.addEventListener('DOMContentLoaded', () => {
             this.trigger.innerHTML = `<span>${selectedOpt ? selectedOpt.text : 'Selecciona una opción'}</span><span class="material-symbols-rounded">expand_more</span>`;
 
             Array.from(this.select.options).forEach(option => {
+                // Omitir placeholders y opciones deshabilitadas para que solo aparezcan las opciones reales seleccionables (en blanco)
+                if (option.disabled || option.value === '') {
+                    return;
+                }
+
                 const optDiv = document.createElement('div');
                 optDiv.className = 'custom-select-option';
                 optDiv.textContent = option.text;
                 optDiv.dataset.value = option.value;
 
-                if (option.disabled) {
-                    optDiv.classList.add('disabled');
-                } else {
-                    optDiv.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.select.value = option.value;
-                        this.trigger.innerHTML = `<span>${option.text}</span><span class="material-symbols-rounded">expand_more</span>`;
-                        this.dropdown.classList.remove('open');
-                        this.trigger.classList.remove('open');
-                        this.trigger.classList.remove('input-error');
-                        this.select.classList.remove('input-error');
+                optDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.select.value = option.value;
+                    this.trigger.innerHTML = `<span>${option.text}</span><span class="material-symbols-rounded">expand_more</span>`;
+                    this.dropdown.classList.remove('open');
+                    this.trigger.classList.remove('open');
+                    this.trigger.classList.remove('input-error');
+                    this.select.classList.remove('input-error');
 
-                        // Disparar change con bubbling para el resto del sistema
-                        this.select.dispatchEvent(new Event('change', { bubbles: true }));
+                    // Disparar change con bubbling para el resto del sistema
+                    this.select.dispatchEvent(new Event('change', { bubbles: true }));
 
-                        // Actualizar selección visual
-                        Array.from(this.dropdown.children).forEach(c => c.classList.remove('selected'));
-                        optDiv.classList.add('selected');
+                    // Actualizar selección visual
+                    Array.from(this.dropdown.children).forEach(c => c.classList.remove('selected'));
+                    optDiv.classList.add('selected');
 
-                        if (typeof tryAutoAdvanceWizardStep === 'function') {
-                            tryAutoAdvanceWizardStep();
-                        }
-                    });
-                }
+                    if (typeof tryAutoAdvanceWizardStep === 'function') {
+                        tryAutoAdvanceWizardStep();
+                    }
+                });
 
-                if (this.select.value === option.value && !option.disabled) {
+                if (this.select.value === option.value) {
                     optDiv.classList.add('selected');
                 }
 
