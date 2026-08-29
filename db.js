@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.10"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.13"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 const defaultCatalogData = {
     truckEngines: {
@@ -1450,6 +1450,62 @@ class Database {
         }
 
         localStorage.setItem(this.suggestionsKey, JSON.stringify(suggestions));
+    }
+
+    async purgeExpiredExtensionListings() {
+        if (!supabaseClient) return;
+        try {
+            const now = new Date().toISOString();
+            // Buscar listings expirados de la extensión
+            const { data: expiredListings, error: fetchError } = await supabaseClient
+                .from('listings')
+                .select('id, images')
+                .eq('publisher_id', 'admin_fb_importer')
+                .lt('expires_at', now);
+
+            if (fetchError) throw fetchError;
+            if (!expiredListings || expiredListings.length === 0) return;
+
+            console.log(`[Purge] Encontrados ${expiredListings.length} autos expirados de la extensión para eliminar.`);
+
+            const idsToDelete = expiredListings.map(l => l.id);
+            let pathsToDelete = [];
+
+            expiredListings.forEach(l => {
+                if (l.images && Array.isArray(l.images)) {
+                    l.images.forEach(url => {
+                        if (url.includes('supabase.co')) {
+                            const parts = url.split('/');
+                            pathsToDelete.push('cars/' + parts[parts.length - 1]);
+                        }
+                    });
+                }
+            });
+
+            // 1. Eliminar imágenes de Storage
+            if (pathsToDelete.length > 0) {
+                const { error: storageError } = await supabaseClient.storage.from('car-images').remove(pathsToDelete);
+                if (storageError) console.warn('[Purge] Error eliminando imágenes:', storageError);
+            }
+
+            // 2. Eliminar registros de la DB
+            const { error: deleteError } = await supabaseClient
+                .from('listings')
+                .delete()
+                .in('id', idsToDelete);
+
+            if (deleteError) throw deleteError;
+
+            console.log('[Purge] Limpieza completada con éxito.');
+
+            // 3. Remover de la caché local si están
+            if (this.listingsCache) {
+                this.listingsCache = this.listingsCache.filter(l => !idsToDelete.includes(l.id));
+                localStorage.setItem(this.listingsKey, JSON.stringify(this.listingsCache));
+            }
+        } catch (error) {
+            console.error('[Purge] Error purgado de autos expirados:', error);
+        }
     }
 
     addListingNote(id, noteText, skipSave = false) {

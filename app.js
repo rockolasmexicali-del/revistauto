@@ -5776,6 +5776,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Admin Dashboard ---
     function loadAdminData() {
+        if (typeof db.purgeExpiredExtensionListings === 'function') {
+            db.purgeExpiredExtensionListings();
+        }
         updateAdminStats();
         renderAdminInventory();
         updateAdminApprovals();
@@ -7039,6 +7042,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 listing.publisher_id === 'admin_fb_importer' || 
                                 (listing.notes && JSON.stringify(listing.notes).includes('Extensión')) ||
                                 (listing.source && listing.source.includes('extension'));
+            let expiryText = '';
+            if (listing.expiresAt) {
+                const expDate = new Date(listing.expiresAt);
+                const formatter = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+                expiryText = ` &bull; <span style="color:#f59e0b;">Vence: ${formatter.format(expDate)}</span>`;
+            }
+
             return `
             <tr>
                 <td style="text-align:center; padding: 6px 4px;">
@@ -7050,7 +7060,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>
                     <strong>${listing.title}</strong>
                     ${isExtension ? '<span style="display:inline-block; margin-left:6px; background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.4); border-radius:4px; padding:1px 6px; font-size:0.7rem; font-weight:700; vertical-align:middle;">(Extensión)</span>' : ''}<br>
-                    <small style="color:var(--text-muted)">${listing.year} • ${listing.city}</small>
+                    <small style="color:var(--text-muted)">${listing.year} &bull; ${listing.city}${expiryText}</small>
                 </td>
                 <td style="white-space: nowrap;">${usePriceFormatterHook(listing)}</td>
                 <td>${listing.views || 0}</td>
@@ -7313,6 +7323,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Solo publicaciones con expiresAt (sistema rolling billing)
             // Las de prueba/seed sin fecha nunca aparecen aquí
             if (!l.expiresAt) return false;
+
+            // Excluir publicaciones de la Extensión (no se renuevan, se auto-eliminan a los 15 días)
+            const isFromExtension = l.publisherId === 'admin_fb_importer' || l.publisher_id === 'admin_fb_importer' ||
+                                    (Array.isArray(l.notes) && l.notes.some(n => n && n.type === 'origen' && n.text === 'Extensión'));
+            if (isFromExtension) return false;
+
             const expDate = new Date(l.expiresAt);
             return expDate <= alertThreshold; // Vence en <= 5 días o ya venció
         });
