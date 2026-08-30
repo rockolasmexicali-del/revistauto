@@ -1,4 +1,24 @@
-const APP_VERSION = "3.17.26"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.29"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+
+// Función oficial: Devuelve fecha YYYY-MM-DD sincronizada con el horario oficial del negocio (Mexicali / America/Tijuana)
+function getLocalDateString(dateInput = new Date()) {
+    const d = (dateInput instanceof Date && !isNaN(dateInput.getTime())) ? dateInput : new Date(dateInput);
+    try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Tijuana',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        return formatter.format(d);
+    } catch (e) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+}
+if (typeof window !== 'undefined') window.getLocalDateString = getLocalDateString;
 
 const defaultCatalogData = {
     truckEngines: {
@@ -1931,7 +1951,7 @@ class Database {
     async recordTraffic(source) {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString();
 
                 // Generar ID único de sesión temporal si no existe
                 if (!sessionStorage.getItem('revista_visitor_id')) {
@@ -1974,7 +1994,12 @@ class Database {
 
 
     async recordGlobalVisit(overrideCity, overrideState) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateString();
+
+        // Candado estricto: Una sola visita global por usuario por día en la sesión
+        const sessionKey = `revista_global_visit_recorded_${today}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+        sessionStorage.setItem(sessionKey, 'true');
 
         let vCity = overrideCity || 'Desconocida';
         let vState = overrideState || 'Desconocido';
@@ -1984,15 +2009,11 @@ class Database {
                 const locStr = localStorage.getItem('revista_last_location');
                 if (locStr) {
                     const loc = JSON.parse(locStr);
-                    if (loc.city) vCity = loc.city;
-                    if (loc.state) vState = loc.state;
+                    if (loc.city && loc.city !== 'Desconocida') vCity = loc.city;
+                    if (loc.state && loc.state !== 'Desconocido') vState = loc.state;
                 }
             } catch (e) {}
         }
-
-        const sessionKey = `revista_visit_recorded_${today}_${vCity}`;
-        if (sessionStorage.getItem(sessionKey)) return;
-        sessionStorage.setItem(sessionKey, 'true');
 
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
@@ -2052,7 +2073,7 @@ class Database {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
                 const now = new Date();
-                const visit_date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const visit_date = getLocalDateString(now);
 
                 let vCity = 'Desconocida';
                 let vState = 'Desconocido';

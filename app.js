@@ -307,8 +307,32 @@ document.addEventListener('DOMContentLoaded', () => {
     useDirectBrowserRedirect();
 
     // --- Registrar visita global del sitio (una vez por sesión) ---
-    if (typeof useAnalyticsHook === 'function') {
-        useAnalyticsHook().recordGlobalVisit();
+    // Si ya existe ubicación conocida en caché, se registra de inmediato.
+    // Si es modo incógnito / primera visita, esperamos a que el GPS o selector defina la ciudad
+    // o aplicamos fallback a 'Desconocida' tras 4 segundos para no contar doble jamás.
+    const cachedLocStr = localStorage.getItem('revista_last_location');
+    let hasKnownCity = false;
+    if (cachedLocStr) {
+        try {
+            const parsedLoc = JSON.parse(cachedLocStr);
+            if (parsedLoc && parsedLoc.city && parsedLoc.city !== 'Desconocida') {
+                hasKnownCity = true;
+                if (typeof useAnalyticsHook === 'function') {
+                    useAnalyticsHook().recordGlobalVisit(parsedLoc.city, parsedLoc.state);
+                }
+            }
+        } catch (e) {}
+    }
+
+    if (!hasKnownCity) {
+        setTimeout(() => {
+            const today = (typeof getLocalDateString === 'function') ? getLocalDateString() : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+            if (!sessionStorage.getItem('revista_global_visit_recorded_' + today)) {
+                if (typeof useAnalyticsHook === 'function') {
+                    useAnalyticsHook().recordGlobalVisit('Desconocida', 'Desconocido');
+                }
+            }
+        }, 4000);
     }
 
     // --- State ---
@@ -6952,9 +6976,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.useChartBreakdownHook = useChartBreakdownHook;
 
-    window.showChartBreakdown = function(chartType, period, index, label) {
+    window.showChartBreakdown = async function(chartType, period, index, label) {
         const modal = document.getElementById('chart-breakdown-modal');
         if (!modal) return;
+
+        // Refrescar analíticas de visitas en vivo desde Supabase para ver las visitas más recientes
+        if (chartType === 'traffic' && typeof db !== 'undefined' && db && typeof db.fetchTrafficStats === 'function') {
+            try {
+                const freshData = await db.fetchTrafficStats();
+                if (freshData && Array.isArray(freshData)) {
+                    window.trafficStatsCache = freshData;
+                }
+            } catch (e) {
+                console.warn("Error refrescando trafficStatsCache:", e);
+            }
+        }
 
         const hook = typeof window.useChartBreakdownHook === 'function' ? window.useChartBreakdownHook() : null;
         if (!hook) return;
@@ -8642,9 +8678,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = (typeof getLocalDateString === 'function') ? getLocalDateString(today) : `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const inOneMonth = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-        const inOneMonthStr = inOneMonth.toISOString().split('T')[0];
+        const inOneMonthStr = (typeof getLocalDateString === 'function') ? getLocalDateString(inOneMonth) : `${inOneMonth.getFullYear()}-${String(inOneMonth.getMonth() + 1).padStart(2, '0')}-${String(inOneMonth.getDate()).padStart(2, '0')}`;
 
         const startDateInput = document.getElementById('ad-start-date');
         const endDateInput = document.getElementById('ad-end-date');
@@ -8936,8 +8972,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;"><span class="material-symbols-rounded" style="animation:spin 1s linear infinite; font-size:20px; vertical-align:middle;">refresh</span> Cargando...</td></tr>';
 
         const { from, to } = getDateRangeForPeriod(period, fromDate, toDate);
-        const fromISO = from.toISOString().split('T')[0];
-        const toISO = to.toISOString().split('T')[0];
+        const fromISO = (typeof getLocalDateString === 'function') ? getLocalDateString(from) : `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+        const toISO = (typeof getLocalDateString === 'function') ? getLocalDateString(to) : `${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`;
 
         let payments = [];
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
@@ -9052,8 +9088,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const wb = XLSX.utils.book_new();
         const periodLabel = corteCurrentPeriod === 'today' ? 'Hoy' : corteCurrentPeriod === 'week' ? 'Semana' : corteCurrentPeriod === 'month' ? 'Mes' : 'Rango';
         const sheetName = `Corte ${periodLabel} ${from.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}`;
-        XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
-        XLSX.writeFile(wb, `Corte_RevistAuto_${periodLabel}_${from.toISOString().split('T')[0]}.xlsx`);
+        const fromDateStr = (typeof getLocalDateString === 'function') ? getLocalDateString(from) : `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+        XLSX.writeFile(wb, `Corte_RevistAuto_${periodLabel}_${fromDateStr}.xlsx`);
     }
 
     // Event listeners del Corte de Caja
