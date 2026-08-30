@@ -4384,45 +4384,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openFacebookApp = function(url) {
         if (!url) return;
-        if (window.innerWidth >= 768) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            return;
-        }
-
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isAndroid = /Android/.test(navigator.userAgent);
         
-        let deepLink = url;
-        let isFB = url.includes('facebook.com') || url.includes('fb.me');
-        
-        if (isFB) {
-            const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
-            if (isIOS) {
-                // En iOS, la forma más limpia suele ser intentar usar el enlace web normal, el sistema intercepta (Universal Links)
-                // O probar con un esquema fb:// directo si es soportado. 
-                deepLink = 'fb://facewebmodal/f?href=' + encodeURIComponent(url);
-            } else if (isAndroid) {
-                // Intent estándar de Android para forzar a la app de Facebook a abrir la URL HTTPS
-                deepLink = 'intent://' + urlWithoutProtocol + '#Intent;package=com.facebook.katana;scheme=https;end';
-            }
-        }
-
-        // Timer para detectar si la app no está instalada (fallback a la página web)
-        const fallbackTimer = setTimeout(() => {
-            window.location.href = url;
-        }, 1500);
-
-        // Al salir de la app, pausar el timer
-        const blurHandler = () => clearTimeout(fallbackTimer);
-        window.addEventListener('blur', blurHandler, { once: true });
-        
-        window.location.href = deepLink;
+        // Usar método universal de Pestaña Emergente (_blank)
+        // En Android PWA: Abre un Chrome Custom Tab que al darle "Atrás" se cierra y vuelve a la app.
+        // En iOS PWA: Abre Safari o lanza Universal Link directo a la app con botón de retorno.
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     window.contactSeller = function (listingId) {
