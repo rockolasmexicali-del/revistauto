@@ -4411,6 +4411,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const btnCall = document.getElementById('btn-contact-call');
                 const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
+                const btnFacebook = document.getElementById('btn-contact-facebook');
 
                 if (window.innerWidth >= 768) {
                     btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${phoneData.displayFormatted}`;
@@ -4432,6 +4433,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.open(`https://wa.me/${waClean}?text=${message}`, '_blank');
                     document.getElementById('contact-modal').classList.remove('active');
                 };
+
+                if (btnFacebook) {
+                    if (fbChatUrl) {
+                        btnFacebook.style.display = 'flex';
+                        btnFacebook.onclick = () => {
+                            window.open(fbChatUrl, '_blank');
+                            document.getElementById('contact-modal').classList.remove('active');
+                        };
+                    } else {
+                        btnFacebook.style.display = 'none';
+                    }
+                }
 
                 document.getElementById('contact-modal').classList.add('active');
             } else {
