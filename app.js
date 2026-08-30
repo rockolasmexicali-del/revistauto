@@ -4382,6 +4382,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    window.openFacebookApp = function(url) {
+        if (!url) return;
+        if (window.innerWidth >= 768) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            return;
+        }
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        let deepLink = url;
+        let isFB = url.includes('facebook.com') || url.includes('fb.me');
+        
+        if (isFB) {
+            if (isIOS) {
+                deepLink = 'fb://facewebmodal/f?href=' + encodeURIComponent(url);
+            } else if (isAndroid) {
+                deepLink = 'intent://facewebmodal/f?href=' + encodeURIComponent(url) + '#Intent;package=com.facebook.katana;scheme=fb;end';
+            }
+        }
+
+        // Timer para detectar si la app no está instalada (fallback a la página web)
+        const fallbackTimer = setTimeout(() => {
+            window.location.href = url;
+        }, 1500);
+
+        // Al salir de la app, pausar el timer
+        const blurHandler = () => clearTimeout(fallbackTimer);
+        window.addEventListener('blur', blurHandler, { once: true });
+        
+        window.location.href = deepLink;
+    };
+
     window.contactSeller = function (listingId) {
         const strId = String(listingId);
         let listing = db.getAllListings().find(l => String(l.id) === strId);
@@ -4398,22 +4437,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let fbChatUrl = listing.fb_chat_url;
             
             if (!actualPhone && fbChatUrl) {
-                if (window.innerWidth >= 768) {
-                    // En PC, forzar nueva pestaña de manera confiable
-                    const a = document.createElement('a');
-                    a.href = fbChatUrl;
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                } else {
-                    // En móviles, guardamos el estado y navegamos en la misma pestaña
-                    const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
-                    window.history.replaceState({ path: newUrl }, '', newUrl);
-                    localStorage.setItem('resume_listing_id', listing.id); // Guardado en disco por si Android mata la app en background
-                    window.location.href = fbChatUrl;
-                }
+                const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
+                window.history.replaceState({ path: newUrl }, '', newUrl);
+                localStorage.setItem('resume_listing_id', listing.id); 
+                window.openFacebookApp(fbChatUrl);
                 return;
             }
             
@@ -4453,21 +4480,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (fbChatUrl) {
                         btnFacebook.style.display = 'flex';
                         btnFacebook.onclick = () => {
-                            if (window.innerWidth >= 768) {
-                                const a = document.createElement('a');
-                                a.href = fbChatUrl;
-                                a.target = '_blank';
-                                a.rel = 'noopener noreferrer';
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                            } else {
-                                // Guardar estado con el ID del auto para que al presionar 'Atrás' regrese a esta tarjeta
-                                const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
-                                window.history.replaceState({ path: newUrl }, '', newUrl);
-                                localStorage.setItem('resume_listing_id', listing.id);
-                                window.location.href = fbChatUrl;
-                            }
+                            const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
+                            window.history.replaceState({ path: newUrl }, '', newUrl);
+                            localStorage.setItem('resume_listing_id', listing.id);
+                            window.openFacebookApp(fbChatUrl);
                             document.getElementById('contact-modal').classList.remove('active');
                         };
                     } else {
