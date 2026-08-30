@@ -288,6 +288,10 @@ window.useAdPricingHook = (function() {
 function useAnalyticsHook() {
     return {
         recordGlobalVisit: (city, state) => {
+            if (city && city !== 'Desconocida' && window._fallbackUnknownVisitTimeout) {
+                clearTimeout(window._fallbackUnknownVisitTimeout);
+                window._fallbackUnknownVisitTimeout = null;
+            }
             if (typeof db !== 'undefined' && db && typeof db.recordGlobalVisit === 'function') {
                 db.recordGlobalVisit(city, state);
             }
@@ -308,8 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Registrar visita global del sitio (una vez por sesión) ---
     // Si ya existe ubicación conocida en caché, se registra de inmediato.
-    // Si es modo incógnito / primera visita, esperamos a que el GPS o selector defina la ciudad
-    // o aplicamos fallback a 'Desconocida' tras 4 segundos para no contar doble jamás.
+    // Si es modo incógnito / primera visita, esperamos 25 segundos a que el usuario lea y acepte el GPS o elija ciudad.
     const cachedLocStr = localStorage.getItem('revista_last_location');
     let hasKnownCity = false;
     if (cachedLocStr) {
@@ -325,14 +328,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!hasKnownCity) {
-        setTimeout(() => {
+        window._fallbackUnknownVisitTimeout = setTimeout(() => {
             const today = (typeof getLocalDateString === 'function') ? getLocalDateString() : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
             if (!sessionStorage.getItem('revista_global_visit_recorded_' + today)) {
                 if (typeof useAnalyticsHook === 'function') {
                     useAnalyticsHook().recordGlobalVisit('Desconocida', 'Desconocido');
                 }
             }
-        }, 4000);
+            window._fallbackUnknownVisitTimeout = null;
+        }, 25000); // 25 segundos para que el usuario lea con calma y elija su opción
     }
 
     // --- State ---
@@ -1376,6 +1380,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
                 }
             }, () => {
+                if (window._fallbackUnknownVisitTimeout) {
+                    clearTimeout(window._fallbackUnknownVisitTimeout);
+                    window._fallbackUnknownVisitTimeout = null;
+                }
+                const today = (typeof getLocalDateString === 'function') ? getLocalDateString() : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+                if (!sessionStorage.getItem('revista_global_visit_recorded_' + today)) {
+                    if (typeof useAnalyticsHook === 'function') {
+                        useAnalyticsHook().recordGlobalVisit('Desconocida', 'Desconocido');
+                    }
+                }
                 if (isManualClick) showAlert('Permiso de ubicación denegado o no disponible.', 'Ubicación', 'warning');
                 if (btnLocateMe) btnLocateMe.innerHTML = '<span class="material-symbols-rounded">location_on</span>';
 
