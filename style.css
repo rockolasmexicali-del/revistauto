@@ -3555,19 +3555,200 @@ input:checked+.slider:before {
     .form-row-contact .form-group-phone {
         flex: 1.35 !important;
     }
-    .form-row-contact .form-group-whatsapp {
-        flex: 0.85 !important;
+.favoritos-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
     }
-    .form-row-contact .phone-lada-select {
-        width: 76px !important;
-        font-size: 0.76rem !important;
-        padding: 10px 2px !important;
+    #compare-button-container {
+        width: 100%;
+    }
+    .btn-comparar-smart {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        border-radius: 9999px;
+        box-sizing: border-box;
+        text-align: center;
+    }
+}
+.btn-comparar-smart.active-mode {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+}
+.btn-comparar-smart.ready-mode {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+.comparar-text-normal, .comparar-text-magic {
+    transition: opacity 0.4s ease;
+    grid-area: text;
+}
+.comparar-text-magic {
+    opacity: 0;
+    pointer-events: none;
+}
+.btn-comparar-smart.show-magic .comparar-text-normal {
+    opacity: 0;
+}
+.btn-comparar-smart.show-magic .comparar-text-magic {
+    opacity: 1;
+}
+.btn-comparar-smart .progress-bg {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 0%;
+    background: rgba(255, 255, 255, 0.3);
+    z-index: 0;
+    pointer-events: none;
+}
+.btn-comparar-smart span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Tarjetas Seleccionables */
+.card-selectable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-selectable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.card-selected {
+    border: 2px solid var(--primary-color) !important;
+    box-shadow: 0 0 15px rgba(2, 132, 199, 0.4) !important;
+    transform: translateY(-4px) !important;
+    position: relative;
+}
+.card-selected::before {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--primary-color);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Modal Comparador */
+.comparador-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+.comparador-col {
+    background: rgba(255,255,255,0.02);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.comparador-col img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+.comparador-precio {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 2px;
+}
+.comparador-precio-original {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+.comparador-fila {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.comparador-fila:last-child {
+    border-bottom: none;
+}
+.comparador-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.comparador-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+.comparador-value.highlight {
+    color: #10b981;
+    font-weight: 700;
+}
+.comparador-value.warning {
+    color: #f59e0b;
+}
+
+/* Asesor Amigo Box */
+.asesor-box {
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.asesor-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #38bdf8;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+.asesor-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+
+@media (max-width: 768px) {
+    .comparador-grid {
+        gap: 8px;
+    }
+    .comparador-col {
+        padding: 10px;
+    }
+    .comparador-col img {
+        height: 120px;
+    }
+    .comparador-precio {
+        font-size: 1.15rem;
+    }
+    .comparador-value {
+        font-size: 0.85rem;
     }
 }
 
-@media (min-width: 768px) {
-    .slide-out-left { animation: slideOutLeft 0.25s forwards ease-in-out; }
-    .slide-out-right { animation: slideOutRight 0.25s forwards ease-in-out; }
-    .slide-in-right { animation: slideInFromRight 0.25s forwards ease-in-out; }
-    .slide-in-left { animation: slideInLeft 0.25s forwards ease-in-out; }
+/* Contact Phone & WhatsApp layout for Mobile */
+@media (max-width: 480px) {
+    .form-row-contact .form-group-phone {
+        flex: 1.35 !important;
+    }
 }
+
