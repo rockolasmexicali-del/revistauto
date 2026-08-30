@@ -2061,19 +2061,19 @@ input:checked+.slider:before {
 }
 
 .slide-out-left {
-    animation: slideOutLeft 0.25s forwards ease-in-out;
+    animation: slideOutLeft 0.15s forwards ease-out;
 }
 
 .slide-out-right {
-    animation: slideOutRight 0.25s forwards ease-in-out;
+    animation: slideOutRight 0.15s forwards ease-out;
 }
 
 .slide-in-right {
-    animation: slideInFromRight 0.25s forwards ease-in-out;
+    animation: slideInFromRight 0.15s forwards ease-out;
 }
 
 .slide-in-left {
-    animation: slideInLeft 0.25s forwards ease-in-out;
+    animation: slideInLeft 0.15s forwards ease-out;
 }
 
 /* ==========================================================================
@@ -3564,4 +3564,10 @@ input:checked+.slider:before {
         padding: 10px 2px !important;
     }
 }
-
+
+@media (min-width: 768px) {
+    .slide-out-left { animation: slideOutLeft 0.25s forwards ease-in-out; }
+    .slide-out-right { animation: slideOutRight 0.25s forwards ease-in-out; }
+    .slide-in-right { animation: slideInFromRight 0.25s forwards ease-in-out; }
+    .slide-in-left { animation: slideInLeft 0.25s forwards ease-in-out; }
+}

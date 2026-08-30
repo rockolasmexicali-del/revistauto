@@ -2546,13 +2546,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (detalleContent) {
                             void detalleContent.offsetWidth;
                             detalleContent.classList.add(animInClass);
-                            setTimeout(() => detalleContent.classList.remove(animInClass), 260);
+                            setTimeout(() => detalleContent.classList.remove(animInClass), window.innerWidth < 768 ? 160 : 260);
                         }
                     } else {
                         if (adModal) adModal.classList.remove('active');
                         window.closeListingDetails();
                     }
-                }, 200);
+                }, window.innerWidth < 768 ? 100 : 200);
                 return;
             }
 
@@ -2579,9 +2579,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (contentDiv) {
                     void contentDiv.offsetWidth; // Forzar reflow para reiniciar la animación
                     contentDiv.classList.add(animInClass);
-                    setTimeout(() => contentDiv.classList.remove(animInClass), 260);
+                    setTimeout(() => contentDiv.classList.remove(animInClass), window.innerWidth < 768 ? 160 : 260);
                 }
-            }, 200);
+            }, window.innerWidth < 768 ? 100 : 200);
         };
 
         const modal = document.getElementById('ad-fullscreen-modal');
@@ -4236,10 +4236,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Ahora el modal ya cubre la pantalla: reset del auto sin que se vea
                                 detalleContent.classList.remove(animOutClass);
                                 if (contentDiv) {
-                                    setTimeout(() => contentDiv.classList.remove(animInClass), 260);
+                                    setTimeout(() => contentDiv.classList.remove(animInClass), window.innerWidth < 768 ? 160 : 260);
                                 }
                             });
-                        }, 200);
+                        }, window.innerWidth < 768 ? 100 : 200);
                         return;
                     }
                 }
@@ -4259,9 +4259,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         newDetalleContent.classList.add(animInClass);
                         setTimeout(() => {
                             newDetalleContent.classList.remove(animInClass);
-                        }, 260); // Clean up after animation finishes
+                        }, window.innerWidth < 768 ? 160 : 260); // Clean up after animation finishes
                     }
-                }, 200); // Load new data while previous is sliding out
+                }, window.innerWidth < 768 ? 100 : 200); // Load new data while previous is sliding out
             };
             window.navigateListingGlobal = navigateListing;
         }
