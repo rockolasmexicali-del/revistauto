@@ -4383,6 +4383,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openFacebookApp = function(url, listingId) {
         if (!url) return;
+        if (window.innerWidth >= 768) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            return;
+        }
         window.location.href = url;
     };
 
