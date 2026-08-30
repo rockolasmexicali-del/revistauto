@@ -4398,10 +4398,22 @@ document.addEventListener('DOMContentLoaded', () => {
             let fbChatUrl = listing.fb_chat_url;
             
             if (!actualPhone && fbChatUrl) {
-                // Guardar estado con el ID del auto para que al presionar 'Atrás' regrese a esta tarjeta
-                const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
-                window.history.replaceState({ path: newUrl }, '', newUrl);
-                window.location.href = fbChatUrl;
+                if (window.innerWidth >= 768) {
+                    // En PC, forzar nueva pestaña de manera confiable
+                    const a = document.createElement('a');
+                    a.href = fbChatUrl;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    // En móviles, guardamos el estado y navegamos en la misma pestaña
+                    const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
+                    window.history.replaceState({ path: newUrl }, '', newUrl);
+                    localStorage.setItem('resume_listing_id', listing.id); // Guardado en disco por si Android mata la app en background
+                    window.location.href = fbChatUrl;
+                }
                 return;
             }
             
@@ -4441,10 +4453,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (fbChatUrl) {
                         btnFacebook.style.display = 'flex';
                         btnFacebook.onclick = () => {
-                            // Guardar estado con el ID del auto para que al presionar 'Atrás' regrese a esta tarjeta
-                            const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
-                            window.history.replaceState({ path: newUrl }, '', newUrl);
-                            window.location.href = fbChatUrl;
+                            if (window.innerWidth >= 768) {
+                                const a = document.createElement('a');
+                                a.href = fbChatUrl;
+                                a.target = '_blank';
+                                a.rel = 'noopener noreferrer';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            } else {
+                                // Guardar estado con el ID del auto para que al presionar 'Atrás' regrese a esta tarjeta
+                                const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
+                                window.history.replaceState({ path: newUrl }, '', newUrl);
+                                localStorage.setItem('resume_listing_id', listing.id);
+                                window.location.href = fbChatUrl;
+                            }
                             document.getElementById('contact-modal').classList.remove('active');
                         };
                     } else {
@@ -12059,11 +12082,43 @@ window.checkDeepLink = function () {
     tryOpen();
 };
 
+// Nueva función para recuperar estado si la app se mató en background (Android OOM)
+window.checkResumeState = function () {
+    const resumeId = localStorage.getItem('resume_listing_id');
+    if (!resumeId) return;
+
+    localStorage.removeItem('resume_listing_id');
+
+    // Asegurarse de que view-inicio esté activo como fondo
+    const viewInicio = document.getElementById('view-inicio');
+    const allViews = document.querySelectorAll('.view');
+    allViews.forEach(v => v.classList.remove('active'));
+    if (viewInicio) viewInicio.classList.add('active');
+
+    let attempts = 0;
+    const maxAttempts = 40;
+    const tryOpen = () => {
+        if (typeof window.openListingDetails === 'function') {
+            window.openListingDetails(resumeId);
+        } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(tryOpen, 100);
+        }
+    };
+    tryOpen();
+};
+
 window.addEventListener('load', () => {
-    setTimeout(window.checkDeepLink, 300);
+    setTimeout(() => {
+        window.checkDeepLink();
+        window.checkResumeState();
+    }, 300);
 });
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(window.checkDeepLink, 300);
+    setTimeout(() => {
+        window.checkDeepLink();
+        window.checkResumeState();
+    }, 300);
 }
 
 // ==========================================
