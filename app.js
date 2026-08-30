@@ -4398,7 +4398,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let fbChatUrl = listing.fb_chat_url;
             
             if (!actualPhone && fbChatUrl) {
-                window.open(fbChatUrl, '_blank');
+                // Guardar estado con el ID del auto para que al presionar 'Atrás' regrese a esta tarjeta
+                const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
+                window.history.replaceState({ path: newUrl }, '', newUrl);
+                window.location.href = fbChatUrl;
                 return;
             }
             
@@ -4438,7 +4441,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (fbChatUrl) {
                         btnFacebook.style.display = 'flex';
                         btnFacebook.onclick = () => {
-                            window.open(fbChatUrl, '_blank');
+                            // Guardar estado con el ID del auto para que al presionar 'Atrás' regrese a esta tarjeta
+                            const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
+                            window.history.replaceState({ path: newUrl }, '', newUrl);
+                            window.location.href = fbChatUrl;
                             document.getElementById('contact-modal').classList.remove('active');
                         };
                     } else {
