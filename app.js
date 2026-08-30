@@ -3960,6 +3960,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="carousel-nav-btn next" onclick="scrollCarousel(event, this, 1)"><span class="material-symbols-rounded">chevron_right</span></button>
             `;
         }
+        const hasPhone = (listing.phone || listing.whatsapp || listing.seller_phone || listing.seller_whatsapp) ? true : false;
+        const hasFbUrl = listing.fb_chat_url ? true : false;
+        
+        let btnContactarHtml = '';
+        if (!hasPhone && hasFbUrl) {
+            btnContactarHtml = `<button class="btn-contactar fb-btn" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto; background: linear-gradient(135deg, #1877F2 0%, #0C5EBF 100%); box-shadow: 0 4px 15px rgba(24,119,242,0.3);">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Facebook
+                          </button>`;
+        } else {
+            btnContactarHtml = `<button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
+                            <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
+                          </button>`;
+        }
+
         detalleContent.innerHTML = `
             <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
             <button class="global-nav-btn next desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(1);"><span class="material-symbols-rounded">arrow_forward_ios</span></button>
@@ -3986,9 +4000,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="detalle-city-pulsing"><span class="material-symbols-rounded">location_on</span> ${listing.city}</div>
                     </div>
-                    <button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
-                        <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
-                    </button>
+                    ${btnContactarHtml}
                 </div>
                 
                 <div class="detalle-grid">
@@ -4382,7 +4394,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (listing) {
-            let phone = listing.phone || listing.whatsapp || "5512345678";
+            let actualPhone = listing.phone || listing.whatsapp || listing.seller_phone || listing.seller_whatsapp;
+            let fbChatUrl = listing.fb_chat_url;
+            
+            if (!actualPhone && fbChatUrl) {
+                window.open(fbChatUrl, '_blank');
+                return;
+            }
+            
+            let phone = actualPhone || "5512345678";
             if (phone) {
                 const phoneData = parseAndFormatPhone(phone, listing);
                 const waData = parseAndFormatPhone(listing.whatsapp || phone, listing);

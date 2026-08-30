@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.30"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.31"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 // Función oficial: Devuelve fecha YYYY-MM-DD sincronizada con el horario oficial del negocio (Mexicali / America/Tijuana)
 function getLocalDateString(dateInput = new Date()) {
@@ -657,13 +657,18 @@ class Database {
 
     getAllListings() {
         const listings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
-        return listings.map(l => ({
-            ...l,
-            type: (l.type === 'Camioneta') ? 'SUV / Camioneta' : (l.type || ''),
-            notes: Array.isArray(l.notes) ? l.notes : (typeof l.notes === 'string' ? JSON.parse(l.notes || '[]') : []),
-            payments: Array.isArray(l.payments) ? l.payments : (typeof l.payments === 'string' ? JSON.parse(l.payments || '[]') : []),
-            isMyListing: l.publisherId === this.uuid || l.publisher_id === this.uuid
-        }));
+        return listings.map(l => {
+            const notesArr = Array.isArray(l.notes) ? l.notes : (typeof l.notes === 'string' ? JSON.parse(l.notes || '[]') : []);
+            const fbNote = notesArr.find(n => n && (n.type === 'fb_chat_url' || n.type === 'fb_url'));
+            return {
+                ...l,
+                type: (l.type === 'Camioneta') ? 'SUV / Camioneta' : (l.type || ''),
+                notes: notesArr,
+                fb_chat_url: l.fb_chat_url || (fbNote ? fbNote.text : null),
+                payments: Array.isArray(l.payments) ? l.payments : (typeof l.payments === 'string' ? JSON.parse(l.payments || '[]') : []),
+                isMyListing: l.publisherId === this.uuid || l.publisher_id === this.uuid
+            };
+        });
     }
 
     resetFeedShuffle() {
