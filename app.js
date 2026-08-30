@@ -4402,10 +4402,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let isFB = url.includes('facebook.com') || url.includes('fb.me');
         
         if (isFB) {
+            const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
             if (isIOS) {
+                // En iOS, la forma más limpia suele ser intentar usar el enlace web normal, el sistema intercepta (Universal Links)
+                // O probar con un esquema fb:// directo si es soportado. 
                 deepLink = 'fb://facewebmodal/f?href=' + encodeURIComponent(url);
             } else if (isAndroid) {
-                deepLink = 'intent://facewebmodal/f?href=' + encodeURIComponent(url) + '#Intent;package=com.facebook.katana;scheme=fb;end';
+                // Intent estándar de Android para forzar a la app de Facebook a abrir la URL HTTPS
+                deepLink = 'intent://' + urlWithoutProtocol + '#Intent;package=com.facebook.katana;scheme=https;end';
             }
         }
 
