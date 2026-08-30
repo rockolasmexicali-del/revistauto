@@ -3964,11 +3964,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasFbUrl = listing.fb_chat_url ? true : false;
         
         let btnContactarHtml = '';
-        if (!hasPhone && hasFbUrl) {
-            btnContactarHtml = `<button class="btn-contactar fb-btn" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto; background: linear-gradient(135deg, #1877F2 0%, #0C5EBF 100%); box-shadow: 0 4px 15px rgba(24,119,242,0.3);">
-                            <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Facebook
-                          </button>`;
-        } else {
+        if (hasPhone || hasFbUrl) {
             btnContactarHtml = `<button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
                             <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
                           </button>`;
@@ -4410,60 +4406,66 @@ document.addEventListener('DOMContentLoaded', () => {
         if (listing) {
             let actualPhone = listing.phone || listing.whatsapp || listing.seller_phone || listing.seller_whatsapp;
             let fbChatUrl = listing.fb_chat_url;
-            
-            if (!actualPhone && fbChatUrl) {
-                window.openFacebookApp(fbChatUrl, listing.id);
+
+            const btnCall = document.getElementById('btn-contact-call');
+            const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
+            const btnFacebook = document.getElementById('btn-contact-facebook');
+
+            if (!actualPhone && !fbChatUrl) {
+                showAlert('El vendedor de este vehículo no ha registrado un medio de contacto.', 'Sin Contacto', 'info');
                 return;
             }
-            
-            let phone = actualPhone || "5512345678";
-            if (phone) {
-                const phoneData = parseAndFormatPhone(phone, listing);
-                const waData = parseAndFormatPhone(listing.whatsapp || phone, listing);
+
+            if (actualPhone) {
+                const phoneData = parseAndFormatPhone(actualPhone, listing);
+                const waData = parseAndFormatPhone(listing.whatsapp || actualPhone, listing);
                 const waClean = waData.prefix.replace('+', '') + waData.nationalDigits;
                 const message = encodeURIComponent(`Hola, vi tu anuncio "${listing.title}" en RevistAuto. Me interesa y quisiera más información.`);
 
-                const btnCall = document.getElementById('btn-contact-call');
-                const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
-                const btnFacebook = document.getElementById('btn-contact-facebook');
-
-                if (window.innerWidth >= 768) {
-                    btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${phoneData.displayFormatted}`;
-                    btnCall.style.cursor = 'pointer';
-                    btnCall.onclick = () => {
-                        window.open(phoneData.telUrl, '_self');
-                        document.getElementById('contact-modal').classList.remove('active');
-                    };
-                } else {
-                    btnCall.innerHTML = `<span class="material-symbols-rounded">call</span> Llamar`;
-                    btnCall.style.cursor = 'pointer';
-                    btnCall.onclick = () => {
-                        window.open(phoneData.telUrl, '_self');
-                        document.getElementById('contact-modal').classList.remove('active');
-                    };
-                }
-
-                btnWhatsApp.onclick = () => {
-                    window.open(`https://wa.me/${waClean}?text=${message}`, '_blank');
-                    document.getElementById('contact-modal').classList.remove('active');
-                };
-
-                if (btnFacebook) {
-                    if (fbChatUrl) {
-                        btnFacebook.style.display = 'flex';
-                        btnFacebook.onclick = () => {
-                            window.openFacebookApp(fbChatUrl, listing.id);
+                if (btnCall) {
+                    btnCall.style.display = 'flex';
+                    if (window.innerWidth >= 768) {
+                        btnCall.innerHTML = `<span class="material-symbols-rounded">phone_iphone</span> ${phoneData.displayFormatted}`;
+                        btnCall.style.cursor = 'pointer';
+                        btnCall.onclick = () => {
+                            window.open(phoneData.telUrl, '_self');
                             document.getElementById('contact-modal').classList.remove('active');
                         };
                     } else {
-                        btnFacebook.style.display = 'none';
+                        btnCall.innerHTML = `<span class="material-symbols-rounded">call</span> Llamar`;
+                        btnCall.style.cursor = 'pointer';
+                        btnCall.onclick = () => {
+                            window.open(phoneData.telUrl, '_self');
+                            document.getElementById('contact-modal').classList.remove('active');
+                        };
                     }
                 }
 
-                document.getElementById('contact-modal').classList.add('active');
+                if (btnWhatsApp) {
+                    btnWhatsApp.style.display = 'flex';
+                    btnWhatsApp.onclick = () => {
+                        window.open(`https://wa.me/${waClean}?text=${message}`, '_blank');
+                        document.getElementById('contact-modal').classList.remove('active');
+                    };
+                }
             } else {
-                showAlert('El vendedor de este vehículo no ha registrado un número de contacto.', 'Sin Contacto', 'info');
+                if (btnCall) btnCall.style.display = 'none';
+                if (btnWhatsApp) btnWhatsApp.style.display = 'none';
             }
+
+            if (btnFacebook) {
+                if (fbChatUrl) {
+                    btnFacebook.style.display = 'flex';
+                    btnFacebook.onclick = () => {
+                        window.openFacebookApp(fbChatUrl, listing.id);
+                        document.getElementById('contact-modal').classList.remove('active');
+                    };
+                } else {
+                    btnFacebook.style.display = 'none';
+                }
+            }
+
+            document.getElementById('contact-modal').classList.add('active');
         }
     };
     function showFavoriteToast() {
