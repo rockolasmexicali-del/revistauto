@@ -4437,9 +4437,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let fbChatUrl = listing.fb_chat_url;
             
             if (!actualPhone && fbChatUrl) {
-                const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
-                window.history.replaceState({ path: newUrl }, '', newUrl);
-                localStorage.setItem('resume_listing_id', listing.id); 
                 window.openFacebookApp(fbChatUrl);
                 return;
             }
@@ -4480,9 +4477,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (fbChatUrl) {
                         btnFacebook.style.display = 'flex';
                         btnFacebook.onclick = () => {
-                            const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listing.id;
-                            window.history.replaceState({ path: newUrl }, '', newUrl);
-                            localStorage.setItem('resume_listing_id', listing.id);
                             window.openFacebookApp(fbChatUrl);
                             document.getElementById('contact-modal').classList.remove('active');
                         };
@@ -12098,42 +12092,14 @@ window.checkDeepLink = function () {
     tryOpen();
 };
 
-// Nueva función para recuperar estado si la app se mató en background (Android OOM)
-window.checkResumeState = function () {
-    const resumeId = localStorage.getItem('resume_listing_id');
-    if (!resumeId) return;
-
-    localStorage.removeItem('resume_listing_id');
-
-    // Asegurarse de que view-inicio esté activo como fondo
-    const viewInicio = document.getElementById('view-inicio');
-    const allViews = document.querySelectorAll('.view');
-    allViews.forEach(v => v.classList.remove('active'));
-    if (viewInicio) viewInicio.classList.add('active');
-
-    let attempts = 0;
-    const maxAttempts = 40;
-    const tryOpen = () => {
-        if (typeof window.openListingDetails === 'function') {
-            window.openListingDetails(resumeId);
-        } else if (attempts < maxAttempts) {
-            attempts++;
-            setTimeout(tryOpen, 100);
-        }
-    };
-    tryOpen();
-};
-
 window.addEventListener('load', () => {
     setTimeout(() => {
         window.checkDeepLink();
-        window.checkResumeState();
     }, 300);
 });
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(() => {
         window.checkDeepLink();
-        window.checkResumeState();
     }, 300);
 }
 
