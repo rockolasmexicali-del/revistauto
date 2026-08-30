@@ -9,6 +9,24 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// === CORTINA DE CARGA (Para auto-rescate al volver de Facebook) ===
+if (window.location.search.includes('?id=')) {
+    const curtain = document.createElement('div');
+    curtain.id = 'app-loading-curtain';
+    curtain.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background-color:#0f172a;z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:"Inter",sans-serif;transition:opacity 0.4s ease;';
+    curtain.innerHTML = `
+        <div style="border:4px solid rgba(255,255,255,0.2);border-top:4px solid #10b981;border-radius:50%;width:50px;height:50px;animation:curtain-spin 1s linear infinite;"></div>
+        <style>@keyframes curtain-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+        <p style="margin-top:20px;font-size:16px;font-weight:600;">Recuperando vehículo...</p>
+    `;
+    if (document.body) {
+        document.body.appendChild(curtain);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => document.body.appendChild(curtain));
+    }
+}
+// ====================================================================
+
 window.parseAndFormatPhone = function (phoneStr, context = null) {
     let rawStr = phoneStr ? String(phoneStr).trim() : '';
 
@@ -4075,6 +4093,17 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetalle.style.backgroundColor = 'var(--bg-color)';
 
         viewDetalle.classList.add('active');
+        
+        // --- Remover cortina de carga si existe ---
+        const curtain = document.getElementById('app-loading-curtain');
+        if (curtain) {
+            curtain.style.opacity = '0';
+            setTimeout(() => {
+                if (curtain.parentNode) curtain.parentNode.removeChild(curtain);
+            }, 400); // esperar que termine la transición
+        }
+        // ------------------------------------------
+
         history.pushState({ page: 'listing-details' }, '');
 
         const carousel = detalleContent.querySelector('.detalle-img-carousel');
@@ -4382,19 +4411,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.openFacebookApp = function(url) {
+    window.openFacebookApp = function(url, listingId) {
         if (!url) return;
         
-        // Usar método universal de Pestaña Emergente (_blank)
-        // En Android PWA: Abre un Chrome Custom Tab que al darle "Atrás" se cierra y vuelve a la app.
-        // En iOS PWA: Abre Safari o lanza Universal Link directo a la app con botón de retorno.
-        const a = document.createElement('a');
-        a.href = url;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        // 1. Guardar el ID del auto en la URL para el auto-rescate
+        if (listingId) {
+            const newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?id=' + listingId;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+
+        // 2. Navegar en la misma pestaña (para que el botón "Atrás" nunca minimice el PWA)
+        window.location.href = url;
     };
 
     window.contactSeller = function (listingId) {
@@ -4413,7 +4440,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let fbChatUrl = listing.fb_chat_url;
             
             if (!actualPhone && fbChatUrl) {
-                window.openFacebookApp(fbChatUrl);
+                window.openFacebookApp(fbChatUrl, listing.id);
                 return;
             }
             
@@ -4453,7 +4480,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (fbChatUrl) {
                         btnFacebook.style.display = 'flex';
                         btnFacebook.onclick = () => {
-                            window.openFacebookApp(fbChatUrl);
+                            window.openFacebookApp(fbChatUrl, listing.id);
                             document.getElementById('contact-modal').classList.remove('active');
                         };
                     } else {
