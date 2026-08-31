@@ -4453,20 +4453,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (btnWhatsApp) btnWhatsApp.style.display = 'none';
             }
 
+            const fbNote = document.getElementById('contact-fb-note');
             if (btnFacebook) {
                 if (fbChatUrl) {
                     btnFacebook.style.display = 'flex';
+                    if (fbNote) fbNote.style.display = 'block';
+
                     btnFacebook.onclick = () => {
                         document.getElementById('contact-modal').classList.remove('active');
-                        const noticeModal = document.getElementById('facebook-notice-modal');
-                        if (noticeModal) {
-                            noticeModal.classList.add('active');
-                            const btnProceed = document.getElementById('btn-facebook-notice-proceed');
-                            if (btnProceed) {
-                                btnProceed.onclick = () => {
-                                    noticeModal.classList.remove('active');
-                                    window.openFacebookApp(fbChatUrl, listing.id);
-                                };
+                        const hasSeenNotice = sessionStorage.getItem('fb_notice_seen');
+
+                        if (!hasSeenNotice) {
+                            const noticeModal = document.getElementById('facebook-notice-modal');
+                            if (noticeModal) {
+                                noticeModal.classList.add('active');
+                                const btnProceed = document.getElementById('btn-facebook-notice-proceed');
+                                if (btnProceed) {
+                                    btnProceed.onclick = () => {
+                                        sessionStorage.setItem('fb_notice_seen', 'true');
+                                        noticeModal.classList.remove('active');
+                                        window.openFacebookApp(fbChatUrl, listing.id);
+                                    };
+                                }
+                            } else {
+                                window.openFacebookApp(fbChatUrl, listing.id);
                             }
                         } else {
                             window.openFacebookApp(fbChatUrl, listing.id);
@@ -4474,6 +4484,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 } else {
                     btnFacebook.style.display = 'none';
+                    if (fbNote) fbNote.style.display = 'none';
                 }
             }
 
