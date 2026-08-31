@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.46"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.47"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 // Función oficial: Devuelve fecha YYYY-MM-DD sincronizada con el horario oficial del negocio (Mexicali / America/Tijuana)
 function getLocalDateString(dateInput = new Date()) {

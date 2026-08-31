@@ -4457,8 +4457,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fbChatUrl) {
                     btnFacebook.style.display = 'flex';
                     btnFacebook.onclick = () => {
-                        window.openFacebookApp(fbChatUrl, listing.id);
                         document.getElementById('contact-modal').classList.remove('active');
+                        const noticeModal = document.getElementById('facebook-notice-modal');
+                        if (noticeModal) {
+                            noticeModal.classList.add('active');
+                            const btnProceed = document.getElementById('btn-facebook-notice-proceed');
+                            if (btnProceed) {
+                                btnProceed.onclick = () => {
+                                    noticeModal.classList.remove('active');
+                                    window.openFacebookApp(fbChatUrl, listing.id);
+                                };
+                            }
+                        } else {
+                            window.openFacebookApp(fbChatUrl, listing.id);
+                        }
                     };
                 } else {
                     btnFacebook.style.display = 'none';

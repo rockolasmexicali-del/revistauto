@@ -1082,6 +1082,33 @@
         </div>
     </div>
 
+    <!-- Facebook Notice Modal -->
+    <div id="facebook-notice-modal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 340px; text-align: center; padding: 24px 20px;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(24, 119, 242, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#1877F2">
+                    <path d="M12 2C6.477 2 2 6.145 2 11.26c0 2.912 1.487 5.503 3.791 7.153v3.315c0 .411.458.653.805.424l3.18-2.09c1.077.295 2.227.458 3.424.458 5.523 0 10-4.145 10-9.26S17.523 2 12 2zm1.206 12.836l-2.484-2.656-4.847 2.656 5.313-5.632 2.535 2.656 4.796-2.656-5.313 5.632z"/>
+                </svg>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 8px; font-weight: 700;">Aviso de Publicación</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 16px;">
+                Te estamos enviando a la publicación original en Facebook.
+            </p>
+            <div style="background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.35); border-radius: 12px; padding: 12px 14px; margin-bottom: 20px; text-align: left; font-size: 0.85rem; color: #fde047; line-height: 1.45; display: flex; gap: 10px; align-items: flex-start;">
+                <span class="material-symbols-rounded" style="color: #eab308; font-size: 20px; flex-shrink: 0; margin-top: 1px;">info</span>
+                <span>Si al entrar Facebook te muestra solo la portada del grupo, lo más probable es que el auto <strong>ya fue vendido</strong> y el vendedor borró el anuncio.</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="btn-facebook-notice-proceed" class="primary-btn" style="background: linear-gradient(135deg, #1877F2 0%, #0C5EBF 100%); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">open_in_new</span> Continuar a Facebook
+                </button>
+                <button onclick="document.getElementById('facebook-notice-modal').classList.remove('active')" class="primary-btn" style="background: var(--surface-light); color: var(--text-main);">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Approve Modal -->
     <div id="approve-confirm-modal" class="modal" style="z-index: 10000;">
         <div class="modal-content" style="max-width: 340px; text-align: center; padding: 28px 20px; background: linear-gradient(135deg, var(--surface-color) 0%, var(--bg-color) 100%); border: 1px solid var(--success-color); box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
