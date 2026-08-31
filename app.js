@@ -4454,16 +4454,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const fbNote = document.getElementById('contact-fb-note');
+            const hasSeenNotice = sessionStorage.getItem('fb_notice_seen');
+
             if (btnFacebook) {
                 if (fbChatUrl) {
                     btnFacebook.style.display = 'flex';
-                    if (fbNote) fbNote.style.display = 'block';
+                    // Ocultar nota en la primera vez; mostrarla de la 2da vez en adelante
+                    if (fbNote) fbNote.style.display = hasSeenNotice ? 'block' : 'none';
 
                     btnFacebook.onclick = () => {
                         document.getElementById('contact-modal').classList.remove('active');
-                        const hasSeenNotice = sessionStorage.getItem('fb_notice_seen');
+                        const alreadySeen = sessionStorage.getItem('fb_notice_seen');
 
-                        if (!hasSeenNotice) {
+                        if (!alreadySeen) {
                             const noticeModal = document.getElementById('facebook-notice-modal');
                             if (noticeModal) {
                                 noticeModal.classList.add('active');
