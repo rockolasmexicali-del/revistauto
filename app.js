@@ -2563,7 +2563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function createListingCardHTML(listing, hideHeart = false) {
-        const isSaved = savedListingsIds.includes(listing.id);
+        const isSaved = Array.isArray(savedListingsIds) && savedListingsIds.some(sId => String(sId) === String(listing.id));
         const savedClass = isSaved ? 'saved' : '';
         const savedIcon = isSaved ? 'favorite' : 'favorite_border';
 
@@ -4145,7 +4145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const isSaved = savedListingsIds.includes(id);
+        const isSaved = Array.isArray(savedListingsIds) && savedListingsIds.some(sId => String(sId) === String(id));
 
         // Construir Contenido
         const images = listing.images || (listing.image ? [listing.image] : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']);
@@ -4748,9 +4748,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.toggleSaveDetalle = function (id, btnElement) {
-        id = Number(id); // Convertir a número para la comparación
-        window.toggleSave(id, btnElement);
-        const isSaved = savedListingsIds.includes(id);
+        const strId = String(id);
+        window.toggleSave(strId, btnElement);
+        const isSaved = Array.isArray(savedListingsIds) && savedListingsIds.some(sId => String(sId) === strId);
 
         // Forzar estilos sobre el botón para garantizar que se pinte
         btnElement.style.color = isSaved ? '#EF4444' : 'white';
