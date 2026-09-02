@@ -231,6 +231,71 @@ function useListingContactHook(listing) {
 }
 window.useListingContactHook = useListingContactHook;
 
+function useExternalNavigationHook() {
+    function formatMobileFacebookUrl(rawUrl) {
+        if (!rawUrl) return '';
+        let url = String(rawUrl).trim();
+        try {
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                const parsed = new URL(url);
+                if (parsed.hostname === 'facebook.com' || parsed.hostname === 'www.facebook.com') {
+                    parsed.hostname = 'm.facebook.com';
+                    return parsed.toString();
+                }
+                return parsed.toString();
+            } else if (url.includes('facebook.com') || url.includes('fb.me')) {
+                url = url.replace('://www.facebook.com', '://m.facebook.com')
+                         .replace('://facebook.com', '://m.facebook.com');
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url.replace(/^www\./, 'm.');
+                }
+                return url;
+            }
+        } catch (e) { }
+        return url.startsWith('http') ? url : `https://${url}`;
+    }
+
+    function openFacebookSafe(url, listingId = null) {
+        if (!url) return;
+
+        // EXCLUSIVO PARA DESKTOP / PC (>= 768px):
+        // Mantiene la pestaña nueva intacta (_blank), sin modificar nada en computadoras
+        if (window.innerWidth >= 768) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            return;
+        }
+
+        // EXCLUSIVO PARA MÓVILES (< 768px):
+        // 1. Convertir a m.facebook.com para matar la redirección HTTP 302 del servidor
+        const targetUrl = formatMobileFacebookUrl(url);
+
+        // 2. Guardar ID para restauración si Chrome refresca la pestaña
+        if (listingId) {
+            sessionStorage.setItem('revista_return_listing_id', String(listingId));
+        }
+
+        // 3. Crear colchón de ancla en el historial antes de salir
+        try {
+            history.pushState({ page: 'facebook-return-anchor', listingId: listingId }, '', window.location.href);
+        } catch (e) { }
+
+        // 4. Navegar a la URL móvil limpia
+        window.location.href = targetUrl;
+    }
+
+    return {
+        formatMobileFacebookUrl,
+        openFacebookSafe
+    };
+}
+window.useExternalNavigationHook = useExternalNavigationHook;
+
 function getListingPriceText(listing) {
     if (!listing) return 'Precio a tratar';
     const priceNum = typeof listing === 'number' ? listing : Number(listing.price);
@@ -3504,6 +3569,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePopState(e) {
         if (isExiting) return;
 
+        // 0. Retorno seguro desde Facebook en móvil (Colchón de historial)
+        if (e && e.state && e.state.page === 'facebook-return-anchor') {
+            const contactModal = document.getElementById('contact-modal');
+            if (contactModal) {
+                contactModal.classList.remove('active');
+                contactModal.style.display = '';
+            }
+            const noticeModal = document.getElementById('facebook-notice-modal');
+            if (noticeModal) {
+                noticeModal.classList.remove('active');
+                noticeModal.style.display = '';
+            }
+            return;
+        }
+
         // 1. Check Fullscreen Ad Modal
         const adModal = document.getElementById('ad-fullscreen-modal');
         if (adModal && (adModal.classList.contains('active') || adModal.style.display === 'flex' || adModal.style.display === 'block')) {
@@ -4455,17 +4535,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openFacebookApp = function(url, listingId) {
         if (!url) return;
-        if (window.innerWidth >= 768) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            return;
+        if (typeof useExternalNavigationHook === 'function') {
+            useExternalNavigationHook().openFacebookSafe(url, listingId);
+        } else {
+            if (window.innerWidth >= 768) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                window.location.href = url;
+            }
         }
-        window.location.href = url;
     };
 
     window.contactSeller = function (listingId) {
@@ -14270,5 +14354,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // Restauración suave al volver de Facebook en móvil si el navegador liberó memoria
+        try {
+            const returnListingId = sessionStorage.getItem('revista_return_listing_id');
+            if (returnListingId && window.innerWidth < 768) {
+                sessionStorage.removeItem('revista_return_listing_id');
+                setTimeout(() => {
+                    if (typeof window.openListingDetails === 'function') {
+                        window.openListingDetails(returnListingId);
+                    }
+                }, 300);
+            }
+        } catch (e) { }
     }, 500);
 });
