@@ -151,6 +151,86 @@ function usePriceFormatterHook(listing, options = {}) {
 window.usePriceFormatterHook = usePriceFormatterHook;
 window.formatListingPriceHTML = usePriceFormatterHook;
 
+function useListingContactHook(listing) {
+    if (!listing) {
+        return {
+            hasContact: false,
+            hasPhone: false,
+            hasWhatsApp: false,
+            hasFacebook: false,
+            phone: null,
+            whatsapp: null,
+            facebookUrl: null,
+            btnContactarHtml: ''
+        };
+    }
+
+    const phone = listing.phone || listing.seller_phone || null;
+    const whatsapp = listing.whatsapp || listing.seller_whatsapp || null;
+    const hasPhone = Boolean(phone || whatsapp);
+    const hasWhatsApp = Boolean(whatsapp);
+
+    // Extraer URL de Facebook defensivamente de todos los posibles campos
+    let facebookUrl = listing.fb_chat_url || listing.fb_url || listing.facebook || null;
+
+    if (!facebookUrl) {
+        let notesArr = [];
+        if (listing.notes) {
+            try {
+                notesArr = Array.isArray(listing.notes) ? listing.notes : JSON.parse(listing.notes || '[]');
+            } catch (e) {
+                notesArr = [];
+            }
+        }
+        if (Array.isArray(notesArr) && notesArr.length > 0) {
+            const fbNote = notesArr.find(n => n && (n.type === 'fb_chat_url' || n.type === 'fb_url' || n.type === 'facebook' || (n.text && (n.text.includes('facebook.com') || n.text.includes('fb.me') || n.text.includes('fb.com') || n.text.includes('m.me')))));
+            if (fbNote && fbNote.text) {
+                facebookUrl = fbNote.text.trim();
+            }
+        }
+    }
+
+    if (!facebookUrl && listing.social_links) {
+        let socialLinks = [];
+        try {
+            socialLinks = Array.isArray(listing.social_links) ? listing.social_links : JSON.parse(listing.social_links || '[]');
+        } catch (e) {
+            socialLinks = [];
+        }
+        if (Array.isArray(socialLinks)) {
+            for (const link of socialLinks) {
+                const url = typeof link === 'string' ? link : (link && link.url ? link.url : '');
+                if (url && (url.includes('facebook.com') || url.includes('fb.me') || url.includes('fb.com') || url.includes('m.me'))) {
+                    facebookUrl = url.trim();
+                    break;
+                }
+            }
+        }
+    }
+
+    const hasFacebook = Boolean(facebookUrl);
+    const hasContact = hasPhone || hasFacebook;
+
+    let btnContactarHtml = '';
+    if (hasContact) {
+        btnContactarHtml = `<button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
+            <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
+        </button>`;
+    }
+
+    return {
+        hasContact,
+        hasPhone,
+        hasWhatsApp,
+        hasFacebook,
+        phone,
+        whatsapp,
+        facebookUrl,
+        btnContactarHtml
+    };
+}
+window.useListingContactHook = useListingContactHook;
+
 function getListingPriceText(listing) {
     if (!listing) return 'Precio a tratar';
     const priceNum = typeof listing === 'number' ? listing : Number(listing.price);
@@ -3834,13 +3914,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (data && !error) {
-                    listing = {
-                        ...data,
-                        reactions: typeof data.reactions === 'string' ? (function(){ try { return JSON.parse(data.reactions); } catch(e) { return data.reactions; } })() : (data.reactions || { like: 0, love: 0, fire: 0, angry: 0 }),
-                        notes: Array.isArray(data.notes) ? data.notes : (typeof data.notes === 'string' ? JSON.parse(data.notes || '[]') : []),
-                        payments: Array.isArray(data.payments) ? data.payments : (typeof data.payments === 'string' ? JSON.parse(data.payments || '[]') : []),
-                        isMyListing: data.publisher_id === window.db.uuid || data.publisherId === window.db.uuid
-                    };
+                    listing = (typeof db !== 'undefined' && db && typeof db.normalizeListing === 'function')
+                        ? db.normalizeListing(data)
+                        : {
+                            ...data,
+                            reactions: typeof data.reactions === 'string' ? (function(){ try { return JSON.parse(data.reactions); } catch(e) { return data.reactions; } })() : (data.reactions || { like: 0, love: 0, fire: 0, angry: 0 }),
+                            notes: Array.isArray(data.notes) ? data.notes : (typeof data.notes === 'string' ? JSON.parse(data.notes || '[]') : []),
+                            payments: Array.isArray(data.payments) ? data.payments : (typeof data.payments === 'string' ? JSON.parse(data.payments || '[]') : []),
+                            isMyListing: data.publisher_id === window.db.uuid || data.publisherId === window.db.uuid
+                        };
 
                     // Reconciliar con la memoria viva: si el usuario ya reaccionó en esta sesión,
                     // preferir esos datos para no resetear el contador al regresar a la tarjeta.
@@ -3861,6 +3943,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // SIEMPRE reconciliar con la memoria viva para que los contadores de emojis
         // no se reseteen al cambiar de tarjeta y regresar.
         if (listing) {
+            window.currentViewingListing = listing;
             const liveItemForReactions = 
                 (typeof window.activeFeedListings !== 'undefined' && window.activeFeedListings.find(l => String(l.id) === strId))
                 || (window.searchCascadeList && window.searchCascadeList.find(l => String(l.id) === strId))
@@ -3960,15 +4043,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="carousel-nav-btn next" onclick="scrollCarousel(event, this, 1)"><span class="material-symbols-rounded">chevron_right</span></button>
             `;
         }
-        const hasPhone = (listing.phone || listing.whatsapp || listing.seller_phone || listing.seller_whatsapp) ? true : false;
-        const hasFbUrl = listing.fb_chat_url ? true : false;
-        
-        let btnContactarHtml = '';
-        if (hasPhone || hasFbUrl) {
-            btnContactarHtml = `<button class="btn-contactar" onclick="window.contactSeller('${listing.id}')" style="margin-top: 0; padding: 10px 24px; font-size: 0.95rem; border-radius: 24px; flex-shrink: 0; width: auto;">
-                            <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> Contactar
-                          </button>`;
-        }
+        const contactInfo = useListingContactHook(listing);
+        const btnContactarHtml = contactInfo.btnContactarHtml;
 
         detalleContent.innerHTML = `
             <button class="global-nav-btn prev desktop-only-btn" onclick="event.stopPropagation(); if(window.navigateListingGlobal) window.navigateListingGlobal(-1);"><span class="material-symbols-rounded">arrow_back_ios_new</span></button>
@@ -4402,16 +4478,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!listing && window.currentSearchContext && window.currentSearchContext.level1) {
             listing = window.currentSearchContext.level1.find(l => String(l.id) === strId);
         }
+        if (!listing && window.searchCascadeList) {
+            listing = window.searchCascadeList.find(l => String(l.id) === strId);
+        }
+        if (!listing && window.currentViewingListing && String(window.currentViewingListing.id) === strId) {
+            listing = window.currentViewingListing;
+        }
 
         if (listing) {
-            let actualPhone = listing.phone || listing.whatsapp || listing.seller_phone || listing.seller_whatsapp;
-            let fbChatUrl = listing.fb_chat_url;
+            const contactInfo = useListingContactHook(listing);
+            let actualPhone = contactInfo.phone || contactInfo.whatsapp;
+            let fbChatUrl = contactInfo.facebookUrl;
 
             const btnCall = document.getElementById('btn-contact-call');
             const btnWhatsApp = document.getElementById('btn-contact-whatsapp');
             const btnFacebook = document.getElementById('btn-contact-facebook');
 
-            if (!actualPhone && !fbChatUrl) {
+            if (!contactInfo.hasContact) {
                 showAlert('El vendedor de este vehículo no ha registrado un medio de contacto.', 'Sin Contacto', 'info');
                 return;
             }

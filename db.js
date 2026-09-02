@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.50"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.17.51"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 // Función oficial: Devuelve fecha YYYY-MM-DD sincronizada con el horario oficial del negocio (Mexicali / America/Tijuana)
 function getLocalDateString(dateInput = new Date()) {
@@ -507,6 +507,112 @@ class Database {
         }
     }
 
+    normalizeListing(item, localListing = null) {
+        if (!item) return null;
+
+        const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || (localListing && localListing.isMyListing);
+
+        // Preservar y fusionar notas CRM
+        let serverNotes = [];
+        if (item.notes) {
+            try { serverNotes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes; } catch (e) { serverNotes = []; }
+        }
+        let localNotes = localListing && Array.isArray(localListing.notes) ? localListing.notes : [];
+
+        const notesMap = new Map();
+        [...serverNotes, ...localNotes].forEach(n => {
+            if (n && (n.text || n.type)) {
+                const key = n.id || `${n.timestamp}_${n.text}_${n.type}`;
+                if (!notesMap.has(key)) notesMap.set(key, n);
+            }
+        });
+        const mergedNotes = Array.from(notesMap.values());
+
+        // Extraer Facebook URL robustamente desde fb_chat_url, fb_url, facebook, notes o social_links
+        const fbNote = mergedNotes.find(n => n && (n.type === 'fb_chat_url' || n.type === 'fb_url' || n.type === 'facebook' || (n.text && (n.text.includes('facebook.com') || n.text.includes('fb.me') || n.text.includes('fb.com') || n.text.includes('m.me')))));
+
+        let socialLinks = [];
+        if (item.social_links) {
+            try {
+                socialLinks = Array.isArray(item.social_links) ? item.social_links : JSON.parse(item.social_links || '[]');
+            } catch (e) {
+                socialLinks = [];
+            }
+        } else if (localListing && localListing.social_links) {
+            socialLinks = Array.isArray(localListing.social_links) ? localListing.social_links : [];
+        }
+
+        let fbSocial = null;
+        if (Array.isArray(socialLinks)) {
+            for (const link of socialLinks) {
+                const url = typeof link === 'string' ? link : (link && link.url ? link.url : '');
+                if (url && (url.includes('facebook.com') || url.includes('fb.me') || url.includes('fb.com') || url.includes('m.me'))) {
+                    fbSocial = url.trim();
+                    break;
+                }
+            }
+        }
+
+        const fbUrl = item.fb_chat_url || item.fb_url || item.facebook || (fbNote ? fbNote.text : null) || fbSocial || (localListing ? (localListing.fb_chat_url || localListing.fb_url) : null) || null;
+
+        // Preservar y fusionar pagos
+        let serverPayments = [];
+        if (item.payments) {
+            try { serverPayments = typeof item.payments === 'string' ? JSON.parse(item.payments) : item.payments; } catch (e) { serverPayments = []; }
+        }
+        let localPayments = localListing && Array.isArray(localListing.payments) ? localListing.payments : [];
+
+        const paymentsMap = new Map();
+        [...serverPayments, ...localPayments].forEach(p => {
+            if (p && (p.amount !== undefined || p.id)) {
+                const key = p.id || `${p.date}_${p.amount}`;
+                if (!paymentsMap.has(key)) paymentsMap.set(key, p);
+            }
+        });
+        const mergedPayments = Array.from(paymentsMap.values());
+
+        // Si la publicación local tenía cambios pendientes de sincronización por estar offline, preservarlos
+        let mergedFields = { ...item };
+        if (localListing && localListing._pendingSync) {
+            mergedFields = {
+                ...item,
+                ...localListing
+            };
+            delete mergedFields._pendingSync;
+            delete localListing._pendingSync;
+            this.saveListing(localListing).catch(e => console.warn('Retry sync listing failed:', e));
+        }
+
+        return {
+            ...mergedFields,
+            type: (mergedFields.type === 'Camioneta' || item.type === 'Camioneta') ? 'SUV / Camioneta' : (mergedFields.type || item.type || ''),
+            engine: mergedFields.engine || item.engine || item.motor || (localListing ? localListing.engine : ''),
+            legal: mergedFields.legal || item.legal || item.situacion || (localListing ? localListing.legal : ''),
+            ac: mergedFields.ac || item.ac || (localListing ? localListing.ac : ''),
+            mileage: mergedFields.mileage !== undefined && mergedFields.mileage !== null ? String(mergedFields.mileage) : (localListing ? localListing.mileage : ''),
+            phone: mergedFields.seller_phone || mergedFields.phone || item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
+            whatsapp: mergedFields.seller_whatsapp || mergedFields.whatsapp || item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
+            fb_chat_url: fbUrl,
+            fb_url: fbUrl,
+            social_links: socialLinks,
+            publishedAt: item.published_at || item.publishedAt || (localListing ? localListing.publishedAt : null),
+            expiresAt: item.expires_at || item.expiresAt || (localListing ? localListing.expiresAt : null),
+            lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
+            paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
+            images: mergedFields.images && mergedFields.images.length > 0 ? mergedFields.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
+            notes: mergedNotes,
+            payments: mergedPayments,
+            reactions: item.reactions ? (typeof item.reactions === 'string' ? (function(){ try { return JSON.parse(item.reactions); } catch(e) { return item.reactions; } })() : item.reactions) : (localListing && localListing.reactions ? localListing.reactions : { like: 0, love: 0, fire: 0, angry: 0 }),
+            ref_number: item.ref_number || (localListing ? localListing.ref_number : null),
+            old_price: item.old_price !== undefined && item.old_price !== null ? Number(item.old_price) : (localListing ? localListing.old_price : null),
+            currency: mergedFields.currency || item.currency || (localListing ? localListing.currency : null) || 'MXN',
+            publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
+            publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
+            box: mergedFields.box || item.box || item.caja || (localListing ? localListing.box : ''),
+            isMyListing: isMine
+        };
+    }
+
     async syncWithServer() {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
             try {
@@ -539,81 +645,7 @@ class Database {
 
                     const normalized = data
                         .filter(item => item.status !== 'eliminado' && item.status !== 'rechazado')
-                        .map(item => {
-                            const localListing = localListingsMap.get(String(item.id));
-                            const isMine = item.publisher_id === this.uuid || item.publisherId === this.uuid || (localListing && localListing.isMyListing);
-
-                            // Preservar y fusionar notas CRM
-                            let serverNotes = [];
-                            if (item.notes) {
-                                try { serverNotes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes; } catch (e) { serverNotes = []; }
-                            }
-                            let localNotes = localListing && Array.isArray(localListing.notes) ? localListing.notes : [];
-
-                            const notesMap = new Map();
-                            [...serverNotes, ...localNotes].forEach(n => {
-                                if (n && n.text) {
-                                    const key = n.id || `${n.timestamp}_${n.text}`;
-                                    if (!notesMap.has(key)) notesMap.set(key, n);
-                                }
-                            });
-                            const mergedNotes = Array.from(notesMap.values());
-
-                            // Preservar y fusionar pagos
-                            let serverPayments = [];
-                            if (item.payments) {
-                                try { serverPayments = typeof item.payments === 'string' ? JSON.parse(item.payments) : item.payments; } catch (e) { serverPayments = []; }
-                            }
-                            let localPayments = localListing && Array.isArray(localListing.payments) ? localListing.payments : [];
-
-                            const paymentsMap = new Map();
-                            [...serverPayments, ...localPayments].forEach(p => {
-                                if (p && (p.amount !== undefined || p.id)) {
-                                    const key = p.id || `${p.date}_${p.amount}`;
-                                    if (!paymentsMap.has(key)) paymentsMap.set(key, p);
-                                }
-                            });
-                            const mergedPayments = Array.from(paymentsMap.values());
-
-                            // Si la publicación local tenía cambios pendientes de sincronización por estar offline, preservarlos
-                            let mergedFields = { ...item };
-                            if (localListing && localListing._pendingSync) {
-                                mergedFields = {
-                                    ...item,
-                                    ...localListing
-                                };
-                                delete mergedFields._pendingSync;
-                                delete localListing._pendingSync;
-                                // Reintentar sincronizar a la nube de fondo
-                                this.saveListing(localListing).catch(e => console.warn('Retry sync listing failed:', e));
-                            }
-
-                            return {
-                                ...mergedFields,
-                                type: (mergedFields.type === 'Camioneta' || item.type === 'Camioneta') ? 'SUV / Camioneta' : (mergedFields.type || item.type || ''),
-                                engine: mergedFields.engine || item.engine || item.motor || (localListing ? localListing.engine : ''),
-                                legal: mergedFields.legal || item.legal || item.situacion || (localListing ? localListing.legal : ''),
-                                ac: mergedFields.ac || item.ac || (localListing ? localListing.ac : ''),
-                                mileage: mergedFields.mileage !== undefined && mergedFields.mileage !== null ? String(mergedFields.mileage) : (localListing ? localListing.mileage : ''),
-                                phone: mergedFields.seller_phone || mergedFields.phone || item.seller_phone || item.phone || (localListing ? localListing.phone : ''),
-                                whatsapp: mergedFields.seller_whatsapp || mergedFields.whatsapp || item.seller_whatsapp || item.whatsapp || (localListing ? localListing.whatsapp : ''),
-                                publishedAt: item.published_at || item.publishedAt || (localListing ? localListing.publishedAt : null),
-                                expiresAt: item.expires_at || item.expiresAt || (localListing ? localListing.expiresAt : null),
-                                lastRenewedMonth: item.last_renewed_month || item.lastRenewedMonth || (localListing ? localListing.lastRenewedMonth : null),
-                                paymentStatus: item.payment_status || item.paymentStatus || (localListing ? localListing.paymentStatus : null),
-                                images: mergedFields.images && mergedFields.images.length > 0 ? mergedFields.images : (localListing && localListing.images ? localListing.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=600&q=80']),
-                                notes: mergedNotes,
-                                payments: mergedPayments,
-                                reactions: item.reactions ? (typeof item.reactions === 'string' ? (function(){ try { return JSON.parse(item.reactions); } catch(e) { return item.reactions; } })() : item.reactions) : (localListing && localListing.reactions ? localListing.reactions : { like: 0, love: 0, fire: 0, angry: 0 }),
-                                ref_number: item.ref_number || item.ref_number || (localListing ? localListing.ref_number : null),
-                                old_price: item.old_price !== undefined && item.old_price !== null ? Number(item.old_price) : (localListing ? localListing.old_price : null),
-                                currency: mergedFields.currency || item.currency || (localListing ? localListing.currency : null) || 'MXN',
-                                publisherId: item.publisherId || item.publisher_id || (isMine ? this.uuid : ''),
-                                publisher_id: item.publisher_id || item.publisherId || (isMine ? this.uuid : ''),
-                                box: mergedFields.box || item.box || item.caja || (localListing ? localListing.box : ''),
-                                isMyListing: isMine
-                            };
-                        });
+                        .map(item => this.normalizeListing(item, localListingsMap.get(String(item.id))));
 
                     let finalListings = [];
                     if (isAdmin) {
@@ -657,18 +689,7 @@ class Database {
 
     getAllListings() {
         const listings = JSON.parse(localStorage.getItem(this.listingsKey) || '[]');
-        return listings.map(l => {
-            const notesArr = Array.isArray(l.notes) ? l.notes : (typeof l.notes === 'string' ? JSON.parse(l.notes || '[]') : []);
-            const fbNote = notesArr.find(n => n && (n.type === 'fb_chat_url' || n.type === 'fb_url'));
-            return {
-                ...l,
-                type: (l.type === 'Camioneta') ? 'SUV / Camioneta' : (l.type || ''),
-                notes: notesArr,
-                fb_chat_url: l.fb_chat_url || (fbNote ? fbNote.text : null),
-                payments: Array.isArray(l.payments) ? l.payments : (typeof l.payments === 'string' ? JSON.parse(l.payments || '[]') : []),
-                isMyListing: l.publisherId === this.uuid || l.publisher_id === this.uuid
-            };
-        });
+        return listings.map(l => this.normalizeListing(l));
     }
 
     resetFeedShuffle() {
@@ -743,11 +764,7 @@ class Database {
         idsToFetch.forEach((id, index) => idToIndex[id] = index);
         data.sort((a, b) => idToIndex[a.id] - idToIndex[b.id]);
 
-        const normalizedData = (data || []).map(item => ({
-            ...item,
-            type: (item.type === 'Camioneta') ? 'SUV / Camioneta' : (item.type || ''),
-            isMyListing: item.publisher_id === this.uuid || item.publisherId === this.uuid
-        }));
+        const normalizedData = (data || []).map(item => this.normalizeListing(item));
 
         return {
             data: normalizedData,
@@ -1322,7 +1339,7 @@ class Database {
 
             const { data, error } = await query;
             if (!error && data) {
-                return data;
+                return data.map(item => this.normalizeListing(item));
             }
         }
 
