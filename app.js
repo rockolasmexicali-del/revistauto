@@ -3488,6 +3488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
                     if (window.initAutoScroll) window.initAutoScroll(scrollContainer);
                 });
+                if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
             }, 50);
         }
     }
@@ -3495,8 +3496,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.toggleSave = function (id, btnElement) {
         try {
-            id = Number(id);
-            const index = savedListingsIds.indexOf(id);
+            const strId = String(id);
+            const index = savedListingsIds.findIndex(savedId => String(savedId) === strId);
             const btn = btnElement.tagName === 'BUTTON' ? btnElement : btnElement.closest('button');
             const span = btn ? btn.querySelector('span') : null;
 
@@ -3510,17 +3511,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 // Like
-                savedListingsIds.push(id);
+                savedListingsIds.push(strId);
                 if (btn) {
                     btn.classList.add('saved');
                     btn.style.color = '#EF4444';
                     btn.innerHTML = `<span class="material-symbols-rounded" style="font-variation-settings: 'FILL' 1; animation: heartPulse 0.3s ease-in-out; color: #EF4444;">favorite</span>`;
                 }
             }
-            localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
+            try {
+                localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
+            } catch (e) { }
 
             // Sync with feed cards visually without re-rendering everything
-            const feedBtn = document.querySelector(`.card-save-btn[onclick*="toggleSave(${id}"]`);
+            const feedBtn = document.querySelector(`.card-save-btn[onclick*="toggleSave(${id}"]`) || document.querySelector(`.card-save-btn[onclick*="toggleSave('${id}'"]`);
             if (feedBtn) {
                 if (index > -1) {
                     feedBtn.classList.remove('saved');
@@ -3545,9 +3548,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.updateNavFavoriteIcon = function () {
-        const hasFavorites = Array.isArray(savedListingsIds) && savedListingsIds.length > 0;
-        const favNavBtns = document.querySelectorAll('.nav-item[data-target="view-biblioteca"] .material-symbols-rounded');
+        let hasFavorites = false;
+        if (Array.isArray(savedListingsIds) && savedListingsIds.length > 0) {
+            if (typeof window.useFavoritesNavigationHook === 'function') {
+                const favHook = window.useFavoritesNavigationHook();
+                const validListings = favHook.getFavoriteListings(true);
+                // Si el inventario ya tiene datos cargados, verificar si hay autos reales válidos
+                const allLoaded = (typeof db !== 'undefined' && db.getAllListings && db.getAllListings().length > 0) ||
+                                  (typeof window.activeFeedListings !== 'undefined' && window.activeFeedListings.length > 0);
+                if (allLoaded) {
+                    hasFavorites = validListings.length > 0;
+                } else {
+                    hasFavorites = savedListingsIds.length > 0;
+                }
+            } else {
+                hasFavorites = savedListingsIds.length > 0;
+            }
+        }
 
+        const favNavBtns = document.querySelectorAll('.nav-item[data-target="view-biblioteca"] .material-symbols-rounded');
         favNavBtns.forEach(icon => {
             if (hasFavorites) {
                 icon.style.setProperty('color', '#EF4444', 'important');
@@ -3859,7 +3878,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // HOOK DE NAVEGACIÓN EXCLUSIVA DE FAVORITOS
     // ==========================================
     function useFavoritesNavigationHook() {
-        function getFavoriteListings() {
+        function getFavoriteListings(autoPurge = false) {
             const allLocal = (typeof db !== 'undefined' && db.getAllListings) ? db.getAllListings() : [];
             const allFeed = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
             const allMap = new Map();
@@ -3867,8 +3886,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (l && l.id) allMap.set(String(l.id), l);
             });
             const all = Array.from(allMap.values());
-            const favIds = typeof savedListingsIds !== 'undefined' ? savedListingsIds : [];
-            return all.filter(l => favIds.includes(Number(l.id)) && (l.status === 'autorizado' || (typeof db !== 'undefined' && db.isListingActive && db.isListingActive(l))));
+            const favIds = Array.isArray(savedListingsIds) ? savedListingsIds : [];
+
+            // Filtrar carros reales que coincidan por ID y estén autorizados/activos
+            const validSavedListings = all.filter(l => {
+                const idStr = String(l.id);
+                const isMatch = favIds.some(fId => String(fId) === idStr);
+                const isActive = l.status === 'autorizado' || (typeof db !== 'undefined' && db.isListingActive && db.isListingActive(l));
+                return isMatch && isActive;
+            });
+
+            // Si se solicita purga y el inventario ya tiene datos cargados
+            if (autoPurge && all.length > 0 && favIds.length > 0) {
+                const validIdsSet = new Set(validSavedListings.map(l => String(l.id)));
+                const purgedIds = favIds.filter(fId => validIdsSet.has(String(fId)));
+                if (purgedIds.length !== favIds.length) {
+                    savedListingsIds = purgedIds;
+                    try {
+                        localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
+                    } catch (e) { }
+                }
+            }
+
+            return validSavedListings;
         }
 
         return { getFavoriteListings };
@@ -3877,17 +3917,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Saved / Library ---
     function renderSavedListings() {
-        const allLocal = db.getAllListings();
-        const allFeed = typeof window.activeFeedListings !== 'undefined' ? window.activeFeedListings : [];
-
-        // Combinar ambas fuentes evitando duplicados
-        const allMap = new Map();
-        [...allLocal, ...allFeed].forEach(l => {
-            allMap.set(String(l.id), l);
-        });
-        const all = Array.from(allMap.values());
-
-        const saved = all.filter(l => savedListingsIds.includes(Number(l.id)) && l.status === 'autorizado');
+        const favHook = typeof window.useFavoritesNavigationHook === 'function' ? window.useFavoritesNavigationHook() : null;
+        const saved = favHook ? favHook.getFavoriteListings(true) : [];
 
         if (saved.length === 0) {
             savedListingsContainer.innerHTML = `
@@ -3899,7 +3930,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             savedListingsContainer.innerHTML = saved.map(l => createListingCardHTML(l, false)).join('');
         }
-        
+
+        if (typeof window.updateNavFavoriteIcon === 'function') {
+            window.updateNavFavoriteIcon();
+        }
+
         if (typeof window.updateCompareButtonVisibility === 'function') {
             window.updateCompareButtonVisibility();
         }
@@ -5016,10 +5051,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.deleteListing(idToDelete);
 
                 // 4. Quitar de guardados si aplica
-                const sIdx = savedListingsIds.indexOf(idToDelete);
-                if (sIdx > -1) {
-                    savedListingsIds.splice(sIdx, 1);
-                    localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
+                if (Array.isArray(savedListingsIds)) {
+                    const strId = String(idToDelete);
+                    const sIdx = savedListingsIds.findIndex(fId => String(fId) === strId);
+                    if (sIdx > -1) {
+                        savedListingsIds.splice(sIdx, 1);
+                        try {
+                            localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
+                        } catch (e) { }
+                    }
+                }
+                if (typeof window.updateNavFavoriteIcon === 'function') {
+                    window.updateNavFavoriteIcon();
                 }
 
                 renderMyListings();
@@ -6030,25 +6073,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                 if (Number(finalCityPrice) === 0) {
-                    // Flujo Gratuito: Ocultar Mercado Pago y mostrar modal de revisión
-                    const optionsModal = document.getElementById('publish-options-modal');
-                    if (optionsModal) {
-                        document.getElementById('publish-modal-title').textContent = '¡Publica tu anuncio gratis!';
-                        document.getElementById('publish-modal-desc').textContent = 'Tu vehículo entrará a un breve proceso de revisión por nuestro equipo. En pocos minutos será autorizado y estará visible en la plataforma durante un mes. ¿Deseas publicarlo ahora?';
-
-                        document.getElementById('btn-option-pay-now').style.display = 'none';
-
-                        const icon = document.getElementById('publish-later-icon');
-                        if (icon) icon.textContent = 'check_circle';
-                        const title = document.getElementById('publish-later-title');
-                        if (title) title.textContent = 'Subir Anuncio';
-                        const desc = document.getElementById('publish-later-desc');
-                        if (desc) desc.textContent = 'Haz clic aquí para enviar tu anuncio a revisión y publicarlo sin costo.';
-
-                        optionsModal.classList.add('active');
-                    }
-                    window.currentPendingListingId = newListing.id;
-                    newListingModal.classList.remove('active');
+                    // Flujo Gratuito: Omitir modal intermedio e ir directo a la confirmación de éxito
+                    showAlert('¡Vehículo publicado con éxito! Está pendiente de aprobación.', 'Publicado', 'check_circle', () => {
+                        if (typeof switchView === 'function') switchView('view-alta');
+                        if (typeof renderMyListings === 'function') renderMyListings();
+                    });
                 } else if (globalMpEnabled) {
                     // Mostrar modal de opciones normal
                     const optionsModal = document.getElementById('publish-options-modal');
@@ -8480,6 +8509,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Eliminación local y en la nube manejada internamente por db.js
         await db.deleteListing(id);
+
+        // Remover de guardados locales si aplica
+        if (Array.isArray(savedListingsIds)) {
+            const strId = String(id);
+            const sIdx = savedListingsIds.findIndex(fId => String(fId) === strId);
+            if (sIdx > -1) {
+                savedListingsIds.splice(sIdx, 1);
+                try {
+                    localStorage.setItem('revista_autos_saved', JSON.stringify(savedListingsIds));
+                } catch (e) { }
+            }
+        }
+        if (typeof window.updateNavFavoriteIcon === 'function') {
+            window.updateNavFavoriteIcon();
+        }
 
         const modal = document.getElementById('reject-confirm-modal');
         if (modal) modal.classList.remove('active');
