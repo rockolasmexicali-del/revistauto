@@ -1,4 +1,4 @@
-const APP_VERSION = "3.17.55"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.18.01"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 // Función oficial: Devuelve fecha YYYY-MM-DD sincronizada con el horario oficial del negocio (Mexicali / America/Tijuana)
 function getLocalDateString(dateInput = new Date()) {
@@ -702,7 +702,9 @@ class Database {
             return { data: [], total: 0, hasMore: false };
         }
 
-        const filtersHash = JSON.stringify({ state, cities, filters });
+        const normalizedCities = (cities && cities.length > 0) ? [...cities].sort() : [];
+        const cleanState = (state && state !== 'Todos') ? state : null;
+        const filtersHash = JSON.stringify({ state: cleanState, cities: normalizedCities, filters });
 
         this.shuffledFeedCache = this.shuffledFeedCache || {};
         this.shuffledFeedTotalCountCache = this.shuffledFeedTotalCountCache || {};
@@ -711,10 +713,10 @@ class Database {
         if (!this.shuffledFeedCache[filtersHash] || forceRefresh) {
             let query = supabaseClient.from('listings').select('id', { count: 'exact' }).eq('status', 'autorizado').limit(5000);
 
-            if (cities && cities.length > 0) {
-                query = query.in('city', cities);
-            } else if (state && state !== 'Todos') {
-                query = query.eq('state', state);
+            if (normalizedCities.length > 0) {
+                query = query.in('city', normalizedCities);
+            } else if (cleanState) {
+                query = query.eq('state', cleanState);
             }
 
             if (filters.category && filters.category !== 'Todos') {
@@ -771,6 +773,59 @@ class Database {
             total: activeTotalCount,
             hasMore: to < activeShuffleList.length
         };
+    }
+
+    async fetchCategoryListingIds({ state = null, cities = [], category = null } = {}) {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient) return [];
+        try {
+            let query = supabaseClient.from('listings').select('id').eq('status', 'autorizado').limit(5000);
+            const normalizedCities = (cities && cities.length > 0) ? [...cities].sort() : [];
+            const cleanState = (state && state !== 'Todos') ? state : null;
+
+            if (normalizedCities.length > 0) {
+                query = query.in('city', normalizedCities);
+            } else if (cleanState) {
+                query = query.eq('state', cleanState);
+            }
+
+            if (category && category !== 'Todos') {
+                if (category === 'SUV / Camioneta' || category === 'Camioneta') {
+                    query = query.in('type', ['SUV / Camioneta', 'Camioneta']);
+                } else {
+                    query = query.eq('type', category);
+                }
+            }
+
+            const { data, error } = await query;
+            if (error) {
+                console.error('Error fetching category listing ids:', error);
+                return [];
+            }
+            return (data || []).map(d => d.id);
+        } catch (e) {
+            console.error('Network error fetching category listing ids:', e);
+            return [];
+        }
+    }
+
+    async fetchListingsByIds(ids = []) {
+        if (!ids || ids.length === 0 || typeof supabaseClient === 'undefined' || !supabaseClient) {
+            return [];
+        }
+        try {
+            const { data, error } = await supabaseClient.from('listings').select('*').in('id', ids);
+            if (error) {
+                console.error('Error in fetchListingsByIds:', error);
+                return [];
+            }
+            const idToIndex = {};
+            ids.forEach((id, index) => idToIndex[id] = index);
+            const sorted = (data || []).sort((a, b) => (idToIndex[a.id] ?? 0) - (idToIndex[b.id] ?? 0));
+            return sorted.map(item => this.normalizeListing(item));
+        } catch (e) {
+            console.error('Network error in fetchListingsByIds:', e);
+            return [];
+        }
     }
 
     async fetchCategoryStats(cities = []) {

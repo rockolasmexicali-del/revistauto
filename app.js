@@ -2533,6 +2533,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const scrollAmount = Math.max(scrollContainer.clientWidth * 0.75, 160);
                     scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    if (typeof window.useCategoryShelfHook === 'function') {
+                        window.useCategoryShelfHook().loadNextShelfBatch(categoryType);
+                    }
                 }
             }
         }
@@ -2576,7 +2579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let navArrows = '';
 
         return `
-            <div class="card" data-id="${listing.id}" style="cursor: pointer;" onclick="if(!event.target.closest('.card-save-btn')) openListingDetails(${listing.id})">
+            <div class="card" data-id="${listing.id}" style="cursor: pointer;" onclick="if(!event.target.closest('.card-save-btn')) openListingDetails(${listing.id}, this)">
                 <div class="card-img-wrapper">
                     <div class="card-img-carousel" style="overflow-x: hidden;">
                         ${imageElements}
@@ -3073,6 +3076,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (scrollContainer) {
             const scrollAmount = Math.max(scrollContainer.clientWidth * 0.8, 150);
             scrollContainer.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+
+            if (direction === 1) {
+                const category = row.getAttribute('data-category');
+                const shelf = window.__categoryShelfStore && window.__categoryShelfStore.shelves && window.__categoryShelfStore.shelves[category];
+                if (category && shelf && !shelf.isLoading && shelf.hasMore && typeof window.useCategoryShelfHook === 'function') {
+                    window.useCategoryShelfHook().loadNextShelfBatch(category);
+                }
+            }
         }
     };
 
@@ -3080,33 +3091,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = scrollContainer.parentElement;
         const prevBtn = row.querySelector('.row-nav-btn.prev');
         const nextBtn = row.querySelector('.row-nav-btn.next');
-
-        // Lazy loading dinámico por fila
         const category = row.getAttribute('data-category');
-        if (category && window.netflixRowData && window.netflixRowData[category]) {
-            const rowData = window.netflixRowData[category];
-            // Si nos acercamos al final (75% del scroll) y aún hay autos por mostrar
-            const scrollPercentage = (scrollContainer.scrollLeft + scrollContainer.clientWidth) / scrollContainer.scrollWidth;
-            if (scrollPercentage > 0.75 && rowData.renderedCount < rowData.allListings.length) {
-                const nextBatch = rowData.allListings.slice(rowData.renderedCount, rowData.renderedCount + 15);
+        const shelf = window.__categoryShelfStore && window.__categoryShelfStore.shelves && window.__categoryShelfStore.shelves[category];
 
-                const freq = window.db.adFrequencyScroll || 10;
-                let newCardsHTML = '';
-                for (let i = 0; i < nextBatch.length; i++) {
-                    newCardsHTML += createListingCardHTML(nextBatch[i], true);
-                    // Also inject ads in lazy load based on overall count
-                    const totalIndex = rowData.renderedCount + i + 1;
-                    if (totalIndex % freq === 0 && window.db.adsEnabled) {
-                        // Assuming we want to show a random ad (for simplicity here, since adPool is out of scope)
-                        // It will render the fallback "Anunciate" ad since we don't have adPool locally without await
-                        // To improve this, we would need to pass adPool to window, or just let it render fallback.
-                        // For now we'll render fallback to encourage more advertisers!
-                        newCardsHTML += createAdCardHTML(null);
-                    }
-                }
-
-                scrollContainer.insertAdjacentHTML('beforeend', newCardsHTML);
-                rowData.renderedCount += 15;
+        // Lazy loading dinámico por carril al aproximarse al final únicamente si hay más elementos
+        if (category && shelf && !shelf.isLoading && shelf.hasMore && typeof window.useCategoryShelfHook === 'function') {
+            const scrollRemaining = scrollContainer.scrollWidth - (scrollContainer.scrollLeft + scrollContainer.clientWidth);
+            if (scrollRemaining < 400) {
+                window.useCategoryShelfHook().loadNextShelfBatch(category);
             }
         }
 
@@ -3119,9 +3111,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (nextBtn) {
-            if (scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 10) {
+            const hasMoreOnServer = shelf ? shelf.hasMore : false;
+            const isAtEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 15;
+            if (isAtEnd && !hasMoreOnServer) {
                 nextBtn.classList.add('hidden');
-            } else {
+            } else if (!isAtEnd || hasMoreOnServer) {
                 nextBtn.classList.remove('hidden');
             }
         }
@@ -3178,6 +3172,316 @@ document.addEventListener('DOMContentLoaded', () => {
     // PC (≥768px): ~100 autos → ~10+ por cada categoría
     // Móvil (<768px): ~40 autos → ~4-5 por cada categoría
     var PAGE_SIZE = window.innerWidth >= 768 ? 100 : 40;
+
+    // ====================================================================
+    // HOOK: useCategoryShelfHook — Carruseles Estilo Netflix Independientes
+    // Gestiona carga por carril (16 de inicio), barajado independiente por categoría,
+    // carga bajo demanda al avanzar con flecha '>', y cola ordenada para fullscreen espejo.
+    // ====================================================================
+    function useCategoryShelfHook() {
+        if (!window.__categoryShelfStore) {
+            window.__categoryShelfStore = {
+                shelves: {}, // category => { allIds: [], items: [], page: 0, hasMore: true, total: 0, isLoading: false }
+                activeCarouselQueue: null, // { category: 'Camión', items: [...] }
+                activeContext: null, // hash of { state, cities }
+                renderGeneration: 0 // token de cancelación contra condiciones de carrera
+            };
+        }
+        const store = window.__categoryShelfStore;
+        const SHELF_PAGE_SIZE = window.innerWidth >= 768 ? 16 : 12;
+
+        function resetShelves() {
+            store.shelves = {};
+            store.activeCarouselQueue = null;
+        }
+
+        async function renderAllShelves(feedContainer, cities, state, forceReload = false) {
+            if (!feedContainer) return;
+            const popularCategories = getSortedCategoriesByPopularity().filter(t => t !== 'Todos');
+
+            feedContainer.classList.remove('listings-grid');
+
+            const sentinel = document.getElementById('feed-infinite-scroll-sentinel');
+            if (sentinel) sentinel.style.display = 'none';
+
+            const sortedCities = (cities && cities.length > 0) ? cities.slice().sort() : [];
+            const cleanState = (state && state !== 'Todos') ? state : null;
+            const currentHash = JSON.stringify({ state: cleanState, cities: sortedCities });
+            const isContextChanged = (store.activeContext !== currentHash);
+
+            // Cancelación de solicitudes obsoletas previas
+            store.renderGeneration = (store.renderGeneration || 0) + 1;
+            const currentGen = store.renderGeneration;
+
+            if (forceReload || isContextChanged) {
+                resetShelves();
+                store.activeContext = currentHash;
+                if (window.db && typeof window.db.resetFeedShuffle === 'function') {
+                    window.db.resetFeedShuffle();
+                }
+            } else if (Object.keys(store.shelves).length > 0 && feedContainer.children.length > 0) {
+                return;
+            }
+
+            // Pre-crear las filas en el DOM en el orden de popularidad
+            let rowsHTML = '';
+            popularCategories.forEach(type => {
+                rowsHTML += `
+                <div class="netflix-row" data-category="${type}" style="display: none;">
+                    <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding-left: 5px; margin-bottom: 8px;">
+                        <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer; margin-bottom: 0; padding-left: 0;">
+                            ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
+                        </h3>
+                        <div class="netflix-row-cta-container"></div>
+                    </div>
+                    <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
+                        <span class="material-symbols-rounded">chevron_left</span>
+                    </button>
+                    <button class="row-nav-btn next" onclick="scrollNetflixRow(event, this, 1)">
+                        <span class="material-symbols-rounded">chevron_right</span>
+                    </button>
+                    <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)"></div>
+                </div>`;
+            });
+            feedContainer.innerHTML = rowsHTML;
+
+            // Pre-cargar anuncios si están habilitados
+            let adPool = [];
+            if (window.db && window.db.adsEnabled) {
+                const activeCities = (sortedCities && sortedCities.length > 0) ? sortedCities : null;
+                adPool = await window.db.getRandomAds(5, activeCities) || [];
+            }
+            if (store.renderGeneration !== currentGen) return;
+
+            // Descargar en paralelo el primer bloque de 16 para cada categoría activa
+            const fetchPromises = popularCategories.map(async (catType) => {
+                try {
+                    let shelf = store.shelves[catType];
+                    if (!shelf || forceReload || isContextChanged) {
+                        // 1. Obtener la lista completa de IDs autorizados para esta categoría y zona
+                        const rawIds = await window.db.fetchCategoryListingIds({
+                            state: cleanState,
+                            cities: sortedCities,
+                            category: catType
+                        });
+                        if (store.renderGeneration !== currentGen) return;
+
+                        // 2. Barajar los IDs exactamente UNA VEZ para este carril
+                        const shuffledIds = (rawIds || []).sort(() => Math.random() - 0.5);
+                        shelf = {
+                            allIds: shuffledIds,
+                            items: [],
+                            page: 0,
+                            hasMore: shuffledIds.length > 0,
+                            total: shuffledIds.length,
+                            isLoading: false
+                        };
+                        store.shelves[catType] = shelf;
+
+                        // 3. Tomar el primer bloque (página 1) de la lista barajada
+                        const page1Ids = shuffledIds.slice(0, SHELF_PAGE_SIZE);
+                        if (page1Ids.length > 0) {
+                            const page1Listings = await window.db.fetchListingsByIds(page1Ids);
+                            if (store.renderGeneration !== currentGen) return;
+
+                            shelf.items = page1Listings;
+                            shelf.page = 1;
+                            // Si la cantidad total es menor o igual al tamaño de página, NO hay más páginas
+                            shelf.hasMore = SHELF_PAGE_SIZE < shelf.allIds.length;
+
+                            renderShelfItems(catType, page1Listings, 0, adPool);
+                        } else {
+                            shelf.hasMore = false;
+                        }
+                    } else if (shelf.items && shelf.items.length > 0) {
+                        renderShelfItems(catType, shelf.items, 0, adPool);
+                    }
+                } catch (e) {
+                    console.error(`Error loading shelf for ${catType}:`, e);
+                }
+            });
+
+            await Promise.all(fetchPromises);
+            if (store.renderGeneration !== currentGen) return;
+
+            // Sincronizar activeFeedListings con todos los autos cargados
+            window.activeFeedListings = Object.values(store.shelves).flatMap(s => s.items || []);
+
+            const totalRendered = window.activeFeedListings.length;
+            if (totalRendered === 0) {
+                feedContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; width: 100%; gap: 16px;">
+                        <span class="material-symbols-rounded" style="font-size: 64px; color: var(--text-muted); opacity: 0.5;">search_off</span>
+                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.2rem; font-weight: 500;">
+                            No hay vehículos publicados en tu zona todavía.
+                        </h2>
+                        <button data-action="open-new-listing" class="primary-btn" style="padding: 12px 24px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-rounded">add_circle</span> Da de alta tu vehículo
+                        </button>
+                    </div>`;
+            }
+
+            // Inicializar visibilidad de flechas en cada fila
+            setTimeout(() => {
+                if (store.renderGeneration !== currentGen) return;
+                feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
+                    if (window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
+                });
+                if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
+            }, 60);
+        }
+
+        function renderShelfItems(catType, items, existingCount, adPool) {
+            const feedContainer = document.getElementById('feed-container');
+            if (!feedContainer) return;
+            const row = feedContainer.querySelector(`.netflix-row[data-category="${catType}"]`);
+            if (!row) return;
+
+            const scroller = row.querySelector('.netflix-row-scroll');
+            if (!scroller) return;
+
+            // Conjunto con los IDs ya existentes en este carrusel en el DOM
+            const existingDomIds = new Set(
+                Array.from(scroller.querySelectorAll('.card[data-id]')).map(c => String(c.getAttribute('data-id')))
+            );
+
+            if (existingCount === 0) {
+                let ctaLogicCarousel = getSmartCTALogic(items);
+                if (ctaLogicCarousel.show) {
+                    const ctaContainer = row.querySelector('.netflix-row-cta-container');
+                    if (ctaContainer) {
+                        ctaContainer.innerHTML = `
+                            <button class="btn btn-sm" data-action="open-new-listing" style="background-color: var(--primary-color); color: white; border: none; border-radius: 20px; display: flex; align-items: center; gap: 4px; font-size: 0.65rem; padding: 3px 8px; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); text-transform: uppercase; cursor: pointer; white-space: nowrap;">
+                                <span class="material-symbols-rounded" style="font-size: 14px; color: white;">add_circle</span>
+                                ${ctaLogicCarousel.mainHTML} <span class="smart-cta-secondary"><span style="opacity: 0.6; margin: 0 2px;">|</span> <span style="text-transform: none;">${ctaLogicCarousel.messageHTML}</span></span>
+                            </button>
+                        `;
+                    }
+                }
+            }
+
+            const freq = (window.db && window.db.adFrequencyScroll) || 10;
+            let cardsHTML = '';
+            let newlyAdded = 0;
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const itemIdStr = String(item.id);
+
+                // ESCUDO TOTAL: Si ya existe en el DOM, no se inserta duplicado
+                if (existingDomIds.has(itemIdStr)) {
+                    continue;
+                }
+                existingDomIds.add(itemIdStr);
+
+                cardsHTML += createListingCardHTML(item, true);
+                newlyAdded++;
+
+                if (window.db && window.db.adsEnabled && (existingCount + newlyAdded) % freq === 0 && adPool && adPool.length > 0) {
+                    const ad = adPool[Math.floor(Math.random() * adPool.length)];
+                    cardsHTML += createAdCardHTML(ad, item.id, item.id);
+                }
+            }
+
+            if (cardsHTML) {
+                scroller.insertAdjacentHTML('beforeend', cardsHTML);
+            }
+            row.style.display = 'block';
+        }
+
+        async function loadNextShelfBatch(catType) {
+            const shelf = store.shelves[catType];
+            if (!shelf || shelf.isLoading || !shelf.hasMore) return;
+
+            shelf.isLoading = true;
+            const nextPage = shelf.page + 1;
+            const from = (nextPage - 1) * SHELF_PAGE_SIZE;
+            const to = nextPage * SHELF_PAGE_SIZE;
+            const pageIds = (shelf.allIds || []).slice(from, to);
+
+            if (pageIds.length === 0) {
+                shelf.hasMore = false;
+                shelf.isLoading = false;
+                const row = document.querySelector(`.netflix-row[data-category="${catType}"]`);
+                if (row) {
+                    const scroller = row.querySelector('.netflix-row-scroll');
+                    if (scroller && window.updateNetflixNav) window.updateNetflixNav(scroller);
+                }
+                return;
+            }
+
+            try {
+                const newItems = await window.db.fetchListingsByIds(pageIds);
+
+                if (newItems && newItems.length > 0) {
+                    const uniqueNewItems = newItems.filter(newItem => !shelf.items.some(ex => String(ex.id) === String(newItem.id)));
+                    if (uniqueNewItems.length > 0) {
+                        const existingCount = shelf.items.length;
+                        shelf.items.push(...uniqueNewItems);
+                        shelf.page = nextPage;
+
+                        let adPool = [];
+                        if (window.db && window.db.adsEnabled) {
+                            const activeCities = (selectedCities && selectedCities.length > 0) ? selectedCities : null;
+                            adPool = await window.db.getRandomAds(5, activeCities) || [];
+                        }
+
+                        renderShelfItems(catType, uniqueNewItems, existingCount, adPool);
+
+                        if (store.activeCarouselQueue && store.activeCarouselQueue.category === catType) {
+                            store.activeCarouselQueue.items = [...shelf.items];
+                        }
+
+                        window.activeFeedListings = Object.values(store.shelves).flatMap(s => s.items || []);
+                    }
+                }
+                shelf.hasMore = to < (shelf.allIds ? shelf.allIds.length : 0);
+            } catch (err) {
+                console.error(`Error loading next batch for ${catType}:`, err);
+            } finally {
+                shelf.isLoading = false;
+                const row = document.querySelector(`.netflix-row[data-category="${catType}"]`);
+                if (row) {
+                    const scroller = row.querySelector('.netflix-row-scroll');
+                    if (scroller && window.updateNetflixNav) {
+                        window.updateNetflixNav(scroller);
+                    }
+                }
+            }
+        }
+
+        function setCarouselQueueFromElement(targetEl, listingId) {
+            if (!targetEl) return;
+            const row = (targetEl.classList && targetEl.classList.contains('netflix-row'))
+                ? targetEl
+                : (targetEl.closest ? targetEl.closest('.netflix-row') : null);
+            if (row) {
+                const category = row.getAttribute('data-category');
+                const shelf = store.shelves[category];
+                if (shelf && shelf.items && shelf.items.length > 0) {
+                    store.activeCarouselQueue = {
+                        category: category,
+                        items: [...shelf.items]
+                    };
+                    return;
+                }
+            }
+            store.activeCarouselQueue = null;
+        }
+
+        function getCarouselQueue() {
+            return store.activeCarouselQueue;
+        }
+
+        return {
+            renderAllShelves,
+            loadNextShelfBatch,
+            setCarouselQueueFromElement,
+            getCarouselQueue,
+            resetShelves
+        };
+    }
+    window.useCategoryShelfHook = useCategoryShelfHook;
 
     // ==========================================
     // HOOK DE PRE-CARGA EN SEGUNDO PLANO (PREFETCHING)
@@ -3332,6 +3636,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         populateHomeCategories();
 
+        let sentinel = document.getElementById('feed-infinite-scroll-sentinel');
+
+        // Vista de Carruseles Estilo Netflix ("Todos") con carga por carril independiente
+        if (currentFeedCategory === 'Todos') {
+            if (sentinel) sentinel.style.display = 'none';
+            await useCategoryShelfHook().renderAllShelves(feedContainer, selectedCities, userStateSelect ? userStateSelect.value : null, forceReload);
+            return;
+        }
+
+        // Vista de Cuadrícula para Categorías Específicas (ej. "Sedán", "Camión")
+        feedContainer.classList.add('listings-grid');
+
         // Reset pagination state
         currentFeedPage = 1;
         window.activeFeedListings = [];
@@ -3339,7 +3655,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (feedContainer) feedContainer.innerHTML = '';
 
         // Add sentinel
-        let sentinel = document.getElementById('feed-infinite-scroll-sentinel');
         if (!sentinel) {
             sentinel = document.createElement('div');
             sentinel.id = 'feed-infinite-scroll-sentinel';
@@ -3355,40 +3670,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }, { rootMargin: '300px' });
             observer.observe(sentinel);
-        }
-
-        // Setup container layout based on category
-        if (currentFeedCategory !== 'Todos') {
-            feedContainer.classList.add('listings-grid');
         } else {
-            feedContainer.classList.remove('listings-grid');
-            window.netflixRowData = {}; // Initialize for lazy loading horizontal rows
-
-            // Pre-crear las filas en el DOM en el orden EXACTO de popularidad
-            // Inicialmente estarán ocultas (display: none)
-            const popularCategories = getSortedCategoriesByPopularity();
-            let emptyRowsHTML = '';
-            popularCategories.forEach(type => {
-                if (type !== 'Todos') {
-                    emptyRowsHTML += `
-                    <div class="netflix-row" data-category="${type}" style="display: none;">
-                        <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding-left: 5px; margin-bottom: 8px;">
-                            <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer; margin-bottom: 0; padding-left: 0;">
-                                ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
-                            </h3>
-                            <div class="netflix-row-cta-container"></div>
-                        </div>
-                        <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
-                            <span class="material-symbols-rounded">chevron_left</span>
-                        </button>
-                        <button class="row-nav-btn next" onclick="scrollNetflixRow(event, this, 1)">
-                            <span class="material-symbols-rounded">chevron_right</span>
-                        </button>
-                        <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)"></div>
-                    </div>`;
-                }
-            });
-            feedContainer.innerHTML = emptyRowsHTML;
+            sentinel.style.display = 'block';
         }
 
         await fetchNextFeedBlock();
@@ -3987,10 +4270,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Detalles ---
-    window.openListingDetails = async function (id) {
+    window.openListingDetails = async function (id, originEl = null) {
         window.showListingDetails = window.openListingDetails;
         let listing = null;
         const strId = String(id);
+
+        // Si se recibió o detecta el elemento de origen, sincronizar la cola del carril (orden espejo 1:1)
+        const origin = originEl || (typeof event !== 'undefined' && event && event.target ? event.target.closest('.card') : null);
+        if (origin && typeof window.useCategoryShelfHook === 'function') {
+            window.useCategoryShelfHook().setCarouselQueueFromElement(origin, id);
+        } else if (typeof window.useCategoryShelfHook === 'function' && !originEl) {
+            const cardInDom = document.querySelector(`.card[data-id="${id}"]`);
+            if (cardInDom) {
+                window.useCategoryShelfHook().setCarouselQueueFromElement(cardInDom, id);
+            }
+        }
 
         // 1. Buscar en Caché Local (Favoritos o Mis Anuncios)
         const allListings = db.getAllListings();
@@ -4351,7 +4645,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const navigateListing = (direction) => {
                 let sameCategoryListings = [];
-                if (previousViewId === 'view-biblioteca') {
+                const shelfQueue = (typeof window.useCategoryShelfHook === 'function') ? window.useCategoryShelfHook().getCarouselQueue() : null;
+
+                if (shelfQueue && shelfQueue.items && shelfQueue.items.length > 0 && shelfQueue.items.some(l => String(l.id) === String(listing.id))) {
+                    // Navegación espejo 1:1 del carril horizontal donde se hizo clic
+                    sameCategoryListings = shelfQueue.items;
+                } else if (previousViewId === 'view-biblioteca') {
                     // Si el usuario viene de la sección de Favoritos, deslizar únicamente entre sus vehículos guardados
                     const favHook = typeof window.useFavoritesNavigationHook === 'function' ? window.useFavoritesNavigationHook() : null;
                     sameCategoryListings = favHook ? favHook.getFavoriteListings() : [];
@@ -4389,6 +4688,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 let nextIndex = currentIndex + direction;
                 if (nextIndex >= sameCategoryListings.length) nextIndex = 0; // Vuelve al principio
                 if (nextIndex < 0) nextIndex = sameCategoryListings.length - 1; // Va al final
+
+                // Si navegamos en fullscreen hacia el final de un carril y hay más autos disponibles en el servidor, precargarlos
+                if (shelfQueue && direction === 1 && nextIndex >= sameCategoryListings.length - 3 && typeof window.useCategoryShelfHook === 'function') {
+                    window.useCategoryShelfHook().loadNextShelfBatch(shelfQueue.category);
+                }
 
                 // Inserción de publicidad según la frecuencia configurada al deslizar entre vehículos
                 window.detailSwipesCount = (window.detailSwipesCount || 0) + 1;
