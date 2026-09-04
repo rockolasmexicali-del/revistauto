@@ -8001,48 +8001,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return window.updateAdminAdsApprovals();
     };
 
-    window.approveAdAdmin = async function (adId) {
-        window.appConfirm('¿Aprobar este anuncio publicitario? Quedará activo por 30 días.', async () => {
-            try {
-                const ads = db.getAllAds();
-                const ad = ads.find(a => String(a.id) === String(adId));
-                if (ad) {
-                    ad.is_active = true;
-                    ad.payment_status = 'pagado';
-                    const now = new Date();
-                    ad.start_date = now.toISOString();
-                    const end = new Date(now);
-                    end.setDate(end.getDate() + 30);
-                    ad.end_date = end.toISOString();
-
-                    await db.saveAd(ad);
-
-                    const amount = window.useAdPricingHook ? window.useAdPricingHook.getAdPrice(ad) : (globalAdMonthlyPrice || 500);
-                    db.addAdPayment(ad.id, amount, null, 'Publicidad', 'manual');
-                    db.logActivity('Autorización de publicidad', `Publicidad #${ad.id} (${ad.title || 'Sin título'})`, ad.city || ad.target_city || 'Global');
-
-                    showAlert('Anuncio publicitario aprobado exitosamente', 'Aprobado', 'check_circle');
-                    if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-                    if (typeof updateAdminPendingAds === 'function') updateAdminPendingAds();
-                    if (typeof renderMyListings === 'function') renderMyListings();
-                }
-            } catch (e) {
-                showAlert('Error al aprobar anuncio', 'Error', 'error');
-            }
-        });
-    };
-
-    window.deleteAdAdmin = async function (adId) {
-        try {
-            await db.deleteAd(adId);
-            showAlert('Anuncio eliminado', 'Eliminado', 'info');
-            if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
-            if (typeof renderMyListings === 'function') renderMyListings();
-        } catch (e) {
-            showAlert('Error al eliminar anuncio', 'Error', 'error');
-        }
-    };
-
     function updateAdminRenewals() {
         const list = document.getElementById('renewals-list');
         const badge = document.getElementById('renewals-count-badge');
@@ -9104,8 +9062,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Limpiar dataset.lastState para forzar re-renderizado inmediato
                 const pendingAdsList = document.getElementById('pending-ads-list');
                 if (pendingAdsList) delete pendingAdsList.dataset.lastState;
-                const adminAdsTable = document.getElementById('admin-ads-table-body');
-                if (adminAdsTable) delete adminAdsTable.dataset.lastState;
+                const adsTable = document.getElementById('ads-table-body');
+                if (adsTable) delete adsTable.dataset.lastState;
 
                 if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
                 if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
@@ -9396,8 +9354,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Invalidate cache dataset on tables for immediate re-render
                 const tbody = document.getElementById('ads-table-body');
                 if (tbody) delete tbody.dataset.lastState;
-                const adminAdsTable = document.getElementById('admin-ads-table-body');
-                if (adminAdsTable) delete adminAdsTable.dataset.lastState;
                 const pendingAdsList = document.getElementById('pending-ads-list');
                 if (pendingAdsList) delete pendingAdsList.dataset.lastState;
 
@@ -11365,13 +11321,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const city = document.getElementById('client-ad-city').value.trim();
                 const rawPhone = document.getElementById('client-ad-phone').value.trim();
                 const phoneLada = document.getElementById('client-ad-phone-lada') ? document.getElementById('client-ad-phone-lada').value : '+52';
-                const phoneDigits = rawPhone.replace(/[^0-9]/g, '');
-                const phone = phoneDigits ? `${phoneLada} ${phoneDigits}` : rawPhone;
+                const cleanPhoneDigits = extractCleanAdDigits(rawPhone, phoneLada);
+                const phone = cleanPhoneDigits ? `${phoneLada} ${cleanPhoneDigits}` : rawPhone;
 
                 const rawWa = document.getElementById('client-ad-whatsapp').value.trim();
-                const waLada = document.getElementById('client-ad-whatsapp-lada') ? document.getElementById('client-ad-whatsapp-lada').value : '+52';
-                const waDigits = rawWa.replace(/[^0-9]/g, '');
-                const wa = waDigits ? `${waLada} ${waDigits}` : rawWa;
+                const waLada = rawWa.startsWith('+1') ? '+1' : (rawWa.startsWith('+52') ? '+52' : phoneLada);
+                const cleanWaDigits = extractCleanAdDigits(rawWa, waLada);
+                const wa = cleanWaDigits ? `${waLada} ${cleanWaDigits}` : (cleanPhoneDigits ? `${phoneLada} ${cleanPhoneDigits}` : '');
 
                 if (!title || !desc || !state || !city) {
                     showAlert('Por favor, completa los campos obligatorios (Título, Descripción, Estado y Ciudad).', 'Campos incompletos', 'warning');
@@ -11485,8 +11441,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             const pendingAdsList = document.getElementById('pending-ads-list');
                             if (pendingAdsList) delete pendingAdsList.dataset.lastState;
-                            const adminAdsTable = document.getElementById('admin-ads-table-body');
-                            if (adminAdsTable) delete adminAdsTable.dataset.lastState;
+                            const adsTable = document.getElementById('ads-table-body');
+                            if (adsTable) delete adsTable.dataset.lastState;
 
                             if (typeof forceInstantAdminRefresh === 'function') forceInstantAdminRefresh();
                             if (typeof updateAdminAdsApprovals === 'function') updateAdminAdsApprovals();
@@ -12126,6 +12082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         };
+        window.approveAdAdmin = window.approveAd;
 
         window.deleteAdAdmin = async function (id) {
             window.appConfirm('¿Rechazar y eliminar permanentemente este anuncio?', async () => {
