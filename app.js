@@ -3070,7 +3070,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.scrollNetflixRow = function (e, btn, direction) {
-        e.stopPropagation();
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        if (!btn || btn.classList.contains('disabled')) {
+            return;
+        }
         const row = btn.parentElement;
         const scrollContainer = row.querySelector('.netflix-row-scroll');
         if (scrollContainer) {
@@ -3088,7 +3094,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.updateNetflixNav = function (scrollContainer) {
+        if (!scrollContainer) return;
         const row = scrollContainer.parentElement;
+        if (!row) return;
         const prevBtn = row.querySelector('.row-nav-btn.prev');
         const nextBtn = row.querySelector('.row-nav-btn.next');
         const category = row.getAttribute('data-category');
@@ -3102,21 +3110,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        const canScrollAny = scrollContainer.scrollWidth > scrollContainer.clientWidth + 10;
+        const hasMoreOnServer = shelf ? shelf.hasMore : false;
+
         if (prevBtn) {
-            if (scrollContainer.scrollLeft <= 10) {
+            if (!canScrollAny) {
                 prevBtn.classList.add('hidden');
+                prevBtn.classList.remove('disabled');
+                prevBtn.removeAttribute('aria-disabled');
+            } else if (scrollContainer.scrollLeft <= 10) {
+                prevBtn.classList.remove('hidden');
+                prevBtn.classList.add('disabled');
+                prevBtn.setAttribute('aria-disabled', 'true');
             } else {
                 prevBtn.classList.remove('hidden');
+                prevBtn.classList.remove('disabled');
+                prevBtn.removeAttribute('aria-disabled');
             }
         }
 
         if (nextBtn) {
-            const hasMoreOnServer = shelf ? shelf.hasMore : false;
-            const isAtEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 15;
-            if (isAtEnd && !hasMoreOnServer) {
+            if (!canScrollAny && !hasMoreOnServer) {
                 nextBtn.classList.add('hidden');
-            } else if (!isAtEnd || hasMoreOnServer) {
+                nextBtn.classList.remove('disabled');
+                nextBtn.removeAttribute('aria-disabled');
+            } else {
+                const isAtEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 15;
                 nextBtn.classList.remove('hidden');
+                if (isAtEnd && !hasMoreOnServer) {
+                    nextBtn.classList.add('disabled');
+                    nextBtn.setAttribute('aria-disabled', 'true');
+                } else {
+                    nextBtn.classList.remove('disabled');
+                    nextBtn.removeAttribute('aria-disabled');
+                }
             }
         }
     };
