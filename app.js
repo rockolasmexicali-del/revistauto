@@ -354,7 +354,6 @@ setTimeout(() => {
     setTimeout(() => {
         document.querySelectorAll('.netflix-row-cta-container').forEach(el => el.innerHTML = '');
     }, 800);
-    console.log("40 seconds elapsed, CTAs fading out smoothly.");
 }, 40000);
 // --- HOOK: Precios y Promociones por Ciudad ---
 window.useCityPricingHook = (function() {
@@ -1139,7 +1138,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial local render
     window.isWaitingForInitialGps = true;
     populateHomeCategories();
-    renderFeed();
     // Solo cargar datos administrativos si hay sesión de admin activa
     if (isAdminLoggedIn()) {
         if (typeof updateAdminStats === 'function') updateAdminStats();
@@ -3095,57 +3093,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.updateNetflixNav = function (scrollContainer) {
         if (!scrollContainer) return;
-        const row = scrollContainer.parentElement;
-        if (!row) return;
-        const prevBtn = row.querySelector('.row-nav-btn.prev');
-        const nextBtn = row.querySelector('.row-nav-btn.next');
-        const category = row.getAttribute('data-category');
-        const shelf = window.__categoryShelfStore && window.__categoryShelfStore.shelves && window.__categoryShelfStore.shelves[category];
+        if (scrollContainer._navRafPending) return;
+        scrollContainer._navRafPending = true;
 
-        // Lazy loading dinámico por carril al aproximarse al final únicamente si hay más elementos
-        if (category && shelf && !shelf.isLoading && shelf.hasMore && typeof window.useCategoryShelfHook === 'function') {
-            const scrollRemaining = scrollContainer.scrollWidth - (scrollContainer.scrollLeft + scrollContainer.clientWidth);
-            if (scrollRemaining < 400) {
-                window.useCategoryShelfHook().loadNextShelfBatch(category);
-            }
-        }
+        requestAnimationFrame(() => {
+            scrollContainer._navRafPending = false;
+            const row = scrollContainer.parentElement;
+            if (!row) return;
+            const prevBtn = row.querySelector('.row-nav-btn.prev');
+            const nextBtn = row.querySelector('.row-nav-btn.next');
+            const category = row.getAttribute('data-category');
+            const shelf = window.__categoryShelfStore && window.__categoryShelfStore.shelves && window.__categoryShelfStore.shelves[category];
 
-        const canScrollAny = scrollContainer.scrollWidth > scrollContainer.clientWidth + 10;
-        const hasMoreOnServer = shelf ? shelf.hasMore : false;
-
-        if (prevBtn) {
-            if (!canScrollAny) {
-                prevBtn.classList.add('hidden');
-                prevBtn.classList.remove('disabled');
-                prevBtn.removeAttribute('aria-disabled');
-            } else if (scrollContainer.scrollLeft <= 10) {
-                prevBtn.classList.remove('hidden');
-                prevBtn.classList.add('disabled');
-                prevBtn.setAttribute('aria-disabled', 'true');
-            } else {
-                prevBtn.classList.remove('hidden');
-                prevBtn.classList.remove('disabled');
-                prevBtn.removeAttribute('aria-disabled');
-            }
-        }
-
-        if (nextBtn) {
-            if (!canScrollAny && !hasMoreOnServer) {
-                nextBtn.classList.add('hidden');
-                nextBtn.classList.remove('disabled');
-                nextBtn.removeAttribute('aria-disabled');
-            } else {
-                const isAtEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 15;
-                nextBtn.classList.remove('hidden');
-                if (isAtEnd && !hasMoreOnServer) {
-                    nextBtn.classList.add('disabled');
-                    nextBtn.setAttribute('aria-disabled', 'true');
-                } else {
-                    nextBtn.classList.remove('disabled');
-                    nextBtn.removeAttribute('aria-disabled');
+            // Lazy loading dinámico por carril al aproximarse al final únicamente si hay más elementos
+            if (category && shelf && !shelf.isLoading && shelf.hasMore && typeof window.useCategoryShelfHook === 'function') {
+                const scrollRemaining = scrollContainer.scrollWidth - (scrollContainer.scrollLeft + scrollContainer.clientWidth);
+                if (scrollRemaining < 400) {
+                    window.useCategoryShelfHook().loadNextShelfBatch(category);
                 }
             }
-        }
+
+            const canScrollAny = scrollContainer.scrollWidth > scrollContainer.clientWidth + 10;
+            const hasMoreOnServer = shelf ? shelf.hasMore : false;
+
+            if (prevBtn) {
+                if (!canScrollAny) {
+                    prevBtn.classList.add('hidden');
+                    prevBtn.classList.remove('disabled');
+                    prevBtn.removeAttribute('aria-disabled');
+                } else if (scrollContainer.scrollLeft <= 10) {
+                    prevBtn.classList.remove('hidden');
+                    prevBtn.classList.add('disabled');
+                    prevBtn.setAttribute('aria-disabled', 'true');
+                } else {
+                    prevBtn.classList.remove('hidden');
+                    prevBtn.classList.remove('disabled');
+                    prevBtn.removeAttribute('aria-disabled');
+                }
+            }
+
+            if (nextBtn) {
+                if (!canScrollAny && !hasMoreOnServer) {
+                    nextBtn.classList.add('hidden');
+                    nextBtn.classList.remove('disabled');
+                    nextBtn.removeAttribute('aria-disabled');
+                } else {
+                    const isAtEnd = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 15;
+                    nextBtn.classList.remove('hidden');
+                    if (isAtEnd && !hasMoreOnServer) {
+                        nextBtn.classList.add('disabled');
+                        nextBtn.setAttribute('aria-disabled', 'true');
+                    } else {
+                        nextBtn.classList.remove('disabled');
+                        nextBtn.removeAttribute('aria-disabled');
+                    }
+                }
+            }
+        });
     };
 
     // --- Búsqueda en Cascada (3 niveles) ---
@@ -3211,7 +3215,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 shelves: {}, // category => { allIds: [], items: [], page: 0, hasMore: true, total: 0, isLoading: false }
                 activeCarouselQueue: null, // { category: 'Camión', items: [...] }
                 activeContext: null, // hash of { state, cities }
-                renderGeneration: 0 // token de cancelación contra condiciones de carrera
+                renderGeneration: 0, // token de cancelación contra condiciones de carrera
+                isRenderingAll: false
             };
         }
         const store = window.__categoryShelfStore;
@@ -3236,126 +3241,169 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentHash = JSON.stringify({ state: cleanState, cities: sortedCities });
             const isContextChanged = (store.activeContext !== currentHash);
 
-            // Cancelación de solicitudes obsoletas previas
+            // Escudo de concurrencia:
+            // Si no se fuerza recarga y el contexto es el mismo:
+            // a) Si ya hay un renderAllShelves en ejecución activa, salimos sin cancelar la petición en curso
+            // b) Si ya hay tarjetas visibles en los carruseles del DOM, salimos sin parpadeo
+            if (!forceReload && !isContextChanged) {
+                const shelfCardsCount = feedContainer.querySelectorAll('.netflix-row-scroll .card[data-id]').length;
+                if (store.isRenderingAll || (shelfCardsCount > 0 && Object.keys(store.shelves).length > 0)) {
+                    return;
+                }
+            }
+
+            // Iniciar nueva generación de renderizado (cancela peticiones obsoletas previas)
             store.renderGeneration = (store.renderGeneration || 0) + 1;
             const currentGen = store.renderGeneration;
+            store.isRenderingAll = true;
 
-            if (forceReload || isContextChanged) {
-                resetShelves();
-                store.activeContext = currentHash;
-                if (window.db && typeof window.db.resetFeedShuffle === 'function') {
-                    window.db.resetFeedShuffle();
-                }
-            } else if (Object.keys(store.shelves).length > 0 && feedContainer.children.length > 0) {
-                return;
-            }
-
-            // Pre-crear las filas en el DOM en el orden de popularidad
-            let rowsHTML = '';
-            popularCategories.forEach(type => {
-                rowsHTML += `
-                <div class="netflix-row" data-category="${type}" style="display: none;">
-                    <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding-left: 5px; margin-bottom: 8px;">
-                        <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer; margin-bottom: 0; padding-left: 0;">
-                            ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
-                        </h3>
-                        <div class="netflix-row-cta-container"></div>
-                    </div>
-                    <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
-                        <span class="material-symbols-rounded">chevron_left</span>
-                    </button>
-                    <button class="row-nav-btn next" onclick="scrollNetflixRow(event, this, 1)">
-                        <span class="material-symbols-rounded">chevron_right</span>
-                    </button>
-                    <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)"></div>
-                </div>`;
-            });
-            feedContainer.innerHTML = rowsHTML;
-
-            // Pre-cargar anuncios si están habilitados
-            let adPool = [];
-            if (window.db && window.db.adsEnabled) {
-                const activeCities = (sortedCities && sortedCities.length > 0) ? sortedCities : null;
-                adPool = await window.db.getRandomAds(5, activeCities) || [];
-            }
-            if (store.renderGeneration !== currentGen) return;
-
-            // Descargar en paralelo el primer bloque de 16 para cada categoría activa
-            const fetchPromises = popularCategories.map(async (catType) => {
-                try {
-                    let shelf = store.shelves[catType];
-                    if (!shelf || forceReload || isContextChanged) {
-                        // 1. Obtener la lista completa de IDs autorizados para esta categoría y zona
-                        const rawIds = await window.db.fetchCategoryListingIds({
-                            state: cleanState,
-                            cities: sortedCities,
-                            category: catType
-                        });
-                        if (store.renderGeneration !== currentGen) return;
-
-                        // 2. Barajar los IDs exactamente UNA VEZ para este carril
-                        const shuffledIds = (rawIds || []).sort(() => Math.random() - 0.5);
-                        shelf = {
-                            allIds: shuffledIds,
-                            items: [],
-                            page: 0,
-                            hasMore: shuffledIds.length > 0,
-                            total: shuffledIds.length,
-                            isLoading: false
-                        };
-                        store.shelves[catType] = shelf;
-
-                        // 3. Tomar el primer bloque (página 1) de la lista barajada
-                        const page1Ids = shuffledIds.slice(0, SHELF_PAGE_SIZE);
-                        if (page1Ids.length > 0) {
-                            const page1Listings = await window.db.fetchListingsByIds(page1Ids);
-                            if (store.renderGeneration !== currentGen) return;
-
-                            shelf.items = page1Listings;
-                            shelf.page = 1;
-                            // Si la cantidad total es menor o igual al tamaño de página, NO hay más páginas
-                            shelf.hasMore = SHELF_PAGE_SIZE < shelf.allIds.length;
-
-                            renderShelfItems(catType, page1Listings, 0, adPool);
-                        } else {
-                            shelf.hasMore = false;
-                        }
-                    } else if (shelf.items && shelf.items.length > 0) {
-                        renderShelfItems(catType, shelf.items, 0, adPool);
+            try {
+                if (forceReload || isContextChanged) {
+                    resetShelves();
+                    store.activeContext = currentHash;
+                    if (window.db && typeof window.db.resetFeedShuffle === 'function') {
+                        window.db.resetFeedShuffle();
                     }
-                } catch (e) {
-                    console.error(`Error loading shelf for ${catType}:`, e);
                 }
-            });
 
-            await Promise.all(fetchPromises);
-            if (store.renderGeneration !== currentGen) return;
-
-            // Sincronizar activeFeedListings con todos los autos cargados
-            window.activeFeedListings = Object.values(store.shelves).flatMap(s => s.items || []);
-
-            const totalRendered = window.activeFeedListings.length;
-            if (totalRendered === 0) {
-                feedContainer.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; width: 100%; gap: 16px;">
-                        <span class="material-symbols-rounded" style="font-size: 64px; color: var(--text-muted); opacity: 0.5;">search_off</span>
-                        <h2 style="color: var(--text-muted); text-align: center; font-size: 1.2rem; font-weight: 500;">
-                            No hay vehículos publicados en tu zona todavía.
-                        </h2>
-                        <button data-action="open-new-listing" class="primary-btn" style="padding: 12px 24px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                            <span class="material-symbols-rounded">add_circle</span> Da de alta tu vehículo
+                // Pre-crear las filas en el DOM en el orden de popularidad
+                let rowsHTML = '';
+                popularCategories.forEach(type => {
+                    rowsHTML += `
+                    <div class="netflix-row" data-category="${type}" style="display: none;">
+                        <div class="netflix-row-header" style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding-left: 5px; margin-bottom: 8px;">
+                            <h3 class="netflix-row-title" onclick="window.advanceCategoryRow('${type}')" style="cursor: pointer; margin-bottom: 0; padding-left: 0;">
+                                ${type} <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">chevron_right</span>
+                            </h3>
+                            <div class="netflix-row-cta-container"></div>
+                        </div>
+                        <button class="row-nav-btn prev hidden" onclick="scrollNetflixRow(event, this, -1)">
+                            <span class="material-symbols-rounded">chevron_left</span>
                         </button>
+                        <button class="row-nav-btn next" onclick="scrollNetflixRow(event, this, 1)">
+                            <span class="material-symbols-rounded">chevron_right</span>
+                        </button>
+                        <div class="netflix-row-scroll" onscroll="updateNetflixNav(this)"></div>
                     </div>`;
-            }
-
-            // Inicializar visibilidad de flechas en cada fila
-            setTimeout(() => {
-                if (store.renderGeneration !== currentGen) return;
-                feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
-                    if (window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
                 });
-                if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
-            }, 60);
+                feedContainer.innerHTML = rowsHTML;
+
+                // Pre-cargar anuncios si están habilitados
+                let adPool = [];
+                if (window.db && window.db.adsEnabled) {
+                    const activeCities = (sortedCities && sortedCities.length > 0) ? sortedCities : null;
+                    adPool = await window.db.getRandomAds(5, activeCities) || [];
+                }
+                if (store.renderGeneration !== currentGen) return;
+
+                // Agrupar IDs pre-cargados de la consulta de ranking para evitar llamadas HTTP redundantes
+                const preloadedIdsByCategory = {};
+                if (Array.isArray(window.cachedCategoryStats)) {
+                    popularCategories.forEach(cat => {
+                        preloadedIdsByCategory[cat] = [];
+                    });
+                    window.cachedCategoryStats.forEach(item => {
+                        let cat = item.type;
+                        if (cat === 'Camioneta' || cat === 'SUV') cat = 'SUV / Camioneta';
+                        if (preloadedIdsByCategory[cat] && item.id) {
+                            preloadedIdsByCategory[cat].push(item.id);
+                        }
+                    });
+                }
+
+                // Descargar en paralelo el primer bloque de 16 para cada categoría activa
+                const fetchPromises = popularCategories.map(async (catType) => {
+                    try {
+                        let shelf = store.shelves[catType];
+                        if (!shelf || forceReload || isContextChanged) {
+                            // 1. Obtener IDs: usar los pre-cargados en memoria si existen, o consultar con fallback
+                            let rawIds = null;
+                            if (preloadedIdsByCategory[catType] !== undefined) {
+                                rawIds = preloadedIdsByCategory[catType];
+                            } else {
+                                rawIds = await window.db.fetchCategoryListingIds({
+                                    state: cleanState,
+                                    cities: sortedCities,
+                                    category: catType
+                                });
+                                if (store.renderGeneration !== currentGen) return;
+                            }
+
+                            // Si no hay autos para esta categoría en esta zona, evitar peticiones innecesarias
+                            if (!rawIds || rawIds.length === 0) {
+                                shelf = { allIds: [], items: [], page: 0, hasMore: false, total: 0, isLoading: false };
+                                store.shelves[catType] = shelf;
+                                return;
+                            }
+
+                            // 2. Barajar los IDs exactamente UNA VEZ para este carril
+                            const shuffledIds = [...rawIds].sort(() => Math.random() - 0.5);
+                            shelf = {
+                                allIds: shuffledIds,
+                                items: [],
+                                page: 0,
+                                hasMore: shuffledIds.length > 0,
+                                total: shuffledIds.length,
+                                isLoading: false
+                            };
+                            store.shelves[catType] = shelf;
+
+                            // 3. Tomar el primer bloque (página 1) de la lista barajada
+                            const page1Ids = shuffledIds.slice(0, SHELF_PAGE_SIZE);
+                            if (page1Ids.length > 0) {
+                                const page1Listings = await window.db.fetchListingsByIds(page1Ids);
+                                if (store.renderGeneration !== currentGen) return;
+
+                                shelf.items = page1Listings;
+                                shelf.page = 1;
+                                // Si la cantidad total es menor o igual al tamaño de página, NO hay más páginas
+                                shelf.hasMore = SHELF_PAGE_SIZE < shelf.allIds.length;
+
+                                renderShelfItems(catType, page1Listings, 0, adPool);
+                            } else {
+                                shelf.hasMore = false;
+                            }
+                        } else if (shelf.items && shelf.items.length > 0) {
+                            renderShelfItems(catType, shelf.items, 0, adPool);
+                        }
+                    } catch (e) {
+                        console.error(`Error loading shelf for ${catType}:`, e);
+                    }
+                });
+
+                await Promise.all(fetchPromises);
+                if (store.renderGeneration !== currentGen) return;
+
+                // Sincronizar activeFeedListings con todos los autos cargados
+                window.activeFeedListings = Object.values(store.shelves).flatMap(s => s.items || []);
+
+                const totalRendered = window.activeFeedListings.length;
+                if (totalRendered === 0) {
+                    feedContainer.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; width: 100%; gap: 16px;">
+                            <span class="material-symbols-rounded" style="font-size: 64px; color: var(--text-muted); opacity: 0.5;">search_off</span>
+                            <h2 style="color: var(--text-muted); text-align: center; font-size: 1.2rem; font-weight: 500;">
+                                No hay vehículos publicados en tu zona todavía.
+                            </h2>
+                            <button data-action="open-new-listing" class="primary-btn" style="padding: 12px 24px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <span class="material-symbols-rounded">add_circle</span> Da de alta tu vehículo
+                            </button>
+                        </div>`;
+                }
+
+                // Inicializar visibilidad de flechas en cada fila
+                setTimeout(() => {
+                    if (store.renderGeneration !== currentGen) return;
+                    feedContainer.querySelectorAll('.netflix-row-scroll').forEach(scrollContainer => {
+                        if (window.updateNetflixNav) window.updateNetflixNav(scrollContainer);
+                    });
+                    if (window.updateNavFavoriteIcon) window.updateNavFavoriteIcon();
+                }, 60);
+            } finally {
+                if (store.renderGeneration === currentGen) {
+                    store.isRenderingAll = false;
+                }
+            }
         }
 
         function renderShelfItems(catType, items, existingCount, adPool) {
@@ -3654,6 +3702,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // retenemos el DOM existente sin vaciar el contenedor para evitar cualquier parpadeo al cambiar de pestaña.
         if (!forceReload && window.activeFeedListings && window.activeFeedListings.length > 0 && feedContainer && feedContainer.children.length > 0) {
             return;
+        }
+
+        // Si ya hay una renderización global en curso para la vista 'Todos', evitamos llamadas concurrentes redundantes
+        if (!forceReload && currentFeedCategory === 'Todos') {
+            const shelfStore = window.__categoryShelfStore;
+            if (shelfStore && shelfStore.isRenderingAll) {
+                return;
+            }
         }
 
         // Refrescar ranking desde el servidor antes de renderizar
@@ -5537,6 +5593,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ignorar inputs ocultos que no aplican a la validación en este caso
             if (input.style.display === 'none' && input.tagName.toLowerCase() !== 'select') return;
 
+            // Excepción defensiva: Si la publicación que se está editando cuenta con contacto de Facebook,
+            // el teléfono y WhatsApp son opcionales. Si están vacíos, no se consideran error.
+            if (currentWizardStep === 2 && window._currentEditingHasFacebook) {
+                if (input.id === 'form-phone' || input.id === 'form-whatsapp') {
+                    const val = (input.value || '').replace(/\D/g, '');
+                    if (val.length === 0) {
+                        return; // Opcional porque el contacto está cubierto por Facebook
+                    }
+                    if (val.length < 10) {
+                        isValid = false;
+                        input.classList.add('input-error');
+                        const formGroup = input.closest('.form-group');
+                        const label = formGroup ? formGroup.querySelector('label') : null;
+                        const labelText = label ? label.textContent : (input.id === 'form-phone' ? 'Teléfono' : 'WhatsApp');
+                        if (!missingFields.includes(`${labelText} (debe tener 10 dígitos o dejarse vacío)`)) {
+                            missingFields.push(`${labelText} (debe tener 10 dígitos o dejarse vacío)`);
+                        }
+                        return;
+                    }
+                }
+            }
+
             if (!input.checkValidity()) {
                 isValid = false;
 
@@ -5686,6 +5764,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.updateTruckMechanicsUI === 'function') window.updateTruckMechanicsUI();
         whatsappModified = false;
         phoneModified = false;
+        window._currentEditingHasFacebook = false;
+        const fbNotice = document.getElementById('form-fb-contact-notice');
+        if (fbNotice) fbNotice.style.display = 'none';
         selectedImageFiles = [];
         if (typeof renderImagePreviews === 'function') renderImagePreviews();
         newListingModal.querySelector('h3').textContent = 'Dar de Alta Vehículo';
@@ -5710,6 +5791,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     btnCloseModal.addEventListener('click', () => {
+        window._currentEditingHasFacebook = false;
+        const fbNoticeClose = document.getElementById('form-fb-contact-notice');
+        if (fbNoticeClose) fbNoticeClose.style.display = 'none';
         newListingModal.classList.remove('active');
         const morePhotosModal = document.getElementById('more-photos-modal');
         if (morePhotosModal) morePhotosModal.classList.remove('active');
@@ -5813,6 +5897,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { window._isPopulatingListingData = false; }, 600);
         const id = listing.id;
         editingListingId = id;
+
+        // Detectar si la publicación cuenta con enlace de contacto a Facebook
+        const contactInfo = typeof window.useListingContactHook === 'function' ? window.useListingContactHook(listing) : null;
+        window._currentEditingHasFacebook = Boolean(contactInfo && contactInfo.hasFacebook);
+        const fbNotice = document.getElementById('form-fb-contact-notice');
+        if (fbNotice) {
+            fbNotice.style.display = window._currentEditingHasFacebook ? 'flex' : 'none';
+        }
 
         let fType = document.getElementById('form-type');
         const normalizedType = (listing.type === 'Camioneta') ? 'SUV / Camioneta' : (listing.type || '');
@@ -6448,6 +6540,9 @@ document.addEventListener('DOMContentLoaded', () => {
         function finishWizardSubmit() {
             const wasAdminEdit = window._editFromAdmin === true;
             window._editFromAdmin = false;
+            window._currentEditingHasFacebook = false;
+            const fbNotice = document.getElementById('form-fb-contact-notice');
+            if (fbNotice) fbNotice.style.display = 'none';
             editingListingId = null;
             newListingForm.reset();
             newListingModal.classList.remove('active');

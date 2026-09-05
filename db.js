@@ -1,4 +1,4 @@
-const APP_VERSION = "3.18.01"; // Incrementa este valor cada vez que actualices el catálogo o estructura
+const APP_VERSION = "3.18.03"; // Incrementa este valor cada vez que actualices el catálogo o estructura
 
 // Función oficial: Devuelve fecha YYYY-MM-DD sincronizada con el horario oficial del negocio (Mexicali / America/Tijuana)
 function getLocalDateString(dateInput = new Date()) {
@@ -835,7 +835,7 @@ class Database {
         try {
             let query = supabaseClient
                 .from('listings')
-                .select('type, views')
+                .select('id, type, views')
                 .eq('status', 'autorizado');
 
             if (cities && cities.length > 0) {
@@ -849,7 +849,8 @@ class Database {
             }
             return (data || []).map(item => ({
                 ...item,
-                type: (item.type === 'Camioneta') ? 'SUV / Camioneta' : (item.type || '')
+                id: item.id,
+                type: (item.type === 'Camioneta' || item.type === 'SUV') ? 'SUV / Camioneta' : (item.type || '')
             }));
         } catch (e) {
             console.warn('Network error fetching category stats:', e);

@@ -1934,10 +1934,10 @@ input[type=number] {
     overflow-x: auto;
     padding-bottom: 8px;
     scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    overscroll-behavior-x: contain;
 }
 
 .netflix-row-scroll::-webkit-scrollbar {
@@ -1949,6 +1949,8 @@ input[type=number] {
     max-width: 150px;
     scroll-snap-align: start;
     flex-shrink: 0;
+    content-visibility: auto;
+    contain-intrinsic-size: 150px 220px;
 }
 
 .netflix-row-scroll .card-img-wrapper {
